@@ -1,0 +1,14 @@
+{
+  "name": "pakkasmarja-berries-models",
+  "version": "0.0.1",
+  "description": "Cassandra models for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-models"
+    ],
+    "consumes": [
+      "shady-cassandra"
+    ]
+  }
+}

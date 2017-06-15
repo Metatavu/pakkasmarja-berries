@@ -1,0 +1,15 @@
+{
+  "name": "pakkasmarja-berries-routes",
+  "version": "0.0.1",
+  "description": "Connect routes for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-routes"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-models"
+    ]
+  }
+}

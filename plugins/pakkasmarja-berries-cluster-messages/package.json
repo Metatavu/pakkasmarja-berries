@@ -1,0 +1,15 @@
+{
+  "name": "pakkasmarja-berries-cluster-messages",
+  "version": "0.0.1",
+  "description": "Cluster wide message handlers for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-cluster-messages"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-models"
+    ]
+  }
+}

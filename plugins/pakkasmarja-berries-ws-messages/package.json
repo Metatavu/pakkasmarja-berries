@@ -1,0 +1,15 @@
+{
+  "name": "pakkasmarja-berries-ws-messages",
+  "version": "0.0.1",
+  "description": "Websocket message handlers for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-ws-messages"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-models"
+    ]
+  }
+}
