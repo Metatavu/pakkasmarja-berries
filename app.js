@@ -111,6 +111,8 @@
     routes.register(app, keycloak);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages);
+    
+    
    
   });
 

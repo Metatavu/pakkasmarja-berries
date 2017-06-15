@@ -9,7 +9,8 @@
     ],
     "consumes": [
       "logger",
-      "pakkasmarja-berries-models"
+      "pakkasmarja-berries-models",
+      "pakkasmarja-berries-user-management"
     ]
   }
 }
