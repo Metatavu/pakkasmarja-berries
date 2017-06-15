@@ -7,24 +7,53 @@
   const util = require('util'); 
   const moment = require('moment');
   const uuid = require('uuid4');
+  const _ = require('lodash');
   
   class PakkasmarjaBerriesClusterMessages {
     
-    constructor (logger, pakkasmarjaBerriesModels) {
+    constructor (logger, models) {
       this.logger = logger;
-      this.pakkasmarjaBerriesModels = pakkasmarjaBerriesModels;
+      this.models = models;
     }
     
-    register(shadyMessages) {
+    onMessageAdded(event, data) {
+      const userId = data.userId;
+      const message = data.message;
+      const clients = this.webSockets.getClients();
+      
+      _.forEach(clients, (client) => {
+        const sessionId = client.getSessionId();
+        this.models.findSession(sessionId)
+          .then((session) => {
+            if (session.userId === userId) {
+              client.sendMessage({
+                "type": "message-added",
+                "data": {
+                  "id": message.id,
+                  "content": message.content,
+                  "userId": message.userId,
+                  "threadId": message.threadId
+                }
+              });
+            }
+          })
+          .catch((err) => {
+            this.logger.error(`Failed to load session ${sessionId}`, err);
+          });
+      });
+    }
     
+    register(shadyMessages, webSockets) {
+      this.webSockets = webSockets;
+      shadyMessages.on("client:message-added", this.onMessageAdded.bind(this));
     }
     
   };
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
-    const pakkasmarjaBerriesModels = imports['pakkasmarja-berries-models'];
-    const pakkasmarjaBerriesClusterMessages = new PakkasmarjaBerriesClusterMessages(logger, pakkasmarjaBerriesModels);
+    const models = imports['pakkasmarja-berries-models'];
+    const pakkasmarjaBerriesClusterMessages = new PakkasmarjaBerriesClusterMessages(logger, models);
     register(null, {
       'pakkasmarja-berries-cluster-messages': pakkasmarjaBerriesClusterMessages
     });
