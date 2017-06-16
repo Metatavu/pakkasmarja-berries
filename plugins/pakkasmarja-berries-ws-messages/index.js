@@ -75,7 +75,7 @@
       return new Promise((resolve, reject) => {
         this.models.findSession(this.models.toUuid(client.getSessionId()))
           .then((session) => {
-            reject(session.userId);
+            resolve(session.userId);
           })
           .catch(reject);
       });

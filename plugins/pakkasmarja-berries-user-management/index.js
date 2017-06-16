@@ -52,8 +52,7 @@
       });
     }
     
-    listGroupsMemberIds(realm, groupIds) {
-      console.log("listGroupsMemberIds", realm);
+    listGroupsMemberIds(realm, groupIds) {     
       return new Promise((resolve, reject) => {
         this.listGroupsMembers(realm, groupIds)
           .then((members) => {
@@ -64,7 +63,6 @@
     }
     
     listGroupsMembers(realm, groupIds) {
-      console.log("listGroupsMembers", realm);
       return new Promise((resolve, reject) => {
         const promises = _.map(groupIds, (groupId) => {
           return this.listGroupMembers(realm, groupId);
@@ -79,7 +77,6 @@
     }
     
     listGroupMembers(realm, groupId) {
-      console.log("listGroupMembers", realm);
       return new Promise((resolve, reject) => {
         this.getClient()
           .then((client) => {
