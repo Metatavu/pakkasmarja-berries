@@ -11,9 +11,9 @@
   
   class Routes {
     
-    constructor (logger, pakkasmarjaBerriesModels) {
+    constructor (logger, models) {
       this.logger = logger;
-      this.pakkasmarjaBerriesModels = pakkasmarjaBerriesModels;
+      this.models = models;
     }
     
     getIndex(req, res) {
@@ -75,8 +75,8 @@
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
-    const pakkasmarjaBerriesModels = imports['pakkasmarja-berries-models'];
-    const routes = new Routes(logger, pakkasmarjaBerriesModels);
+    const models = imports['pakkasmarja-berries-models'];
+    const routes = new Routes(logger, models);
     register(null, {
       'pakkasmarja-berries-routes': routes
     });
