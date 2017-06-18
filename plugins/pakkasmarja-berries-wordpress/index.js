@@ -32,7 +32,7 @@
   } 
   
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
+    const logger = imports.logger;
     const wordpress = new PakkasmarjaBerriesWordpress(logger);
     
     wordpress.initialize(() => {
