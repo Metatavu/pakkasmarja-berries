@@ -1,0 +1,14 @@
+{
+  "name": "pakkasmarja-berries-wordpress",
+  "version": "0.0.1",
+  "description": "Wordpress integration for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-wordpress"
+    ],
+    "consumes": [
+      "logger"
+    ]
+  }
+}
