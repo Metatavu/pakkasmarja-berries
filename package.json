@@ -29,7 +29,8 @@
     "shady-messages": "0.3.0",
     "shady-websockets": "0.0.1",
     "shady-worker": "0.0.4",
-    "uuid4": "1.0.0"
+    "uuid4": "1.0.0",
+    "wpapi": "^1.1.1"
   },
   "devDependencies": {
     "grunt": "^1.0.1",
