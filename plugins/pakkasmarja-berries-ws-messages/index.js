@@ -73,8 +73,8 @@
                   "id": newsItem.id,
                   "contents": newsItem.content.rendered,
                   "title": newsItem.title.rendered,
-                  "created": moment(newsItem['date_gmt']).format(),
-                  "modified": moment(newsItem['modified_gmt']).format()  
+                  "created": moment(newsItem.date_gmt).format(),
+                  "modified": moment(newsItem.modified_gmt).format()  
                 };
               })
             }
@@ -117,7 +117,7 @@
   };
 
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
+    const logger = imports.logger;
     const models = imports['pakkasmarja-berries-models'];
     const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
