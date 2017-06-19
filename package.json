@@ -18,6 +18,7 @@
     "express": "4.15.3",
     "express-session": "^1.15.3",
     "jshashes": "^1.0.6",
+    "keycloak-admin-client": "^0.7.0",
     "keycloak-connect": "3.1.0",
     "lodash": "^4.17.4",
     "moment": "2.18.1",
