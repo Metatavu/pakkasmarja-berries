@@ -89,7 +89,7 @@
         return Promise.resolve([]);
       }
       
-      return this.instance.Message.findAsync({ threadId: threadId });
+      return this.instance.Message.findAsync({ threadId: threadId }, { allow_filtering: true });
     }
     
     createThread(threadId, title, type, userGroupIds) {
