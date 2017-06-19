@@ -23,23 +23,25 @@
       
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
-        this.models.findSession(sessionId)
-          .then((session) => {
-            if (session.userId === userId) {
-              client.sendMessage({
-                "type": "message-added",
-                "data": {
-                  "id": message.id,
-                  "content": message.content,
-                  "userId": message.userId,
-                  "threadId": message.threadId
-                }
-              });
-            }
-          })
-          .catch((err) => {
-            this.logger.error(`Failed to load session ${sessionId}`, err);
-          });
+        if (sessionId) {
+          this.models.findSession(this.models.toUuid(sessionId.toString()))
+            .then((session) => {
+              if (session.userId === userId) {
+                client.sendMessage({
+                  "type": "message-added",
+                  "data": {
+                    "id": message.id,
+                    "content": message.content,
+                    "userId": message.userId,
+                    "threadId": message.threadId
+                  }
+                });
+              }
+            })
+            .catch((err) => {
+              this.logger.error(`Failed to load session ${sessionId}`, err);
+            });
+        }
       });
     }
     
@@ -53,6 +55,7 @@
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
     const models = imports['pakkasmarja-berries-models'];
+   
     const pakkasmarjaBerriesClusterMessages = new PakkasmarjaBerriesClusterMessages(logger, models);
     register(null, {
       'pakkasmarja-berries-cluster-messages': pakkasmarjaBerriesClusterMessages
