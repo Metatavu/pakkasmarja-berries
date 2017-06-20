@@ -84,6 +84,10 @@
       }).saveAsync(); 
     }
     
+    findMessage(messageId) {
+      return this.instance.Message.findOneAsync({ id: messageId });
+    }
+    
     listMessagesByThreadId(threadId) {
       if (!threadId) {
         return Promise.resolve([]);
