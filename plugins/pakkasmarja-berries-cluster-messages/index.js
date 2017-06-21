@@ -28,12 +28,9 @@
             .then((session) => {
               if (session.userId === userId) {
                 client.sendMessage({
-                  "type": "message-added",
+                  "type": "messages-added",
                   "data": {
-                    "id": message.id,
-                    "content": message.content,
-                    "userId": message.userId,
-                    "threadId": message.threadId
+                    messages: [ message ]
                   }
                 });
               }
