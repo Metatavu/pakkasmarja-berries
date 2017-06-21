@@ -113,8 +113,10 @@
     
     onGetMessages(message, client) {
       const threadId = this.models.toUuid(message['thread-id']);
+      const firstResult = message['first-result'];
+      const maxResults = message['max-results'];
       
-      this.models.listMessagesByThreadId(threadId)
+      this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
         .then((messages) => {
           client.sendMessage({
             "type": "messages-added",

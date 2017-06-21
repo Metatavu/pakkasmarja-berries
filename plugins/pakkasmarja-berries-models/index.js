@@ -28,10 +28,13 @@
           id: "uuid",
           threadId: "uuid",
           userId: "text",
-          contents: "text"
+          contents: "text",
+          created: "timestamp",
+          modified: "timestamp"
         },
-        key : [ [ "id" ] ],
-        indexes: ["userId", "threadId" ]
+        key : [ [ "threadId" ], "userId", "created" ],
+        indexes: ["userId", "threadId" ],
+        clustering_order: {"created": "desc"}
       });
       
       this._registerModel('Thread', {
@@ -76,24 +79,47 @@
     }
     
     createMessage(messageId, threadId, userId, contents) {
+      const created = new Date().getTime();
+      
       return new this.instance.Message({
         id: messageId,
         threadId: threadId,
         userId: userId,
-        contents: contents
+        contents: contents,
+        created: created,
+        modified: created
       }).saveAsync(); 
     }
     
     findMessage(messageId) {
-      return this.instance.Message.findOneAsync({ id: messageId });
+      return this.instance.Message.findOneAsync({ id: messageId }, { allow_filtering: true });
     }
     
-    listMessagesByThreadId(threadId) {
+    listMessagesByThreadId(threadId, firstResult, maxResults) {
       if (!threadId) {
         return Promise.resolve([]);
       }
       
-      return this.instance.Message.findAsync({ threadId: threadId }, { allow_filtering: true });
+      return new Promise((resolve, reject) => {      
+        // TODO: paging should be optimized
+
+        const limit = (firstResult || 0) + (maxResults || 0);
+
+        const query = {
+          'threadId': threadId,
+          '$limit': limit
+        };
+        
+        this.instance.Message.findAsync(query)
+          .then((messages) => {
+            if (maxResults !== undefined) {
+              resolve(messages.splice(firstResult));
+            } else {
+              resolve(messages);
+            }
+          })
+          .catch(reject);
+      });
     }
     
     createThread(threadId, title, type, userGroupIds) {
@@ -160,10 +186,10 @@
     const pakkasmarjaBerriesModels = new PakkasmarjaBerriesModels(cassandraModels);
     
     pakkasmarjaBerriesModels.registerModels(() => {
-      register(null, {
-        'pakkasmarja-berries-models': pakkasmarjaBerriesModels
+        register(null, {
+          'pakkasmarja-berries-models': pakkasmarjaBerriesModels
+        });
       });
-    });
   };
   
 })();

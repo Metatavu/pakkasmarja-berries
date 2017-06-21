@@ -8,7 +8,8 @@ module.exports = [
   {
     "packagePath": "shady-cassandra",
     "keyspace": 'berries',
-    "contactPoints": config.get('cassandra:contact-points')
+    "contactPoints": config.get('cassandra:contact-points'),
+    "migration": "alter"
   },
   {
     "packagePath": "architect-logger",
