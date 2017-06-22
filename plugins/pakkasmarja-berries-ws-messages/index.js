@@ -74,7 +74,8 @@
                   "contents": newsItem.content.rendered,
                   "title": newsItem.title.rendered,
                   "created": moment(newsItem.date_gmt).format(),
-                  "modified": moment(newsItem.modified_gmt).format()  
+                  "modified": moment(newsItem.modified_gmt).format(),
+                  "image": newsItem.better_featured_image.source_url
                 };
               })
             }
