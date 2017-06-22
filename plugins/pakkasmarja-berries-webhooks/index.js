@@ -100,12 +100,12 @@
               });
           })
           .catch((err) => {
-            this.logger.error(`Failed to fetch chat thread ${wpId}`, err);
+            this.logger.error(`Failed to fetch chat thread ${id}`, err);
           });
       }
     }
     
-  };
+  }
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
