@@ -40,7 +40,7 @@
     const shadyMessages = architectApp.getService('shady-messages');
     const shadyWorker = architectApp.getService('shady-worker');
     const WebSockets = architectApp.getService('shady-websockets');
-    const pakkasmarjaBarriesModels = architectApp.getService('pakkasmarja-berries-models');
+    const models = architectApp.getService('pakkasmarja-berries-models');
     const routes = architectApp.getService('pakkasmarja-berries-routes');
     const webSocketMessages = architectApp.getService('pakkasmarja-berries-ws-messages');
     const clusterMessages = architectApp.getService('pakkasmarja-berries-cluster-messages');
@@ -106,11 +106,25 @@
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'pug');
     
-    const webSockets = new WebSockets(httpServer);
+    const webSockets = new WebSockets(httpServer, (sessionId, callback) => {
+      try {
+        models.findSession(models.toUuid(sessionId))
+          .then((session) => {
+            callback(!!session);
+          })
+          .catch((err) => {
+            logger.error(err);
+            callback(false);
+          });
+      } catch (e) {
+        logger.error(e);
+        callback(false);
+      }
+    });
     
     routes.register(app, keycloak);
     webSocketMessages.register(webSockets);
-    clusterMessages.register(shadyMessages, webSocketMessages);
+    clusterMessages.register(shadyMessages, webSockets);
 
   });
 

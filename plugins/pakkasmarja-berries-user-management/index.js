@@ -28,6 +28,16 @@
       });
     }
     
+    listUserGroupIds(realm, userId) {
+      return new Promise((resolve, reject) => {
+        this.listUserGroups(realm, userId)
+          .then((userGroup) => {
+            resolve(_.uniq(_.map(userGroup, 'id')));
+          })
+          .catch(reject);
+      });
+    }
+    
     listUserGroups(realm, userId) {
       return new Promise((resolve, reject) => {
         this.getClient()
@@ -36,7 +46,7 @@
               .then(resolve)
               .catch(reject);
           })
-          .catch();
+          .catch(reject);
       });
     }
     
@@ -48,7 +58,7 @@
               .then(resolve)
               .catch(reject);
           })
-          .catch();
+          .catch(reject);
       });
     }
     

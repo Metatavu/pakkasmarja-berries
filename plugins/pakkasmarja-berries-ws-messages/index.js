@@ -9,13 +9,14 @@
   const config = require('nconf');
   const moment = require('moment');
   const uuid = require('uuid4');
+  const Promise = require('bluebird');
   
   class PakkasmarjaBerriesWebsocketMessages {
     
-    constructor (logger, models, clusterMessages, userManagement, wordpress) {
+    constructor (logger, models, shadyMessages, userManagement, wordpress) {
       this.logger = logger;
       this.models = models;
-      this.clusterMessages = clusterMessages;
+      this.shadyMessages = shadyMessages;
       this.userManagement = userManagement;
       this.wordpress = wordpress;
     }
@@ -41,22 +42,27 @@
               const userGroupIds = thread.userGroupIds;
               this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
                 .then((userIds) => {
-                  this.models.createMessage(this.models.getUuid(), threadId, userId, contents)
-                    .then((message) => {
-                      userIds.forEach((userId) => {
-                        this.clusterMessages.trigger("client:message-added", {
-                          "userId": userId,
-                          "message": message
-                        });
-                      });
+                  const messageId = this.models.getUuid();
+                  this.models.createMessage(messageId, threadId, userId, contents)
+                    .then(() => {
+                      this.models.findMessage(messageId)
+                        .then((message) => {
+                          userIds.forEach((userId) => {
+                            this.shadyMessages.trigger("client:message-added", {
+                              "userId": userId,
+                              "message": message
+                            });
+                          });
+                        })
+                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
                     })
-                    .catch(handleWebSocketError(client, 'SEND_MESSAGE'));            
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));            
                 });
             })
-            .catch(handleWebSocketError(client, 'SEND_MESSAGE'));
+            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
 
         })
-        .catch(handleWebSocketError(client, 'SEND_MESSAGE'));
+        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
     }
     
     onGetNews(message, client) {
@@ -81,7 +87,46 @@
             }
           });
         })
-        .catch(handleWebSocketError(client, 'GET_POSTS'));
+        .catch(this.handleWebSocketError(client, 'GET_POSTS'));
+    }
+    
+    onGetThreads(message, client) {
+      const type = message['thread-type'];
+      this.getUserGroupIds(client)
+        .then((userGroupIds) => {
+          const threadPromises = _.map(userGroupIds, (userGroupId) => {
+            return this.models.listThreadsByTypeAndUserGroupId(type, userGroupId);
+          });
+  
+          Promise.all(threadPromises)
+            .then((threads) => {
+              client.sendMessage({
+                "type": "threads-added",
+                "data": {
+                  threads: _.flatten(threads)
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_THREADS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_THREADS'));
+    }
+    
+    onGetMessages(message, client) {
+      const threadId = this.models.toUuid(message['thread-id']);
+      const firstResult = message['first-result'];
+      const maxResults = message['max-results'];
+      
+      this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
+        .then((messages) => {
+          client.sendMessage({
+            "type": "messages-added",
+            "data": {
+              messages: _.flatten(messages)
+            }
+          });
+        })
+        .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
     }
     
     onMessage(event) {
@@ -91,6 +136,12 @@
       switch (message.type) {
         case 'send-message':
           this.onSendMessage(message, client);
+        break;
+        case 'get-messages':
+          this.onGetMessages(message, client);
+        break;
+        case 'get-threads':
+          this.onGetThreads(message, client);
         break;
         case 'get-news':
           this.onGetNews(message, client);
@@ -111,6 +162,20 @@
       });
     }
     
+    getUserGroupIds(client) {
+      return new Promise((resolve, reject) => {
+        this.getUserId(client)
+          .then((userId) => {
+            this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
+              .then((userGroupIds) => {
+                resolve(userGroupIds);
+              })
+              .catch(reject);
+          })
+          .catch(reject);
+      });
+    }
+    
     register(webSockets) {
       webSockets.on("message", this.onMessage.bind(this));
     }
@@ -120,11 +185,11 @@
   module.exports = (options, imports, register) => {
     const logger = imports.logger;
     const models = imports['pakkasmarja-berries-models'];
-    const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
+    const shadyMessages = imports['shady-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
     
-    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, clusterMessages, userManagement, wordpress);
+    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress);
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
     });
