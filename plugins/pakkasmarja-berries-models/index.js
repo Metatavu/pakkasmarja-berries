@@ -42,13 +42,15 @@
           id: "uuid",
           title: "text",
           type: "text",
-          userGroupIds: {
-            type: "set",
-            typeDef: "<text>"
+          originId: "text",
+          imagePath: "text",
+          userGroupRoles: {
+            type: "map",
+            typeDef: "<text,text>"
           }
         },
         key : [ [ "id" ]  ],
-        indexes: ["type", "userGroupIds" ]
+        indexes: ["type", "userGroupRoles", "originId" ]
       });
     }
     
@@ -121,13 +123,15 @@
           .catch(reject);
       });
     }
-    
-    createThread(threadId, title, type, userGroupIds) {
+                
+    createThread(threadId, originId, title, type, imageUrl, userGroupRoles) {
       return new this.instance.Thread({
         id: threadId,
         title: title,
         type: type,
-        userGroupIds: userGroupIds
+        originId: originId,
+        imageUrl: imageUrl,
+        userGroupRoles: userGroupRoles
       }).saveAsync(); 
     }
     
@@ -135,24 +139,23 @@
       return this.instance.Thread.findOneAsync({ id: id });
     }
     
+    findThreadByOriginId(originId) {
+      return this.instance.Thread.findOneAsync({ originId: originId });
+    }
+    
     listThreadsByUserGroupId(userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupIds: { $contains: userGroupId } });
+      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } });
     }
     
     listThreadsByTypeAndUserGroupId(type, userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupIds: { $contains: userGroupId }, type: type }, { allow_filtering: true });
+      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId }, type: type }, { allow_filtering: true });
     }
     
-    addThreadUserGroupIds(threadId, userGroupIds) {
-      return this.instance.Thread.updateAsync({ id: threadId}, { 
-        userGroups: { '$append': userGroupIds }
-      });
-    }
-    
-    removeThreadUserGroupIds(threadId, userGroupIds) {
-      return this.instance.Thread.updateAsync({ id: threadId}, { 
-        userGroups: { '$remove': userGroupIds }
-      });
+    updateThread(thread, title, imagePath, userGroupRoles) {
+      thread.title = title;
+      thread.imagePath = imagePath;
+      thread.userGroupRoles = userGroupRoles;
+      return thread.saveAsync(); 
     }
     
     get instance() {
