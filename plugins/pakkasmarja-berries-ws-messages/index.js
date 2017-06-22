@@ -39,7 +39,7 @@
 
           this.models.findThread(threadId)
             .then((thread) => {
-              const userGroupIds = thread.userGroupIds;
+              const userGroupIds = Object.keys(thread.userGroupRoles);
               this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
                 .then((userIds) => {
                   const messageId = this.models.getUuid();
