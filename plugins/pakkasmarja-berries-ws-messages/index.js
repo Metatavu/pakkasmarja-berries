@@ -81,7 +81,7 @@
                   "title": newsItem.title.rendered,
                   "created": moment(newsItem.date_gmt).format(),
                   "modified": moment(newsItem.modified_gmt).format(),
-                  "image": newsItem.better_featured_image.source_url
+                  "image": newsItem.better_featured_image ? newsItem.better_featured_image.source_url : null
                 };
               })
             }
