@@ -23,11 +23,17 @@
         password: config.get('wordpress:password')
       });
       
+      this.api.chatThreads = this.api.registerRoute( 'wp/v2', '/chat-thread/(?P<id>)' );
+      
       callback();
     }
     
     listNews(page, perPage) {
       return this.api.posts().perPage(perPage).page(page);
+    }
+    
+    findChatThread(id) {
+      return this.api.chatThreads().id(id);
     }
   } 
   
