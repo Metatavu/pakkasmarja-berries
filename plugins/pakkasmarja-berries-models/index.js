@@ -52,6 +52,21 @@
         key : [ [ "id" ]  ],
         indexes: ["type", "userGroupRoles", "originId" ]
       });
+      
+      this._registerModel('QuestionGroup', {
+        fields: {
+          id: "uuid",
+          title: "text",
+          originId: "text",
+          imagePath: "text",
+          userGroupRoles: {
+            type: "map",
+            typeDef: "<text,text>"
+          }
+        },
+        key : [ [ "id" ]  ],
+        indexes: [ "userGroupRoles", "originId" ]
+      });
     }
     
     getModels() {
@@ -156,6 +171,35 @@
       thread.imagePath = imagePath;
       thread.userGroupRoles = userGroupRoles;
       return thread.saveAsync(); 
+    }
+             
+    createQuestionGroup(questionGroupId, originId, title, imageUrl, userGroupRoles) {
+      return new this.instance.QuestionGroup({
+        id: questionGroupId,
+        title: title,
+        originId: originId,
+        imageUrl: imageUrl,
+        userGroupRoles: userGroupRoles
+      }).saveAsync(); 
+    }
+    
+    findQuestionGroup(id) {
+      return this.instance.QuestionGroup.findOneAsync({ id: id });
+    }
+    
+    findQuestionGroupByOriginId(originId) {
+      return this.instance.QuestionGroup.findOneAsync({ originId: originId });
+    }
+    
+    listQuestionGroupsByUserGroupId(userGroupId) {
+      return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } });
+    }
+    
+    updateQuestionGroup(questionGroup, title, imagePath, userGroupRoles) {
+      questionGroup.title = title;
+      questionGroup.imagePath = imagePath;
+      questionGroup.userGroupRoles = userGroupRoles;
+      return questionGroup.saveAsync(); 
     }
     
     get instance() {
