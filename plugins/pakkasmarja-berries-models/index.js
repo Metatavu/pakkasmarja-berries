@@ -159,7 +159,7 @@
     }
     
     listThreadsByUserGroupId(userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } });
+      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
     }
     
     listThreadsByTypeAndUserGroupId(type, userGroupId) {
@@ -192,7 +192,7 @@
     }
     
     listQuestionGroupsByUserGroupId(userGroupId) {
-      return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } });
+      return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
     }
     
     updateQuestionGroup(questionGroup, title, imagePath, userGroupRoles) {

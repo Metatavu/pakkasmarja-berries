@@ -112,6 +112,27 @@
         .catch(this.handleWebSocketError(client, 'GET_THREADS'));
     }
     
+    onGetQuestionGroups(message, client) {
+      this.getUserGroupIds(client)
+        .then((userGroupIds) => {
+          const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
+            return this.models.listQuestionGroupsByUserGroupId(userGroupId);
+          });
+  
+          Promise.all(questionGroupPromises)
+            .then((questionGroups) => {
+              client.sendMessage({
+                "type": "question-groups-added",
+                "data": {
+                  'question-groups': _.flatten(questionGroups)
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
+    }
+    
     onGetMessages(message, client) {
       const threadId = this.models.toUuid(message['thread-id']);
       const firstResult = message['first-result'];
@@ -142,6 +163,9 @@
         break;
         case 'get-threads':
           this.onGetThreads(message, client);
+        break;
+        case 'get-question-groups':
+          this.onGetQuestionGroups(message, client);
         break;
         case 'get-news':
           this.onGetNews(message, client);
