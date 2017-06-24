@@ -24,7 +24,7 @@
               .then(resolve)
               .catch(reject);
           })
-          .catch();
+          .catch(reject);
       });
     }
     
@@ -36,7 +36,7 @@
               .then(resolve)
               .catch(reject);
           })
-          .catch();
+          .catch(reject);
       });
     }
     
