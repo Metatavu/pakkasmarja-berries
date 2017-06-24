@@ -17,8 +17,11 @@
     }
     
     onMessageAdded(event, data) {
-      const userId = data.userId;
-      const message = data.message;
+      const userId = data['user-id'];
+      const message = data['message'];
+      const threadId = data['thread-id'];
+      const threadType = data['thread-type'];
+      
       const clients = this.webSockets.getClients();
       
       _.forEach(clients, (client) => {
@@ -30,7 +33,9 @@
                 client.sendMessage({
                   "type": "messages-added",
                   "data": {
-                    messages: [ message ]
+                    'messages': [ message ],
+                    'thread-id': threadId,
+                    'thread-type': threadType
                   }
                 });
               }

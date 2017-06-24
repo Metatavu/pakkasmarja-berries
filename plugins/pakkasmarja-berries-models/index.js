@@ -52,6 +52,25 @@
         key : [ [ "id" ]  ],
         indexes: ["type", "userGroupRoles", "originId" ]
       });
+      
+      this._registerModel('QuestionGroup', {
+        fields: {
+          id: "uuid",
+          title: "text",
+          originId: "text",
+          imagePath: "text",
+          userGroupRoles: {
+            type: "map",
+            typeDef: "<text,text>"
+          },
+          userThreads: {
+            type: "map",
+            typeDef: "<text,uuid>"
+          }
+        },
+        key : [ [ "id" ]  ],
+        indexes: [ "userGroupRoles", "originId" ]
+      });
     }
     
     getModels() {
@@ -144,7 +163,7 @@
     }
     
     listThreadsByUserGroupId(userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } });
+      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
     }
     
     listThreadsByTypeAndUserGroupId(type, userGroupId) {
@@ -156,6 +175,66 @@
       thread.imagePath = imagePath;
       thread.userGroupRoles = userGroupRoles;
       return thread.saveAsync(); 
+    }
+             
+    createQuestionGroup(questionGroupId, originId, title, imageUrl, userGroupRoles) {
+      return new this.instance.QuestionGroup({
+        id: questionGroupId,
+        title: title,
+        originId: originId,
+        imageUrl: imageUrl,
+        userGroupRoles: userGroupRoles,
+        userThreads: {}
+      }).saveAsync(); 
+    }
+    
+    findQuestionGroup(id) {
+      return this.instance.QuestionGroup.findOneAsync({ id: id });
+    }
+    
+    findQuestionGroupByOriginId(originId) {
+      return this.instance.QuestionGroup.findOneAsync({ originId: originId });
+    }
+    
+    findQuestionGroupByThreadId(threadId) {
+      return this.instance.QuestionGroup.findOneAsync({ userThreads: { '$contains': threadId } }, { allow_filtering: true } );
+    }
+    
+    listQuestionGroupsByUserGroupId(userGroupId) {
+      return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
+    }
+    
+    updateQuestionGroup(questionGroup, title, imagePath, userGroupRoles) {
+      questionGroup.title = title;
+      questionGroup.imagePath = imagePath;
+      questionGroup.userGroupRoles = userGroupRoles;
+      return questionGroup.saveAsync(); 
+    }
+    
+    findOrCreateQuestionGroupUserThread(questionGroup, userId) {
+      const userThreads = questionGroup.userThreads || {};
+      
+      let threadId = userThreads[userId];
+      if (threadId) {
+        return this.findThread(threadId);
+      } else {
+        return new Promise((resolve, reject) => {
+          threadId = this.getUuid();
+          this.createThread(threadId, null, null, "question", null, null)
+            .then(() => {
+              const userThreadAdd = {};
+              userThreadAdd[userId] = threadId;
+              this.instance.QuestionGroup.updateAsync({ id:questionGroup.id }, { userThreads:{ '$add': userThreadAdd } })
+                .then(() => {
+                  this.findThread(threadId)
+                    .then(resolve)
+                    .catch(reject);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        });
+      }
     }
     
     get instance() {

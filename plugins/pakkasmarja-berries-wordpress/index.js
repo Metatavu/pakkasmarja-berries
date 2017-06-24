@@ -24,6 +24,7 @@
       });
       
       this.api.chatThreads = this.api.registerRoute( 'wp/v2', '/chat-thread/(?P<id>)' );
+      this.api.questionGroups = this.api.registerRoute( 'wp/v2', '/question-group/(?P<id>)' );
       
       callback();
     }
@@ -34,6 +35,10 @@
     
     findChatThread(id) {
       return this.api.chatThreads().id(id);
+    }
+    
+    findQuestionGroup(id) {
+      return this.api.questionGroups().id(id);
     }
   } 
   

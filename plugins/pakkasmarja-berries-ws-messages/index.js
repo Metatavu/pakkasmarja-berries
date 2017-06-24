@@ -24,7 +24,7 @@
     handleWebSocketError(client, operation) {
       return (err) => {
         const failedOperation = operation || 'UNKNOWN_OPERATION';
-        this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));      
+        this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));
         // TODO notify client
       };
     }
@@ -39,30 +39,78 @@
 
           this.models.findThread(threadId)
             .then((thread) => {
-              const userGroupIds = Object.keys(thread.userGroupRoles);
-              this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
-                .then((userIds) => {
-                  const messageId = this.models.getUuid();
-                  this.models.createMessage(messageId, threadId, userId, contents)
-                    .then(() => {
-                      this.models.findMessage(messageId)
-                        .then((message) => {
-                          userIds.forEach((userId) => {
-                            this.shadyMessages.trigger("client:message-added", {
-                              "userId": userId,
-                              "message": message
-                            });
-                          });
-                        })
-                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
-                    })
-                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));            
-                });
+              if (thread.type === 'conversation') {
+                this.onSendMessageConversation(userId, thread, contents, client);
+              } else if (thread.type === 'question') {
+                this.onSendMessageQuestion(userId, thread, contents, client);
+              } else {
+                this.logger.error(`Unknown thread type ${thread.type}`);
+              }
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
 
         })
         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
+    }
+    
+    onSendMessageConversation(userId, thread, contents, client) {
+      const userGroupIds = Object.keys(thread.userGroupRoles);
+      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+        .then((userIds) => {
+          const messageId = this.models.getUuid();
+          this.models.createMessage(messageId, thread.id, userId, contents)
+            .then(() => {
+              this.models.findMessage(messageId)
+                .then((message) => {
+                  this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                    .then((user) => {
+                      userIds.forEach((userId) => {
+                        this.shadyMessages.trigger("client:message-added", {
+                          "user-id": userId,
+                          "message": this.translateMessage(message, user),
+                          "thread-id": thread.id,
+                          "thread-type": thread.type
+                        });
+                      });
+                    })
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
+                })
+                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
+            })
+            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));            
+        });
+    }
+    
+    onSendMessageQuestion(userId, thread, contents, client) {
+      this.models.findQuestionGroupByThreadId(thread.id)
+        .then((questionGroup) => {
+          const userGroupIds = Object.keys(questionGroup.userGroupRoles);
+          this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+            .then((userIds) => {
+              this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                .then((user) => {
+                  const messageId = this.models.getUuid();
+                  this.models.createMessage(messageId, thread.id, userId, contents)
+                    .then(() => {
+                      this.models.findMessage(messageId)
+                        .then((message) => {
+                          userIds.forEach((userId) => {
+                            this.shadyMessages.trigger("client:message-added", {
+                              "user-id": userId,
+                              "message": this.translateMessage(message, user),
+                              "thread-id": thread.id,
+                              "thread-type": thread.type
+                            });
+                          });
+                        })
+                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
+                    })
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
+                })
+                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
+            });
+        })
+        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
     }
     
     onGetNews(message, client) {
@@ -112,19 +160,135 @@
         .catch(this.handleWebSocketError(client, 'GET_THREADS'));
     }
     
+    onGetQuestionGroups(message, client) {
+      this.getUserGroupIds(client)
+        .then((userGroupIds) => {
+          const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
+            return this.models.listQuestionGroupsByUserGroupId(userGroupId);
+          });
+  
+          Promise.all(questionGroupPromises)
+            .then((data) => {
+              const questionGroups = _.map(_.flatten(data), (questionGroup) => {
+                return {
+                  id: questionGroup.id,
+                  title: questionGroup.title,
+                  originId: questionGroup.originId,
+                  imagePath: questionGroup.imagePath,
+                  role: this.getQuestionGroupRole(questionGroup, userGroupIds)
+                };
+              });
+              
+              client.sendMessage({
+                "type": "question-groups-added",
+                "data": {
+                  'question-groups': questionGroups
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
+    }
+    
+    onSelectQuestionGroupThread(message, client) {
+      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.findQuestionGroup(questionGroupId)
+            .then((questionGroup) => {
+              this.models.findOrCreateQuestionGroupUserThread(questionGroup, userId)
+                .then((thread) => {
+                  client.sendMessage({
+                    "type": "question-thread-selected",
+                    "data": {
+                      'thread-id': thread.id
+                    }
+                  });
+                })
+                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+    }
+    
+    onGetQuestionGroupThreads(message, client) {
+      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      // TODO: Permission to list threads
+      
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.findQuestionGroup(questionGroupId)
+            .then((questionGroup) => {
+              const userIds = _.keys(questionGroup.userThreads||{});
+              const threadIds = _.values(questionGroup.userThreads||{});
+              this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
+                .then((userMap) => {
+                  const threadPromises = _.map(threadIds, (threadId, index) => {
+                    return new Promise((resolve, reject) => {
+                      this.models.findThread(threadId)
+                        .then((thread) => {
+                          const userId = userIds[index];
+                          const user = userMap[userId];
+                          resolve({
+                            id: thread.id,
+                            title: this.userManagement.getUserDisplayName(user),
+                            type: thread.type,
+                            imagePath: this.userManagement.getUserImage(user)
+                          });
+                        })
+                        .catch(reject);
+                    });
+                  });
+
+                  Promise.all(threadPromises)
+                    .then((threads) => {
+                      client.sendMessage({
+                        "type": "question-group-threads-added",
+                        "data": {
+                          'question-group-id': questionGroupId,
+                          'threads': threads
+                        }
+                      });
+                    })
+                    .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                })
+                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+    }
+    
     onGetMessages(message, client) {
       const threadId = this.models.toUuid(message['thread-id']);
       const firstResult = message['first-result'];
       const maxResults = message['max-results'];
       
-      this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
-        .then((messages) => {
-          client.sendMessage({
-            "type": "messages-added",
-            "data": {
-              messages: _.flatten(messages)
-            }
-          });
+      this.models.findThread(threadId)
+        .then((thread) => {
+          this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
+            .then((data) => {
+              const messages = _.flatten(data);
+              const userIds = _.uniq(_.map(messages, 'userId'));
+              
+              this.userManagement.getUserMap(config.get('keycloak:realm'), userIds)
+                .then((userMap) => {              
+                  client.sendMessage({
+                    "type": "messages-added",
+                    "data": {
+                      "messages": _.map(messages, (message) => {
+                        return this.translateMessage(message, userMap[message.userId]);
+                      }),
+                      "thread-id": thread.id,
+                      "thread-type": thread.type
+                    }
+                  });                  
+                })
+                .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
+            })
+            .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
         })
         .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
     }
@@ -143,6 +307,15 @@
         case 'get-threads':
           this.onGetThreads(message, client);
         break;
+        case 'get-question-groups':
+          this.onGetQuestionGroups(message, client);
+        break;
+        case 'select-question-group-thread':
+          this.onSelectQuestionGroupThread(message, client);
+        break;
+        case 'get-question-group-threads':
+          this.onGetQuestionGroupThreads(message, client);
+        break;
         case 'get-news':
           this.onGetNews(message, client);
         break;
@@ -150,6 +323,41 @@
           this.logger.error(util.format("Unknown message type %s", message.type));
         break;
       }
+    }
+    
+    translateMessage(message, user) {             
+      return {
+        id: message.id,
+        threadId: message.threadId,
+        userId: message.userId,
+        userName: this.userManagement.getUserDisplayName(user),  
+        contents: message.contents,
+        created: message.created,
+        modified: message.modified
+      };
+    }
+    
+    getQuestionGroupRole(questionGroup, userGroupIds) {
+      let result = null;
+      
+      userGroupIds.forEach((userGroupId) => {
+        const role = questionGroup.userGroupRoles[userGroupId];
+        if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
+          result = role; 
+        }
+      });
+      
+      return result;
+    }
+    
+    getRoleIndex(role) {
+      if (role === 'manager') {
+        return 2;
+      } else if (role === 'user') {
+        return 1;
+      }
+      
+      return 0;
     }
     
     getUserId(client) {
@@ -188,8 +396,8 @@
     const shadyMessages = imports['shady-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
-    
     const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress);
+    
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
     });

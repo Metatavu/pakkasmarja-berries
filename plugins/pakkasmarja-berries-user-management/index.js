@@ -16,6 +16,18 @@
       this.logger = logger;
     }
     
+    findUser(realm, id) {
+      return new Promise((resolve, reject) => {
+        this.getClient()
+          .then((client) => {
+            client.users.find(realm, { userId: id })
+              .then(resolve)
+              .catch(reject);
+          })
+          .catch(reject);
+      });
+    }
+    
     listUsers(realm) {
       return new Promise((resolve, reject) => {
         this.getClient()
@@ -24,7 +36,7 @@
               .then(resolve)
               .catch(reject);
           })
-          .catch();
+          .catch(reject);
       });
     }
     
@@ -96,6 +108,35 @@
           })
           .catch();
       });
+    }
+    
+    getUserMap(realm, userIds) {
+      return new Promise((resolve, reject) => {
+        const userPromises = _.map(userIds, (userId) => {
+          return this.findUser(realm, userId);
+        });
+
+        Promise.all(userPromises)
+          .then((users) => {
+            const result = {};
+    
+            users.forEach((user) => {
+              result[user.id] = user;
+            });
+            
+            resolve(result);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getUserDisplayName(user) {
+      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName} <${user.email}>` : `<${user.email}>`;
+    }
+    
+    getUserImage(user) {
+      // TODO: Implement
+      return null;
     }
     
     getClient() {
