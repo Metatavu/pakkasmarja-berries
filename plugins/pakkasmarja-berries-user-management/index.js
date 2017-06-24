@@ -16,6 +16,18 @@
       this.logger = logger;
     }
     
+    findUser(realm, id) {
+      return new Promise((resolve, reject) => {
+        this.getClient()
+          .then((client) => {
+            client.users.find(realm, { userId: id })
+              .then(resolve)
+              .catch(reject);
+          })
+          .catch();
+      });
+    }
+    
     listUsers(realm) {
       return new Promise((resolve, reject) => {
         this.getClient()

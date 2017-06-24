@@ -24,7 +24,7 @@
     handleWebSocketError(client, operation) {
       return (err) => {
         const failedOperation = operation || 'UNKNOWN_OPERATION';
-        this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));      
+        this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));
         // TODO notify client
       };
     }
@@ -173,23 +173,35 @@
         .then((userId) => {
           this.models.findQuestionGroup(questionGroupId)
             .then((questionGroup) => {
+              const userIds = _.keys(questionGroup.userThreads||{});
               const threadIds = _.values(questionGroup.userThreads||{});
-              const threadPromises = _.map(threadIds, (threadId) => {
-                return this.models.findThread(threadId);
-              });
-              
-              Promise.all(threadPromises)
-                .then((threads) => {
-                  client.sendMessage({
-                    "type": "question-group-threads-added",
-                    "data": {
-                      'question-group-id': questionGroupId,
-                      'threads': threads
-                    }
+              this.getUserMap(_.uniq(userIds))
+                .then((userMap) => {
+                  const threadPromises = _.map(threadIds, (threadId, index) => {
+                    const thread = this.models.findThread(threadId);
+                    const userId = userIds[index];
+                    const user = userMap[userId];
+                    return {
+                      id: thread.id,
+                      title: this.getUserDisplayName(user),
+                      type: thread.type,
+                      imagePath: this.getUserImage(user)
+                    };
                   });
+
+                  Promise.all(threadPromises)
+                    .then((threads) => {
+                      client.sendMessage({
+                        "type": "question-group-threads-added",
+                        "data": {
+                          'question-group-id': questionGroupId,
+                          'threads': threads
+                        }
+                      });
+                    })
+                    .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-              
             })
             .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
         })
@@ -278,6 +290,45 @@
       });
     }
     
+    getUserMap(userIds) {
+      return new Promise((resolve, reject) => {
+        const userPromises = _.map(userIds, (userId) => {
+          return this.getUser(userId);
+        });
+
+        Promise.all(userPromises)
+          .then((users) => {
+            const result = {};
+    
+            users.forEach((user) => {
+              result[user.id] = user;
+            });
+            
+            resolve(result);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getUserDisplayName(user) {
+      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName} <${user.email}>` : `<${user.email}>`;
+    }
+    
+    getUserImage(user) {
+      // TODO: Implement
+      return null;
+    }
+    
+    getUser(userId) {
+      return new Promise((resolve, reject) => {
+        this.userManagement.findUser(config.get('keycloak:realm'), userId)
+          .then((user) => {
+            resolve(user);
+          })
+          .catch(reject);
+      });
+    }
+    
     getUserGroupIds(client) {
       return new Promise((resolve, reject) => {
         this.getUserId(client)
@@ -304,8 +355,8 @@
     const shadyMessages = imports['shady-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
-    
     const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress);
+    
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
     });
