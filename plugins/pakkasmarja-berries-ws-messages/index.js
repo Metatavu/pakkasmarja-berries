@@ -120,17 +120,51 @@
           });
   
           Promise.all(questionGroupPromises)
-            .then((questionGroups) => {
+            .then((data) => {
+              const questionGroups = _.map(_.flatten(data), (questionGroup) => {
+                return {
+                  id: questionGroup.id,
+                  title: questionGroup.title,
+                  originId: questionGroup.originId,
+                  imagePath: questionGroup.imagePath,
+                  role: this.getQuestionGroupRole(questionGroup, userGroupIds)
+                };
+              });
+              
+              console.log(questionGroups);
+              
               client.sendMessage({
                 "type": "question-groups-added",
                 "data": {
-                  'question-groups': _.flatten(questionGroups)
+                  'question-groups': questionGroups
                 }
               });
             })
             .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
         })
         .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
+    }
+    
+    onSelectQuestionGroupThread(message, client) {
+      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.findQuestionGroup(questionGroupId)
+            .then((questionGroup) => {
+              this.models.findOrCreateQuestionGroupUserThread(questionGroup, userId)
+                .then((thread) => {
+                  client.sendMessage({
+                    "type": "question-thread-selected",
+                    "data": {
+                      'thread-id': thread.id
+                    }
+                  });
+                })
+                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
     }
     
     onGetMessages(message, client) {
@@ -150,6 +184,29 @@
         .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
     }
     
+    getQuestionGroupRole(questionGroup, userGroupIds) {
+      let result = null;
+      
+      userGroupIds.forEach((userGroupId) => {
+        const role = questionGroup.userGroupRoles[userGroupId];
+        if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
+          result = role; 
+        }
+      });
+      
+      return result;
+    }
+    
+    getRoleIndex(role) {
+      if (role === 'manager') {
+        return 2;
+      } else if (role === 'user') {
+        return 1;
+      }
+      
+      return 0;
+    }
+    
     onMessage(event) {
       const message = event.data.message;
       const client = event.client;
@@ -166,6 +223,9 @@
         break;
         case 'get-question-groups':
           this.onGetQuestionGroups(message, client);
+        break;
+        case 'select-question-group-thread':
+          this.onSelectQuestionGroupThread(message, client);
         break;
         case 'get-news':
           this.onGetNews(message, client);

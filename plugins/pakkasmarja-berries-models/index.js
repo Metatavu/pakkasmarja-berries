@@ -62,6 +62,10 @@
           userGroupRoles: {
             type: "map",
             typeDef: "<text,text>"
+          },
+          userThreads: {
+            type: "map",
+            typeDef: "<text,uuid>"
           }
         },
         key : [ [ "id" ]  ],
@@ -179,7 +183,8 @@
         title: title,
         originId: originId,
         imageUrl: imageUrl,
-        userGroupRoles: userGroupRoles
+        userGroupRoles: userGroupRoles,
+        userThreads: {}
       }).saveAsync(); 
     }
     
@@ -200,6 +205,38 @@
       questionGroup.imagePath = imagePath;
       questionGroup.userGroupRoles = userGroupRoles;
       return questionGroup.saveAsync(); 
+    }
+    
+    findOrCreateQuestionGroupUserThread(questionGroup, userId) {
+      const userThreads = questionGroup.userThreads || {};
+      
+      let threadId = userThreads[userId];
+      if (threadId) {
+        return this.findThread(threadId);
+      } else {
+        return new Promise((resolve, reject) => {
+          threadId = this.getUuid();
+          
+          console.log("New thread", threadId);
+          
+          this.createThread(threadId, null, null, "question", null, null)
+            .then(() => {
+              const userThreadAdd = {};
+              userThreadAdd[userId] = threadId;
+              
+              console.log("userThreadAdd", userThreadAdd);
+              
+              this.instance.QuestionGroup.updateAsync({ id:questionGroup.id }, { userThreads:{ '$add': userThreadAdd } })
+                .then(() => {
+                  this.findThread(threadId)
+                    .then(resolve)
+                    .catch(reject);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        });
+      }
     }
     
     get instance() {
