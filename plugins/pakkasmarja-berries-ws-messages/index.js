@@ -54,8 +54,8 @@
     }
     
     onSendMessageConversation(userId, thread, contents, client) {
-      const userGroupIds = Object.keys(thread.userGroupRoles);
-      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+      const threadUserGroupIds = Object.keys(thread.userGroupRoles);
+      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), threadUserGroupIds)
         .then((userIds) => {
           const messageId = this.models.getUuid();
           this.models.createMessage(messageId, thread.id, userId, contents)
@@ -64,14 +64,19 @@
                 .then((message) => {
                   this.userManagement.findUser(config.get('keycloak:realm'), userId)
                     .then((user) => {
-                      userIds.forEach((userId) => {
-                        this.shadyMessages.trigger("client:message-added", {
-                          "user-id": userId,
-                          "message": this.translateMessage(message, user),
-                          "thread-id": thread.id,
-                          "thread-type": thread.type
-                        });
-                      });
+                      this.getUserGroupIds(client)
+                        .then((userGroupIds) => {
+                          const role = this.getConversationThreadRole(thread, userGroupIds);
+                          userIds.forEach((userId) => {
+                            this.shadyMessages.trigger("client:message-added", {
+                              "user-id": userId,
+                              "message": this.translateMessage(message, user, role),
+                              "thread-id": thread.id,
+                              "thread-type": thread.type
+                            });                          
+                          });
+                        })
+                       .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
                     })
                     .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
                 })
@@ -85,6 +90,8 @@
       this.models.findQuestionGroupByThreadId(thread.id)
         .then((questionGroup) => {
           const userGroupIds = Object.keys(questionGroup.userGroupRoles);
+          const role = this.getQuestionGroupRole(questionGroup, userGroupIds);
+                            
           this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
             .then((userIds) => {
               this.userManagement.findUser(config.get('keycloak:realm'), userId)
@@ -97,7 +104,7 @@
                           userIds.forEach((userId) => {
                             this.shadyMessages.trigger("client:message-added", {
                               "user-id": userId,
-                              "message": this.translateMessage(message, user),
+                              "message": this.translateMessage(message, user, role),
                               "thread-id": thread.id,
                               "thread-type": thread.type
                             });
@@ -272,19 +279,23 @@
             .then((data) => {
               const messages = _.flatten(data);
               const userIds = _.uniq(_.map(messages, 'userId'));
-              
-              this.userManagement.getUserMap(config.get('keycloak:realm'), userIds)
-                .then((userMap) => {              
-                  client.sendMessage({
-                    "type": "messages-added",
-                    "data": {
-                      "messages": _.map(messages, (message) => {
-                        return this.translateMessage(message, userMap[message.userId]);
-                      }),
-                      "thread-id": thread.id,
-                      "thread-type": thread.type
-                    }
-                  });                  
+              this.getThreadRoleMap(thread, userIds)
+                .then((roleMap) => {
+                  this.userManagement.getUserMap(config.get('keycloak:realm'), userIds)
+                    .then((userMap) => {
+                      client.sendMessage({
+                        "type": "messages-added",
+                        "data": {
+                          "messages": _.map(messages, (message) => {
+                            const role = roleMap[message.userId];
+                            return this.translateMessage(message, userMap[message.userId], role);
+                          }),
+                          "thread-id": thread.id,
+                          "thread-type": thread.type
+                        }
+                      });                  
+                    })
+                    .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
                 })
                 .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
             })
@@ -325,7 +336,57 @@
       }
     }
     
-    translateMessage(message, user) {             
+    getThreadRoleMap(thread, userIds) {
+      return new Promise((resolve, reject) => {
+        
+        const userGroupPromises = _.map(userIds, (userId) => {
+          return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId);
+        });
+        
+        Promise.all(userGroupPromises)
+          .then((userUserGroupIds) => {
+            if (thread.type === 'conversation') {
+              this.getUserGroupRolesRoleMap(thread.userGroupRoles, userIds, userUserGroupIds)
+                .then(resolve)
+                .catch(reject);
+            } else {
+              this.models.findQuestionGroupByThreadId(thread.id)
+                .then((questionGroup) => {
+                  this.getUserGroupRolesRoleMap(questionGroup.userGroupRoles, userIds, userUserGroupIds)
+                    .then(resolve)
+                    .catch(reject);
+                })
+                .catch(reject);
+            }
+          })
+          .catch(reject);
+      });
+    }
+    
+    getUserGroupRolesRoleMap(userGroupRoles, userIds, userUserGroupIds) {
+      return new Promise((resolve, reject) => {
+        const result = {};
+
+        const rolePromises = _.map(userUserGroupIds, (userGroupIds) => {
+          return this.getUserGroupRole(userGroupRoles, userGroupIds);
+        });
+
+        Promise.all(rolePromises)
+          .then((roles) => {
+            const result = {};
+
+            userIds.forEach((userId, index) => {
+              const role = roles[index];
+              result[userId] = role;
+            });
+
+            resolve(result);
+          })
+          .catch(reject);
+      });
+    }
+    
+    translateMessage(message, user, role) {             
       return {
         id: message.id,
         threadId: message.threadId,
@@ -333,15 +394,24 @@
         userName: this.userManagement.getUserDisplayName(user),  
         contents: message.contents,
         created: message.created,
-        modified: message.modified
+        modified: message.modified,
+        role: role
       };
     }
     
+    getConversationThreadRole(conversationThread, userGroupIds) {
+      return this.getUserGroupRole(conversationThread.userGroupRoles, userGroupIds);
+    }
+    
     getQuestionGroupRole(questionGroup, userGroupIds) {
+      return this.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
+    }
+    
+    getUserGroupRole(userGroupRoles, userGroupIds) {
       let result = null;
       
       userGroupIds.forEach((userGroupId) => {
-        const role = questionGroup.userGroupRoles[userGroupId];
+        const role = userGroupRoles[userGroupId];
         if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
           result = role; 
         }
