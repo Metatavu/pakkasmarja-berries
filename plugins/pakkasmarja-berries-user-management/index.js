@@ -110,6 +110,35 @@
       });
     }
     
+    getUserMap(realm, userIds) {
+      return new Promise((resolve, reject) => {
+        const userPromises = _.map(userIds, (userId) => {
+          return this.findUser(realm, userId);
+        });
+
+        Promise.all(userPromises)
+          .then((users) => {
+            const result = {};
+    
+            users.forEach((user) => {
+              result[user.id] = user;
+            });
+            
+            resolve(result);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getUserDisplayName(user) {
+      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName} <${user.email}>` : `<${user.email}>`;
+    }
+    
+    getUserImage(user) {
+      // TODO: Implement
+      return null;
+    }
+    
     getClient() {
       return KeycloakAdminClient(config.get('keycloak:admin'));
     }

@@ -62,14 +62,18 @@
             .then(() => {
               this.models.findMessage(messageId)
                 .then((message) => {
-                  userIds.forEach((userId) => {
-                    this.shadyMessages.trigger("client:message-added", {
-                      "user-id": userId,
-                      "message": message,
-                      "thread-id": thread.id,
-                      "thread-type": thread.type
-                    });
-                  });
+                  this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                    .then((user) => {
+                      userIds.forEach((userId) => {
+                        this.shadyMessages.trigger("client:message-added", {
+                          "user-id": userId,
+                          "message": this.translateMessage(message, user),
+                          "thread-id": thread.id,
+                          "thread-type": thread.type
+                        });
+                      });
+                    })
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
                 })
                 .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
             })
@@ -83,19 +87,23 @@
           const userGroupIds = Object.keys(questionGroup.userGroupRoles);
           this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
             .then((userIds) => {
-              const messageId = this.models.getUuid();
-              this.models.createMessage(messageId, thread.id, userId, contents)
-                .then(() => {
-                  this.models.findMessage(messageId)
-                    .then((message) => {
-                      userIds.forEach((userId) => {
-                        this.shadyMessages.trigger("client:message-added", {
-                          "user-id": userId,
-                          "message": message,
-                          "thread-id": thread.id,
-                          "thread-type": thread.type
-                        });
-                      });
+              this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                .then((user) => {
+                  const messageId = this.models.getUuid();
+                  this.models.createMessage(messageId, thread.id, userId, contents)
+                    .then(() => {
+                      this.models.findMessage(messageId)
+                        .then((message) => {
+                          userIds.forEach((userId) => {
+                            this.shadyMessages.trigger("client:message-added", {
+                              "user-id": userId,
+                              "message": this.translateMessage(message, user),
+                              "thread-id": thread.id,
+                              "thread-type": thread.type
+                            });
+                          });
+                        })
+                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                     })
                     .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                 })
@@ -215,7 +223,7 @@
             .then((questionGroup) => {
               const userIds = _.keys(questionGroup.userThreads||{});
               const threadIds = _.values(questionGroup.userThreads||{});
-              this.getUserMap(_.uniq(userIds))
+              this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
                   const threadPromises = _.map(threadIds, (threadId, index) => {
                     return new Promise((resolve, reject) => {
@@ -225,9 +233,9 @@
                           const user = userMap[userId];
                           resolve({
                             id: thread.id,
-                            title: this.getUserDisplayName(user),
+                            title: this.userManagement.getUserDisplayName(user),
                             type: thread.type,
-                            imagePath: this.getUserImage(user)
+                            imagePath: this.userManagement.getUserImage(user)
                           });
                         })
                         .catch(reject);
@@ -261,15 +269,24 @@
       this.models.findThread(threadId)
         .then((thread) => {
           this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
-            .then((messages) => {
-              client.sendMessage({
-                "type": "messages-added",
-                "data": {
-                  "messages": _.flatten(messages),
-                  "thread-id": thread.id,
-                  "thread-type": thread.type
-                }
-              });
+            .then((data) => {
+              const messages = _.flatten(data);
+              const userIds = _.uniq(_.map(messages, 'userId'));
+              
+              this.userManagement.getUserMap(config.get('keycloak:realm'), userIds)
+                .then((userMap) => {              
+                  client.sendMessage({
+                    "type": "messages-added",
+                    "data": {
+                      "messages": _.map(messages, (message) => {
+                        return this.translateMessage(message, userMap[message.userId])
+                      }),
+                      "thread-id": thread.id,
+                      "thread-type": thread.type
+                    }
+                  });                  
+                })
+                .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
             })
             .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
         })
@@ -308,6 +325,18 @@
       }
     }
     
+    translateMessage(message, user) {             
+      return {
+        id: message.id,
+        threadId: message.threadId,
+        userId: message.userId,
+        userName: this.userManagement.getUserDisplayName(user),  
+        contents: message.contents,
+        created: message.created,
+        modified: message.modified
+      };
+    }
+    
     getQuestionGroupRole(questionGroup, userGroupIds) {
       let result = null;
       
@@ -336,45 +365,6 @@
         this.models.findSession(this.models.toUuid(client.getSessionId()))
           .then((session) => {
             resolve(session.userId);
-          })
-          .catch(reject);
-      });
-    }
-    
-    getUserMap(userIds) {
-      return new Promise((resolve, reject) => {
-        const userPromises = _.map(userIds, (userId) => {
-          return this.getUser(userId);
-        });
-
-        Promise.all(userPromises)
-          .then((users) => {
-            const result = {};
-    
-            users.forEach((user) => {
-              result[user.id] = user;
-            });
-            
-            resolve(result);
-          })
-          .catch(reject);
-      });
-    }
-    
-    getUserDisplayName(user) {
-      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName} <${user.email}>` : `<${user.email}>`;
-    }
-    
-    getUserImage(user) {
-      // TODO: Implement
-      return null;
-    }
-    
-    getUser(userId) {
-      return new Promise((resolve, reject) => {
-        this.userManagement.findUser(config.get('keycloak:realm'), userId)
-          .then((user) => {
-            resolve(user);
           })
           .catch(reject);
       });
