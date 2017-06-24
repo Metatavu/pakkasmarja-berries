@@ -279,7 +279,7 @@
                     "type": "messages-added",
                     "data": {
                       "messages": _.map(messages, (message) => {
-                        return this.translateMessage(message, userMap[message.userId])
+                        return this.translateMessage(message, userMap[message.userId]);
                       }),
                       "thread-id": thread.id,
                       "thread-type": thread.type
