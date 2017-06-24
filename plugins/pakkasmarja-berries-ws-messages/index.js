@@ -131,8 +131,6 @@
                 };
               });
               
-              console.log(questionGroups);
-              
               client.sendMessage({
                 "type": "question-groups-added",
                 "data": {
@@ -167,6 +165,37 @@
         .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
     }
     
+    onGetQuestionGroupThreads(message, client) {
+      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      // TODO: Permission to list threads
+      
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.findQuestionGroup(questionGroupId)
+            .then((questionGroup) => {
+              const threadIds = _.values(questionGroup.userThreads||{});
+              const threadPromises = _.map(threadIds, (threadId) => {
+                return this.models.findThread(threadId);
+              });
+              
+              Promise.all(threadPromises)
+                .then((threads) => {
+                  client.sendMessage({
+                    "type": "question-group-threads-added",
+                    "data": {
+                      'question-group-id': questionGroupId,
+                      'threads': threads
+                    }
+                  });
+                })
+                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+              
+            })
+            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+    }
+    
     onGetMessages(message, client) {
       const threadId = this.models.toUuid(message['thread-id']);
       const firstResult = message['first-result'];
@@ -182,6 +211,38 @@
           });
         })
         .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
+    }
+    
+    onMessage(event) {
+      const message = event.data.message;
+      const client = event.client;
+      
+      switch (message.type) {
+        case 'send-message':
+          this.onSendMessage(message, client);
+        break;
+        case 'get-messages':
+          this.onGetMessages(message, client);
+        break;
+        case 'get-threads':
+          this.onGetThreads(message, client);
+        break;
+        case 'get-question-groups':
+          this.onGetQuestionGroups(message, client);
+        break;
+        case 'select-question-group-thread':
+          this.onSelectQuestionGroupThread(message, client);
+        break;
+        case 'get-question-group-threads':
+          this.onGetQuestionGroupThreads(message, client);
+        break;
+        case 'get-news':
+          this.onGetNews(message, client);
+        break;
+        default:
+          this.logger.error(util.format("Unknown message type %s", message.type));
+        break;
+      }
     }
     
     getQuestionGroupRole(questionGroup, userGroupIds) {
@@ -205,35 +266,6 @@
       }
       
       return 0;
-    }
-    
-    onMessage(event) {
-      const message = event.data.message;
-      const client = event.client;
-      
-      switch (message.type) {
-        case 'send-message':
-          this.onSendMessage(message, client);
-        break;
-        case 'get-messages':
-          this.onGetMessages(message, client);
-        break;
-        case 'get-threads':
-          this.onGetThreads(message, client);
-        break;
-        case 'get-question-groups':
-          this.onGetQuestionGroups(message, client);
-        break;
-        case 'select-question-group-thread':
-          this.onSelectQuestionGroupThread(message, client);
-        break;
-        case 'get-news':
-          this.onGetNews(message, client);
-        break;
-        default:
-          this.logger.error(util.format("Unknown message type %s", message.type));
-        break;
-      }
     }
     
     getUserId(client) {
