@@ -39,30 +39,70 @@
 
           this.models.findThread(threadId)
             .then((thread) => {
-              const userGroupIds = Object.keys(thread.userGroupRoles);
-              this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
-                .then((userIds) => {
-                  const messageId = this.models.getUuid();
-                  this.models.createMessage(messageId, threadId, userId, contents)
-                    .then(() => {
-                      this.models.findMessage(messageId)
-                        .then((message) => {
-                          userIds.forEach((userId) => {
-                            this.shadyMessages.trigger("client:message-added", {
-                              "userId": userId,
-                              "message": message
-                            });
-                          });
-                        })
-                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
-                    })
-                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));            
-                });
+              if (thread.type === 'conversation') {
+                this.onSendMessageConversation(userId, thread, contents, client);
+              } else if (thread.type === 'question') {
+                this.onSendMessageQuestion(userId, thread, contents, client);
+              } else {
+                this.logger.error(`Unknown thread type ${thread.type}`);
+              }
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
 
         })
         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
+    }
+    
+    onSendMessageConversation(userId, thread, contents, client) {
+      const userGroupIds = Object.keys(thread.userGroupRoles);
+      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+        .then((userIds) => {
+          const messageId = this.models.getUuid();
+          this.models.createMessage(messageId, thread.id, userId, contents)
+            .then(() => {
+              this.models.findMessage(messageId)
+                .then((message) => {
+                  userIds.forEach((userId) => {
+                    this.shadyMessages.trigger("client:message-added", {
+                      "user-id": userId,
+                      "message": message,
+                      "thread-id": thread.id,
+                      "thread-type": thread.type
+                    });
+                  });
+                })
+                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
+            })
+            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));            
+        });
+    }
+    
+    onSendMessageQuestion(userId, thread, contents, client) {
+      this.models.findQuestionGroupByThreadId(thread.id)
+        .then((questionGroup) => {
+          const userGroupIds = Object.keys(questionGroup.userGroupRoles);
+          this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+            .then((userIds) => {
+              const messageId = this.models.getUuid();
+              this.models.createMessage(messageId, thread.id, userId, contents)
+                .then(() => {
+                  this.models.findMessage(messageId)
+                    .then((message) => {
+                      userIds.forEach((userId) => {
+                        this.shadyMessages.trigger("client:message-added", {
+                          "user-id": userId,
+                          "message": message,
+                          "thread-id": thread.id,
+                          "thread-type": thread.type
+                        });
+                      });
+                    })
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
+                })
+                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
+            });
+        })
+        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
     }
     
     onGetNews(message, client) {
@@ -178,15 +218,20 @@
               this.getUserMap(_.uniq(userIds))
                 .then((userMap) => {
                   const threadPromises = _.map(threadIds, (threadId, index) => {
-                    const thread = this.models.findThread(threadId);
-                    const userId = userIds[index];
-                    const user = userMap[userId];
-                    return {
-                      id: thread.id,
-                      title: this.getUserDisplayName(user),
-                      type: thread.type,
-                      imagePath: this.getUserImage(user)
-                    };
+                    return new Promise((resolve, reject) => {
+                      this.models.findThread(threadId)
+                        .then((thread) => {
+                          const userId = userIds[index];
+                          const user = userMap[userId];
+                          resolve({
+                            id: thread.id,
+                            title: this.getUserDisplayName(user),
+                            type: thread.type,
+                            imagePath: this.getUserImage(user)
+                          });
+                        })
+                        .catch(reject);
+                    });
                   });
 
                   Promise.all(threadPromises)
@@ -213,14 +258,20 @@
       const firstResult = message['first-result'];
       const maxResults = message['max-results'];
       
-      this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
-        .then((messages) => {
-          client.sendMessage({
-            "type": "messages-added",
-            "data": {
-              messages: _.flatten(messages)
-            }
-          });
+      this.models.findThread(threadId)
+        .then((thread) => {
+          this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
+            .then((messages) => {
+              client.sendMessage({
+                "type": "messages-added",
+                "data": {
+                  "messages": _.flatten(messages),
+                  "thread-id": thread.id,
+                  "thread-type": thread.type
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
         })
         .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
     }

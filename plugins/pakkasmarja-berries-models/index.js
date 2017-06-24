@@ -196,6 +196,10 @@
       return this.instance.QuestionGroup.findOneAsync({ originId: originId });
     }
     
+    findQuestionGroupByThreadId(threadId) {
+      return this.instance.QuestionGroup.findOneAsync({ userThreads: { '$contains': threadId } }, { allow_filtering: true } );
+    }
+    
     listQuestionGroupsByUserGroupId(userGroupId) {
       return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
     }
@@ -216,16 +220,10 @@
       } else {
         return new Promise((resolve, reject) => {
           threadId = this.getUuid();
-          
-          console.log("New thread", threadId);
-          
           this.createThread(threadId, null, null, "question", null, null)
             .then(() => {
               const userThreadAdd = {};
               userThreadAdd[userId] = threadId;
-              
-              console.log("userThreadAdd", userThreadAdd);
-              
               this.instance.QuestionGroup.updateAsync({ id:questionGroup.id }, { userThreads:{ '$add': userThreadAdd } })
                 .then(() => {
                   this.findThread(threadId)
