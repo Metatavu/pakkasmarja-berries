@@ -6,15 +6,18 @@
   
   const util = require('util'); 
   const moment = require('moment');
+  const config = require('nconf');
   const uuid = require('uuid4');
   const _ = require('lodash');
   
   class PakkasmarjaBerriesWebhooks {
     
-    constructor (logger, models, wordpress) {
+    constructor (logger, models, wordpress, userManagement, shadyMessages) {
       this.logger = logger;
       this.models = models;
       this.wordpress = wordpress;
+      this.userManagement = userManagement;
+      this.shadyMessages = shadyMessages;
     }
     
     handle(source, req) {
@@ -82,7 +85,8 @@
                 if (thread) {
                   this.models.updateThread(thread, wpTitle, imagePath, userGroupRoles)
                     .then(() => {
-                      this.logger.info(`Thread ${wpId} updated`);
+                      this.logger.info(`Thread ${thread.id} updated`);
+                      this.notifyClusterConversationThreadAdded(thread);
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to update chat thread ${wpId}`, err);
@@ -91,7 +95,8 @@
                   const threadId = this.models.getUuid();
                   this.models.createThread(threadId, wpId, wpTitle, wpType, wpFeaturedMediaUrl, userGroupRoles)
                     .then(() => {
-                      this.logger.info(`Thread ${wpId} created`);
+                      this.logger.info(`Thread ${threadId} created`);
+                      this.notifyClusterConversationThreadIdAdded(threadId);
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to create chat thread from ${wpId}`, err);
@@ -106,6 +111,32 @@
             this.logger.error(`Failed to fetch chat thread ${id}`, err);
           });
       }
+    }
+    
+    notifyClusterConversationThreadIdAdded(threadId) {
+      this.models.findThread(threadId)
+        .then((thread) => {
+          this.notifyClusterConversationThreadAdded(thread);
+        })
+        .catch((err) => {
+          this.logger.error(err);
+        });
+    }
+    
+    notifyClusterConversationThreadAdded(thread) {
+      const threadUserGroupIds = Object.keys(thread.userGroupRoles);
+      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), threadUserGroupIds)
+        .then((userIds) => {
+          userIds.forEach((userId) => {
+            this.shadyMessages.trigger("client:conversation-thread-added", {
+              "user-id": userId,
+              "thread": thread
+            });                          
+          });
+        })
+        .catch((err) => {
+          this.logger.error(err);
+        });
     }
     
     handleManagementEditPostQuestionGroup(id, req) {
@@ -162,8 +193,10 @@
     const logger = imports['logger'];
     const models = imports['pakkasmarja-berries-models'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
-   
-    const webhooks = new PakkasmarjaBerriesWebhooks(logger, models, wordpress);
+    const shadyMessages = imports['shady-messages'];
+    const userManagement = imports['pakkasmarja-berries-user-management'];
+    
+    const webhooks = new PakkasmarjaBerriesWebhooks(logger, models, wordpress, userManagement, shadyMessages);
     register(null, {
       'pakkasmarja-berries-webhooks': webhooks
     });

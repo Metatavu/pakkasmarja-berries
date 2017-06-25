@@ -10,7 +10,9 @@
     "consumes": [
       "logger",
       "pakkasmarja-berries-models",
-      "pakkasmarja-berries-wordpress"
+      "pakkasmarja-berries-user-management",
+      "pakkasmarja-berries-wordpress",
+      "shady-messages"
     ]
   }
 }

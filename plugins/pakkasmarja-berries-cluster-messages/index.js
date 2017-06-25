@@ -47,9 +47,36 @@
       });
     }
     
+    onConversationThreadAdded(event, data) {
+      const userId = data['user-id'];
+      const thread = data['thread'];
+      const clients = this.webSockets.getClients();
+      
+      _.forEach(clients, (client) => {
+        const sessionId = client.getSessionId();
+        if (sessionId) {
+          this.models.findSession(this.models.toUuid(sessionId.toString()))
+            .then((session) => {
+              if (session.userId === userId) {
+                client.sendMessage({
+                  "type": "conversation-threads-added",
+                  "data": {
+                    threads: [ thread ]
+                  }
+                });
+              }
+            })
+            .catch((err) => {
+              this.logger.error(`Failed to load session ${sessionId}`, err);
+            });
+        }
+      });
+    }
+    
     register(shadyMessages, webSockets) {
       this.webSockets = webSockets;
       shadyMessages.on("client:message-added", this.onMessageAdded.bind(this));
+      shadyMessages.on("client:conversation-thread-added", this.onConversationThreadAdded.bind(this));
     }
     
   };
