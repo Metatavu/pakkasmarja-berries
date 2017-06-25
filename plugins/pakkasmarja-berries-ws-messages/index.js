@@ -145,18 +145,17 @@
         .catch(this.handleWebSocketError(client, 'GET_POSTS'));
     }
     
-    onGetThreads(message, client) {
-      const type = message['thread-type'];
+    onGetConversationThreads(message, client) {
       this.getUserGroupIds(client)
         .then((userGroupIds) => {
           const threadPromises = _.map(userGroupIds, (userGroupId) => {
-            return this.models.listThreadsByTypeAndUserGroupId(type, userGroupId);
+            return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
           });
   
           Promise.all(threadPromises)
             .then((threads) => {
               client.sendMessage({
-                "type": "threads-added",
+                "type": "conversation-threads-added",
                 "data": {
                   threads: _.flatten(threads)
                 }
@@ -315,8 +314,8 @@
         case 'get-messages':
           this.onGetMessages(message, client);
         break;
-        case 'get-threads':
-          this.onGetThreads(message, client);
+        case 'get-conversation-threads':
+          this.onGetConversationThreads(message, client);
         break;
         case 'get-question-groups':
           this.onGetQuestionGroups(message, client);
