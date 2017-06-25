@@ -1,7 +1,7 @@
 {
   "name": "pakkasmarja-berries",
   "description": "Shady Engine backend worker for Pakkasmarja Berries application",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "app.js",
   "author": {
     "name": "Metatavu",

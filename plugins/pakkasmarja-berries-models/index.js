@@ -159,7 +159,7 @@
     }
     
     findThreadByOriginId(originId) {
-      return this.instance.Thread.findOneAsync({ originId: originId });
+      return this.instance.Thread.findOneAsync({ originId: originId }, { allow_filtering: true });
     }
     
     listThreadsByUserGroupId(userGroupId) {
@@ -193,7 +193,7 @@
     }
     
     findQuestionGroupByOriginId(originId) {
-      return this.instance.QuestionGroup.findOneAsync({ originId: originId });
+      return this.instance.QuestionGroup.findOneAsync({ originId: originId }, { allow_filtering: true });
     }
     
     findQuestionGroupByThreadId(threadId) {
