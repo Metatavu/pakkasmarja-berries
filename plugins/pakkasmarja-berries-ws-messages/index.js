@@ -5,7 +5,7 @@
   'use strict';
   
   const _ = require('lodash');
-  const util = require('util'); 
+  const util = require('util');
   const config = require('nconf');
   const moment = require('moment');
   const uuid = require('uuid4');
@@ -367,7 +367,7 @@
         const result = {};
 
         const rolePromises = _.map(userUserGroupIds, (userGroupIds) => {
-          return this.getUserGroupRole(userGroupRoles, userGroupIds);
+          return this.userManagement.getUserGroupRole(userGroupRoles, userGroupIds);
         });
 
         Promise.all(rolePromises)
@@ -399,34 +399,11 @@
     }
     
     getConversationThreadRole(conversationThread, userGroupIds) {
-      return this.getUserGroupRole(conversationThread.userGroupRoles, userGroupIds);
+      return this.userManagement.getUserGroupRole(conversationThread.userGroupRoles, userGroupIds);
     }
     
     getQuestionGroupRole(questionGroup, userGroupIds) {
-      return this.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
-    }
-    
-    getUserGroupRole(userGroupRoles, userGroupIds) {
-      let result = null;
-      
-      userGroupIds.forEach((userGroupId) => {
-        const role = userGroupRoles[userGroupId];
-        if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
-          result = role; 
-        }
-      });
-      
-      return result;
-    }
-    
-    getRoleIndex(role) {
-      if (role === 'manager') {
-        return 2;
-      } else if (role === 'user') {
-        return 1;
-      }
-      
-      return 0;
+      return this.userManagement.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
     }
     
     getUserId(client) {

@@ -139,6 +139,29 @@
       return null;
     }
     
+    getUserGroupRole(userGroupRoles, userGroupIds) {
+      let result = null;
+      
+      userGroupIds.forEach((userGroupId) => {
+        const role = userGroupRoles[userGroupId];
+        if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
+          result = role; 
+        }
+      });
+      
+      return result;
+    }
+    
+    getRoleIndex(role) {
+      if (role === 'manager') {
+        return 2;
+      } else if (role === 'user') {
+        return 1;
+      }
+      
+      return 0;
+    }
+    
     getClient() {
       return KeycloakAdminClient(config.get('keycloak:admin'));
     }

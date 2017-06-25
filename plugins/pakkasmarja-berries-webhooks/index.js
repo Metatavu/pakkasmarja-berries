@@ -113,6 +113,56 @@
       }
     }
     
+    handleManagementEditPostQuestionGroup(id, req) {
+      const postStatus = req.body['post_status'];
+      if (postStatus === 'publish') {
+        this.wordpress.findQuestionGroup(id)
+          .then((wpQuestionGroup) => {
+            const wpId = wpQuestionGroup.id.toString();
+            const wpUserGroupSetings = wpQuestionGroup['user-group-setings'];
+            const wpFeaturedMediaUrl = wpQuestionGroup['better_featured_image'] ? wpQuestionGroup['better_featured_image'].source_url : null;
+            const wpTitle = wpQuestionGroup.title.rendered;
+            const userGroupRoles = {};
+            const imagePathMatch = wpFeaturedMediaUrl ? /(.*\/wp-content)(.*)/.exec(wpFeaturedMediaUrl) : null;
+            const imagePath = imagePathMatch && imagePathMatch.length > 2 ? '/images/wordpress' + imagePathMatch[2] : null;
+            
+            _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
+              userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
+            });
+                   
+            this.models.findQuestionGroupByOriginId(wpId)
+              .then((questionGroup) => {
+                if (questionGroup) {
+                  this.models.updateQuestionGroup(questionGroup, wpTitle, imagePath, userGroupRoles)
+                    .then(() => {
+                      this.logger.info(`Group ${questionGroup.id} updated`);
+                      this.notifyClusterQuestionGroupAdded(questionGroup);
+                    }) 
+                    .catch((err) => {
+                      this.logger.error(`Failed to update question group ${wpId}`, err);
+                    });
+                } else {
+                  const questionGroupId = this.models.getUuid();
+                  this.models.createQuestionGroup(questionGroupId, wpId, wpTitle, wpFeaturedMediaUrl, userGroupRoles)
+                    .then(() => {
+                      this.logger.info(`Group ${questionGroupId} created`);
+                      this.notifyClusterQuestionGroupIdAdded(questionGroupId);
+                    }) 
+                    .catch((err) => {
+                      this.logger.error(`Failed to create question group from ${wpId}`, err);
+                    });
+                }
+              })
+              .catch((err) => {
+                this.logger.error(`Failed to find question group ${wpId}`, err);
+              });
+          })
+          .catch((err) => {
+            this.logger.error(`Failed to fetch question group ${id}`, err);
+          });
+      }
+    }
+    
     notifyClusterConversationThreadIdAdded(threadId) {
       this.models.findThread(threadId)
         .then((thread) => {
@@ -139,52 +189,30 @@
         });
     }
     
-    handleManagementEditPostQuestionGroup(id, req) {
-      const postStatus = req.body['post_status'];
-      if (postStatus === 'publish') {
-        this.wordpress.findQuestionGroup(id)
-          .then((wpQuestionGroup) => {
-            const wpId = wpQuestionGroup.id.toString();
-            const wpUserGroupSetings = wpQuestionGroup['user-group-setings'];
-            const wpFeaturedMediaUrl = wpQuestionGroup['better_featured_image'] ? wpQuestionGroup['better_featured_image'].source_url : null;
-            const wpTitle = wpQuestionGroup.title.rendered;
-            const userGroupRoles = {};
-            const imagePathMatch = wpFeaturedMediaUrl ? /(.*\/wp-content)(.*)/.exec(wpFeaturedMediaUrl) : null;
-            const imagePath = imagePathMatch && imagePathMatch.length > 2 ? '/images/wordpress' + imagePathMatch[2] : null;
-            
-            _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
-              userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
-            });
-                   
-            this.models.findQuestionGroupByOriginId(wpId)
-              .then((questionGroup) => {
-                if (questionGroup) {
-                  this.models.updateQuestionGroup(questionGroup, wpTitle, imagePath, userGroupRoles)
-                    .then(() => {
-                      this.logger.info(`Group ${wpId} updated`);
-                    }) 
-                    .catch((err) => {
-                      this.logger.error(`Failed to update question group ${wpId}`, err);
-                    });
-                } else {
-                  const questionGroupId = this.models.getUuid();
-                  this.models.createQuestionGroup(questionGroupId, wpId, wpTitle, wpFeaturedMediaUrl, userGroupRoles)
-                    .then(() => {
-                      this.logger.info(`Group ${wpId} created`);
-                    }) 
-                    .catch((err) => {
-                      this.logger.error(`Failed to create question group from ${wpId}`, err);
-                    });
-                }
-              })
-              .catch((err) => {
-                this.logger.error(`Failed to find question group ${wpId}`, err);
-              });
-          })
-          .catch((err) => {
-            this.logger.error(`Failed to fetch question group ${id}`, err);
+    notifyClusterQuestionGroupIdAdded(questionGroupId) {
+      this.models.findQuestionGroup(questionGroupId)
+        .then((questionGroup) => {
+          this.notifyClusterQuestionGroupAdded(questionGroup);
+        })
+        .catch((err) => {
+          this.logger.error(err);
+        });
+    }
+    
+    notifyClusterQuestionGroupAdded(questionGroup) {
+      const questionGroupUserGroupIds = Object.keys(questionGroup.userGroupRoles);
+      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), questionGroupUserGroupIds)
+        .then((userIds) => {
+          userIds.forEach((userId) => {
+            this.shadyMessages.trigger("client:question-group-added", {
+              "user-id": userId,
+              "question-group": questionGroup
+            });                          
           });
-      }
+        })
+        .catch((err) => {
+          this.logger.error(err);
+        });
     }
     
   }
