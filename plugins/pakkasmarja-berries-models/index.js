@@ -212,11 +212,25 @@
     }
     
     findOrCreateQuestionGroupUserThread(questionGroup, userId) {
-      const userThreads = questionGroup.userThreads || {};
+      if (!userId) {
+        console.error("userId not specified");
+        return;
+      }
       
+      const userThreads = questionGroup.userThreads || {};
+
       let threadId = userThreads[userId];
       if (threadId) {
-        return this.findThread(threadId);
+        return new Promise((resolve, reject) => {
+          this.findThread(threadId)
+            .then((thread) => {
+              resolve({
+                thread: thread, 
+                created: false
+              });
+            })
+            .catch(reject);
+        });
       } else {
         return new Promise((resolve, reject) => {
           threadId = this.getUuid();
@@ -227,7 +241,12 @@
               this.instance.QuestionGroup.updateAsync({ id:questionGroup.id }, { userThreads:{ '$add': userThreadAdd } })
                 .then(() => {
                   this.findThread(threadId)
-                    .then(resolve)
+                    .then((thread) => {
+                      resolve({
+                        thread: thread, 
+                        created: true
+                      });
+                    })
                     .catch(reject);
                 })
                 .catch(reject);

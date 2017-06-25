@@ -114,6 +114,34 @@
       });
     }
     
+    onQuestionGroupThreadAdded(event, data) {
+      const userId = data['user-id'];
+      const thread = data['thread'];
+      const questionGroupId = data['question-group-id'];
+      const clients = this.webSockets.getClients();
+      
+      _.forEach(clients, (client) => {
+        const sessionId = client.getSessionId();
+        if (sessionId) {
+          this.models.findSession(this.models.toUuid(sessionId.toString()))
+            .then((session) => {
+              if (session.userId === userId) {
+                client.sendMessage({
+                  "type": "question-group-threads-added",
+                  "data": {
+                    'question-group-id': questionGroupId,
+                    'threads': [ thread ]
+                  }
+                });
+              }
+            })
+            .catch((err) => {
+              this.logger.error(`Failed to load session ${sessionId}`, err);
+            });
+        }
+      });
+    }
+    
     getQuestionGroupRole(questionGroup, userGroupIds) {
       return this.userManagement.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
     }
@@ -127,6 +155,7 @@
       shadyMessages.on("client:message-added", this.onMessageAdded.bind(this));
       shadyMessages.on("client:conversation-thread-added", this.onConversationThreadAdded.bind(this));
       shadyMessages.on("client:question-group-added", this.onQuestionGroupAdded.bind(this));
+      shadyMessages.on("client:question-group-thread-added", this.onQuestionGroupThreadAdded.bind(this));
     }
     
   };

@@ -204,13 +204,46 @@
           this.models.findQuestionGroup(questionGroupId)
             .then((questionGroup) => {
               this.models.findOrCreateQuestionGroupUserThread(questionGroup, userId)
-                .then((thread) => {
+                .then((data) => {
+                  const thread = data.thread;
+                  const created = data.created;
+                  
                   client.sendMessage({
                     "type": "question-thread-selected",
                     "data": {
                       'thread-id': thread.id
                     }
                   });
+                  
+                  if (created) {
+                    const userGroupIds = [];
+                    _.forEach(questionGroup.userGroupRoles, (role, userGroupId) => {
+                      if (role === 'manager') {
+                        userGroupIds.push(userGroupId);
+                      }
+                    });
+                    
+                    this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                      .then((user) => {
+                        this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+                          .then((userIds) => {
+                            userIds.forEach((userId) => {
+                              this.shadyMessages.trigger("client:question-group-thread-added", {
+                                'question-group-id': questionGroupId,
+                                'thread': {
+                                  id: thread.id,
+                                  title: this.userManagement.getUserDisplayName(user),
+                                  type: thread.type,
+                                  imagePath: this.userManagement.getUserImage(user)
+                                },
+                                'user-id': userId
+                              });
+                            });
+                          })
+                          .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+                      })
+                      .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+                  }
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
             })
@@ -229,6 +262,7 @@
             .then((questionGroup) => {
               const userIds = _.keys(questionGroup.userThreads||{});
               const threadIds = _.values(questionGroup.userThreads||{});
+              
               this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
                   const threadPromises = _.map(threadIds, (threadId, index) => {
@@ -247,7 +281,7 @@
                         .catch(reject);
                     });
                   });
-
+                  
                   Promise.all(threadPromises)
                     .then((threads) => {
                       client.sendMessage({
