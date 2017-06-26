@@ -193,7 +193,7 @@
                   id: questionGroup.id,
                   title: questionGroup.title,
                   originId: questionGroup.originId,
-                  imagePath: questionGroup.imagePath,
+                  imageUrl: questionGroup.imageUrl,
                   latestMessage: questionGroup.latestMessage,
                   role: this.getQuestionGroupRole(questionGroup, userGroupIds)
                 };
