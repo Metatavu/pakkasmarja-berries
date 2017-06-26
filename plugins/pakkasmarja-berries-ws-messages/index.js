@@ -129,7 +129,7 @@
       const perPage = message.perPage;
       const baseUrl = this.getBaseUrl();
       
-      this.wordpress.listNews(page, perPage)
+      this.wordpress.listPosts(page, perPage)
         .then((newItems) => {
           client.sendMessage({
             "type": "news-items-added",

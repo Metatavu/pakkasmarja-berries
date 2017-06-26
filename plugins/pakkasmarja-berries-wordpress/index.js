@@ -30,6 +30,10 @@
       callback();
     }
     
+    findPost(id) {
+      return this.api.posts().id(id);
+    }
+    
     listNews(page, perPage) {
       return this.api.posts().perPage(perPage).page(page);
     }

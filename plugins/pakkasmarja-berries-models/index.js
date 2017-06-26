@@ -73,6 +73,20 @@
         key : [ [ "id" ]  ],
         indexes: [ "userGroupRoles", "originId" ]
       });
+      
+      this._registerModel('NewsArticle', {
+        fields: {
+          id: "uuid",
+          title: "text",
+          contents: "text",
+          created: "timestamp",
+          modified: "timestamp",
+          originId: "text",
+          imageUrl: "text",
+        },
+        key : [ [ "id" ]  ],
+        indexes: [ "originId" ]
+      });
     }
     
     getModels() {
@@ -271,6 +285,34 @@
             .catch(reject);
         });
       }
+    }
+    
+    createNewsArticle(newsArticleId, originId, title, contents, created, modified, imageUrl) {
+      return new this.instance.NewsArticle({
+         id: newsArticleId,
+         title: title,
+         contents: contents,
+         created: created,
+         modified: modified,
+         originId:originId,
+         imageUrl: imageUrl
+      }).saveAsync(); 
+    }
+    
+    findNewsArticle(id) {
+      return this.instance.NewsArticle.findOneAsync({ id: id });
+    }
+    
+    findNewsArticleByOriginId(originId) {
+      return this.instance.NewsArticle.findOneAsync({ originId: originId }, { allow_filtering: true });
+    }
+    
+    updateNewsArticle(newsArticle, title, contents, modified, imageUrl) {
+      newsArticle.title = title;
+      newsArticle.contents = contents;
+      newsArticle.modified = modified;
+      newsArticle.imageUrl = imageUrl;
+      return newsArticle.saveAsync(); 
     }
     
     get instance() {

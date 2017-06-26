@@ -18,6 +18,7 @@
     "command-line-usage": "^4.0.0",
     "express": "4.15.3",
     "express-session": "^1.15.3",
+    "fcm-push": "^1.1.2",
     "jshashes": "^1.0.6",
     "keycloak-admin-client": "^0.7.0",
     "keycloak-connect": "3.1.0",

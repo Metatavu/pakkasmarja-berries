@@ -29,5 +29,6 @@ module.exports = [
   "./plugins/pakkasmarja-berries-cluster-messages",
   "./plugins/pakkasmarja-berries-user-management",
   "./plugins/pakkasmarja-berries-wordpress",
-  "./plugins/pakkasmarja-berries-webhooks"
+  "./plugins/pakkasmarja-berries-webhooks",
+  "./plugins/pakkasmarja-berries-push-notifications"
 ];
