@@ -218,7 +218,7 @@
       const secure = config.get('client:server:secure');
       const port = config.get('client:server:port');
       const protocol = secure ? 'https' : 'http';
-      return `${protocol}://${host}:${port}`
+      return `${protocol}://${host}:${port}`;
     }
     
   }
