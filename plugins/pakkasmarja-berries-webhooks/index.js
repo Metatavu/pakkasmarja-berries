@@ -73,8 +73,7 @@
             const wpTitle = wpChatThread.title.rendered;
             const wpType = 'conversation';
             const userGroupRoles = {};
-            const imagePathMatch = wpFeaturedMediaUrl ? /(.*\/wp-content)(.*)/.exec(wpFeaturedMediaUrl) : null;
-            const imagePath = imagePathMatch && imagePathMatch.length > 2 ? '/images/wordpress' + imagePathMatch[2] : null;
+            const imageUrl = this.wordpress.resolveImageUrl(this.getBaseUrl(), wpFeaturedMediaUrl);
             
             _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
               userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
@@ -83,7 +82,7 @@
             this.models.findThreadByOriginId(wpId)
               .then((thread) => {
                 if (thread) {
-                  this.models.updateThread(thread, wpTitle, imagePath, userGroupRoles)
+                  this.models.updateThread(thread, wpTitle, imageUrl, userGroupRoles)
                     .then(() => {
                       this.logger.info(`Thread ${thread.id} updated`);
                       this.notifyClusterConversationThreadAdded(thread);
@@ -93,7 +92,7 @@
                     });
                 } else {
                   const threadId = this.models.getUuid();
-                  this.models.createThread(threadId, wpId, wpTitle, wpType, wpFeaturedMediaUrl, userGroupRoles)
+                  this.models.createThread(threadId, wpId, wpTitle, wpType, imageUrl, userGroupRoles)
                     .then(() => {
                       this.logger.info(`Thread ${threadId} created`);
                       this.notifyClusterConversationThreadIdAdded(threadId);
@@ -123,8 +122,7 @@
             const wpFeaturedMediaUrl = wpQuestionGroup['better_featured_image'] ? wpQuestionGroup['better_featured_image'].source_url : null;
             const wpTitle = wpQuestionGroup.title.rendered;
             const userGroupRoles = {};
-            const imagePathMatch = wpFeaturedMediaUrl ? /(.*\/wp-content)(.*)/.exec(wpFeaturedMediaUrl) : null;
-            const imagePath = imagePathMatch && imagePathMatch.length > 2 ? '/images/wordpress' + imagePathMatch[2] : null;
+            const imageUrl = this.wordpress.resolveImageUrl(this.getBaseUrl(), wpFeaturedMediaUrl);
             
             _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
               userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
@@ -133,7 +131,7 @@
             this.models.findQuestionGroupByOriginId(wpId)
               .then((questionGroup) => {
                 if (questionGroup) {
-                  this.models.updateQuestionGroup(questionGroup, wpTitle, imagePath, userGroupRoles)
+                  this.models.updateQuestionGroup(questionGroup, wpTitle, imageUrl, userGroupRoles)
                     .then(() => {
                       this.logger.info(`Group ${questionGroup.id} updated`);
                       this.notifyClusterQuestionGroupAdded(questionGroup);
@@ -143,7 +141,7 @@
                     });
                 } else {
                   const questionGroupId = this.models.getUuid();
-                  this.models.createQuestionGroup(questionGroupId, wpId, wpTitle, wpFeaturedMediaUrl, userGroupRoles)
+                  this.models.createQuestionGroup(questionGroupId, wpId, wpTitle, imageUrl, userGroupRoles)
                     .then(() => {
                       this.logger.info(`Group ${questionGroupId} created`);
                       this.notifyClusterQuestionGroupIdAdded(questionGroupId);
@@ -213,6 +211,14 @@
         .catch((err) => {
           this.logger.error(err);
         });
+    }
+    
+    getBaseUrl() {
+      const host = config.get('client:server:host');
+      const secure = config.get('client:server:secure');
+      const port = config.get('client:server:port');
+      const protocol = secure ? 'https' : 'http';
+      return `${protocol}://${host}:${port}`;
     }
     
   }

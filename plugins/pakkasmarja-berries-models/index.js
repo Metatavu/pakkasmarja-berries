@@ -43,7 +43,7 @@
           title: "text",
           type: "text",
           originId: "text",
-          imagePath: "text",
+          imageUrl: "text",
           userGroupRoles: {
             type: "map",
             typeDef: "<text,text>"
@@ -58,7 +58,7 @@
           id: "uuid",
           title: "text",
           originId: "text",
-          imagePath: "text",
+          imageUrl: "text",
           userGroupRoles: {
             type: "map",
             typeDef: "<text,text>"
@@ -170,9 +170,9 @@
       return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId }, type: type }, { allow_filtering: true });
     }
     
-    updateThread(thread, title, imagePath, userGroupRoles) {
+    updateThread(thread, title, imageUrl, userGroupRoles) {
       thread.title = title;
-      thread.imagePath = imagePath;
+      thread.imageUrl = imageUrl;
       thread.userGroupRoles = userGroupRoles;
       return thread.saveAsync(); 
     }
@@ -204,9 +204,9 @@
       return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
     }
     
-    updateQuestionGroup(questionGroup, title, imagePath, userGroupRoles) {
+    updateQuestionGroup(questionGroup, title, imageUrl, userGroupRoles) {
       questionGroup.title = title;
-      questionGroup.imagePath = imagePath;
+      questionGroup.imageUrl = imageUrl;
       questionGroup.userGroupRoles = userGroupRoles;
       return questionGroup.saveAsync(); 
     }

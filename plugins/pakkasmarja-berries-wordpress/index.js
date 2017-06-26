@@ -9,6 +9,7 @@
   const Promise = require('bluebird');
   const config = require('nconf');
   const WPAPI = require('wpapi');
+  const cheerio = require('cheerio');
   
   class PakkasmarjaBerriesWordpress {
     
@@ -39,6 +40,22 @@
     
     findQuestionGroup(id) {
       return this.api.questionGroups().id(id);
+    }
+    
+    resolveImageUrl(baseUrl, src) {
+      const match = src ? /(.*\/wp-content)(.*)/.exec(src) : null;
+      return match && match.length > 2 ? `${baseUrl}/images/wordpress${match[2]}` : src;   
+    }
+    
+    processContents(baseUrl, contents) {
+      const $ = cheerio.load(contents);
+      $('img').each((index, img) => {
+        $(img)
+          .removeAttr('srcset')
+          .attr('src', this.resolveImageUrl(baseUrl, $(img).attr('src')));
+      });
+      
+      return $.html();
     }
   } 
   
