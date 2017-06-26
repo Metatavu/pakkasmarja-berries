@@ -123,6 +123,7 @@
     onGetNews(message, client) {
       const page = message.page;
       const perPage = message.perPage;
+      const baseUrl = this.getBaseUrl();
       
       this.wordpress.listNews(page, perPage)
         .then((newItems) => {
@@ -132,17 +133,25 @@
               items: _.map(newItems, (newsItem) => {
                 return {
                   "id": newsItem.id,
-                  "contents": newsItem.content.rendered,
+                  "contents": this.wordpress.processContents(baseUrl, newsItem.content.rendered),
                   "title": newsItem.title.rendered,
                   "created": moment(newsItem.date_gmt).format(),
                   "modified": moment(newsItem.modified_gmt).format(),
-                  "image": newsItem.better_featured_image ? newsItem.better_featured_image.source_url : null
+                  "image": newsItem.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, newsItem.better_featured_image.source_url) : null
                 };
               })
             }
           });
         })
         .catch(this.handleWebSocketError(client, 'GET_POSTS'));
+    }
+    
+    getBaseUrl() {
+      const host = config.get('client:server:host');
+      const secure = config.get('client:server:secure');
+      const port = config.get('client:server:port');
+      const protocol = secure ? 'https' : 'http';
+      return `${protocol}://${host}:${port}`
     }
     
     onGetConversationThreads(message, client) {
