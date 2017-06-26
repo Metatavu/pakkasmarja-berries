@@ -78,7 +78,7 @@
             const contents = this.wordpress.processContents(baseUrl, wpContents);
             const created = moment(wpPost.date_gmt).valueOf();
             const modified = moment(wpPost.modified_gmt).valueOf();
-            const imageUrl = wpPost.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, wpPost.better_featured_image.source_url) : null
+            const imageUrl = wpPost.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, wpPost.better_featured_image.source_url) : null;
 
             this.models.findNewsArticleByOriginId(wpId)
               .then((newsArticle) => {

@@ -35,7 +35,7 @@
         });
     }
     
-  };
+  }
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
