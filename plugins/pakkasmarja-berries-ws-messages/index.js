@@ -234,7 +234,7 @@
                                   id: thread.id,
                                   title: this.userManagement.getUserDisplayName(user),
                                   type: thread.type,
-                                  imagePath: this.userManagement.getUserImage(user)
+                                  imageUrl: this.userManagement.getUserImage(user)
                                 },
                                 'user-id': userId
                               });
@@ -275,7 +275,7 @@
                             id: thread.id,
                             title: this.userManagement.getUserDisplayName(user),
                             type: thread.type,
-                            imagePath: this.userManagement.getUserImage(user)
+                            imageUrl: this.userManagement.getUserImage(user)
                           });
                         })
                         .catch(reject);
