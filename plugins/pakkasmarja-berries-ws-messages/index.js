@@ -99,16 +99,20 @@
                   const messageId = this.models.getUuid();
                   this.models.createMessage(messageId, thread.id, userId, contents)
                     .then(() => {
-                      this.models.findMessage(messageId)
-                        .then((message) => {
-                          userIds.forEach((userId) => {
-                            this.shadyMessages.trigger("client:message-added", {
-                              "user-id": userId,
-                              "message": this.translateMessage(message, user, role),
-                              "thread-id": thread.id,
-                              "thread-type": thread.type
-                            });
-                          });
+                      this.models.updateGroupLastestMessage(questionGroup, new Date())
+                        .then(() => {
+                          this.models.findMessage(messageId)
+                            .then((message) => {
+                              userIds.forEach((userId) => {
+                                this.shadyMessages.trigger("client:message-added", {
+                                  "user-id": userId,
+                                  "message": this.translateMessage(message, user, role),
+                                  "thread-id": thread.id,
+                                  "thread-type": thread.type
+                                });
+                              });
+                            })
+                            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                         })
                         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                     })
@@ -190,6 +194,7 @@
                   title: questionGroup.title,
                   originId: questionGroup.originId,
                   imagePath: questionGroup.imagePath,
+                  latestMessage: questionGroup.latestMessage,
                   role: this.getQuestionGroupRole(questionGroup, userGroupIds)
                 };
               });
@@ -241,6 +246,7 @@
                                 'question-group-id': questionGroupId,
                                 'thread': {
                                   id: thread.id,
+                                  latestMessage: thread.latestMessage,
                                   title: this.userManagement.getUserDisplayName(user),
                                   type: thread.type,
                                   imageUrl: this.userManagement.getUserImage(user)
@@ -282,6 +288,7 @@
                           const user = userMap[userId];
                           resolve({
                             id: thread.id,
+                            latestMessage: thread.latestMessage,
                             title: this.userManagement.getUserDisplayName(user),
                             type: thread.type,
                             imageUrl: this.userManagement.getUserImage(user)

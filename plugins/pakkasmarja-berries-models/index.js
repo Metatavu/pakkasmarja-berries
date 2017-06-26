@@ -44,6 +44,7 @@
           type: "text",
           originId: "text",
           imageUrl: "text",
+          latestMessage: "timestamp",
           userGroupRoles: {
             type: "map",
             typeDef: "<text,text>"
@@ -59,6 +60,7 @@
           title: "text",
           originId: "text",
           imageUrl: "text",
+          latestMessage: "timestamp",
           userGroupRoles: {
             type: "map",
             typeDef: "<text,text>"
@@ -102,14 +104,24 @@
     createMessage(messageId, threadId, userId, contents) {
       const created = new Date().getTime();
       
-      return new this.instance.Message({
-        id: messageId,
-        threadId: threadId,
-        userId: userId,
-        contents: contents,
-        created: created,
-        modified: created
-      }).saveAsync(); 
+      return new Promise((resolve, reject) => {
+        this.instance.Thread.updateAsync({ id: threadId }, { latestMessage: created })
+          .then(() => {
+            const newMessage = new this.instance.Message({
+              id: messageId,
+              threadId: threadId,
+              userId: userId,
+              contents: contents,
+              created: created,
+              modified: created
+            });
+            
+            newMessage.saveAsync()
+              .then(resolve)
+              .catch(reject);
+          })
+          .catch(reject);
+      });
     }
     
     findMessage(messageId) {
@@ -208,6 +220,11 @@
       questionGroup.title = title;
       questionGroup.imageUrl = imageUrl;
       questionGroup.userGroupRoles = userGroupRoles;
+      return questionGroup.saveAsync(); 
+    }
+    
+    updateGroupLastestMessage(questionGroup, latestMessage) {
+      questionGroup.latestMessage = latestMessage;
       return questionGroup.saveAsync(); 
     }
     

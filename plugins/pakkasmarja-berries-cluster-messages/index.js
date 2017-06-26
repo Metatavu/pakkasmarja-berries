@@ -96,6 +96,7 @@
                           id: questionGroup.id,
                           title: questionGroup.title,
                           originId: questionGroup.originId,
+                          latestMessage: questionGroup.latestMessage,
                           imagePath: questionGroup.imagePath,
                           role: this.getQuestionGroupRole(questionGroup, userGroupIds)
                         }]
