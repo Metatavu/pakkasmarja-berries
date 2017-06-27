@@ -12,6 +12,7 @@
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management",
       "pakkasmarja-berries-wordpress",
+      "pakkasmarja-berries-cluster-messages",
       "shady-messages"
     ]
   }

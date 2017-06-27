@@ -13,12 +13,13 @@
   
   class PakkasmarjaBerriesWebsocketMessages {
     
-    constructor (logger, models, shadyMessages, userManagement, wordpress) {
+    constructor (logger, models, shadyMessages, userManagement, wordpress, clusterMessages) {
       this.logger = logger;
       this.models = models;
       this.shadyMessages = shadyMessages;
       this.userManagement = userManagement;
       this.wordpress = wordpress;
+      this.clusterMessages = clusterMessages;
     }
     
     handleWebSocketError(client, operation) {
@@ -55,71 +56,37 @@
     
     onSendMessageConversation(userId, thread, contents, client) {
       const threadUserGroupIds = Object.keys(thread.userGroupRoles);
-      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), threadUserGroupIds)
-        .then((userIds) => {
-          const messageId = this.models.getUuid();
-          this.models.createMessage(messageId, thread.id, userId, contents)
-            .then(() => {
-              this.models.findMessage(messageId)
-                .then((message) => {
-                  this.userManagement.findUser(config.get('keycloak:realm'), userId)
-                    .then((user) => {
-                      this.getUserGroupIds(client)
-                        .then((userGroupIds) => {
-                          const role = this.getConversationThreadRole(thread, userGroupIds);
-                          userIds.forEach((userId) => {
-                            this.shadyMessages.trigger("client:message-added", {
-                              "user-id": userId,
-                              "message": this.translateMessage(message, user, role),
-                              "thread-id": thread.id,
-                              "thread-type": thread.type
-                            });                          
-                          });
-                        })
-                       .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
-                    })
-                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
-                })
-                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
-            })
-            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));            
-        });
+
+      const messageId = this.models.getUuid();
+
+      this.models.createMessage(messageId, thread.id, userId, contents)
+        .then(() => {
+          const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
+          messageBuilder.thread(thread).messageId(messageId).threadUserGroupIds(threadUserGroupIds).send()
+            .then(() => { })
+            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
+        })
+        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION')); 
     }
     
     onSendMessageQuestion(userId, thread, contents, client) {
       this.models.findQuestionGroupByThreadId(thread.id)
         .then((questionGroup) => {
           const userGroupIds = Object.keys(questionGroup.userGroupRoles);
-          const role = this.getQuestionGroupRole(questionGroup, userGroupIds);
-                            
-          this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
-            .then((userIds) => {
-              this.userManagement.findUser(config.get('keycloak:realm'), userId)
-                .then((user) => {
-                  const messageId = this.models.getUuid();
-                  this.models.createMessage(messageId, thread.id, userId, contents)
-                    .then(() => {
-                      this.models.updateGroupLastestMessage(questionGroup, new Date())
-                        .then(() => {
-                          this.models.findMessage(messageId)
-                            .then((message) => {
-                              userIds.forEach((userId) => {
-                                this.shadyMessages.trigger("client:message-added", {
-                                  "user-id": userId,
-                                  "message": this.translateMessage(message, user, role),
-                                  "thread-id": thread.id,
-                                  "thread-type": thread.type
-                                });
-                              });
-                            })
-                            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
-                        })
-                        .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
-                    })
+          const messageId = this.models.getUuid();
+          
+          this.models.createMessage(messageId, thread.id, userId, contents)
+            .then(() => {
+              this.models.updateGroupLastestMessage(questionGroup, new Date())
+                .then(() => {
+                  this.clusterMessages.createMessageAddedBuilder()
+                    .thread(thread).messageId(messageId).threadUserGroupIds(userGroupIds).send()
+                    .then(() => { })
                     .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                 })
                 .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
-            });
+            })
+            .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
         })
         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
     }
@@ -492,7 +459,8 @@
     const shadyMessages = imports['shady-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
-    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress);
+    const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
+    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress, clusterMessages);
     
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
