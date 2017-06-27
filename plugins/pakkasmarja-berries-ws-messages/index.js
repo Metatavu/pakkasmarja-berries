@@ -94,35 +94,35 @@
     onGetNews(message, client) {
       const page = message.page;
       const perPage = message.perPage;
-      const baseUrl = this.getBaseUrl();
       
-      this.wordpress.listPosts(page, perPage)
-        .then((newItems) => {
-          client.sendMessage({
-            "type": "news-items-added",
-            "data": {
-              items: _.map(newItems, (newsItem) => {
-                return {
-                  "id": newsItem.id,
-                  "contents": this.wordpress.processContents(baseUrl, newsItem.content.rendered),
-                  "title": newsItem.title.rendered,
-                  "created": moment(newsItem.date_gmt).format(),
-                  "modified": moment(newsItem.modified_gmt).format(),
-                  "image": newsItem.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, newsItem.better_featured_image.source_url) : null
-                };
-              })
-            }
-          });
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.listNewsArticles('wp', page * perPage, perPage)
+            .then((newsArticles) => {
+              this.getItemReadMap(userId, _.map(newsArticles, 'id'))
+                .then((itemReadMap) => {  
+                  client.sendMessage({
+                    "type": "news-items-added",
+                    "data": {
+                      items: _.map(newsArticles, (newsArticle) => {
+                        return {
+                          "id": newsArticle.id,
+                          "contents": newsArticle.contents,
+                          "title": newsArticle.title,
+                          "created": moment(newsArticle.created).format(),
+                          "modified": moment(newsArticle.modified).format(),
+                          "image": newsArticle.imageUrl,
+                          "read": itemReadMap[newsArticle.id]
+                        };
+                      })
+                    }
+                  });                
+                })
+                .catch(this.handleWebSocketError(client, 'GET_NEWS'));
+            })
+            .catch(this.handleWebSocketError(client, 'GET_NEWS'));
         })
-        .catch(this.handleWebSocketError(client, 'GET_POSTS'));
-    }
-    
-    getBaseUrl() {
-      const host = config.get('client:server:host');
-      const secure = config.get('client:server:secure');
-      const port = config.get('client:server:port');
-      const protocol = secure ? 'https' : 'http';
-      return `${protocol}://${host}:${port}`;
+        .catch(this.handleWebSocketError(client, 'GET_NEWS'));
     }
     
     onGetConversationThreads(message, client) {
@@ -320,6 +320,98 @@
         .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
     }
     
+    onMarkItemRead(message, client) {
+      const id = message['id']
+      
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.createItemRead(id, userId, new Date())
+            .then(() => {})
+            .catch(this.handleWebSocketError(client, 'MARK_ITEM_READ'));
+        })
+        .catch(this.handleWebSocketError(client, 'MARK_ITEM_READ'));
+    }
+    
+    onGetConversationsUnreadStatus(message, client) {
+      this.getUserItemRead(client, 'conversations')
+        .then((conversationsRead) => {
+          if (!conversationsRead) {
+            client.sendMessage({
+              "type": "conversations-unread",
+              "data": { }
+            }); 
+          } else {
+            this.getUserGroupIds(client)
+              .then((userGroupIds) => {
+                const threadPromises = _.map(userGroupIds, (userGroupId) => {
+                  return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
+                });
+
+                Promise.all(threadPromises)
+                  .then((data) => {
+                    let unread = false;
+                    
+                    const threads = _.flatten(data);
+                    _.forEach(threads, (thread) => {
+                      if (thread.latestMessage && thread.latestMessage.getTime() > conversationsRead.getTime()) {
+                        unread = true;
+                      }
+                    });
+                    
+                    if (unread) {
+                      client.sendMessage({
+                        "type": "conversations-unread",
+                        "data": { }
+                      }); 
+                    }
+                  })
+                  .catch(this.handleWebSocketError(client, 'GET_CONVERSATIONS_UNREAD_STATUS'));
+              })
+              .catch(this.handleWebSocketError(client, 'GET_CONVERSATIONS_UNREAD_STATUS'));            
+          }
+        });
+    }
+    
+    onGetQuestionsUnreadStatus(message, client) {
+      this.getUserItemRead(client, 'questions')
+        .then((questionsRead) => {
+          if (!questionsRead) {
+            client.sendMessage({
+              "type": "questions-unread",
+              "data": { }
+            });
+          } else {
+            this.getUserGroupIds(client)
+              .then((userGroupIds) => {
+                const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
+                  return this.models.listQuestionGroupsByUserGroupId(userGroupId);
+                });
+
+                Promise.all(questionGroupPromises)
+                  .then((data) => {
+                    let unread = false;
+                    
+                    const groups = _.flatten(data);
+                    _.forEach(groups, (group) => {
+                      if (group.latestMessage && group.latestMessage.getTime() > questionsRead.getTime()) {
+                        unread = true;
+                      }
+                    });
+                    
+                    if (unread) {
+                      client.sendMessage({
+                        "type": "questions-unread",
+                        "data": { }
+                      }); 
+                    }
+                  })
+                  .catch(this.handleWebSocketError(client, 'GET_QUESTIONS_UNREAD_STATUS'));
+              })
+              .catch(this.handleWebSocketError(client, 'GET_QUESTIONS_UNREAD_STATUS'));            
+          }
+        });
+    }
+    
     onMessage(event) {
       const message = event.data.message;
       const client = event.client;
@@ -345,6 +437,15 @@
         break;
         case 'get-news':
           this.onGetNews(message, client);
+        break;
+        case 'get-conversations-unread-status':
+          this.onGetConversationsUnreadStatus(message, client);
+        break;
+        case 'get-questions-unread-status':
+          this.onGetQuestionsUnreadStatus(message, client);
+        break;
+        case 'mark-item-read':
+          this.onMarkItemRead(message, client);
         break;
         default:
           this.logger.error(util.format("Unknown message type %s", message.type));
@@ -441,6 +542,49 @@
               .then((userGroupIds) => {
                 resolve(userGroupIds);
               })
+              .catch(reject);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getItemReadMap(userId, ids) {
+      return new Promise((resolve, reject) => {
+        const itemReadPromises = _.map(ids, (id) => {
+          return this.getItemRead(userId, id);
+        });
+
+        Promise.all(itemReadPromises)
+          .then((readItems) => {
+            const result = {};
+
+            _.forEach(ids, (id, index) => {
+              const readItem = readItems[index];
+              result[id] = readItem;
+            });
+
+            resolve(result);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getItemRead(userId, id) {
+      return new Promise((resolve, reject) => {
+        this.models.findItemRead(id.toString(), userId)
+          .then((itemRead) => {
+            resolve(itemRead ? itemRead.time : null);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getUserItemRead(client, id) {
+      return new Promise((resolve, reject) => {
+        this.getUserId(client)
+          .then((userId) => {
+            this.getItemRead(userId, id)
+              .then(resolve)
               .catch(reject);
           })
           .catch(reject);
