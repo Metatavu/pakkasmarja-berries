@@ -165,6 +165,32 @@
       return 0;
     }
     
+    getThreadUserIds(realm, thread) {
+      return new Promise((resolve, reject) => {
+        this.getThreadUserGroupIds(thread)
+          .then((userGroupIds) => {
+            this.listGroupsMemberIds(realm, userGroupIds)
+              .then(resolve)
+              .catch(reject);
+          })
+          .catch(reject);
+      });
+    }
+    
+    getThreadUserGroupIds(thread) {
+      return new Promise((resolve, reject) => {
+        if (thread.type === 'conversation') {
+          resolve(Object.keys(thread.userGroupRoles));
+        } else if (thread.type === 'question') {
+          this.models.findQuestionGroupByThreadId(thread.id)
+            .then((questionGroup) => {
+              resolve(Object.keys(questionGroup.userGroupRoles));
+            })
+            .catch(reject);
+        }
+      });
+    }
+    
     getClient() {
       return KeycloakAdminClient(config.get('keycloak:admin'));
     }

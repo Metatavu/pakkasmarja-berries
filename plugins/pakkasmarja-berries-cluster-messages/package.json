@@ -9,6 +9,7 @@
     ],
     "consumes": [
       "logger",
+      "shady-messages",
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management"
     ]

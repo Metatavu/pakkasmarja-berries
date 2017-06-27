@@ -37,6 +37,19 @@
         clustering_order: {"created": "desc"}
       });
       
+      this._registerModel('MessageAttachment', {
+        fields: {
+          id: "uuid",
+          messageId: "uuid",
+          contents: "blob",
+          contentType: "text",
+          fileName: "text",
+          size: "int"
+        },
+        key : [ [ "id" ], "messageId" ],
+        indexes: [ "messageId" ]
+      });
+      
       this._registerModel('Thread', {
         fields: {
           id: "uuid",
@@ -313,6 +326,25 @@
       newsArticle.modified = modified;
       newsArticle.imageUrl = imageUrl;
       return newsArticle.saveAsync(); 
+    }
+    
+    createMessageAttachment(messageAttachmentId, messageId, contents, contentType, fileName, size) {
+      return new this.instance.MessageAttachment({
+        id: messageAttachmentId,
+        messageId: messageId,
+        contents: contents,
+        contentType: contentType,
+        fileName: fileName,
+        size: size
+      }).saveAsync();
+    }
+    
+    findMessageAttachments(id) {
+      return this.instance.MessageAttachment.findOneAsync({ id: id } );
+    }
+    
+    listMessageAttachmentsByMessageId(messageId) {
+      return this.instance.MessageAttachment.findAsync({ messageId: messageId } );
     }
     
     get instance() {
