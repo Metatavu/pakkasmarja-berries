@@ -11,7 +11,8 @@
       "logger",
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management",
-      "pakkasmarja-berries-webhooks"
+      "pakkasmarja-berries-webhooks",
+      "pakkasmarja-berries-cluster-messages"
     ]
   }
 }
