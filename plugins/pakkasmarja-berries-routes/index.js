@@ -5,18 +5,23 @@
   'use strict';
   
   const _ = require('lodash');
+  const fs = require('fs');
   const moment = require('moment');
   const uuid = require('uuid4');
   const config = require('nconf');
   const request = require('request');
+  const stream = require('stream');
+  const multer = require('multer');
+  const upload = multer({ dest: '/tmp/uploads/' });
   
   class Routes {
     
-    constructor (logger, models, userManagement, webhooks) {
+    constructor (logger, models, userManagement, webhooks, clusterMessages) {
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.webhooks = webhooks;
+      this.clusterMessages = clusterMessages;
     }
     
     getIndex(req, res) {
@@ -43,6 +48,76 @@
           url: `${contentUrl}/${path}`,
           headers: requestHeaders
       }).pipe(res);
+    }
+    
+    getImagesMessages(req, res) {
+      const messageId = req.params.messageId;
+      const messageAttachmentId = this.models.toUuid(req.params.messageAttachmentId);
+      
+      this.models.findMessageAttachments(messageAttachmentId)
+        .then((messageAttachment) => {
+          if (!messageAttachment || (messageAttachment.messageId.toString() !== messageId)) {
+            res.status(404).send();
+          } else {
+            res.set('Content-Type', messageAttachment.contentType);  
+            res.set('Length', messageAttachment.size);
+            res.status(200).send(messageAttachment.contents);
+          }
+        });
+    }
+    
+    postImageUploadMessage(req, res) {
+      const file = req.file;
+      const threadId = this.models.toUuid(req.body.threadId);
+      const sessionId = this.models.toUuid(req.body.sessionId);
+      const baseUrl = this.getBaseUrl();
+      
+      this.models.findSession(sessionId)
+        .then((session) => {
+          if (!session || !session.userId) {
+            res.status(403).send("Forbidden");
+          } else {
+            const userId = session.userId;
+            
+            fs.readFile(file.path, (readErr, data) => {
+              if (readErr) {
+                res.status(500).send(readErr);
+              } else {        
+                const messageAttachmentId = this.models.getUuid();
+                const messageId = this.models.getUuid();
+                const fileName = file.originalname;
+                const contentType = file.mimetype;
+                const size = file.size;
+                const messageContents = `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`;
+
+                this.models.createMessage(messageId, threadId, userId, messageContents)
+                  .then(() => {
+                    this.models.createMessageAttachment(messageAttachmentId, messageId, data, contentType, fileName, size)
+                      .then(() => {
+                        const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
+                        messageBuilder.threadId(threadId).messageId(messageId).send()
+                          .then(() => {
+                            res.status(200).send();
+                          })
+                          .catch((err) => {
+                            this.logger.error(err);
+                            res.status(500).send(err);
+                          });
+                          
+                      })
+                      .catch((err) => {
+                        this.logger.error(err);
+                        res.status(500).send(err);
+                      });
+                  })
+                  .catch((err) => {
+                    this.logger.error(err);
+                    res.status(500).send(err);
+                  });
+              }
+            });
+          }
+        });
     }
     
     getKeycloak(req, res) {
@@ -104,6 +179,8 @@
       
       app.get("/", this.getIndex.bind(this));
       app.get("/images/wordpress/*", this.getImagesWordpress.bind(this));
+      app.get("/images/messages/:messageId/:messageAttachmentId", this.getImagesMessages.bind(this));
+      app.post("/images/upload/message", upload.single('image'), this.postImageUploadMessage.bind(this));
       
       // Keycloak
       
@@ -122,6 +199,14 @@
       app.post('/webhooks/management', this.postWebhooksManagement.bind(this));
     }
     
+    getBaseUrl() {
+      const host = config.get('client:server:host');
+      const secure = config.get('client:server:secure');
+      const port = config.get('client:server:port');
+      const protocol = secure ? 'https' : 'http';
+      return `${protocol}://${host}:${port}`;
+    }
+    
   };
 
   module.exports = (options, imports, register) => {
@@ -129,8 +214,9 @@
     const models = imports['pakkasmarja-berries-models'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const webhooks = imports['pakkasmarja-berries-webhooks'];
+    const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
     
-    const routes = new Routes(logger, models, userManagement, webhooks);
+    const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages);
     register(null, {
       'pakkasmarja-berries-routes': routes
     });
