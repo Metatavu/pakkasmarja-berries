@@ -400,7 +400,7 @@
             client.sendMessage({
               "type": "conversations-unread",
               "data": { }
-            }); 
+            });
           } else {
             this.getUserGroupIds(client)
               .then((userGroupIds) => {

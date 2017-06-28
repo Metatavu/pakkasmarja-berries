@@ -59,6 +59,15 @@
       return this;
     }
     
+    threadUserIds(threadUserIds) {
+      this._threadUserIds = threadUserIds;
+      return this;
+    }
+    
+    userGroupIds(userGroupIds) {
+      this._userGroupIds = userGroupIds;
+    }
+    
     translateMessage(message, user, role) {             
       return {
         id: message.id,
@@ -82,14 +91,20 @@
                   .then((user) => {
                     this._resolveRole()
                       .then((role) => {
-                        this.shadyMessages.trigger("client:message-added", {
-                          "user-id": message.userId,
-                          "message": this.translateMessage(message, user, role),
-                          "thread-id": thread.id,
-                          "thread-type": thread.type
-                        });
-
-                        resolve();
+                        this._resolveThreadUserIds()
+                          .then((threadUserIds) => {
+                            _.forEach(threadUserIds, (threadUserId) => {
+                              this.shadyMessages.trigger("client:message-added", {
+                                "user-id": threadUserId,
+                                "message": this.translateMessage(message, user, role),
+                                "thread-id": thread.id,
+                                "thread-type": thread.type
+                              });
+                            });
+                            
+                            resolve();
+                          }) 
+                          .catch(reject);                            
                       })
                       .catch(reject);
                   })
@@ -163,7 +178,7 @@
         } else {
           this._resolveThread()
             .then((thread) => {
-              this._resolveThreadUserGroupIds()
+              this._resolveUserGroupIds()
                 .then((userGroupIds) => {
                   if (thread.type === 'conversation') {
                     this.role(this.userManagement.getUserGroupRole(thread.userGroupRoles, userGroupIds));
@@ -206,6 +221,44 @@
           reject("Could not resolve thread user group ids");
         }
       });  
+    }
+    
+    _resolveUserGroupIds() {
+      return new Promise((resolve, reject) => {
+        if (this._userGroupIds) {
+          resolve(this._userGroupIds);
+        } else {
+          this._resolveUser()
+            .then((user) => {
+              this.userManagement.listUserGroupIds(config.get('keycloak:realm'), user.id)
+                .then((userGroupIds) => {
+                  this.userGroupIds(userGroupIds);
+                  resolve(this._userGroupIds);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        }
+      });
+    }
+    
+    _resolveThreadUserIds () {
+      return new Promise((resolve, reject) => {
+        if (this._threadUserIds) {
+          resolve(this._threadUserIds);
+        } else {
+          this._resolveThreadUserGroupIds()
+            .then((userGroupIds) => {
+              this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+                .then((threadUserIds) => {
+                  this.threadUserIds(threadUserIds);
+                  resolve(this._threadUserIds);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        }
+      });
     }
     
     _resolveQuestionGroup () {
