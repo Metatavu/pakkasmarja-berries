@@ -105,6 +105,7 @@
                     "type": "news-items-added",
                     "data": {
                       items: _.map(newsArticles, (newsArticle) => {
+                        const newsArticleRead = itemReadMap[newsArticle.id];
                         return {
                           "id": newsArticle.id,
                           "contents": newsArticle.contents,
@@ -112,7 +113,7 @@
                           "created": moment(newsArticle.created).format(),
                           "modified": moment(newsArticle.modified).format(),
                           "image": newsArticle.imageUrl,
-                          "read": itemReadMap[newsArticle.id]
+                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.created
                         };
                       })
                     }
@@ -141,17 +142,17 @@
                   this.getItemReadMap(userId, _.map(data, 'id'))
                     .then((itemReadMap) => {
                       const threads = _.map(data, (thread) => {
+                        const threadRead = itemReadMap[thread.id];
+                
                         return {
                           'id': thread.id,
                           'title': thread.title,
                           'type': thread.type,
                           'imageUrl': thread.imageUrl,
                           'latestMessage': thread.lastMessage,
-                          'read': itemReadMap[thread.id]
+                          'read': threadRead && threadRead.getTime() >= thread.latestMessage
                         }
                       });
-                      
-                      console.log(threads);
                     
                       client.sendMessage({
                         "type": "conversation-threads-added",
@@ -168,31 +169,63 @@
     }
     
     onGetQuestionGroups(message, client) {
-      this.getUserGroupIds(client)
-        .then((userGroupIds) => {
-          const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
-            return this.models.listQuestionGroupsByUserGroupId(userGroupId);
-          });
-  
-          Promise.all(questionGroupPromises)
-            .then((data) => {
-              const questionGroups = _.map(_.flatten(data), (questionGroup) => {
-                return {
-                  id: questionGroup.id,
-                  title: questionGroup.title,
-                  originId: questionGroup.originId,
-                  imageUrl: questionGroup.imageUrl,
-                  latestMessage: questionGroup.latestMessage,
-                  role: this.getQuestionGroupRole(questionGroup, userGroupIds)
-                };
+      this.getUserId(client)
+        .then((userId) => {
+          this.getUserGroupIds(client, userId)
+            .then((userGroupIds) => {
+              const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
+                return this.models.listQuestionGroupsByUserGroupId(userGroupId);
               });
-              
-              client.sendMessage({
-                "type": "question-groups-added",
-                "data": {
-                  'question-groups': questionGroups
-                }
-              });
+
+              Promise.all(questionGroupPromises)
+                .then((datas) => {
+                  const data = _.flatten(datas);
+                  
+                  const questionGroups = _.map(data, (questionGroup) => {
+                    return {
+                      id: questionGroup.id,
+                      title: questionGroup.title,
+                      originId: questionGroup.originId,
+                      imageUrl: questionGroup.imageUrl,
+                      latestMessage: questionGroup.latestMessage,
+                      role: this.getQuestionGroupRole(questionGroup, userGroupIds)
+                    };
+                  });
+
+                  const threadsReadPromises = _.map(questionGroups, (questionGroup, index) => {
+                    return new Promise((resolve, reject) => {
+                      let threadIds = [];
+                      const userThreads = data[index].userThreads||{};
+                      if (questionGroup.role === 'manager') {
+                        threadIds = _.values(userThreads);
+                      } else {
+                        threadIds = _.values(_.filter(userThreads, (threadId, threadUserId) => {
+                          return userId === threadUserId;
+                        }));
+                      }
+                      
+                      this.getThreadsHasUnreadMessages(userId, threadIds)
+                        .then(resolve)
+                        .catch(reject);
+                    });
+                  });
+
+                  Promise.all(threadsReadPromises)
+                    .then((threadsHasUnreadMessages) => {
+                      client.sendMessage({
+                        "type": "question-groups-added",
+                        "data": {
+                          'question-groups': _.map(questionGroups, (questionGroup, index) => {
+                            return Object.assign(questionGroup, {
+                              read: !threadsHasUnreadMessages[index]
+                            });
+                          })
+                        }
+                      });
+                    });
+
+                })
+                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
             })
             .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
         })
@@ -268,35 +301,42 @@
               
               this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
-                  const threadPromises = _.map(threadIds, (threadId, index) => {
-                    return new Promise((resolve, reject) => {
-                      this.models.findThread(threadId)
-                        .then((thread) => {
-                          const userId = userIds[index];
-                          const user = userMap[userId];
-                          resolve({
-                            id: thread.id,
-                            latestMessage: thread.latestMessage,
-                            title: this.userManagement.getUserDisplayName(user),
-                            type: thread.type,
-                            imageUrl: this.userManagement.getUserImage(user)
+                  this.getItemReadMap(userId, threadIds)
+                    .then((itemReadMap) => {
+                      const threadPromises = _.map(threadIds, (threadId, index) => {
+                        return new Promise((resolve, reject) => {
+                          this.models.findThread(threadId)
+                            .then((thread) => {
+                              const userId = userIds[index];
+                              const user = userMap[userId];
+                              const threadRead = itemReadMap[thread.id];
+                              
+                              resolve({
+                                id: thread.id,
+                                latestMessage: thread.latestMessage,
+                                title: this.userManagement.getUserDisplayName(user),
+                                type: thread.type,
+                                imageUrl: this.userManagement.getUserImage(user),
+                                read: threadRead && threadRead.getTime() >= thread.latestMessage
+                              });
+                            })
+                            .catch(reject);
+                        });
+                      });
+
+                      Promise.all(threadPromises)
+                        .then((threads) => {
+                          client.sendMessage({
+                            "type": "question-group-threads-added",
+                            "data": {
+                              'question-group-id': questionGroupId,
+                              'threads': threads
+                            }
                           });
                         })
-                        .catch(reject);
-                    });
-                  });
-                  
-                  Promise.all(threadPromises)
-                    .then((threads) => {
-                      client.sendMessage({
-                        "type": "question-group-threads-added",
-                        "data": {
-                          'question-group-id': questionGroupId,
-                          'threads': threads
-                        }
-                      });
-                    })
-                    .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                  })
+                  .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
             })
@@ -411,14 +451,14 @@
                 Promise.all(questionGroupPromises)
                   .then((data) => {
                     let unread = false;
-                    
+
                     const groups = _.flatten(data);
                     _.forEach(groups, (group) => {
                       if (group.latestMessage && group.latestMessage.getTime() > questionsRead.getTime()) {
                         unread = true;
                       }
                     });
-                    
+
                     if (unread) {
                       client.sendMessage({
                         "type": "questions-unread",
@@ -574,6 +614,50 @@
             })
             .catch(reject);
         }        
+      });
+    }
+    
+    getThreadsHasUnreadMessages(userId, threadIds) {
+      const hasUnreadPromises = _.map(threadIds, (threadId) => {
+        return this.getThreadHasUnreadMessages(userId, threadId);    
+      });
+      
+      return new Promise((resolve, reject) => {
+          Promise.all(hasUnreadPromises)
+            .then((hasUnreads) => {
+              let result = false;
+
+              _.forEach(hasUnreads, (hasUnread) => {
+                if (hasUnread) {
+                  result = true;
+                }
+              });
+
+              resolve(result);
+            })
+            .catch(reject);
+      });
+    }
+    
+    getThreadHasUnreadMessages(userId, threadId) {
+      return new Promise((resolve, reject) => {
+        this.getItemRead(userId, threadId)
+          .then((itemRead) => {
+            if (!itemRead) {
+              resolve(true);
+            } else {
+              this.models.findThread(threadId)
+                .then((thread) => {
+                  if (!thread) {
+                    resolve(false);
+                  } else {
+                    resolve(thread.latestMessage.getTime() > itemRead.getTime());
+                  }
+                })
+                .catch(reject);
+            }
+          })
+          .catch(reject);
       });
     }
     
