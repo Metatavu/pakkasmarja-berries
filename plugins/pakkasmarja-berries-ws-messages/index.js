@@ -116,7 +116,7 @@
                         };
                       })
                     }
-                  });                
+                  });
                 })
                 .catch(this.handleWebSocketError(client, 'GET_NEWS'));
             })
@@ -126,24 +126,45 @@
     }
     
     onGetConversationThreads(message, client) {
-      this.getUserGroupIds(client)
-        .then((userGroupIds) => {
-          const threadPromises = _.map(userGroupIds, (userGroupId) => {
-            return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
-          });
-  
-          Promise.all(threadPromises)
-            .then((threads) => {
-              client.sendMessage({
-                "type": "conversation-threads-added",
-                "data": {
-                  threads: _.flatten(threads)
-                }
+      this.getUserId(client)
+        .then((userId) => {
+          this.getUserGroupIds(client, userId)
+            .then((userGroupIds) => {
+              const threadPromises = _.map(userGroupIds, (userGroupId) => {
+                return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
               });
+
+              Promise.all(threadPromises)
+                .then((datas) => {
+                  const data = _.flatten(datas);
+          
+                  this.getItemReadMap(userId, _.map(data, 'id'))
+                    .then((itemReadMap) => {
+                      const threads = _.map(data, (thread) => {
+                        return {
+                          'id': thread.id,
+                          'title': thread.title,
+                          'type': thread.type,
+                          'imageUrl': thread.imageUrl,
+                          'latestMessage': thread.lastMessage,
+                          'read': itemReadMap[thread.id]
+                        }
+                      });
+                      
+                      console.log(threads);
+                    
+                      client.sendMessage({
+                        "type": "conversation-threads-added",
+                        "data": {
+                          threads: threads
+                        }
+                      });
+                    });
+                })
+                .catch(this.handleWebSocketError(client, 'GET_THREADS'));
             })
             .catch(this.handleWebSocketError(client, 'GET_THREADS'));
-        })
-        .catch(this.handleWebSocketError(client, 'GET_THREADS'));
+      });
     }
     
     onGetQuestionGroups(message, client) {
@@ -534,17 +555,25 @@
       });
     }
     
-    getUserGroupIds(client) {
+    getUserGroupIds(client, userId) {
       return new Promise((resolve, reject) => {
-        this.getUserId(client)
-          .then((userId) => {
-            this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
-              .then((userGroupIds) => {
-                resolve(userGroupIds);
-              })
-              .catch(reject);
-          })
-          .catch(reject);
+        if (userId) {
+          this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
+            .then((userGroupIds) => {
+              resolve(userGroupIds);
+            })
+            .catch(reject);
+        } else {
+          this.getUserId(client)
+            .then((userId) => {
+              this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
+                .then((userGroupIds) => {
+                  resolve(userGroupIds);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        }        
       });
     }
     
