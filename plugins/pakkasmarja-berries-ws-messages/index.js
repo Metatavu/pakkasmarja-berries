@@ -151,7 +151,7 @@
                           'imageUrl': thread.imageUrl,
                           'latestMessage': thread.lastMessage,
                           'read': threadRead && threadRead.getTime() >= thread.latestMessage
-                        }
+                        };
                       });
                     
                       client.sendMessage({
@@ -382,7 +382,7 @@
     }
     
     onMarkItemRead(message, client) {
-      const id = message['id']
+      const id = message.id;
       
       this.getUserId(client)
         .then((userId) => {
