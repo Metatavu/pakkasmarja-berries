@@ -191,6 +191,14 @@
       });
     }
     
+    isValidUserId(userId) {
+      if (typeof userId === 'string') {
+        return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
+      }
+      
+      return false;
+    }
+    
     getClient() {
       return KeycloakAdminClient(config.get('keycloak:admin'));
     }

@@ -96,9 +96,20 @@
           modified: "timestamp",
           originId: "text",
           imageUrl: "text",
+          source: "text"
         },
-        key : [ [ "id" ]  ],
-        indexes: [ "originId" ]
+        key : [ [ "source" ], "created"  ],
+        indexes: [ "originId" ],
+        clustering_order: {"created": "desc"}
+      });
+      
+      this._registerModel('ItemRead', {
+        fields: {
+          itemId: "text",
+          userId: "text",
+          time: "timestamp"
+        },
+        key : [[ "itemId"], "userId" ]
       });
     }
     
@@ -300,7 +311,7 @@
       }
     }
     
-    createNewsArticle(newsArticleId, originId, title, contents, created, modified, imageUrl) {
+    createNewsArticle(newsArticleId, source, originId, title, contents, created, modified, imageUrl) {
       return new this.instance.NewsArticle({
          id: newsArticleId,
          title: title,
@@ -308,7 +319,8 @@
          created: created,
          modified: modified,
          originId:originId,
-         imageUrl: imageUrl
+         imageUrl: imageUrl,
+         source: source
       }).saveAsync(); 
     }
     
@@ -318,6 +330,29 @@
     
     findNewsArticleByOriginId(originId) {
       return this.instance.NewsArticle.findOneAsync({ originId: originId }, { allow_filtering: true });
+    }
+    
+    listNewsArticles(source, firstResult, maxResults) {
+      return new Promise((resolve, reject) => {      
+        // TODO: paging should be optimized
+
+        const limit = (firstResult || 0) + (maxResults || 0);
+
+        const query = {
+          'source': source,
+          '$limit': limit
+        };
+        
+        this.instance.NewsArticle.findAsync(query)
+          .then((newsArticles) => {
+            if (maxResults !== undefined) {
+              resolve(newsArticles.splice(firstResult));
+            } else {
+              resolve(newsArticles);
+            }
+          })
+          .catch(reject);
+      });
     }
     
     updateNewsArticle(newsArticle, title, contents, modified, imageUrl) {
@@ -345,6 +380,18 @@
     
     listMessageAttachmentsByMessageId(messageId) {
       return this.instance.MessageAttachment.findAsync({ messageId: messageId } );
+    }
+    
+    createItemRead(itemId, userId, time) {
+      return new this.instance.ItemRead({
+        itemId: itemId,
+        userId: userId,
+        time: time
+      }).saveAsync(); 
+    }
+    
+    findItemRead(itemId, userId) {
+      return this.instance.ItemRead.findOneAsync({ userId: userId, itemId: itemId });
     }
     
     get instance() {

@@ -108,16 +108,20 @@
     
     const webSockets = new WebSockets(httpServer, (sessionId, callback) => {
       try {
-        models.findSession(models.toUuid(sessionId))
-          .then((session) => {
-            callback(!!session);
-          })
-          .catch((err) => {
-            logger.error(err);
-            callback(false);
-          });
+        if (!sessionId) {
+          callback(false);
+        } else {
+          models.findSession(models.toUuid(sessionId))
+            .then((session) => {
+              callback(session && session.userId);
+            })
+            .catch((err) => {
+              logger.error(err);
+              callback(false);
+            });
+        }
       } catch (e) {
-        logger.error(e);
+        logger.error(`Websocket authentication failed s${e}`);
         callback(false);
       }
     });

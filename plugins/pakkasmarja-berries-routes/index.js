@@ -140,20 +140,30 @@
           this.logger.error(authErr);
           res.status(403).send(authErr);
         } else {
-          const reponse = JSON.parse(body);
-          const userId = reponse.sub;
-          const sessionId = this.models.getUuid();
-          
-          this.models.createSession(sessionId, userId)
-            .then((session) => {
-              res.send({
-                sessionId: sessionId
-              });
-            })
-            .catch((sessionErr) => {
-              logger.error(sessionErr);
-              res.status(500).send(sessionErr);
-            });
+          try {
+            const reponse = JSON.parse(body);
+            const userId = reponse.sub;
+            if (this.userManagement.isValidUserId(userId)) {
+              const sessionId = this.models.getUuid();
+
+              this.models.createSession(sessionId, userId)
+                .then(() => {
+                  res.send({
+                    sessionId: sessionId
+                  });
+                })
+                .catch((sessionErr) => {
+                  this.logger.error(sessionErr);
+                  res.status(500).send(sessionErr);
+                });
+            } else {
+              this.logger.error(`Received invalid userId ${userId} from keycloak`);
+              res.status(403).send("Forbidden");
+            }
+          } catch (e) {
+            this.logger.error(e);
+            res.status(500).send(e);
+          }
         }
       });
     }

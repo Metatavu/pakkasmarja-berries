@@ -92,13 +92,13 @@
                     });
                 } else {
                   const newsArticleId = this.models.getUuid();
-                  this.models.createNewsArticle(newsArticleId, wpId, wpTitle, contents, created, modified, imageUrl)
+                  this.models.createNewsArticle(newsArticleId, "wp", wpId, wpTitle, contents, created, modified, imageUrl)
                     .then(() => {
                       this.logger.info(`News article ${newsArticleId} created`);
                       this.pushNotifications.notifyNewsItemPublish(wpTitle); 
                     }) 
                     .catch((err) => {
-                      this.logger.error(`Failed to create chat thread from ${wpId}`, err);
+                      this.logger.error(`Failed to create news article from ${wpId}`, err);
                     });
                 }
               })
