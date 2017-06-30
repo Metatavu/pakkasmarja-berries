@@ -45,6 +45,10 @@
       }, {
         hooks: {
           'afterFind': (object, options) => {
+            if (!object) {
+              return;  
+            }
+            
             const threads = _.isArray(object) ? object : [ object ];
             
             const extendPromises = _.map(threads, (thread) => {
@@ -84,6 +88,10 @@
       }, {
         hooks: {
           'afterFind': (object, options) => {
+            if (!object) {
+              return;  
+            }
+            
             const questionGroups = _.isArray(object) ? object : [ object ];
             
             const extendPromises = _.map(questionGroups, (questionGroup) => {
