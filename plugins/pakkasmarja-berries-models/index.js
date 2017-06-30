@@ -502,7 +502,7 @@
       return this.MessageAttachment.findOne({ where: { id : id } });
     }
     
-    createItemRead(userId, itemId) {
+    createItemRead(itemId, userId) {
       return this.sequelize.sync()
         .then(() => this.ItemRead.create({
           itemId: itemId,
@@ -510,7 +510,7 @@
       }));
     }
     
-    findItemRead(userId, itemId) {
+    findItemRead(itemId, userId) {
       return this.ItemRead.findOne({ where: { userId: userId, itemId: itemId } });
     }
     
