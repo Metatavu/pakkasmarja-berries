@@ -127,7 +127,13 @@
     
     getKeycloak(req, res) {
       res.header('Content-Type', 'application/json');
-      res.send(config.get('keycloak'));
+      res.send({
+        "realm": config.get('keycloak:realm'),
+        "auth-server-url": config.get('keycloak:auth-server-url'),
+        "ssl-required": config.get('keycloak:ssl-required'),
+        "resource": config.get('keycloak:resource'),
+        "public-client": config.get('keycloak:public-client')
+      });
     }
     
     postJoin(req, res) {
