@@ -56,11 +56,7 @@
     
     const sessionStore = new SequelizeStore({
       db: sequelize,
-      extendDefaultFields: () => {
-        return {
-          id: null
-        };
-      }
+      table: "ConnectSession"
     });
     
     sessionStore.sync();
