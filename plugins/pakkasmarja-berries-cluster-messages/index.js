@@ -53,12 +53,7 @@
       this._role = role;
       return this;
     }
-    /**
-    threadUserGroupIds(threadUserGroupIds) {
-      this._threadUserGroupIds = threadUserGroupIds;
-      return this;
-    }
-    **/
+    
     threadUserIds(threadUserIds) {
       this._threadUserIds = threadUserIds;
       return this;

@@ -88,7 +88,7 @@
         .then((userId) => {
           this.models.listNewsArticles(page * perPage, perPage)
             .then((newsArticles) => {
-              this.getItemReadMap(userId, _.map(newsArticles, (newsArticle) => { return `news-article-${newsArticle.id}` }))
+              this.getItemReadMap(userId, _.map(newsArticles, (newsArticle) => { return `news-article-${newsArticle.id}`; }))
                 .then((itemReadMap) => {
                   client.sendMessage({
                     "type": "news-items-added",
@@ -128,7 +128,7 @@
                 .then((datas) => {
                   const data = _.flatten(datas);
           
-                  this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}` }))
+                  this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }))
                     .then((itemReadMap) => {
                       const threads = _.map(data, (thread) => {
                         const threadRead = itemReadMap[`thread-${thread.id}`];
@@ -289,7 +289,7 @@
               const threadIds = _.map(questionGroupUserThreads, 'threadId');
               this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
-                  this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}` }))
+                  this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }))
                     .then((itemReadMap) => {
                       const threadPromises = _.map(threadIds, (threadId, index) => {
                         return new Promise((resolve, reject) => {

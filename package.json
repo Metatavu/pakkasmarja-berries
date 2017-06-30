@@ -29,7 +29,6 @@
     "nconf": "0.8.4",
     "pug": "^2.0.0-alpha6",
     "request": "2.81.0",
-    "shady-cassandra": "0.0.2",
     "shady-messages": "0.3.0",
     "shady-sequelize": "0.0.1",
     "shady-websockets": "0.0.4",

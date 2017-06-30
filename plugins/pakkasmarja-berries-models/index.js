@@ -114,7 +114,7 @@
       this.defineModel('NewsArticle', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING, allowNull: false },
-        contents: { type: Sequelize.TEXT, allowNull: false },
+        contents: { type: 'LONGTEXT', allowNull: false },
         originId: { type: Sequelize.STRING, allowNull: false },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       });
@@ -122,7 +122,7 @@
       this.defineModel('MessageAttachment', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: 'id' } },
-        contents: { type: Sequelize.BLOB, allowNull: false },
+        contents: { type: 'LONGBLOB', allowNull: false },
         contentType: { type: Sequelize.STRING, allowNull: false },
         fileName: { type: Sequelize.STRING },
         size: { type: Sequelize.BIGINT }

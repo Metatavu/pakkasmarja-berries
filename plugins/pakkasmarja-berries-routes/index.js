@@ -56,7 +56,7 @@
       
       this.models.findMessageAttachments(messageAttachmentId)
         .then((messageAttachment) => {
-          if (!messageAttachment || (messageAttachment.messageId !== messageId)) {
+          if (!messageAttachment || (parseInt(messageAttachment.messageId) !== parseInt(messageId))) {
             res.status(404).send();
           } else {
             res.set('Content-Type', messageAttachment.contentType);  
@@ -89,22 +89,26 @@
                 
                 this.models.createMessage(threadId, userId, 'pending...')
                   .then((message) => {
-                    this.models.createMessageAttachment(data, contentType, fileName, size)
+                    this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
                       .then((messageAttachment) => {
                         const messageId = message.id;
                         const messageAttachmentId = messageAttachment.id;
-                        this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`);
-                    
-                        const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
-                        messageBuilder.threadId(threadId).messageId(messageId).send()
+                        this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
                           .then(() => {
-                            res.status(200).send();
+                            const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
+                            messageBuilder.threadId(threadId).messageId(messageAttachmentId).send()
+                              .then(() => {
+                                res.status(200).send();
+                              })
+                              .catch((err) => {
+                                this.logger.error(err);
+                                res.status(500).send(err);
+                              });
                           })
                           .catch((err) => {
                             this.logger.error(err);
                             res.status(500).send(err);
                           });
-                          
                       })
                       .catch((err) => {
                         this.logger.error(err);
