@@ -83,7 +83,7 @@
             this.models.findNewsArticleByOriginId(wpId)
               .then((newsArticle) => {
                 if (newsArticle) {
-                  this.models.updateNewsArticle(newsArticle, wpTitle, contents, modified, imageUrl)
+                  this.models.updateNewsArticle(newsArticle.id, wpTitle, contents, imageUrl)
                     .then(() => {
                       this.logger.info(`News article ${newsArticle.id} updated`);
                     }) 
@@ -91,10 +91,9 @@
                       this.logger.error(`Failed to update news article ${wpId}`, err);
                     });
                 } else {
-                  const newsArticleId = this.models.getUuid();
-                  this.models.createNewsArticle(newsArticleId, "wp", wpId, wpTitle, contents, created, modified, imageUrl)
-                    .then(() => {
-                      this.logger.info(`News article ${newsArticleId} created`);
+                  this.models.createNewsArticle(wpId, wpTitle, contents, imageUrl)
+                    .then((newsArticle) => {
+                      this.logger.info(`News article ${newsArticle.id} created`);
                       this.pushNotifications.notifyNewsItemPublish(wpTitle); 
                     }) 
                     .catch((err) => {
@@ -133,20 +132,25 @@
             this.models.findThreadByOriginId(wpId)
               .then((thread) => {
                 if (thread) {
-                  this.models.updateThread(thread, wpTitle, imageUrl, userGroupRoles)
+                  this.models.updateThread(thread.id, wpTitle, imageUrl)
                     .then(() => {
-                      this.logger.info(`Thread ${thread.id} updated`);
-                      this.notifyClusterConversationThreadAdded(thread);
+                      this.models.setThreadUserGroupRoles(thread.id, userGroupRoles)
+                        .then(() => {
+                          this.logger.info(`Thread ${thread.id} updated`);
+                          this.notifyClusterConversationThreadAdded(thread);
+                        });
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to update chat thread ${wpId}`, err);
                     });
                 } else {
-                  const threadId = this.models.getUuid();
-                  this.models.createThread(threadId, wpId, wpTitle, wpType, imageUrl, userGroupRoles)
-                    .then(() => {
-                      this.logger.info(`Thread ${threadId} created`);
-                      this.notifyClusterConversationThreadIdAdded(threadId);
+                  this.models.createThread(wpId, wpTitle, wpType, imageUrl)
+                    .then((thread) => {
+                      this.models.setThreadUserGroupRoles(thread.id, userGroupRoles)
+                        .then(() => {
+                          this.logger.info(`Thread ${thread.id} created`);
+                          this.notifyClusterConversationThreadIdAdded(thread.id);
+                        });
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to create chat thread from ${wpId}`, err);
@@ -182,20 +186,25 @@
             this.models.findQuestionGroupByOriginId(wpId)
               .then((questionGroup) => {
                 if (questionGroup) {
-                  this.models.updateQuestionGroup(questionGroup, wpTitle, imageUrl, userGroupRoles)
+                  this.models.updateQuestionGroup(questionGroup.id, wpTitle, imageUrl)
                     .then(() => {
-                      this.logger.info(`Group ${questionGroup.id} updated`);
-                      this.notifyClusterQuestionGroupAdded(questionGroup);
+                      this.models.setQuestionGroupUserGroupRoles(questionGroup.id, userGroupRoles)
+                        .then(() => {
+                          this.logger.info(`Group ${questionGroup.id} updated`);
+                          this.notifyClusterQuestionGroupAdded(questionGroup);
+                        });
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to update question group ${wpId}`, err);
                     });
                 } else {
-                  const questionGroupId = this.models.getUuid();
-                  this.models.createQuestionGroup(questionGroupId, wpId, wpTitle, imageUrl, userGroupRoles)
-                    .then(() => {
-                      this.logger.info(`Group ${questionGroupId} created`);
-                      this.notifyClusterQuestionGroupIdAdded(questionGroupId);
+                  this.models.createQuestionGroup(wpId, wpTitle, imageUrl)
+                    .then((questionGroup) => {
+                      this.models.setQuestionGroupUserGroupRoles(questionGroup.id, userGroupRoles)
+                        .then(() => {
+                          this.logger.info(`Group ${questionGroup.id} created`);
+                          this.notifyClusterQuestionGroupIdAdded(questionGroup.id);
+                        });
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to create question group from ${wpId}`, err);
@@ -223,8 +232,7 @@
     }
     
     notifyClusterConversationThreadAdded(thread) {
-      const threadUserGroupIds = Object.keys(thread.userGroupRoles);
-      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), threadUserGroupIds)
+      this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
         .then((userIds) => {
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:conversation-thread-added", {
@@ -249,8 +257,7 @@
     }
     
     notifyClusterQuestionGroupAdded(questionGroup) {
-      const questionGroupUserGroupIds = Object.keys(questionGroup.userGroupRoles);
-      this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), questionGroupUserGroupIds)
+      this.userManagement.getQuestionGroupUserIds()
         .then((userIds) => {
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:question-group-added", {

@@ -13,8 +13,9 @@
   
   class PakkasmarjaBerriesUserManagement {
     
-    constructor (logger) {
+    constructor (logger, models) {
       this.logger = logger;
+      this.models = models;
     }
     
     findUser(realm, id) {
@@ -142,11 +143,31 @@
       return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
     }
     
-    getUserGroupRole(userGroupRoles, userGroupIds) {
+    getThreadUserRole(realm, threadId, userId) {
+      return this.models.getThreadUserGroupRoleMap(threadId)
+        .then((userGroupRoleMap) => {
+          return this.listUserGroupIds(realm, userId)
+            .then((userGroupIds) => {
+              return this.getUserGroupRole(userGroupRoleMap, userGroupIds);
+            });
+        });
+    }
+    
+    getQuestionGroupUserRole(realm, questionGroupId, userId) {
+      return this.models.getQuestionGroupUserGroupRoleMap(questionGroupId)
+        .then((userGroupRoleMap) => {
+          return this.listUserGroupIds(realm, userId)
+            .then((userGroupIds) => {
+              return this.getUserGroupRole(userGroupRoleMap, userGroupIds);
+            });
+        });
+    }
+    
+    getUserGroupRole(userGroupRoleMap, userGroupIds) {
       let result = null;
       
       userGroupIds.forEach((userGroupId) => {
-        const role = userGroupRoles[userGroupId];
+        const role = userGroupRoleMap[userGroupId];
         if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
           result = role; 
         }
@@ -165,30 +186,18 @@
       return 0;
     }
     
-    getThreadUserIds(realm, thread) {
-      return new Promise((resolve, reject) => {
-        this.getThreadUserGroupIds(thread)
-          .then((userGroupIds) => {
-            this.listGroupsMemberIds(realm, userGroupIds)
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
-      });
+    getThreadUserIds(realm, threadId) {
+      return this.models.listThreadUserGroupIds(threadId)
+        .then((threadUserGroupIds) => {
+          return this.listGroupsMemberIds(realm, threadUserGroupIds);
+        });
     }
     
-    getThreadUserGroupIds(thread) {
-      return new Promise((resolve, reject) => {
-        if (thread.type === 'conversation') {
-          resolve(Object.keys(thread.userGroupRoles));
-        } else if (thread.type === 'question') {
-          this.models.findQuestionGroupByThreadId(thread.id)
-            .then((questionGroup) => {
-              resolve(Object.keys(questionGroup.userGroupRoles));
-            })
-            .catch(reject);
-        }
-      });
+    getQuestionGroupUserIds(realm, questionGroupId) {
+      return this.models.listQuestionGroupUserGroupIds(questionGroupId)
+        .then((questionGroupUserGroupIds) => {
+          return this.listGroupsMemberIds(realm, questionGroupUserGroupIds);
+        });
     }
     
     isValidUserId(userId) {
@@ -207,7 +216,8 @@
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
-    const pakkasmarjaBerriesUserManagement = new PakkasmarjaBerriesUserManagement(logger);
+    const models = imports['pakkasmarja-berries-models'];
+    const pakkasmarjaBerriesUserManagement = new PakkasmarjaBerriesUserManagement(logger, models);
     register(null, {
       'pakkasmarja-berries-user-management': pakkasmarjaBerriesUserManagement
     });
