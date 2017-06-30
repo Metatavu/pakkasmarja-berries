@@ -598,7 +598,7 @@
                   if (!thread) {
                     resolve(false);
                   } else {
-                    resolve(thread.latestMessage.getTime() > itemRead.getTime());
+                    resolve(!thread.latestMessage || (thread.latestMessage.getTime() > itemRead.getTime()));
                   }
                 })
                 .catch(reject);
