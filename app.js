@@ -16,7 +16,7 @@
   const Hashes = require('jshashes');
   const Keycloak = require('keycloak-connect');  
   const session = require('express-session');
-  const CassandraStore = require("cassandra-store");
+  const SequelizeStore = require('connect-session-sequelize')(session.Store);
   const SHA256 = new Hashes.SHA256;
   
   config.file({file: __dirname + '/config.json'});
@@ -37,6 +37,8 @@
       return;
     }
     
+    const sequelize = architectApp.getService('shady-sequelize').sequelize;
+    const Sequelize = architectApp.getService('shady-sequelize').Sequelize;
     const shadyMessages = architectApp.getService('shady-messages');
     const shadyWorker = architectApp.getService('shady-worker');
     const WebSockets = architectApp.getService('shady-websockets');
@@ -52,16 +54,16 @@
     const app = express();
     const httpServer = http.createServer(app);
     
-    const sessionStore = new CassandraStore({
-      table: "sessions_store.sessions",
-      clientOptions: {
-        contactPoints: config.get('cassandra:contact-points') || ['localhost'],
-        keyspace: "sessions_store",
-        "queryOptions": {
-            "prepare": true
-        }
-      } 
+    const sessionStore = new SequelizeStore({
+      db: sequelize,
+      extendDefaultFields: () => {
+        return {
+          id: null
+        };
+      }
     });
+    
+    sessionStore.sync();
     
     const keycloak = new Keycloak({ store: sessionStore }, {
       "realm": config.get('keycloak:realm'),
