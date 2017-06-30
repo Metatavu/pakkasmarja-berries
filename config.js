@@ -7,10 +7,10 @@ module.exports = [
   },
   {
     "packagePath": "shady-sequelize",
-    "host": "localhost",
-    "database": "pakkasmarja",
-    "username": "root",
-    "password": "random",
+    "host": config.get('mysql:host'),
+    "database": config.get('mysql:database'),
+    "username": config.get('mysql:username'),
+    "password": config.get('mysql:password'),
     "dialect": "mysql"
   },
   {

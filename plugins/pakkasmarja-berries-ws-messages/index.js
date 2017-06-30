@@ -138,7 +138,7 @@
                           'type': thread.type,
                           'imageUrl': thread.imageUrl,
                           'latestMessage': thread.latestMessage,
-                          'read': threadRead && threadRead.getTime() >= thread.latestMessage.getTime()
+                          'read': !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
                         };
                       });
                     
@@ -283,11 +283,10 @@
       
       this.getUserId(client)
         .then((userId) => {
-          this.models.listQuestionGroupUserThreadsByQuestionGroupId()
+          this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId)
             .then((questionGroupUserThreads) => {
               const userIds = _.map(questionGroupUserThreads, 'userId');
               const threadIds = _.map(questionGroupUserThreads, 'threadId');
-              
               this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
                   this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}` }))
@@ -306,7 +305,7 @@
                                 title: this.userManagement.getUserDisplayName(user),
                                 type: thread.type,
                                 imageUrl: this.userManagement.getUserImage(user),
-                                read: threadRead && threadRead.getTime() >= thread.latestMessage
+                                read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
                               });
                             })
                             .catch(reject);
