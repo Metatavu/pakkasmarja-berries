@@ -33,16 +33,15 @@
         originId: { type: Sequelize.STRING },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
-        getterMethods: {
-          latestMessage() {
-            return this.getLatestMessageCreatedByThreadIds([this.getDataValue('id')])
-              .then((maxCreatedAt) => {
-                return maxCreatedAt;
-              })
-              .catch((err) => {
-                this.logger.error('Error populating lastest message in thread')
-                return null;
-              });
+        hooks: {
+          'afterFind': (object, options) => {
+            const threads = _.isArray(object) ? object : [ object ];
+            
+            const extendPromises = _.map(threads, (thread) => {
+              return this.createThreadLatestMessagePromise(thread);
+            });
+            
+            return Promise.all(extendPromises);
           }
         }
       });
@@ -72,6 +71,18 @@
         title: { type: Sequelize.STRING, allowNull: false },
         originId: { type: Sequelize.STRING, allowNull: false },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+      }, {
+        hooks: {
+          'afterFind': (object, options) => {
+            const questionGroups = _.isArray(object) ? object : [ object ];
+            
+            const extendPromises = _.map(questionGroups, (questionGroup) => {
+              return this.createQuestionGroupLatestMessagePromise(questionGroup);
+            });
+            
+            return Promise.all(extendPromises);
+          }
+        }
       });
       
       this.defineModel('QuestionGroupUserGroupRole', {
@@ -571,6 +582,22 @@
     }
     
     register() {
+    }
+    
+    createThreadLatestMessagePromise(thread) {
+      return this.getLatestMessageCreatedByThreadIds([thread.dataValues.id]).then((maxCreatedAt) => {
+        thread.latestMessage = maxCreatedAt;
+      });
+    }
+    
+    createQuestionGroupLatestMessagePromise(questionGroup) {
+      return this.listQuestionGroupUserThreadsByQuestionGroupId(questionGroup.id)
+        .then((questionGroupUserThreads) => {
+          const threadIds = _.map(questionGroupUserThreads, 'threadId');
+          return this.getLatestMessageCreatedByThreadIds(threadIds).then((maxCreatedAt) => {
+            questionGroup.latestMessage = maxCreatedAt;
+          });
+        });
     }
   } 
   

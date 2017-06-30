@@ -88,7 +88,7 @@
         .then((userId) => {
           this.models.listNewsArticles(page * perPage, perPage)
             .then((newsArticles) => {
-              this.getItemReadMap(userId, _.map(newsArticles, 'id'))
+              this.getItemReadMap(userId, _.map(newsArticles, (newsArticle) => { return `news-article-${newsArticle.id}` }))
                 .then((itemReadMap) => {
                   client.sendMessage({
                     "type": "news-items-added",
@@ -128,7 +128,7 @@
                 .then((datas) => {
                   const data = _.flatten(datas);
           
-                  this.getItemReadMap(userId, _.map(data, 'id'))
+                  this.getItemReadMap(userId, _.map(data, (thread) => { `thread-${thread.id}` }))
                     .then((itemReadMap) => {
                       const threads = _.map(data, (thread) => {
                         const threadRead = itemReadMap[thread.id];
@@ -138,7 +138,7 @@
                           'title': thread.title,
                           'type': thread.type,
                           'imageUrl': thread.imageUrl,
-                          'latestMessage': thread.lastMessage,
+                          'latestMessage': thread.latestMessage,
                           'read': threadRead && threadRead.getTime() >= thread.latestMessage
                         };
                       });
@@ -590,7 +590,7 @@
     
     getThreadHasUnreadMessages(userId, threadId) {
       return new Promise((resolve, reject) => {
-        this.getItemRead(userId, threadId)
+        this.getItemRead(userId, `thread-${threadId}`)
           .then((itemRead) => {
             if (!itemRead) {
               resolve(true);
