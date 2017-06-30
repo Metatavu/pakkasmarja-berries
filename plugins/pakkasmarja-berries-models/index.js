@@ -26,6 +26,16 @@
         userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
       });
       
+      this.defineModel('ConnectSession', {
+        sid: {
+          type: Sequelize.STRING,
+          primaryKey: true
+        },
+        userId: Sequelize.STRING,
+        expires: Sequelize.DATE,
+        data: Sequelize.TEXT
+      });
+      
       this.defineModel('Thread', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING },
