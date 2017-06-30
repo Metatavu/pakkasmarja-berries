@@ -52,11 +52,11 @@
     
     getImagesMessages(req, res) {
       const messageId = req.params.messageId;
-      const messageAttachmentId = this.models.toUuid(req.params.messageAttachmentId);
+      const messageAttachmentId = req.params.messageAttachmentId;
       
       this.models.findMessageAttachments(messageAttachmentId)
         .then((messageAttachment) => {
-          if (!messageAttachment || (messageAttachment.messageId.toString() !== messageId)) {
+          if (!messageAttachment || (messageAttachment.messageId !== messageId)) {
             res.status(404).send();
           } else {
             res.set('Content-Type', messageAttachment.contentType);  
@@ -68,8 +68,8 @@
     
     postImageUploadMessage(req, res) {
       const file = req.file;
-      const threadId = this.models.toUuid(req.body.threadId);
-      const sessionId = this.models.toUuid(req.body.sessionId);
+      const threadId = req.body.threadId;
+      const sessionId = req.body.sessionId;
       const baseUrl = this.getBaseUrl();
       
       this.models.findSession(sessionId)
@@ -83,17 +83,18 @@
               if (readErr) {
                 res.status(500).send(readErr);
               } else {        
-                const messageAttachmentId = this.models.getUuid();
-                const messageId = this.models.getUuid();
                 const fileName = file.originalname;
                 const contentType = file.mimetype;
                 const size = file.size;
-                const messageContents = `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`;
-
-                this.models.createMessage(messageId, threadId, userId, messageContents)
-                  .then(() => {
-                    this.models.createMessageAttachment(messageAttachmentId, messageId, data, contentType, fileName, size)
-                      .then(() => {
+                
+                this.models.createMessage(threadId, userId, 'pending...')
+                  .then((message) => {
+                    this.models.createMessageAttachment(data, contentType, fileName, size)
+                      .then((messageAttachment) => {
+                        const messageId = message.id;
+                        const messageAttachmentId = messageAttachment.id;
+                        this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`);
+                    
                         const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
                         messageBuilder.threadId(threadId).messageId(messageId).send()
                           .then(() => {
@@ -144,12 +145,10 @@
             const reponse = JSON.parse(body);
             const userId = reponse.sub;
             if (this.userManagement.isValidUserId(userId)) {
-              const sessionId = this.models.getUuid();
-
-              this.models.createSession(sessionId, userId)
-                .then(() => {
+              this.models.createSession(userId)
+                .then((session) => {
                   res.send({
-                    sessionId: sessionId
+                    sessionId: session.id
                   });
                 })
                 .catch((sessionErr) => {

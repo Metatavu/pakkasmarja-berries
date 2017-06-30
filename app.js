@@ -111,7 +111,7 @@
         if (!sessionId) {
           callback(false);
         } else {
-          models.findSession(models.toUuid(sessionId))
+          models.findSession(sessionId)
             .then((session) => {
               callback(session && session.userId);
             })

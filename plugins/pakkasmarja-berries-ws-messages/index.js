@@ -35,7 +35,7 @@
         .then((userId) => {
           // TODO: is user allowed to post the message?
 
-          const threadId = this.models.toUuid(message.threadId);
+          const threadId = message.threadId;
           const contents = message.contents;
 
           this.models.findThread(threadId)
@@ -55,14 +55,10 @@
     }
     
     onSendMessageConversation(userId, thread, contents, client) {
-      const threadUserGroupIds = Object.keys(thread.userGroupRoles);
-
-      const messageId = this.models.getUuid();
-
-      this.models.createMessage(messageId, thread.id, userId, contents)
-        .then(() => {
+      this.models.createMessage(thread.id, userId, contents)
+        .then((message) => {
           const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
-          messageBuilder.thread(thread).messageId(messageId).threadUserGroupIds(threadUserGroupIds).send()
+          messageBuilder.thread(thread).message(message).send()
             .then(() => { })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
         })
@@ -72,15 +68,12 @@
     onSendMessageQuestion(userId, thread, contents, client) {
       this.models.findQuestionGroupByThreadId(thread.id)
         .then((questionGroup) => {
-          const userGroupIds = Object.keys(questionGroup.userGroupRoles);
-          const messageId = this.models.getUuid();
-          
-          this.models.createMessage(messageId, thread.id, userId, contents)
-            .then(() => {
+          this.models.createMessage(thread.id, userId, contents)
+            .then((message) => {
               this.models.updateGroupLastestMessage(questionGroup, new Date())
                 .then(() => {
                   this.clusterMessages.createMessageAddedBuilder()
-                    .thread(thread).messageId(messageId).threadUserGroupIds(userGroupIds).send()
+                    .thread(thread).message(message).send()
                     .then(() => { })
                     .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                 })
@@ -97,10 +90,14 @@
       
       this.getUserId(client)
         .then((userId) => {
-          this.models.listNewsArticles('wp', page * perPage, perPage)
+          this.models.listNewsArticles(page * perPage, perPage)
             .then((newsArticles) => {
+              console.log(JSON.stringify(newsArticles));
+              
               this.getItemReadMap(userId, _.map(newsArticles, 'id'))
-                .then((itemReadMap) => {  
+                .then((itemReadMap) => {
+                  console.log(_.map(newsArticles, 'id'));
+                  
                   client.sendMessage({
                     "type": "news-items-added",
                     "data": {
@@ -110,10 +107,10 @@
                           "id": newsArticle.id,
                           "contents": newsArticle.contents,
                           "title": newsArticle.title,
-                          "created": moment(newsArticle.created).format(),
-                          "modified": moment(newsArticle.modified).format(),
+                          "created": moment(newsArticle.createdAt).format(),
+                          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
                           "image": newsArticle.imageUrl,
-                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.created
+                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt
                         };
                       })
                     }
@@ -132,7 +129,7 @@
           this.getUserGroupIds(client, userId)
             .then((userGroupIds) => {
               const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
+                return this.models.listConversationThreadsByUserGroupId(userGroupId);
               });
 
               Promise.all(threadPromises)
@@ -180,50 +177,56 @@
               Promise.all(questionGroupPromises)
                 .then((datas) => {
                   const data = _.flatten(datas);
+                  const rolePromises = _.map(data, (questionGroup) => {
+                    return this.userManagement.getQuestionGroupUserRole(config.get('keycloak:realm'), questionGroup.id, userId);
+                  });
                   
-                  const questionGroups = _.map(data, (questionGroup) => {
-                    return {
-                      id: questionGroup.id,
-                      title: questionGroup.title,
-                      originId: questionGroup.originId,
-                      imageUrl: questionGroup.imageUrl,
-                      latestMessage: questionGroup.latestMessage,
-                      role: this.getQuestionGroupRole(questionGroup, userGroupIds)
-                    };
-                  });
-
-                  const threadsReadPromises = _.map(questionGroups, (questionGroup, index) => {
-                    return new Promise((resolve, reject) => {
-                      let threadIds = [];
-                      const userThreads = data[index].userThreads||{};
-                      if (questionGroup.role === 'manager') {
-                        threadIds = _.values(userThreads);
-                      } else {
-                        threadIds = _.values(_.filter(userThreads, (threadId, threadUserId) => {
-                          return userId === threadUserId;
-                        }));
-                      }
-                      
-                      this.getThreadsHasUnreadMessages(userId, threadIds)
-                        .then(resolve)
-                        .catch(reject);
-                    });
-                  });
-
-                  Promise.all(threadsReadPromises)
-                    .then((threadsHasUnreadMessages) => {
-                      client.sendMessage({
-                        "type": "question-groups-added",
-                        "data": {
-                          'question-groups': _.map(questionGroups, (questionGroup, index) => {
-                            return Object.assign(questionGroup, {
-                              read: !threadsHasUnreadMessages[index]
-                            });
-                          })
-                        }
+                  Promise.all(rolePromises)
+                    .then((roles) => {
+                      const questionGroups = _.map(data, (questionGroup, index) => {
+                        return {
+                          id: questionGroup.id,
+                          title: questionGroup.title,
+                          originId: questionGroup.originId,
+                          imageUrl: questionGroup.imageUrl,
+                          latestMessage: questionGroup.latestMessage,
+                          role: roles[index]
+                        };
                       });
-                    });
+                      
+                      const threadsReadPromises = _.map(questionGroups, (questionGroup, index) => {
+                        return this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroup.id)
+                          .then((questionGroupUserThreads) => {
+                            let threadIds = [];
 
+                            if (questionGroup.role === 'manager') {
+                              threadIds = _.map(questionGroupUserThreads, 'threadId');
+                            } else {
+                              _.forEach(questionGroupUserThreads, (questionGroupUserThread) => {
+                                if (questionGroupUserThread.userId === userId) {
+                                  threadIds.push(questionGroupUserThread.threadId);
+                                }
+                              });
+                            }
+
+                            return this.getThreadsHasUnreadMessages(userId, threadIds);
+                          });
+                      });
+
+                      Promise.all(threadsReadPromises)
+                        .then((threadsHasUnreadMessages) => {
+                          client.sendMessage({
+                            "type": "question-groups-added",
+                            "data": {
+                              'question-groups': _.map(questionGroups, (questionGroup, index) => {
+                                return Object.assign(questionGroup, {
+                                  read: !threadsHasUnreadMessages[index]
+                                });
+                              })
+                            }
+                          });
+                        });                      
+                    });
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUPS'));
             })
@@ -233,15 +236,15 @@
     }
     
     onSelectQuestionGroupThread(message, client) {
-      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      const questionGroupId = message['question-group-id'];
       this.getUserId(client)
         .then((userId) => {
           this.models.findQuestionGroup(questionGroupId)
             .then((questionGroup) => {
-              this.models.findOrCreateQuestionGroupUserThread(questionGroup, userId)
+              this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroup.id, userId)
                 .then((data) => {
                   const thread = data.thread;
-                  const created = data.created;
+                  const created = thread.createdAt;
                   
                   client.sendMessage({
                     "type": "question-thread-selected",
@@ -251,34 +254,30 @@
                   });
                   
                   if (created) {
-                    const userGroupIds = [];
-                    _.forEach(questionGroup.userGroupRoles, (role, userGroupId) => {
-                      if (role === 'manager') {
-                        userGroupIds.push(userGroupId);
-                      }
-                    });
-                    
-                    this.userManagement.findUser(config.get('keycloak:realm'), userId)
-                      .then((user) => {
-                        this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
-                          .then((userIds) => {
-                            userIds.forEach((userId) => {
-                              this.shadyMessages.trigger("client:question-group-thread-added", {
-                                'question-group-id': questionGroupId,
-                                'thread': {
-                                  id: thread.id,
-                                  latestMessage: thread.latestMessage,
-                                  title: this.userManagement.getUserDisplayName(user),
-                                  type: thread.type,
-                                  imageUrl: this.userManagement.getUserImage(user)
-                                },
-                                'user-id': userId
-                              });
-                            });
+                    this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
+                      .then((managerUserGroupIds) => {
+                        this.userManagement.findUser(config.get('keycloak:realm'), userId)
+                          .then((user) => {
+                            this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), managerUserGroupIds)
+                              .then((userIds) => {
+                                userIds.forEach((userId) => {
+                                  this.shadyMessages.trigger("client:question-group-thread-added", {
+                                    'question-group-id': questionGroupId,
+                                    'thread': {
+                                      id: thread.id,
+                                      latestMessage: thread.latestMessage,
+                                      title: this.userManagement.getUserDisplayName(user),
+                                      type: thread.type,
+                                      imageUrl: this.userManagement.getUserImage(user)
+                                    },
+                                    'user-id': userId
+                                  });
+                                });
+                              })
+                              .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
                           })
-                          .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
-                      })
-                      .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+                          .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));                        
+                      });
                   }
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
@@ -289,15 +288,15 @@
     }
     
     onGetQuestionGroupThreads(message, client) {
-      const questionGroupId = this.models.toUuid(message['question-group-id']);
+      const questionGroupId = message['question-group-id'];
       // TODO: Permission to list threads
       
       this.getUserId(client)
         .then((userId) => {
-          this.models.findQuestionGroup(questionGroupId)
-            .then((questionGroup) => {
-              const userIds = _.keys(questionGroup.userThreads||{});
-              const threadIds = _.values(questionGroup.userThreads||{});
+          this.models.listQuestionGroupUserThreadsByQuestionGroupId()
+            .then((questionGroupUserThreads) => {
+              const userIds = _.map(questionGroupUserThreads, 'userId');
+              const threadIds = _.map(questionGroupUserThreads, 'threadId');
               
               this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
                 .then((userMap) => {
@@ -346,7 +345,7 @@
     }
     
     onGetMessages(message, client) {
-      const threadId = this.models.toUuid(message['thread-id']);
+      const threadId = message['thread-id'];
       const firstResult = message['first-result'];
       const maxResults = message['max-results'];
       
@@ -386,7 +385,7 @@
       
       this.getUserId(client)
         .then((userId) => {
-          this.models.createItemRead(id, userId, new Date())
+          this.models.upsertItemRead(id, userId)
             .then(() => {})
             .catch(this.handleWebSocketError(client, 'MARK_ITEM_READ'));
         })
@@ -405,7 +404,7 @@
             this.getUserGroupIds(client)
               .then((userGroupIds) => {
                 const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                  return this.models.listThreadsByTypeAndUserGroupId('conversation', userGroupId);
+                  return this.models.listConversationThreadsUserGroupId(userGroupId);
                 });
 
                 Promise.all(threadPromises)
@@ -515,53 +514,20 @@
     }
     
     getThreadRoleMap(thread, userIds) {
-      return new Promise((resolve, reject) => {
-        
-        const userGroupPromises = _.map(userIds, (userId) => {
-          return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId);
-        });
-        
-        Promise.all(userGroupPromises)
-          .then((userUserGroupIds) => {
-            if (thread.type === 'conversation') {
-              this.getUserGroupRolesRoleMap(thread.userGroupRoles, userIds, userUserGroupIds)
-                .then(resolve)
-                .catch(reject);
-            } else {
-              this.models.findQuestionGroupByThreadId(thread.id)
-                .then((questionGroup) => {
-                  this.getUserGroupRolesRoleMap(questionGroup.userGroupRoles, userIds, userUserGroupIds)
-                    .then(resolve)
-                    .catch(reject);
-                })
-                .catch(reject);
-            }
-          })
-          .catch(reject);
+      const userRolePromises = _.map(userIds, (userId) => {
+        return this.userManagement.getThreadUserRole(config.get('keycloak:realm'), thread.id, userId);
       });
-    }
-    
-    getUserGroupRolesRoleMap(userGroupRoles, userIds, userUserGroupIds) {
-      return new Promise((resolve, reject) => {
-        const result = {};
-
-        const rolePromises = _.map(userUserGroupIds, (userGroupIds) => {
-          return this.userManagement.getUserGroupRole(userGroupRoles, userGroupIds);
+      
+      return Promise.all(userRolePromises)
+        .then((roles) => {
+          const result = {};
+          
+          _.forEach(userIds, (userId, index) => {
+            result[userId] = roles[index];
+          });
+          
+          return result;
         });
-
-        Promise.all(rolePromises)
-          .then((roles) => {
-            const result = {};
-
-            userIds.forEach((userId, index) => {
-              const role = roles[index];
-              result[userId] = role;
-            });
-
-            resolve(result);
-          })
-          .catch(reject);
-      });
     }
     
     translateMessage(message, user, role) {             
@@ -571,23 +537,15 @@
         userId: message.userId,
         userName: this.userManagement.getUserDisplayName(user),  
         contents: message.contents,
-        created: message.created,
-        modified: message.modified,
+        created: message.createdAt,
+        modified: message.modifiedAt || message.createdAt,
         role: role
       };
     }
     
-    getConversationThreadRole(conversationThread, userGroupIds) {
-      return this.userManagement.getUserGroupRole(conversationThread.userGroupRoles, userGroupIds);
-    }
-    
-    getQuestionGroupRole(questionGroup, userGroupIds) {
-      return this.userManagement.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
-    }
-    
     getUserId(client) {
       return new Promise((resolve, reject) => {
-        this.models.findSession(this.models.toUuid(client.getSessionId()))
+        this.models.findSession(client.getSessionId())
           .then((session) => {
             resolve(session.userId);
           })
@@ -684,7 +642,7 @@
     
     getItemRead(userId, id) {
       return new Promise((resolve, reject) => {
-        this.models.findItemRead(id.toString(), userId)
+        this.models.findItemRead(id, userId)
           .then((itemRead) => {
             resolve(itemRead ? itemRead.time : null);
           })

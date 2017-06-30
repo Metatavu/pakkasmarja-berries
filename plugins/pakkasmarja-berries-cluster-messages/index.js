@@ -53,12 +53,12 @@
       this._role = role;
       return this;
     }
-    
+    /**
     threadUserGroupIds(threadUserGroupIds) {
       this._threadUserGroupIds = threadUserGroupIds;
       return this;
     }
-    
+    **/
     threadUserIds(threadUserIds) {
       this._threadUserIds = threadUserIds;
       return this;
@@ -75,8 +75,8 @@
         userId: message.userId,
         userName: this.userManagement.getUserDisplayName(user),  
         contents: message.contents,
-        created: message.created,
-        modified: message.modified,
+        created: message.createdAt,
+        modified: message.modifiedAt || message.createdAt,
         role: role
       };
     }
@@ -178,49 +178,15 @@
         } else {
           this._resolveThread()
             .then((thread) => {
-              this._resolveUserGroupIds()
-                .then((userGroupIds) => {
-                  if (thread.type === 'conversation') {
-                    this.role(this.userManagement.getUserGroupRole(thread.userGroupRoles, userGroupIds));
-                    resolve(this._role);
-                  } else if (thread.type === 'question') {
-                    this._resolveQuestionGroup()
-                      .then((questionGroup) => {
-                        this.role(this.userManagement.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds));
-                        resolve(this._role);
-                      })
-                      .catch(reject);
-                  } else {
-                    reject("Unknown thread type");
-                  }
-                })
-                .catch(reject);
+              this._resolveUser()
+                .then((user) => {
+                  this.role(this.userManagement.getThreadUserRole(config.get('keycloak:realm'), thread.id, user.id));
+                  resolve(this._role);
+                });
             })
             .catch(reject);
         }
       });
-    }
-    
-    _resolveThreadUserGroupIds() {
-      return new Promise((resolve, reject) => {
-        if (this._threadUserGroupIds) {
-          resolve(this._threadUserGroupIds);
-        } else if (this._thread) {
-          if (this._thread.type === 'conversation') {
-            resolve(Object.keys(this._thread.userGroupRoles));
-          } else if (this._thread.type === 'question') {
-            this._resolveQuestionGroup()
-              .then((questionGroup) => {
-                resolve(Object.keys(questionGroup.userGroupRoles));
-              })
-              .catch(reject);
-          } else {
-            reject("Unknown thread type");
-          }
-        } else {
-          reject("Could not resolve thread user group ids");
-        }
-      });  
     }
     
     _resolveUserGroupIds() {
@@ -247,16 +213,14 @@
         if (this._threadUserIds) {
           resolve(this._threadUserIds);
         } else {
-          this._resolveThreadUserGroupIds()
-            .then((userGroupIds) => {
-              this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), userGroupIds)
+          this._resolveThread()
+            .then((thread) => {
+              this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
                 .then((threadUserIds) => {
-                  this.threadUserIds(threadUserIds);
+                  this._threadUserIds = threadUserIds;
                   resolve(this._threadUserIds);
-                })
-                .catch(reject);
-            })
-            .catch(reject);
+                });
+            });
         }
       });
     }
@@ -324,7 +288,7 @@
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
         if (sessionId) {
-          this.models.findSession(this.models.toUuid(sessionId.toString()))
+          this.models.findSession(sessionId)
             .then((session) => {
               if (session.userId === userId) {
                 client.sendMessage({
@@ -352,7 +316,7 @@
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
         if (sessionId) {
-          this.models.findSession(this.models.toUuid(sessionId.toString()))
+          this.models.findSession(sessionId)
             .then((session) => {
               if (session.userId === userId) {
                 client.sendMessage({
@@ -378,25 +342,27 @@
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
         if (sessionId) {
-          this.models.findSession(this.models.toUuid(sessionId.toString()))
+          this.models.findSession(sessionId)
             .then((session) => {
-              
               if (session.userId === userId) {
                 this.getUserGroupIds(userId)
                   .then((userGroupIds) => {
-                    client.sendMessage({
-                      "type": "question-groups-added",
-                      "data": {
-                        'question-groups': [ {
-                          id: questionGroup.id,
-                          title: questionGroup.title,
-                          originId: questionGroup.originId,
-                          latestMessage: questionGroup.latestMessage,
-                          imageUrl: questionGroup.imageUrl,
-                          role: this.getQuestionGroupRole(questionGroup, userGroupIds)
-                        }]
-                      }
-                    });
+                    this.userManagement.getQuestionGroupUserRole(realm, questionGroup.id, userId)
+                      .then((role) => {
+                        client.sendMessage({
+                          "type": "question-groups-added",
+                          "data": {
+                            'question-groups': [ {
+                              id: questionGroup.id,
+                              title: questionGroup.title,
+                              originId: questionGroup.originId,
+                              latestMessage: questionGroup.latestMessage,
+                              imageUrl: questionGroup.imageUrl,
+                              role: role
+                            }]
+                          }
+                        });                        
+                      });
                   })
                   .catch((err) => {
                     this.logger.error(`Failed to list userGroupIds for ${userId}`, err);
@@ -419,7 +385,7 @@
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
         if (sessionId) {
-          this.models.findSession(this.models.toUuid(sessionId.toString()))
+          this.models.findSession(sessionId)
             .then((session) => {
               if (session.userId === userId) {
                 client.sendMessage({
@@ -436,10 +402,6 @@
             });
         }
       });
-    }
-    
-    getQuestionGroupRole(questionGroup, userGroupIds) {
-      return this.userManagement.getUserGroupRole(questionGroup.userGroupRoles, userGroupIds);
     }
     
     getUserGroupIds(userId) {

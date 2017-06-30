@@ -6,10 +6,12 @@ module.exports = [
     "amqpUrl": config.get('amqp:url')
   },
   {
-    "packagePath": "shady-cassandra",
-    "keyspace": 'berries',
-    "contactPoints": config.get('cassandra:contact-points'),
-    "migration": "alter"
+    "packagePath": "shady-sequelize",
+    "host": "localhost",
+    "database": "pakkasmarja",
+    "username": "root",
+    "password": "random",
+    "dialect": "mysql"
   },
   {
     "packagePath": "architect-logger",

@@ -8,162 +8,282 @@
   const util = require('util');
   const Promise = require('bluebird');
   
-  class PakkasmarjaBerriesModels {
+  class Models {
     
-    constructor (models) {
-      this._models = models;
-      this._registeredModels = [];
+    constructor (logger, shadySequelize) {
+      this.logger = logger;
+      this.sequelize = shadySequelize.sequelize;
+      this.Sequelize = shadySequelize.Sequelize;
+      this.modelNames = [];
+      this.defineModels();
+    }
+    
+    defineModels() {
+      const Sequelize = this.Sequelize;
       
-      this._registerModel('Session', {
-        fields: {
-          id: "uuid",
-          userId: "text",
-          created: "timestamp"
-        },
-        key : ["id"]
+      this.defineModel('Session', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
       });
       
-      this._registerModel('Message', {
-        fields: {
-          id: "uuid",
-          threadId: "uuid",
-          userId: "text",
-          contents: "text",
-          created: "timestamp",
-          modified: "timestamp"
-        },
-        key : [ [ "threadId" ], "userId", "created" ],
-        indexes: ["userId", "threadId" ],
-        clustering_order: {"created": "desc"}
+      this.defineModel('Thread', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        title: { type: Sequelize.STRING },
+        type: { type: Sequelize.STRING, allowNull: false },
+        originId: { type: Sequelize.STRING },
+        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       });
       
-      this._registerModel('MessageAttachment', {
-        fields: {
-          id: "uuid",
-          messageId: "uuid",
-          contents: "blob",
-          contentType: "text",
-          fileName: "text",
-          size: "int"
-        },
-        key : [ [ "id" ], "messageId" ],
-        indexes: [ "messageId" ]
+      this.defineModel('ThreadUserGroupRole', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        userGroupId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 }  },
+        role: { type: Sequelize.STRING, allowNull: false  }
+      }, {
+        indexes: [{
+          name: 'UN_THREADUSERGROUPROLE_THREADID_USERGROUPID',
+          unique: true,
+          fields: ['threadId', 'userGroupId']
+        }]
       });
       
-      this._registerModel('Thread', {
-        fields: {
-          id: "uuid",
-          title: "text",
-          type: "text",
-          originId: "text",
-          imageUrl: "text",
-          latestMessage: "timestamp",
-          userGroupRoles: {
-            type: "map",
-            typeDef: "<text,text>"
-          }
-        },
-        key : [ [ "id" ]  ],
-        indexes: ["type", "userGroupRoles", "originId" ]
+      this.defineModel('Message', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
+        contents: { type: Sequelize.TEXT, allowNull: false }
       });
       
-      this._registerModel('QuestionGroup', {
-        fields: {
-          id: "uuid",
-          title: "text",
-          originId: "text",
-          imageUrl: "text",
-          latestMessage: "timestamp",
-          userGroupRoles: {
-            type: "map",
-            typeDef: "<text,text>"
-          },
-          userThreads: {
-            type: "map",
-            typeDef: "<text,uuid>"
-          }
-        },
-        key : [ [ "id" ]  ],
-        indexes: [ "userGroupRoles", "originId" ]
+      this.defineModel('QuestionGroup', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        title: { type: Sequelize.STRING, allowNull: false },
+        originId: { type: Sequelize.STRING, allowNull: false },
+        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       });
       
-      this._registerModel('NewsArticle', {
-        fields: {
-          id: "uuid",
-          title: "text",
-          contents: "text",
-          created: "timestamp",
-          modified: "timestamp",
-          originId: "text",
-          imageUrl: "text",
-          source: "text"
-        },
-        key : [ [ "source" ], "created"  ],
-        indexes: [ "originId" ],
-        clustering_order: {"created": "desc"}
+      this.defineModel('QuestionGroupUserGroupRole', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
+        userGroupId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 }  },
+        role: { type: Sequelize.STRING, allowNull: false  }
+      }, {
+        indexes: [{
+          name: 'UN_QUESTIONGROUPUSERGROUPROLE_QUESTIONGROUPID_USERGROUPID',
+          unique: true,
+          fields: ['questionGroupId', 'userGroupId']
+        }]
       });
       
-      this._registerModel('ItemRead', {
-        fields: {
-          itemId: "text",
-          userId: "text",
-          time: "timestamp"
-        },
-        key : [[ "itemId"], "userId" ]
+      this.defineModel('QuestionGroupUserThread', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
+      }, {
+        indexes: [{
+          name: 'UN_QUESTIONGROUPUSERTHREAD_QUESTIONGROUPID_THREADID',
+          unique: true,
+          fields: ['questionGroupId', 'threadId']
+        }]
+      });
+      
+      this.defineModel('NewsArticle', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        title: { type: Sequelize.STRING, allowNull: false },
+        contents: { type: Sequelize.TEXT, allowNull: false },
+        originId: { type: Sequelize.STRING, allowNull: false },
+        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+      });
+      
+      this.defineModel('MessageAttachment', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: 'id' } },
+        contents: { type: Sequelize.BLOB, allowNull: false },
+        contentType: { type: Sequelize.STRING, allowNull: false },
+        fileName: { type: Sequelize.STRING },
+        size: { type: Sequelize.BIGINT }
+      });
+      
+      this.defineModel('ItemRead', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
+        itemId: { type: Sequelize.STRING, allowNull: false }
+      }, {
+        indexes: [{
+          name: 'UN_ITEMREAD_USERID_ITEMID',
+          unique: true,
+          fields: ['userId', 'itemId']
+        }]
       });
     }
     
-    getModels() {
-      return this._models;
+    defineModel(name, attributes, options) {
+      this[name] = this.sequelize.define(name, attributes, options);
+      this.modelNames.push(name);
     }
     
-    getUuid() {
-      return this.getModels().uuid();
+    // Sessions
+    
+    findSession(id) {
+      return this.Session.findOne({ where: { id : id } });
     }
     
-    toUuid(string) {
-      return this.getModels().uuidFromString(string);
+    createSession(userId) {
+      return this.sequelize.sync()
+        .then(() => this.Session.create({
+          userId: userId
+      }));
     }
     
-    findSession(sessionId) {
-      return this.instance.Session.findOneAsync({ id: sessionId });
-    }
-    
-    createSession(sessionId, userId) {
-      const session = new this.instance.Session({
-        id: sessionId,
-        created: new Date().getTime(),
-        userId: userId
-      });
-      
-      return session.saveAsync();
-    }
-    
-    createMessage(messageId, threadId, userId, contents) {
-      const created = new Date().getTime();
-      
-      return new Promise((resolve, reject) => {
-        this.instance.Thread.updateAsync({ id: threadId }, { latestMessage: created })
-          .then(() => {
-            const newMessage = new this.instance.Message({
-              id: messageId,
-              threadId: threadId,
-              userId: userId,
-              contents: contents,
-              created: created,
-              modified: created
-            });
+    // Threads
             
-            newMessage.saveAsync()
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+    createThread(originId, title, type, imageUrl) {
+      return this.sequelize.sync()
+        .then(() => this.Thread.create({
+          originId: originId,
+          title: title,
+          type: type,
+          imageUrl: imageUrl
+      }));
+    }
+    
+    findThread(id) {
+      return this.Thread.findOne({ where: { id : id } });
+    }
+    
+    findThreadByOriginId(originId) {
+      return this.Thread.findOne({ where: { originId : originId } });
+    }
+    
+    listConversationThreadsByUserGroupId(userGroupId) {
+      return this.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
+        .then((threadUserGroupRoles) => {
+          return this.Thread.findAll({ where: { 
+            id: {$in: _.map(threadUserGroupRoles, 'threadId') }
+          }});
+        });
+    }
+    
+    getThreadUserGroupRoleMap(threadId) {
+      return this.findThread(threadId)
+        .then((thread) => {
+          if (thread.type === 'conversation') {
+            return this.listThreadUserGroupRolesByThreadId(thread.id)
+              .then((threadUserGroupRoles) => {
+                const result = {};
+        
+                _.forEach(threadUserGroupRoles, (threadUserGroupRole) => {
+                  result[threadUserGroupRole.userGroupId] = threadUserGroupRole.role;
+                });
+                
+                return result;
+              });
+          } else if (thread.type === 'question') {
+            return this.findQuestionGroupByThreadId(thread.id)
+              .then((questionGroup) => {
+                return this.getQuestionGroupUserGroupRoleMap(questionGroup.id);
+              });
+          }
+        });
+    }
+    
+    getQuestionGroupManagerUserGroupIds(questionGroupId) {
+      return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
+        .then((questionGroupUserGroupRoles) => {
+          const result = [];
+
+          _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
+            if (questionGroupUserGroupRole.role === 'manager') {
+              
+            }
+            result.push(questionGroupUserGroupRole.userGroupId);
+          });
+
+          return result;
+        });
+    }
+    
+    getQuestionGroupUserGroupRoleMap(questionGroupId) {
+      return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
+        .then((questionGroupUserGroupRoles) => {
+          const result = {};
+
+          _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
+            result[questionGroupUserGroupRole.userGroupId] = questionGroupUserGroupRole.role;
+          });
+
+          return result;
+        });
+    }
+    
+    listThreadUserGroupIds(threadId) {
+      return this.findThread(threadId)
+        .then((thread) => {
+          if (!thread) {
+            this.logger.error("Thread not found");
+            return [];
+          } else {
+            if (thread.type === 'conversation') {
+              return this.listThreadUserGroupRolesByThreadId(thread.id)
+                .then((threadUserGroupRole) => {
+                  return _.map(threadUserGroupRole, 'userGroupId');
+                });
+            } else if (thread.type === 'question') {
+              return this.findQuestionGroupByThreadId(thread.id)
+                .then((questionGroup) => {
+                  return listQuestionGroupUserGroupIds(questionGroup.id);
+                });
+            }
+          }
+        });
+    }
+    
+    listThreadUserGroupRolesByThreadId(threadId) {
+      return this.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
+    }
+    
+    updateThread(id, title, imageUrl) {
+      return this.Thread.update({
+        title: title,
+        imageUrl: imageUrl
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
-    findMessage(messageId) {
-      return this.instance.Message.findOneAsync({ id: messageId }, { allow_filtering: true });
+    setThreadUserGroupRoles(threadId, roleMap) {
+      const createPromises = _.map(roleMap, (role, userGroupId) => {
+        return this.ThreadUserGroupRole.create({
+            threadId: threadId,
+            userGroupId: userGroupId,
+            role: role
+        });
+      });
+      
+      return this.ThreadUserGroupRole.destroy({ where: { threadId : threadId } })
+        .then(() => {
+          return this.sequelize.sync()
+            .then(() => { 
+              return Promise.all(createPromises);
+            });
+        });
+    }
+    
+    // Messages
+    
+    createMessage(threadId, userId, contents) {
+      return this.sequelize.sync()
+        .then(() => this.Message.create({
+          threadId: threadId,
+          userId: userId,
+          contents: contents
+      }));
+    }
+    
+    findMessage(id) {
+      return this.Message.findOne({ where: { id : id } });
     }
     
     listMessagesByThreadId(threadId, firstResult, maxResults) {
@@ -171,264 +291,273 @@
         return Promise.resolve([]);
       }
       
-      return new Promise((resolve, reject) => {      
-        // TODO: paging should be optimized
-
-        const limit = (firstResult || 0) + (maxResults || 0);
-
-        const query = {
-          'threadId': threadId,
-          '$limit': limit
-        };
-        
-        this.instance.Message.findAsync(query)
-          .then((messages) => {
-            if (maxResults !== undefined) {
-              resolve(messages.splice(firstResult));
-            } else {
-              resolve(messages);
-            }
-          })
-          .catch(reject);
+      return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults });
+    }
+    
+    updateMessage(id, contents) {
+      return this.Message.update({
+        contents: contents
+      }, {
+        where: {
+          id: id
+        }
       });
     }
-                
-    createThread(threadId, originId, title, type, imageUrl, userGroupRoles) {
-      return new this.instance.Thread({
-        id: threadId,
-        title: title,
-        type: type,
-        originId: originId,
-        imageUrl: imageUrl,
-        userGroupRoles: userGroupRoles
-      }).saveAsync(); 
-    }
     
-    findThread(id) {
-      return this.instance.Thread.findOneAsync({ id: id });
+    getLatestMessageCreatedByThreadIds() {
+      
     }
-    
-    findThreadByOriginId(originId) {
-      return this.instance.Thread.findOneAsync({ originId: originId }, { allow_filtering: true });
-    }
-    
-    listThreadsByUserGroupId(userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
-    }
-    
-    listThreadsByTypeAndUserGroupId(type, userGroupId) {
-      return this.instance.Thread.findAsync({ userGroupRoles: { '$contains_key': userGroupId }, type: type }, { allow_filtering: true });
-    }
-    
-    updateThread(thread, title, imageUrl, userGroupRoles) {
-      thread.title = title;
-      thread.imageUrl = imageUrl;
-      thread.userGroupRoles = userGroupRoles;
-      return thread.saveAsync(); 
-    }
-             
-    createQuestionGroup(questionGroupId, originId, title, imageUrl, userGroupRoles) {
-      return new this.instance.QuestionGroup({
-        id: questionGroupId,
-        title: title,
-        originId: originId,
-        imageUrl: imageUrl,
-        userGroupRoles: userGroupRoles,
-        userThreads: {}
-      }).saveAsync(); 
+  
+    // QuestionGroup
+      
+    createQuestionGroup(originId, title, imageUrl) {
+      return this.sequelize.sync()
+        .then(() => this.QuestionGroup.create({
+          title: title,
+          originId: originId,
+          imageUrl: imageUrl
+      }));
     }
     
     findQuestionGroup(id) {
-      return this.instance.QuestionGroup.findOneAsync({ id: id });
-    }
-    
-    findQuestionGroupByOriginId(originId) {
-      return this.instance.QuestionGroup.findOneAsync({ originId: originId }, { allow_filtering: true });
+      return this.QuestionGroup.findOne({ where: { id : id } });
     }
     
     findQuestionGroupByThreadId(threadId) {
-      return this.instance.QuestionGroup.findOneAsync({ userThreads: { '$contains': threadId } }, { allow_filtering: true } );
+      return this.QuestionGroupUserThread.findOne({ where: { threadId : threadId } })
+        .then((questionGroupUserThread) => {
+          if (questionGroupUserThread) {
+            return this.findQuestionGroup(questionGroupUserThread.questionGroupId);
+          } else {
+            return null;
+          }
+        });
+    }
+    
+    findQuestionGroupByOriginId(originId) {
+      return this.QuestionGroup.findOne({ where: { originId : originId } });
     }
     
     listQuestionGroupsByUserGroupId(userGroupId) {
-      return this.instance.QuestionGroup.findAsync({ userGroupRoles: { '$contains_key': userGroupId } }, { allow_filtering: true } );
+      return this.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
+        .then((questionGroupUserGroupRoles) => {
+          return this.QuestionGroup.findAll({ where: { 
+            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') }
+          }});
+        });
     }
     
-    updateQuestionGroup(questionGroup, title, imageUrl, userGroupRoles) {
-      questionGroup.title = title;
-      questionGroup.imageUrl = imageUrl;
-      questionGroup.userGroupRoles = userGroupRoles;
-      return questionGroup.saveAsync(); 
+    updateQuestionGroup(id, title, imageUrl) {
+      return this.QuestionGroup.update({
+        title: title,
+        imageUrl: imageUrl
+      }, {
+        where: {
+          id: id
+        }
+      });
     }
     
-    updateGroupLastestMessage(questionGroup, latestMessage) {
-      questionGroup.latestMessage = latestMessage;
-      return questionGroup.saveAsync(); 
-    }
-    
-    findOrCreateQuestionGroupUserThread(questionGroup, userId) {
-      if (!userId) {
-        console.error("userId not specified");
-        return;
-      }
+    setQuestionGroupUserGroupRoles(questionGroupId, roleMap) {
+      const createPromises = _.map(roleMap, (role, userGroupId) => {
+        return this.QuestionGroupUserGroupRole.create({
+            questionGroupId: questionGroupId,
+            userGroupId: userGroupId,
+            role: role
+        });
+      });
       
-      const userThreads = questionGroup.userThreads || {};
-
-      let threadId = userThreads[userId];
-      if (threadId) {
-        return new Promise((resolve, reject) => {
-          this.findThread(threadId)
-            .then((thread) => {
-              resolve({
-                thread: thread, 
-                created: false
-              });
-            })
-            .catch(reject);
-        });
-      } else {
-        return new Promise((resolve, reject) => {
-          threadId = this.getUuid();
-          this.createThread(threadId, null, null, "question", null, null)
+      return this.QuestionGroupUserGroupRole.destroy({ where: { questionGroupId : questionGroupId } })
+        .then(() => {
+          return this.sequelize.sync()
             .then(() => {
-              const userThreadAdd = {};
-              userThreadAdd[userId] = threadId;
-              this.instance.QuestionGroup.updateAsync({ id:questionGroup.id }, { userThreads:{ '$add': userThreadAdd } })
-                .then(() => {
-                  this.findThread(threadId)
-                    .then((thread) => {
-                      resolve({
-                        thread: thread, 
-                        created: true
-                      });
-                    })
-                    .catch(reject);
-                })
-                .catch(reject);
-            })
-            .catch(reject);
+              return Promise.all(createPromises);          
+            });
         });
-      }
     }
     
-    createNewsArticle(newsArticleId, source, originId, title, contents, created, modified, imageUrl) {
-      return new this.instance.NewsArticle({
-         id: newsArticleId,
-         title: title,
-         contents: contents,
-         created: created,
-         modified: modified,
-         originId:originId,
-         imageUrl: imageUrl,
-         source: source
-      }).saveAsync(); 
+    // QuestionGroupUserThreads
+    
+    createQuestionGroupUserThread(questionGroupId, threadId, userId) {
+      return this.sequelize.sync()
+        .then(() => this.QuestionGroupUserThread.create({
+          threadId: threadId,
+          questionGroupId: questionGroupId,
+          userId: userId
+      }));
+    }
+    
+    findQuestionGroupUserThread(id) {
+      return this.QuestionGroupUserThread.findOne({ where: { id : id } });
+    }
+    
+    findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId) {
+      return this.QuestionGroupUserThread.findOne({ where: { questionGroupId : questionGroupId, userId: userId } } );
+    }
+    
+    findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId) {
+      return this.findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId)
+        .then((questionGroupUserThread) => {
+          if (questionGroupUserThread) {
+            return questionGroupUserThread;
+          } else {
+            return this.createThread(null, null, "question", null)
+              .then((thread) => {
+                return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId);
+              });
+          }
+        });
+    }
+    
+    listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId) {
+      return this.QuestionGroupUserThread.findAll({ where: { questionGroupId : questionGroupId } } );
+    }
+    
+    // News Articles
+    
+    createNewsArticle(originId, title, contents, imageUrl) {
+      return this.sequelize.sync()
+        .then(() => this.NewsArticle.create({
+          title: title,
+          contents: contents,
+          originId: originId,
+          imageUrl: imageUrl
+      }));
     }
     
     findNewsArticle(id) {
-      return this.instance.NewsArticle.findOneAsync({ id: id });
+      return this.NewsArticle.findOne({ where: { id : id } });
     }
     
     findNewsArticleByOriginId(originId) {
-      return this.instance.NewsArticle.findOneAsync({ originId: originId }, { allow_filtering: true });
+      return this.NewsArticle.findOne({ where: { originId : originId } });
     }
     
-    listNewsArticles(source, firstResult, maxResults) {
-      return new Promise((resolve, reject) => {      
-        // TODO: paging should be optimized
-
-        const limit = (firstResult || 0) + (maxResults || 0);
-
-        const query = {
-          'source': source,
-          '$limit': limit
-        };
-        
-        this.instance.NewsArticle.findAsync(query)
-          .then((newsArticles) => {
-            if (maxResults !== undefined) {
-              resolve(newsArticles.splice(firstResult));
-            } else {
-              resolve(newsArticles);
-            }
-          })
-          .catch(reject);
+    listNewsArticles(firstResult, maxResults) {
+      return this.NewsArticle.findAll({ offset: firstResult, limit: maxResults });
+    }
+    
+    updateNewsArticle(id, title, contents, imageUrl) {
+      return this.NewsArticle.update({
+        title: title,
+        contents: contents,
+        imageUrl: imageUrl
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
-    updateNewsArticle(newsArticle, title, contents, modified, imageUrl) {
-      newsArticle.title = title;
-      newsArticle.contents = contents;
-      newsArticle.modified = modified;
-      newsArticle.imageUrl = imageUrl;
-      return newsArticle.saveAsync(); 
-    }
+    // MessageAttachment
     
-    createMessageAttachment(messageAttachmentId, messageId, contents, contentType, fileName, size) {
-      return new this.instance.MessageAttachment({
-        id: messageAttachmentId,
-        messageId: messageId,
-        contents: contents,
-        contentType: contentType,
-        fileName: fileName,
-        size: size
-      }).saveAsync();
+    createMessageAttachment(messageId, contents, contentType, fileName, size) {
+      return this.sequelize.sync()
+        .then(() => this.MessageAttachment.create({
+          messageId: messageId,
+          contents: contents,
+          contentType: contentType,
+          fileName: fileName,
+          size: size
+      }));
     }
     
     findMessageAttachments(id) {
-      return this.instance.MessageAttachment.findOneAsync({ id: id } );
+      return this.MessageAttachment.findOne({ where: { id : id } });
     }
     
-    listMessageAttachmentsByMessageId(messageId) {
-      return this.instance.MessageAttachment.findAsync({ messageId: messageId } );
+    createItemRead(userId, itemId) {
+      return this.sequelize.sync()
+        .then(() => this.ItemRead.create({
+          itemId: itemId,
+          userId: userId
+      }));
     }
     
-    createItemRead(itemId, userId, time) {
-      return new this.instance.ItemRead({
-        itemId: itemId,
-        userId: userId,
-        time: time
-      }).saveAsync(); 
+    findItemRead(userId, itemId) {
+      return this.ItemRead.findOne({ where: { userId: userId, itemId: itemId } });
     }
     
-    findItemRead(itemId, userId) {
-      return this.instance.ItemRead.findOneAsync({ userId: userId, itemId: itemId });
-    }
-    
-    get instance() {
-      return this.getModels().instance;
-    }
-    
-    registerModels (callback) {
-      async.parallel(this._createModelLoads(), (models) => {
-        callback(models);
+    updateItemRead(id, itemId, userId) {
+      return this.ItemRead.update({
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
-    _createModelLoads () {
-      return _.map(this._registeredModels, (registeredModel) => {
-        return (callback) => {
-          this._models.loadSchema(registeredModel.modelName, registeredModel.modelSchema, callback);
-        };
+    upsertItemRead(itemId, userId) {
+      return this.findItemRead(itemId, userId)
+        .then((itemRead) => {
+          if (itemRead) {
+            return this.updateItemRead(itemRead.id);  
+          } else {
+            return this.createItemRead(itemId, userId);
+          }
+        });
+    }
+    
+    // QuestionGroupUserGroupRole
+    
+    createQuestionGroupUserGroupRole(questionGroupId, userGroupId, role) {
+      return this.sequelize.sync()
+        .then(() => this.QuestionGroupUserGroupRole.create({
+          questionGroupId: questionGroupId, 
+          userGroupId: userGroupId,
+          role: role
+      }));
+    }
+    
+    findQuestionGroupUserGroupRole(questionGroupId, userGroupId) {
+      return this.QuestionGroupUserGroupRole.findOne({ where: { questionGroupId: questionGroupId, userGroupId: userGroupId } });
+    }
+    
+    listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId) {
+      return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId } });
+    }
+    
+    listQuestionGroupUserGroupIds(questionGroupId) {
+      return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
+        .then((questionGroupUserGroupRole) => {
+          return _.map(questionGroupUserGroupRole, 'userGroupId');
+        });
+    }
+    
+    updateQuestionGroupUserGroupRole(id, role) {
+      return this.QuestionGroupUserGroupRole.update({
+        role: role
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
-    _registerModel (modelName, modelSchema) {
-      this._registeredModels.push({
-        modelName: modelName,
-        modelSchema: modelSchema
-      });
+    upsertQuestionGroupUserGroupRole(questionGroupId, userGroupId, role) {
+      return this.findQuestionGroupUserGroupRole(questionGroupId, userGroupId)
+        .then((questionGroupUserGroupRole) => {
+          if (questionGroupUserGroupRole) {
+            return this.updateQuestionGroupUserGroupRole(questionGroupUserGroupRole.id, role);  
+          } else {
+            return this.createQuestionGroupUserGroupRole(questionGroupId, userGroupId, role);
+          }
+        });
+    }
+    
+    register() {
     }
   } 
   
   module.exports = (options, imports, register) => {
-    const cassandraModels = imports['shady-cassandra'];
-    const pakkasmarjaBerriesModels = new PakkasmarjaBerriesModels(cassandraModels);
+    const shadySequelize = imports['shady-sequelize'];
+    const logger = imports['logger'];
+    const models = new Models(logger, shadySequelize);
     
-    pakkasmarjaBerriesModels.registerModels(() => {
-        register(null, {
-          'pakkasmarja-berries-models': pakkasmarjaBerriesModels
-        });
-      });
+    register(null, {
+      'pakkasmarja-berries-models': models
+    });
+    
   };
   
 })();
