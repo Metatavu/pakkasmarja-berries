@@ -399,11 +399,23 @@
       return this.findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId)
         .then((questionGroupUserThread) => {
           if (questionGroupUserThread) {
-            return questionGroupUserThread;
+            return this.findThread(questionGroupUserThread.threadId)
+              .then((thread) => {
+                return {
+                  thread: thread,
+                  created: false
+                };
+              });
           } else {
             return this.createThread(null, null, "question", null)
               .then((thread) => {
-                return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId);
+                return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId)
+                  .then(() => {
+                    return {
+                      thread: thread,
+                      created: true
+                    };
+                  });
               });
           }
         });

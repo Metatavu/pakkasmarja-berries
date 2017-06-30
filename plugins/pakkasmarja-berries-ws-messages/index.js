@@ -92,12 +92,8 @@
         .then((userId) => {
           this.models.listNewsArticles(page * perPage, perPage)
             .then((newsArticles) => {
-              console.log(JSON.stringify(newsArticles));
-              
               this.getItemReadMap(userId, _.map(newsArticles, 'id'))
                 .then((itemReadMap) => {
-                  console.log(_.map(newsArticles, 'id'));
-                  
                   client.sendMessage({
                     "type": "news-items-added",
                     "data": {
@@ -245,7 +241,6 @@
                 .then((data) => {
                   const thread = data.thread;
                   const created = thread.createdAt;
-                  
                   client.sendMessage({
                     "type": "question-thread-selected",
                     "data": {

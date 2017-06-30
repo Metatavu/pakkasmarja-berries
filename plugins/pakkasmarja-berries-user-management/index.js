@@ -189,7 +189,6 @@
     getThreadUserIds(realm, threadId) {
       return this.models.listThreadUserGroupIds(threadId)
         .then((threadUserGroupIds) => {
-          console.log("threadUserGroupIds", threadUserGroupIds);
           return this.listGroupsMemberIds(realm, threadUserGroupIds);
         });
     }
