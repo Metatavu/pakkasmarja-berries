@@ -32,6 +32,19 @@
         type: { type: Sequelize.STRING, allowNull: false },
         originId: { type: Sequelize.STRING },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+      }, {
+        getterMethods: {
+          latestMessage() {
+            return this.getLatestMessageCreatedByThreadIds([this.getDataValue('id')])
+              .then((maxCreatedAt) => {
+                return maxCreatedAt;
+              })
+              .catch((err) => {
+                this.logger.error('Error populating lastest message in thread')
+                return null;
+              });
+          }
+        }
       });
       
       this.defineModel('ThreadUserGroupRole', {
@@ -304,8 +317,8 @@
       });
     }
     
-    getLatestMessageCreatedByThreadIds() {
-      
+    getLatestMessageCreatedByThreadIds(threadIds) {
+      return this.Message.max('createdAt', { where: { threadId: { $in: threadIds } } });
     }
   
     // QuestionGroup
