@@ -231,7 +231,7 @@
             } else if (thread.type === 'question') {
               return this.findQuestionGroupByThreadId(thread.id)
                 .then((questionGroup) => {
-                  return listQuestionGroupUserGroupIds(questionGroup.id);
+                  return this.listQuestionGroupUserGroupIds(questionGroup.id);
                 });
             }
           }

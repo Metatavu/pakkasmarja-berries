@@ -70,13 +70,9 @@
         .then((questionGroup) => {
           this.models.createMessage(thread.id, userId, contents)
             .then((message) => {
-              this.models.updateGroupLastestMessage(questionGroup, new Date())
-                .then(() => {
-                  this.clusterMessages.createMessageAddedBuilder()
-                    .thread(thread).message(message).send()
-                    .then(() => { })
-                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
-                })
+              this.clusterMessages.createMessageAddedBuilder()
+                .thread(thread).message(message).send()
+                .then(() => { })
                 .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
