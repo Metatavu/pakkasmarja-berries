@@ -13,6 +13,7 @@
   const stream = require('stream');
   const multer = require('multer');
   const upload = multer({ dest: '/tmp/uploads/' });
+  const auth = require('basic-auth');
   
   class Routes {
     
@@ -193,6 +194,20 @@
       res.send("ok");
     }
     
+    restAuth(req, res, next) {
+      const credentials = auth(req);
+      if (credentials) {
+        const client = config.get(`rest:clients:${credentials.name}`);
+        if (client && (credentials.pass === client.secret)) {
+          return next();
+        }  
+      }
+      
+      res.header('WWW-Authenticate', 'Basic realm="REST"')
+        .status(401)
+        .send('Access denied');
+    }
+    
     register(app, keycloak) {
       // Navigation     
       
@@ -208,10 +223,7 @@
       
       // REST
       
-      // TODO: Add security!!!
-      
-      app.get('/rest/v1/usergroups', this.getRestV1UserGroups.bind(this));
-      
+      app.get('/rest/v1/usergroups', [ this.restAuth ], this.getRestV1UserGroups.bind(this));
       
       // Webhooks
       
