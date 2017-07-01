@@ -96,7 +96,7 @@
                         this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
                           .then(() => {
                             const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
-                            messageBuilder.threadId(threadId).messageId(messageAttachmentId).send()
+                            messageBuilder.threadId(threadId).messageId(messageId).send()
                               .then(() => {
                                 res.status(200).send();
                               })
