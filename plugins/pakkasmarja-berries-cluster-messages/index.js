@@ -399,6 +399,20 @@
       });
     }
     
+    onNewsArticleAdded(event, data) {
+      const newsArticle = data['news-article'];
+      const clients = this.webSockets.getClients();
+      
+      _.forEach(clients, (client) => {
+        client.sendMessage({
+          "type": "news-items-added",
+          "data": {
+            items: [ newsArticle ]
+          }
+        });
+      });
+    }
+    
     getUserGroupIds(userId) {
       return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId);
     }
@@ -409,6 +423,7 @@
       shadyMessages.on("client:conversation-thread-added", this.onConversationThreadAdded.bind(this));
       shadyMessages.on("client:question-group-added", this.onQuestionGroupAdded.bind(this));
       shadyMessages.on("client:question-group-thread-added", this.onQuestionGroupThreadAdded.bind(this));
+      shadyMessages.on("client:news-article-added", this.onNewsArticleAdded.bind(this));
     }
     
   };
