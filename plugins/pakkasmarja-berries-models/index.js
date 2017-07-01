@@ -333,7 +333,7 @@
         return Promise.resolve([]);
       }
       
-      return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults });
+      return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ 'createdAt', 'DESC' ] ] });
     }
     
     updateMessage(id, contents) {
