@@ -30,6 +30,12 @@
       };
     }
     
+    onPing(message, client) {
+      client.sendMessage({
+        "type": "pong"
+      });
+    }
+    
     onSendMessage(message, client) {
       this.getUserId(client)
         .then((userId) => {
@@ -466,6 +472,9 @@
       const client = event.client;
       
       switch (message.type) {
+        case 'ping':
+          this.onPing(message, client);
+        break;
         case 'send-message':
           this.onSendMessage(message, client);
         break;
