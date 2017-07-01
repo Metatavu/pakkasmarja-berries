@@ -133,7 +133,7 @@
     }
     
     getUserDisplayName(user) {
-      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName} <${user.email}>` : `<${user.email}>`;
+      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `<${user.email}>`;
     }
     
     getUserImage(user) {
