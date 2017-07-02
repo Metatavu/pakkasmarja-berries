@@ -39,23 +39,29 @@
     onSendMessage(message, client) {
       this.getUserId(client)
         .then((userId) => {
-          // TODO: is user allowed to post the message?
-
           const threadId = message.threadId;
           const contents = message.contents;
-
-          this.models.findThread(threadId)
-            .then((thread) => {
-              if (thread.type === 'conversation') {
-                this.onSendMessageConversation(userId, thread, contents, client);
-              } else if (thread.type === 'question') {
-                this.onSendMessageQuestion(userId, thread, contents, client);
-              } else {
-                this.logger.error(`Unknown thread type ${thread.type}`);
+          
+          this.userManagement.checkPermissionToPostThread(config.get('keycloak:realm'), userId, threadId)
+            .then((permission) => {
+              if (!permission) {
+                this.logger.warn(`User ${userId} attempted to post message into ${threadId}`);
+                return;
               }
+              
+              this.models.findThread(threadId)
+                .then((thread) => {
+                  if (thread.type === 'conversation') {
+                    this.onSendMessageConversation(userId, thread, contents, client);
+                  } else if (thread.type === 'question') {
+                    this.onSendMessageQuestion(userId, thread, contents, client);
+                  } else {
+                    this.logger.error(`Unknown thread type ${thread.type}`);
+                  }
+                })
+                .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
-
         })
         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE'));
     }
@@ -285,52 +291,61 @@
     
     onGetQuestionGroupThreads(message, client) {
       const questionGroupId = message['question-group-id'];
-      // TODO: Permission to list threads
-      
+      const keycloakRealm = config.get('keycloak:realm');
+              
       this.getUserId(client)
         .then((userId) => {
-          this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId)
-            .then((questionGroupUserThreads) => {
-              const userIds = _.map(questionGroupUserThreads, 'userId');
-              const threadIds = _.map(questionGroupUserThreads, 'threadId');
-              this.userManagement.getUserMap(config.get('keycloak:realm'), _.uniq(userIds))
-                .then((userMap) => {
-                  this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }))
-                    .then((itemReadMap) => {
-                      const threadPromises = _.map(threadIds, (threadId, index) => {
-                        return new Promise((resolve, reject) => {
-                          this.models.findThread(threadId)
-                            .then((thread) => {
-                              const userId = userIds[index];
-                              const user = userMap[userId];
-                              const threadRead = itemReadMap[`thread-${thread.id}`];
-                              
-                              resolve({
-                                id: thread.id,
-                                latestMessage: thread.latestMessage,
-                                title: this.userManagement.getUserDisplayName(user),
-                                type: thread.type,
-                                imageUrl: this.userManagement.getUserImage(user),
-                                read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+          this.userManagement.checkPermissionToListQuestionGroupThreads(keycloakRealm, userId, questionGroupId)
+            .then((permission) => {
+              if (!permission) {
+                this.logger.warn(`User ${userId} attempted to list threads from question group ${questionGroupId}`);
+                return;
+              }
+              
+              this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId)
+                .then((questionGroupUserThreads) => {
+                  const userIds = _.map(questionGroupUserThreads, 'userId');
+                  const threadIds = _.map(questionGroupUserThreads, 'threadId');
+                  this.userManagement.getUserMap(keycloakRealm, _.uniq(userIds))
+                    .then((userMap) => {
+                      this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }))
+                        .then((itemReadMap) => {
+                          const threadPromises = _.map(threadIds, (threadId, index) => {
+                            return new Promise((resolve, reject) => {
+                              this.models.findThread(threadId)
+                                .then((thread) => {
+                                  const userId = userIds[index];
+                                  const user = userMap[userId];
+                                  const threadRead = itemReadMap[`thread-${thread.id}`];
+
+                                  resolve({
+                                    id: thread.id,
+                                    latestMessage: thread.latestMessage,
+                                    title: this.userManagement.getUserDisplayName(user),
+                                    type: thread.type,
+                                    imageUrl: this.userManagement.getUserImage(user),
+                                    read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+                                  });
+                                })
+                                .catch(reject);
+                            });
+                          });
+
+                          Promise.all(threadPromises)
+                            .then((threads) => {
+                              client.sendMessage({
+                                "type": "question-group-threads-added",
+                                "data": {
+                                  'question-group-id': questionGroupId,
+                                  'threads': threads
+                                }
                               });
                             })
-                            .catch(reject);
-                        });
-                      });
-
-                      Promise.all(threadPromises)
-                        .then((threads) => {
-                          client.sendMessage({
-                            "type": "question-group-threads-added",
-                            "data": {
-                              'question-group-id': questionGroupId,
-                              'threads': threads
-                            }
-                          });
-                        })
-                        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-                  })
-                  .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                      })
+                      .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+                    })
+                    .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
                 })
                 .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
             })
@@ -343,36 +358,49 @@
       const threadId = message['thread-id'];
       const firstResult = message['first-result'];
       const maxResults = message['max-results'];
+      const keycloakRealm = config.get('keycloak:realm');
       
-      this.models.findThread(threadId)
-        .then((thread) => {
-          this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
-            .then((data) => {
-              const messages = _.flatten(data);
-              const userIds = _.uniq(_.map(messages, 'userId'));
-              this.getThreadRoleMap(thread, userIds)
-                .then((roleMap) => {
-                  this.userManagement.getUserMap(config.get('keycloak:realm'), userIds)
-                    .then((userMap) => {
-                      client.sendMessage({
-                        "type": "messages-added",
-                        "data": {
-                          "messages": _.map(messages, (message) => {
-                            const role = roleMap[message.userId];
-                            return this.translateMessage(message, userMap[message.userId], role);
-                          }),
-                          "thread-id": thread.id,
-                          "thread-type": thread.type
-                        }
-                      });                  
+      this.getUserId(client)
+        .then((userId) => {
+          this.userManagement.checkPermissionToReadThread(keycloakRealm, userId, threadId)
+            .then((permission) => {
+              if (!permission) {
+                this.logger.warn(`User ${userId} attempted to post message into ${threadId}`);
+                return;
+              }
+              
+              this.models.findThread(threadId)
+                .then((thread) => {
+                  this.models.listMessagesByThreadId(threadId, firstResult, maxResults)
+                    .then((data) => {
+                      const messages = _.flatten(data);
+                      const userIds = _.uniq(_.map(messages, 'userId'));
+                      this.getThreadRoleMap(thread, userIds)
+                        .then((roleMap) => {
+                          this.userManagement.getUserMap(keycloakRealm, userIds)
+                            .then((userMap) => {
+                              client.sendMessage({
+                                "type": "messages-added",
+                                "data": {
+                                  "messages": _.map(messages, (message) => {
+                                    const role = roleMap[message.userId];
+                                    return this.translateMessage(message, userMap[message.userId], role);
+                                  }),
+                                  "thread-id": thread.id,
+                                  "thread-type": thread.type
+                                }
+                              });                  
+                            })
+                            .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
+                        })
+                        .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
                     })
                     .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
                 })
                 .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
             })
             .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
-        })
-        .catch(this.handleWebSocketError(client, 'GET_MESSAGES'));
+        });
     }
     
     onMarkItemRead(message, client) {

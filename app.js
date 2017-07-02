@@ -119,9 +119,21 @@
             });
         }
       } catch (e) {
-        logger.error(`Websocket authentication failed s${e}`);
+        logger.error(`Websocket authentication failed ${e}`);
         callback(false);
       }
+    });
+    
+    webSockets.on("close", (data) => {
+      const client = data.client;
+      const sessionId = client.getSessionId();
+      models.deleteSession(sessionId)
+        .then(() => {
+          logger.info(`Session ${sessionId} removed`);
+        })
+        .catch((e) => {
+          logger.error(`Failed to delete session ${e}`);
+        });
     });
     
     routes.register(app, keycloak);

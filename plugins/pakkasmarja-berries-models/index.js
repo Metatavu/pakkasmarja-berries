@@ -22,7 +22,7 @@
       const Sequelize = this.Sequelize;
       
       this.defineModel('Session', {
-        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
       });
       
@@ -161,6 +161,7 @@
     
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, options);
+      this[name].sync();
       this.modelNames.push(name);
     }
     
@@ -175,6 +176,10 @@
         .then(() => this.Session.create({
           userId: userId
       }));
+    }
+    
+    deleteSession(id) {
+      return this.Session.destroy({ where: { id : id } });
     }
     
     // Threads
