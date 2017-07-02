@@ -233,9 +233,7 @@
     checkPermissionToListQuestionGroupThreads(realm, userId, questionGroupId) {
       return this.getQuestionGroupUserIds(realm, questionGroupId)
         .then((threadUserIds) => {
-          return new Promise((resolve, reject) => {
-            return _.indexOf(threadUserIds||[], userId) >= 0;
-          });
+          return _.indexOf(threadUserIds||[], userId) >= 0;
         });
     }
     

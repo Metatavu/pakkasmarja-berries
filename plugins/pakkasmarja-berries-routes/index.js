@@ -46,8 +46,8 @@
       }
         
       request({
-          url: `${contentUrl}/${path}`,
-          headers: requestHeaders
+        url: `${contentUrl}/${path}`,
+        headers: requestHeaders
       }).pipe(res);
     }
     
@@ -69,61 +69,61 @@
     
     postImageUploadMessage(req, res) {
       const file = req.file;
+      const userId = req.userId;
       const threadId = req.body.threadId;
-      const sessionId = req.body.sessionId;
       const baseUrl = this.getBaseUrl();
       
-      this.models.findSession(sessionId)
-        .then((session) => {
-          if (!session || !session.userId) {
+      this.userManagement.checkPermissionToPostThread(config.get('keycloak:realm'), userId, threadId)
+        .then((permission) => {
+          if (!permission) {
             res.status(403).send("Forbidden");
-          } else {
-            const userId = session.userId;
-            
-            fs.readFile(file.path, (readErr, data) => {
-              if (readErr) {
-                res.status(500).send(readErr);
-              } else {        
-                const fileName = file.originalname;
-                const contentType = file.mimetype;
-                const size = file.size;
-                
-                this.models.createMessage(threadId, userId, 'pending...')
-                  .then((message) => {
-                    this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
-                      .then((messageAttachment) => {
-                        const messageId = message.id;
-                        const messageAttachmentId = messageAttachment.id;
-                        this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
-                          .then(() => {
-                            const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
-                            messageBuilder.threadId(threadId).messageId(messageAttachmentId).send()
-                              .then(() => {
-                                res.status(200).send();
-                              })
-                              .catch((err) => {
-                                this.logger.error(err);
-                                res.status(500).send(err);
-                              });
-                          })
-                          .catch((err) => {
-                            this.logger.error(err);
-                            res.status(500).send(err);
-                          });
-                      })
-                      .catch((err) => {
-                        this.logger.error(err);
-                        res.status(500).send(err);
-                      });
-                  })
-                  .catch((err) => {
-                    this.logger.error(err);
-                    res.status(500).send(err);
-                  });
-              }
-            });
+            return;
           }
+    
+          fs.readFile(file.path, (readErr, data) => {
+            if (readErr) {
+              res.status(500).send(readErr);
+            } else {        
+              const fileName = file.originalname;
+              const contentType = file.mimetype;
+              const size = file.size;
+
+              this.models.createMessage(threadId, userId, 'pending...')
+                .then((message) => {
+                  this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
+                    .then((messageAttachment) => {
+                      const messageId = message.id;
+                      const messageAttachmentId = messageAttachment.id;
+                      this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
+                        .then(() => {
+                          const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
+                          messageBuilder.threadId(threadId).messageId(messageAttachmentId).send()
+                            .then(() => {
+                              res.status(200).send();
+                            })
+                            .catch((err) => {
+                              this.logger.error(err);
+                              res.status(500).send(err);
+                            });
+                        })
+                        .catch((err) => {
+                          this.logger.error(err);
+                          res.status(500).send(err);
+                        });
+                    })
+                    .catch((err) => {
+                      this.logger.error(err);
+                      res.status(500).send(err);
+                    });
+                })
+                .catch((err) => {
+                  this.logger.error(err);
+                  res.status(500).send(err);
+                });
+            }
+          });
         });
+              
     }
     
     getKeycloak(req, res) {
@@ -148,7 +148,6 @@
         }
       }, (authErr, response, body) => {
         if (authErr) {
-          // TODO: Better error handling
           this.logger.error(authErr);
           res.status(403).send(authErr);
         } else {
@@ -208,13 +207,66 @@
         .send('Access denied');
     }
     
+    requireLogged(req, res, next) {
+      const sessionId = req.body.sessionId || req.query.sessionId;
+      
+      this.models.findSession(sessionId)
+        .then((session) => {
+          if (!session || !session.userId) {
+            res.status(403).send("Forbidden");
+          } else {
+            req.userId = session.userId;
+            next();
+          }
+        })
+        .catch((err) => {
+          res.status(500).send(err);
+        });
+    }
+    
+    requirePermissionToPostThread(req, res, next) {
+      const userId = req.userId;
+      const threadId = req.body.threadId;
+      const keycloakRealm = config.get('keycloak:realm');
+      
+      this.userManagement.checkPermissionToPostThread(keycloakRealm, userId, threadId)
+        .then((permission) => {
+          if (permission) {
+            next();
+          } else {
+            res.status(403).send("Forbidden");
+          }
+        })
+        .catch(() => {
+          this.logger.error(`Failed to resolve whether ${userId} has permission to post into thread ${threadId}`);
+        });
+    }
+    
+    requirePermissionToReadMessage(req, res, next) {
+      const userId = req.userId;
+      const messageId = req.params.messageId;
+      const keycloakRealm = config.get('keycloak:realm');
+      
+      this.userManagement.checkPermissionToReadMessage(keycloakRealm, userId, messageId)
+        .then((permission) => {
+          if (permission) {
+            next();
+          } else {
+            res.status(403).send("Forbidden");
+          }
+        })
+        .catch(() => {
+          this.logger.error(`Failed to resolve whether ${userId} has permission to read message ${messageId}`);
+        });
+    }
+    
     register(app, keycloak) {
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
-      app.get("/images/wordpress/*", this.getImagesWordpress.bind(this));
-      app.get("/images/messages/:messageId/:messageAttachmentId", this.getImagesMessages.bind(this));
-      app.post("/images/upload/message", upload.single('image'), this.postImageUploadMessage.bind(this));
+      app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
+      app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
+      app.post("/images/upload/message", [ this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this), upload.single('image') ], this.postImageUploadMessage.bind(this));
       
       // Keycloak
       
@@ -223,7 +275,7 @@
       
       // REST
       
-      app.get('/rest/v1/usergroups', [ this.restAuth ], this.getRestV1UserGroups.bind(this));
+      app.get('/rest/v1/usergroups', [ this.restAuth.bind(this) ], this.getRestV1UserGroups.bind(this));
       
       // Webhooks
       
