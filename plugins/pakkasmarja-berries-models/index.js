@@ -178,6 +178,10 @@
       }));
     }
     
+    deleteSession(id) {
+      return this.Session.destroy({ where: { id : id } });
+    }
+    
     // Threads
             
     createThread(originId, title, type, imageUrl) {
