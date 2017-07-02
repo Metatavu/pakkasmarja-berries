@@ -208,6 +208,37 @@
       return false;
     }
     
+    checkPermissionToPostThread(realm, userId, threadId) {
+      return this.getThreadUserIds(realm, threadId)
+        .then((threadUserIds) => {
+          return _.indexOf(threadUserIds||[], userId) >= 0;
+        });
+    }
+    
+    checkPermissionToReadThread(realm, userId, threadId) {
+      return this.checkPermissionToPostThread(realm, userId, threadId);
+    }
+    
+    checkPermissionToReadMessage(realm, userId, messageId) {
+      return this.models.findMessage(messageId)
+        .then((message) => {
+          if (message) {
+            return this.checkPermissionToReadThread(realm, userId, message.threadId);
+          } else {
+            return false;
+          }
+        });
+    }
+    
+    checkPermissionToListQuestionGroupThreads(realm, userId, questionGroupId) {
+      return this.getQuestionGroupUserIds(realm, questionGroupId)
+        .then((threadUserIds) => {
+          return new Promise((resolve, reject) => {
+            return _.indexOf(threadUserIds||[], userId) >= 0;
+          });
+        });
+    }
+    
     getClient() {
       return KeycloakAdminClient(config.get('keycloak:admin'));
     }
