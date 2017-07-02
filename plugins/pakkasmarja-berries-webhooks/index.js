@@ -94,7 +94,8 @@
                   this.models.createNewsArticle(wpId, wpTitle, contents, imageUrl)
                     .then((newsArticle) => {
                       this.logger.info(`News article ${newsArticle.id} created`);
-                      this.pushNotifications.notifyNewsItemPublish(wpTitle); 
+                      this.notifyClusterNewsArticleAdded(newsArticle);
+                      this.pushNotifications.notifyNewsItemPublish(wpTitle);
                     }) 
                     .catch((err) => {
                       this.logger.error(`Failed to create news article from ${wpId}`, err);
@@ -110,7 +111,7 @@
             this.logger.error(`Failed to fetch post ${id}`, err);
           });
       }
-    }
+    }        
     
     handleManagementEditPostChatThread(id, req) {
       const postStatus = req.body['post_status'];
@@ -219,6 +220,20 @@
             this.logger.error(`Failed to fetch question group ${id}`, err);
           });
       }
+    }
+    
+    notifyClusterNewsArticleAdded(newsArticle) {
+      this.shadyMessages.trigger("client:news-article-added", {
+        "news-article": {
+          "id": newsArticle.id,
+          "contents": newsArticle.contents,
+          "title": newsArticle.title,
+          "created": moment(newsArticle.createdAt).format(),
+          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+          "image": newsArticle.imageUrl,
+          "read": false
+        }
+      });
     }
     
     notifyClusterConversationThreadIdAdded(threadId) {

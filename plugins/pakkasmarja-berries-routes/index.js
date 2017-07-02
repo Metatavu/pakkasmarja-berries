@@ -68,43 +68,32 @@
     }
     
     postImageUploadMessage(req, res) {
-      const file = req.file;
       const userId = req.userId;
+      const file = req.file;
       const threadId = req.body.threadId;
+      const sessionId = req.body.sessionId;
       const baseUrl = this.getBaseUrl();
       
-      this.userManagement.checkPermissionToPostThread(config.get('keycloak:realm'), userId, threadId)
-        .then((permission) => {
-          if (!permission) {
-            res.status(403).send("Forbidden");
-            return;
-          }
-    
-          fs.readFile(file.path, (readErr, data) => {
-            if (readErr) {
-              res.status(500).send(readErr);
-            } else {        
-              const fileName = file.originalname;
-              const contentType = file.mimetype;
-              const size = file.size;
+      fs.readFile(file.path, (readErr, data) => {
+        if (readErr) {
+          res.status(500).send(readErr);
+        } else {        
+          const fileName = file.originalname;
+          const contentType = file.mimetype;
+          const size = file.size;
 
-              this.models.createMessage(threadId, userId, 'pending...')
-                .then((message) => {
-                  this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
-                    .then((messageAttachment) => {
-                      const messageId = message.id;
-                      const messageAttachmentId = messageAttachment.id;
-                      this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
+          this.models.createMessage(threadId, userId, 'pending...')
+            .then((message) => {
+              this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
+                .then((messageAttachment) => {
+                  const messageId = message.id;
+                  const messageAttachmentId = messageAttachment.id;
+                  this.models.updateMessage(message.id, `<img src="${baseUrl}/images/messages/${messageId}/${messageAttachmentId}"/>`)
+                    .then(() => {
+                      const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
+                      messageBuilder.threadId(threadId).messageId(messageId).send()
                         .then(() => {
-                          const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
-                          messageBuilder.threadId(threadId).messageId(messageAttachmentId).send()
-                            .then(() => {
-                              res.status(200).send();
-                            })
-                            .catch((err) => {
-                              this.logger.error(err);
-                              res.status(500).send(err);
-                            });
+                          res.status(200).send();
                         })
                         .catch((err) => {
                           this.logger.error(err);
@@ -120,10 +109,13 @@
                   this.logger.error(err);
                   res.status(500).send(err);
                 });
-            }
-          });
-        });
-              
+            })
+            .catch((err) => {
+              this.logger.error(err);
+              res.status(500).send(err);
+            });
+        }
+      });
     }
     
     getKeycloak(req, res) {
