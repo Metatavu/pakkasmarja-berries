@@ -258,7 +258,7 @@
       app.get("/", this.getIndex.bind(this));
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
       app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
-      app.post("/images/upload/message", [ this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this), upload.single('image') ], this.postImageUploadMessage.bind(this));
+      app.post("/images/upload/message", [ upload.single('image'), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
       
       // Keycloak
       
