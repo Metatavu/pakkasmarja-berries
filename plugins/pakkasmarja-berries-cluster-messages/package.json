@@ -11,7 +11,8 @@
       "logger",
       "shady-messages",
       "pakkasmarja-berries-models",
-      "pakkasmarja-berries-user-management"
+      "pakkasmarja-berries-user-management",
+      "pakkasmarja-berries-push-notifications"
     ]
   }
 }

@@ -12,7 +12,8 @@
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management",
       "pakkasmarja-berries-webhooks",
-      "pakkasmarja-berries-cluster-messages"
+      "pakkasmarja-berries-cluster-messages",
+      "pakkasmarja-berries-push-notifications"
     ]
   }
 }

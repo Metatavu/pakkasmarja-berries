@@ -13,6 +13,7 @@
       "pakkasmarja-berries-user-management",
       "pakkasmarja-berries-wordpress",
       "pakkasmarja-berries-cluster-messages",
+      "pakkasmarja-berries-push-notifications",
       "shady-messages"
     ]
   }

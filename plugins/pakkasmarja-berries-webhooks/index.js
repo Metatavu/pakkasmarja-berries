@@ -204,7 +204,7 @@
                       this.models.setQuestionGroupUserGroupRoles(questionGroup.id, userGroupRoles)
                         .then(() => {
                           this.logger.info(`Group ${questionGroup.id} created`);
-                          this.notifyClusterQuestionGroupIdAdded(questionGroup.id);
+                          this.notifyClusterQuestionGroupAdded(questionGroup);
                         });
                     }) 
                     .catch((err) => {
@@ -261,18 +261,8 @@
         });
     }
     
-    notifyClusterQuestionGroupIdAdded(questionGroupId) {
-      this.models.findQuestionGroup(questionGroupId)
-        .then((questionGroup) => {
-          this.notifyClusterQuestionGroupAdded(questionGroup);
-        })
-        .catch((err) => {
-          this.logger.error(err);
-        });
-    }
-    
     notifyClusterQuestionGroupAdded(questionGroup) {
-      this.userManagement.getQuestionGroupUserIds()
+      this.userManagement.getQuestionGroupUserIds(config.get('keycloak:realm'), questionGroup.id)
         .then((userIds) => {
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:question-group-added", {
