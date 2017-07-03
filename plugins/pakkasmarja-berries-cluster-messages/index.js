@@ -259,13 +259,14 @@
     }
   }
   
-  class PakkasmarjaBerriesClusterMessages {
+  class ClusterMessages {
     
-    constructor (logger, models, userManagement, shadyMessages) {
+    constructor (logger, models, userManagement, shadyMessages, pushNotifications) {
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.shadyMessages = shadyMessages;
+      this.pushNotifications = pushNotifications;
     }
     
     createMessageAddedBuilder() {
@@ -320,6 +321,19 @@
                     threads: [ thread ]
                   }
                 });
+                
+                this.pushNotifications.getSubscribableConversationThreads(userId)
+                  .then((threadIds) => {
+                    client.sendMessage({
+                      "type": "subscribable-conversation-threads-found",
+                      "data": {
+                        'thread-ids': threadIds
+                      }
+                    });
+                  })
+                  .catch((err) => {
+                    this.logger.error(`Failed to update subscriptions for session ${sessionId} on ${err}`);
+                  });
               }
             })
             .catch((err) => {
@@ -360,8 +374,21 @@
                       });
                   })
                   .catch((err) => {
-                    this.logger.error(`Failed to list userGroupIds for ${userId}`, err);
+                    this.logger.error(`Failed to list userGroupIds for ${userId} on ${err}`);
                   });
+                  
+                  this.pushNotifications.getSubscribableQuestionGroupThreads(userId)
+                    .then((threadIds) => {
+                      client.sendMessage({
+                        "type": "subscribable-question-group-threads-found",
+                        "data": {
+                          'thread-ids': threadIds
+                        }
+                      });
+                    })
+                    .catch((err) => {
+                      this.logger.error(`Failed to update subscriptions for session ${sessionId} on ${err}`);
+                    });
               }
             })
             .catch((err) => {
@@ -433,10 +460,11 @@
     const models = imports['pakkasmarja-berries-models'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const shadyMessages = imports['shady-messages'];
+    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
    
-    const pakkasmarjaBerriesClusterMessages = new PakkasmarjaBerriesClusterMessages(logger, models, userManagement, shadyMessages);
+    const clusterMessages = new ClusterMessages(logger, models, userManagement, shadyMessages, pushNotifications);
     register(null, {
-      'pakkasmarja-berries-cluster-messages': pakkasmarjaBerriesClusterMessages
+      'pakkasmarja-berries-cluster-messages': clusterMessages
     });
   };
 

@@ -17,12 +17,13 @@
   
   class Routes {
     
-    constructor (logger, models, userManagement, webhooks, clusterMessages) {
+    constructor (logger, models, userManagement, webhooks, clusterMessages, pushNotifications) {
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.webhooks = webhooks;
       this.clusterMessages = clusterMessages;
+      this.pushNotifications = pushNotifications;
     }
     
     getIndex(req, res) {
@@ -93,6 +94,7 @@
                       const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
                       messageBuilder.threadId(threadId).messageId(messageId).send()
                         .then(() => {
+                          this.pushNotifications.notifyThreadMessage(threadId);
                           res.status(200).send();
                         })
                         .catch((err) => {
@@ -290,8 +292,9 @@
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const webhooks = imports['pakkasmarja-berries-webhooks'];
     const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
+    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
     
-    const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages);
+    const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages, pushNotifications);
     register(null, {
       'pakkasmarja-berries-routes': routes
     });

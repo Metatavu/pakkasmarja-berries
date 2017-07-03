@@ -13,13 +13,14 @@
   
   class PakkasmarjaBerriesWebsocketMessages {
     
-    constructor (logger, models, shadyMessages, userManagement, wordpress, clusterMessages) {
+    constructor (logger, models, shadyMessages, userManagement, wordpress, clusterMessages, pushNotifications) {
       this.logger = logger;
       this.models = models;
       this.shadyMessages = shadyMessages;
       this.userManagement = userManagement;
       this.wordpress = wordpress;
       this.clusterMessages = clusterMessages;
+      this.pushNotifications = pushNotifications;
     }
     
     handleWebSocketError(client, operation) {
@@ -71,7 +72,9 @@
         .then((message) => {
           const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
           messageBuilder.thread(thread).message(message).send()
-            .then(() => { })
+            .then(() => { 
+              this.pushNotifications.notifyConversationThreadMessage(thread.id, thread.title);
+            })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
         })
         .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION')); 
@@ -84,7 +87,9 @@
             .then((message) => {
               this.clusterMessages.createMessageAddedBuilder()
                 .thread(thread).message(message).send()
-                .then(() => { })
+                .then(() => { 
+                  this.pushNotifications.notifyQuestionGroupThreadMessage(thread.id, questionGroup.title);
+                })
                 .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
@@ -495,6 +500,39 @@
         });
     }
     
+    onSubscribableConversationThreads(message, client) {
+      this.getUserId(client)
+        .then((userId) => {
+          this.pushNotifications.getSubscribableConversationThreads(userId)
+            .then((threadIds) => {
+              client.sendMessage({
+                "type": "subscribable-conversation-threads-found",
+                "data": {
+                  'thread-ids': threadIds
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_CONVERSATION_THREADS'));            
+      });
+    }
+    
+    onSubscribableQuestionGroupThreads(message, client) {
+      this.getUserId(client)
+        .then((userId) => {
+          this.pushNotifications.getSubscribableQuestionGroupThreads(userId)
+            .then((threadIds) => {
+              client.sendMessage({
+                "type": "subscribable-question-group-threads-found",
+                "data": {
+                  'thread-ids': threadIds
+                }
+              });
+            })
+            .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_QUESTION_GROUP_THREADS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_QUESTION_GROUP_THREADS'));
+    }
+    
     onMessage(event) {
       const message = event.data.message;
       const client = event.client;
@@ -532,6 +570,12 @@
         break;
         case 'mark-item-read':
           this.onMarkItemRead(message, client);
+        break;
+        case 'get-subscribable-conversation-threads':
+          this.onSubscribableConversationThreads(message, client);
+        break;
+        case 'get-subscribable-question-group-threads':
+          this.onSubscribableQuestionGroupThreads(message, client);
         break;
         default:
           this.logger.error(util.format("Unknown message type %s", message.type));
@@ -701,7 +745,9 @@
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
     const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
-    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress, clusterMessages);
+    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
+     
+    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress, clusterMessages, pushNotifications);
     
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
