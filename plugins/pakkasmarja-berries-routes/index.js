@@ -32,6 +32,10 @@
       }, req.pakkasmarjaBerries));
     }
     
+    getSystemPing(req, res) {
+      res.send("PONG");
+    }
+    
     getImagesWordpress(req, res) {
       const contentUrl = config.get('wordpress:content-url');
       const forwardHeaderNames = ['if-none-match', 'cache-control'];
@@ -258,6 +262,8 @@
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
+      app.get("/system/ping", this.getSystemPing.bind(this));
+      
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
       app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
       app.post("/images/upload/message", [ upload.single('image'), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
