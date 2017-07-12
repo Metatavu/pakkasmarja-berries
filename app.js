@@ -45,6 +45,7 @@
     const models = architectApp.getService('pakkasmarja-berries-models');
     const routes = architectApp.getService('pakkasmarja-berries-routes');
     const webSocketMessages = architectApp.getService('pakkasmarja-berries-ws-messages');
+    const scheluders = architectApp.getService('pakkasmarja-berries-scheluders');
     const clusterMessages = architectApp.getService('pakkasmarja-berries-cluster-messages');
     const logger = architectApp.getService('logger');
     const workerId = shadyWorker.start(config.get("server-group"), options.getOption('port'), options.getOption('host'));
@@ -136,6 +137,7 @@
         });
     });
     
+    scheluders.start();
     routes.register(app, keycloak);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
