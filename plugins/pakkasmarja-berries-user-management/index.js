@@ -94,7 +94,7 @@
 
         Promise.all(promises)
           .then((results) => {
-            resolve(_.flatten(results));
+            resolve(_.compact(_.flatten(results)));
           })
           .catch(reject);
       });
@@ -106,7 +106,9 @@
           .then((client) => {
             client.groups.members.find(realm, groupId)
               .then(resolve)
-              .catch(reject);
+              .catch((err) => {
+                resolve([]);
+              });
           })
           .catch();
       });

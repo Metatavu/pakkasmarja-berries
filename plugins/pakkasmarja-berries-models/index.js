@@ -43,6 +43,7 @@
         originId: { type: Sequelize.STRING },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
+        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -78,6 +79,8 @@
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
         userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
+      }, {
+        paranoid: true
       });
       
       this.defineModel('QuestionGroup', {
@@ -86,6 +89,7 @@
         originId: { type: Sequelize.STRING, allowNull: false },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
+        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -144,6 +148,8 @@
         contentType: { type: Sequelize.STRING, allowNull: false },
         fileName: { type: Sequelize.STRING },
         size: { type: Sequelize.BIGINT }
+      }, {
+        paranoid: true
       });
       
       this.defineModel('ItemRead', {
@@ -177,10 +183,9 @@
     }
     
     createSession(userId) {
-      return this.sequelize.sync()
-        .then(() => this.Session.create({
-          userId: userId
-      }));
+      return this.Session.create({
+        userId: userId
+      });
     }
     
     deleteSession(id) {
@@ -190,17 +195,12 @@
     // Threads
             
     createThread(originId, title, type, imageUrl) {
-      return this.sequelize.sync()
-        .then(() => this.Thread.create({
-          originId: originId,
-          title: title,
-          type: type,
-          imageUrl: imageUrl
-      }));
-    }
-    
-    removeThread(id) {
-      return this.Thread.destroy({ where: { id : id } });
+      return this.Thread.create({
+        originId: originId,
+        title: title,
+        type: type,
+        imageUrl: imageUrl
+      });
     }
     
     findThread(id) {
@@ -324,31 +324,51 @@
       
       return this.ThreadUserGroupRole.destroy({ where: { threadId : threadId } })
         .then(() => {
-          return this.sequelize.sync()
-            .then(() => { 
-              return Promise.all(createPromises);
-            });
+          return Promise.all(createPromises);
         });
     }
     
     // Messages
     
     createMessage(threadId, userId, contents) {
-      return this.sequelize.sync()
-        .then(() => this.Message.create({
-          threadId: threadId,
-          userId: userId,
-          contents: contents
-      }));
+      this.Message.create({
+        threadId: threadId,
+        userId: userId,
+        contents: contents
+      });
     }
     
-    removeMessageAttachments(threadId) {
+    removeThreadMessageAttachments(threadId) {
       return this.Message.findAll({ where: { threadId: threadId } })
         .then((messages) => {
+          const messageAttachmentRemovePromises = [];
           for (let i = 0; i < messages.length; i++) {
-            this.MessageAttachment.destroy({ where: { messageId: messages[i].id } });
+            messageAttachmentRemovePromises.push(this.MessageAttachment.destroy({ where: { messageId: messages[i].id } }));
           }
+          return Promise.all(messageAttachmentRemovePromises);
         });
+    }
+       
+    removeThread(id) {
+      return new Promise((resolve, reject) => {
+        this.removeThreadMessageAttachments(id)
+          .then(() => {
+            this.removeThreadMessages(id)
+              .then(() => {
+                this.removeThreadUserGroupRole(id)
+                  .then(() => {
+                    this.Thread.destroy({ where: { id : id } })
+                    .then(() => {
+                      resolve();
+                    })
+                    .catch(reject);
+                  })
+                  .catch(reject);
+              })
+              .catch(reject);
+          })
+          .catch(reject);
+      });
     }
     
     removeThreadUserGroupRole(threadId) {
@@ -388,12 +408,11 @@
     // QuestionGroup
       
     createQuestionGroup(originId, title, imageUrl) {
-      return this.sequelize.sync()
-        .then(() => this.QuestionGroup.create({
-          title: title,
-          originId: originId,
-          imageUrl: imageUrl
-      }));
+      return this.QuestionGroup.create({
+        title: title,
+        originId: originId,
+        imageUrl: imageUrl
+      });
     }
     
     removeQuestionGroupUserGroupRoles(id) {
@@ -401,7 +420,10 @@
     }
     
     removeQuestionGroup(id) {
-      return this.QuestionGroup.destroy({ where: { id : id } });
+      return this.removeQuestionGroupUserGroupRoles()
+        .then(() => {
+          return this.QuestionGroup.destroy({ where: { id : id } });
+        });
     }
     
     findQuestionGroup(id) {
@@ -458,22 +480,18 @@
       
       return this.QuestionGroupUserGroupRole.destroy({ where: { questionGroupId : questionGroupId } })
         .then(() => {
-          return this.sequelize.sync()
-            .then(() => {
-              return Promise.all(createPromises);          
-            });
+          return Promise.all(createPromises);          
         });
     }
     
     // QuestionGroupUserThreads
     
     createQuestionGroupUserThread(questionGroupId, threadId, userId) {
-      return this.sequelize.sync()
-        .then(() => this.QuestionGroupUserThread.create({
-          threadId: threadId,
-          questionGroupId: questionGroupId,
-          userId: userId
-      }));
+      return this.QuestionGroupUserThread.create({
+        threadId: threadId,
+        questionGroupId: questionGroupId,
+        userId: userId
+      });
     }
     
     findQuestionGroupUserThread(id) {
@@ -517,13 +535,12 @@
     // News Articles
     
     createNewsArticle(originId, title, contents, imageUrl) {
-      return this.sequelize.sync()
-        .then(() => this.NewsArticle.create({
-          title: title,
-          contents: contents,
-          originId: originId,
-          imageUrl: imageUrl
-      }));
+      return this.NewsArticle.create({
+        title: title,
+        contents: contents,
+        originId: originId,
+        imageUrl: imageUrl
+      });
     }
     
     removeNewsArticle(id) {
@@ -561,14 +578,13 @@
     // MessageAttachment
     
     createMessageAttachment(messageId, contents, contentType, fileName, size) {
-      return this.sequelize.sync()
-        .then(() => this.MessageAttachment.create({
-          messageId: messageId,
-          contents: contents,
-          contentType: contentType,
-          fileName: fileName,
-          size: size
-      }));
+      return this.MessageAttachment.create({
+        messageId: messageId,
+        contents: contents,
+        contentType: contentType,
+        fileName: fileName,
+        size: size
+      });
     }
     
     findMessageAttachments(id) {
@@ -576,11 +592,10 @@
     }
     
     createItemRead(itemId, userId) {
-      return this.sequelize.sync()
-        .then(() => this.ItemRead.create({
+      return this.ItemRead.create({
           itemId: itemId,
           userId: userId
-      }));
+      });
     }
     
     findItemRead(itemId, userId) {
@@ -610,12 +625,11 @@
     // QuestionGroupUserGroupRole
     
     createQuestionGroupUserGroupRole(questionGroupId, userGroupId, role) {
-      return this.sequelize.sync()
-        .then(() => this.QuestionGroupUserGroupRole.create({
-          questionGroupId: questionGroupId, 
-          userGroupId: userGroupId,
-          role: role
-      }));
+      return this.QuestionGroupUserGroupRole.create({
+        questionGroupId: questionGroupId, 
+        userGroupId: userGroupId,
+        role: role
+      });
     }
     
     findQuestionGroupUserGroupRole(questionGroupId, userGroupId) {
