@@ -42,8 +42,16 @@
       return this.api.chatThreads().id(id);
     }
     
+    listChatThreads() {
+      return this.api.chatThreads();
+    }
+    
     findQuestionGroup(id) {
       return this.api.questionGroups().id(id);
+    }
+    
+    listQuestionGroups() {
+      return this.api.questionGroups();
     }
     
     resolveImageUrl(baseUrl, src) {

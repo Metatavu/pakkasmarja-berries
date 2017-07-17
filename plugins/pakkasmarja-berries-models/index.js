@@ -194,12 +194,20 @@
       }));
     }
     
+    removeThread(id) {
+      return this.Thread.destroy({ where: { id : id } });
+    }
+    
     findThread(id) {
       return this.Thread.findOne({ where: { id : id } });
     }
     
     findThreadByOriginId(originId) {
       return this.Thread.findOne({ where: { originId : originId } });
+    }
+    
+    findAllChatThreads() {
+      return this.Thread.findAll();
     }
     
     listConversationThreadsByUserGroupId(userGroupId) {
@@ -329,6 +337,34 @@
       }));
     }
     
+    removeMessageAttachments(threadId) {
+      return this.Message.findAll({ where: { threadId: threadId } })
+        .then((messages) => {
+          if (messages) {
+            let counter = 0;
+            for (let i = 0; i < messages.length; i++) {
+              this.MessageAttachment.destroy({ where: { messageId: messages[i].id } });
+              counter++;
+
+              if (counter == messages.length) {
+                return;
+              }
+            }
+          } else {
+            return;
+          }
+          
+        });
+    }
+    
+    removeThreadUserGroupRole(threadId) {
+      return this.ThreadUserGroupRole.destroy({ where: { threadId: threadId } });
+    }
+    
+    removeThreadMessages(threadId) {
+      return this.Message.destroy({ where: { threadId: threadId } });
+    }
+    
     findMessage(id) {
       return this.Message.findOne({ where: { id : id } });
     }
@@ -366,8 +402,20 @@
       }));
     }
     
+    removeQuestionGroupUserGroupRoles(id) {
+      return this.QuestionGroupUserGroupRole.destroy({ where: { questionGroupId : id } });
+    }
+    
+    removeQuestionGroup(id) {
+      return this.QuestionGroup.destroy({ where: { id : id } });
+    }
+    
     findQuestionGroup(id) {
       return this.QuestionGroup.findOne({ where: { id : id } });
+    }
+    
+    findAllQuestionGroups() {
+      return this.QuestionGroup.findAll();
     }
     
     findQuestionGroupByThreadId(threadId) {
