@@ -43,6 +43,7 @@
         originId: { type: Sequelize.STRING },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
+        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -78,6 +79,8 @@
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
         userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
+      }, {
+        paranoid: true
       });
       
       this.defineModel('QuestionGroup', {
@@ -86,6 +89,7 @@
         originId: { type: Sequelize.STRING, allowNull: false },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
+        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -144,6 +148,8 @@
         contentType: { type: Sequelize.STRING, allowNull: false },
         fileName: { type: Sequelize.STRING },
         size: { type: Sequelize.BIGINT }
+      }, {
+        paranoid: true
       });
       
       this.defineModel('ItemRead', {
@@ -195,10 +201,6 @@
         type: type,
         imageUrl: imageUrl
       });
-    }
-    
-    removeThread(id) {
-      return this.Thread.destroy({ where: { id : id } });
     }
     
     findThread(id) {
@@ -336,13 +338,37 @@
       });
     }
     
-    removeMessageAttachments(threadId) {
+    removeThreadMessageAttachments(threadId) {
       return this.Message.findAll({ where: { threadId: threadId } })
         .then((messages) => {
+          const messageAttachmentRemovePromises = [];
           for (let i = 0; i < messages.length; i++) {
-            this.MessageAttachment.destroy({ where: { messageId: messages[i].id } });
+            messageAttachmentRemovePromises.push(this.MessageAttachment.destroy({ where: { messageId: messages[i].id } }));
           }
+          return Promise.all(messageAttachmentRemovePromises);
         });
+    }
+       
+    removeThread(id) {
+      return new Promise((resolve, reject) => {
+        this.removeThreadMessageAttachments(id)
+          .then(() => {
+            this.removeThreadMessages(id)
+              .then(() => {
+                this.removeThreadUserGroupRole(id)
+                  .then(() => {
+                    this.Thread.destroy({ where: { id : id } })
+                    .then(() => {
+                      resolve();
+                    })
+                    .catch(reject);
+                  })
+                  .catch(reject);
+              })
+              .catch(reject);
+          })
+          .catch(reject);
+      });
     }
     
     removeThreadUserGroupRole(threadId) {
@@ -394,7 +420,10 @@
     }
     
     removeQuestionGroup(id) {
-      return this.QuestionGroup.destroy({ where: { id : id } });
+      return this.removeQuestionGroupUserGroupRoles()
+        .then(() => {
+          return this.QuestionGroup.destroy({ where: { id : id } });
+        });
     }
     
     findQuestionGroup(id) {
