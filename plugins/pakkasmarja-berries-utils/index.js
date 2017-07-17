@@ -214,7 +214,7 @@
   }
 
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
+    const logger = imports.logger;
     const models = imports['pakkasmarja-berries-models'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
     const shadyMessages = imports['shady-messages'];

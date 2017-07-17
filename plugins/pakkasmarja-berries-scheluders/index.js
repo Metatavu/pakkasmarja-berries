@@ -19,7 +19,7 @@
           this.wordpress.listPosts(1, 99)
           .then((posts) => {
             const existingManagementIds = posts.map((post) => {
-              return post.id.toString()
+              return post.id.toString();
             });
             
             const articlesToRemove = _.filter(articles, (article) => {
@@ -45,7 +45,7 @@
             .then((wpChatThreads) => {
               
               const existingManagementIds = wpChatThreads.map((wpChatThread) => {
-                return wpChatThread.id.toString()
+                return wpChatThread.id.toString();
               });
               
               const chatThreadsToRemove = _.filter(chatThreads, (chatThread) => {
@@ -70,7 +70,7 @@
             .then((wpQuestionGroups) => {
               
               const existingManagementIds = wpQuestionGroups.map((wpQuestionGroup) => {
-                return wpQuestionGroup.id.toString()
+                return wpQuestionGroup.id.toString();
               });
               
               const questionGroupsToRemove = _.filter(questionGroups, (questionGroup) => {
