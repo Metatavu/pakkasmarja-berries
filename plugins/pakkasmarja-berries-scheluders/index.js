@@ -10,79 +10,103 @@
   const config = require('nconf');
   const WPAPI = require('wpapi');
   const cheerio = require('cheerio');
+  const moment = require('moment');
   
   class PakkasmarjaBerriesScheluders {
     
-    constructor (logger, wordpress, models) {
+    constructor (logger, wordpress, models, shadyMessages, pushNotifications) {
       this.logger = logger;
       this.wordpress = wordpress;
       this.models = models;
+      this.shadyMessages = shadyMessages;
+      this.pushNotifications = pushNotifications;
+    }
+
+    getBaseUrl() {
+      const host = config.get('client:server:host');
+      const secure = config.get('client:server:secure');
+      const port = config.get('client:server:port');
+      const protocol = secure ? 'https' : 'http';
+      return `${protocol}://${host}:${port}`;
     }
     
-    createOrUpdateNewsArticle() {
-        this.models.findAllNewsArticles()
-          .then((articles) => {
-            this.wordpress.listPosts(1, 99)
-              .then((posts) => {
-                  posts.forEach((post) => {
-                    this.models.findNewsArticleByOriginId(post.id)
-                      .then((articleFromDatabase) => {
-                        const originId = post.id.toString();
-                        const title = post.title.rendered;
-                        const content = post.content.rendered;
-
-                        const host = config.get('client:server:host');
-                        const secure = config.get('client:server:secure');
-                        const port = config.get('client:server:port');
-                        const protocol = secure ? 'https' : 'http';
-                        const baseUrl = `${protocol}://${host}:${port}`;
-
-                        const contents = this.wordpress.processContents(baseUrl, content);
-                        const imgUrl = post.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, post.better_featured_image.source_url) : null;
-
-
-                        if (articleFromDatabase) {
-                          this.models.updateNewsArticle(articleFromDatabase.id, title, contents, imgUrl);
-                        } else {
-                          this.models.createNewsArticle(originId, title, contents, imgUrl);
-                        }
-                      });
-                  });
-              });
-          });
+    notifyClusterNewsArticleAdded(newsArticle) {
+      this.shadyMessages.trigger("client:news-article-added", {
+        "news-article": {
+          "id": newsArticle.id,
+          "contents": newsArticle.contents,
+          "title": newsArticle.title,
+          "created": moment(newsArticle.createdAt).format(),
+          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+          "image": newsArticle.imageUrl,
+          "read": false
+        }
+      });
     }
     
-    removeNewsArticleIfDoesntExistInWordpress() {
-        let postsArray = [];
-        let counter = 0;
-        this.models.findAllNewsArticles()
-          .then((articles) => {
-            this.wordpress.listPosts(1, 99)
-            .then((posts) => {
-              for (let i = 0; i < posts.length; i++) {
-                counter++;
-                postsArray.push(posts[i].id.toString());
-
-                if (counter === posts.length) {
-                  for (let i = 0; i < articles.length; i++) {
-                    if (postsArray.indexOf(articles[i].originId.toString()) === -1) {
-                      this.models.removeNewsArticle(articles[i].id);
-                    }
-                  }
-                }
-              }
+    syncManagementNewsArticles() {
+      this.models.findAllNewsArticles()
+        .then((articles) => {
+          this.wordpress.listPosts(1, 99)
+          .then((posts) => {
+            const existingManagementIds = posts.map((post) => {
+              return post.id.toString()
             });
+            
+            const articlesToRemove = _.filter(articles, (article) => {
+              return existingManagementIds.indexOf(article.originId) < 0;
+            });
+            
+            for (let i = 0; i < articlesToRemove.length; i++) {
+              this.models.removeNewsArticle(articlesToRemove[i].id);
+            }
+            
+            posts.forEach((wpPost) => {
+              const baseUrl = this.getBaseUrl();
+              const wpId = wpPost.id.toString();
+              const wpTitle = wpPost.title.rendered;
+              const wpContents = wpPost.content.rendered;
+              const contents = this.wordpress.processContents(baseUrl, wpContents);
+              const created = moment(wpPost.date_gmt).valueOf();
+              const modified = moment(wpPost.modified_gmt).valueOf();
+              const imageUrl = wpPost.better_featured_image ? this.wordpress.resolveImageUrl(baseUrl, wpPost.better_featured_image.source_url) : null;
+
+              this.models.findNewsArticleByOriginId(wpId)
+                .then((newsArticle) => {
+                  if (newsArticle) {
+                    this.models.updateNewsArticle(newsArticle.id, wpTitle, contents, imageUrl)
+                      .then(() => {
+                        this.logger.info(`News article ${newsArticle.id} updated`);
+                      }) 
+                      .catch((err) => {
+                        this.logger.error(`Failed to update news article ${wpId}`, err);
+                      });
+                  } else {
+                    this.models.createNewsArticle(wpId, wpTitle, contents, imageUrl)
+                      .then((newsArticle) => {
+                        this.logger.info(`News article ${newsArticle.id} created`);
+                        this.notifyClusterNewsArticleAdded(newsArticle);
+                        this.pushNotifications.notifyNewsItemPublish(wpTitle);
+                      }) 
+                      .catch((err) => {
+                        console.log(err);
+                        this.logger.error(`Failed to create news article from ${wpId}`, err);
+                      });
+                  }
+                })
+                .catch((err) => {
+                  this.logger.error(`Failed to find news article ${wpId}`, err);
+                });
+            });
+            
           });
+        });
     }
     
     start() {
-      this.removeNewsArticleInterval = setInterval(() => {
-        this.removeNewsArticleIfDoesntExistInWordpress();
-      }, 120000);
-      
-      this.createOrUpdateNewsArticleInterval = setInterval(() => {
-        this.createOrUpdateNewsArticle();
-      }, 120000);
+      this.syncManagementNewsArticlesInterval = setInterval(() => {
+        this.syncManagementNewsArticles();
+      }, 1000 * 60 * 2);
     }
     
   } 
@@ -91,7 +115,9 @@
     const logger = imports.logger;
     const models = imports['pakkasmarja-berries-models'];
     const wordpress = imports['pakkasmarja-berries-wordpress'];
-    const scheluder = new PakkasmarjaBerriesScheluders(logger, wordpress, models);
+    const shadyMessages = imports['shady-messages'];
+    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
+    const scheluder = new PakkasmarjaBerriesScheluders(logger, wordpress, models, shadyMessages, pushNotifications);
     
     register(null, {
       'pakkasmarja-berries-scheluders': scheluder
