@@ -340,20 +340,9 @@
     removeMessageAttachments(threadId) {
       return this.Message.findAll({ where: { threadId: threadId } })
         .then((messages) => {
-          if (messages) {
-            let counter = 0;
-            for (let i = 0; i < messages.length; i++) {
-              this.MessageAttachment.destroy({ where: { messageId: messages[i].id } });
-              counter++;
-
-              if (counter == messages.length) {
-                return;
-              }
-            }
-          } else {
-            return;
+          for (let i = 0; i < messages.length; i++) {
+            this.MessageAttachment.destroy({ where: { messageId: messages[i].id } });
           }
-          
         });
     }
     
