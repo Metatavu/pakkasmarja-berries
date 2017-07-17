@@ -160,7 +160,12 @@
     }
     
     defineModel(name, attributes, options) {
-      this[name] = this.sequelize.define(name, attributes, options);
+      this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
+        charset: 'utf8mb4',
+        dialectOptions: {
+          collate: 'utf8mb4_unicode_ci'
+        }
+      }));
       this[name].sync();
       this.modelNames.push(name);
     }
