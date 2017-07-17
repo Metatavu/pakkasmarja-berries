@@ -484,8 +484,16 @@
       }));
     }
     
+    removeNewsArticle(id) {
+      return this.NewsArticle.destroy({ where: {id: id} });
+    }
+    
     findNewsArticle(id) {
       return this.NewsArticle.findOne({ where: { id : id } });
+    }
+    
+    findAllNewsArticles() {
+      return this.NewsArticle.findAll();
     }
     
     findNewsArticleByOriginId(originId) {

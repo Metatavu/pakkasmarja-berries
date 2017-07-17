@@ -32,5 +32,6 @@ module.exports = [
   "./plugins/pakkasmarja-berries-user-management",
   "./plugins/pakkasmarja-berries-wordpress",
   "./plugins/pakkasmarja-berries-webhooks",
-  "./plugins/pakkasmarja-berries-push-notifications"
+  "./plugins/pakkasmarja-berries-push-notifications",
+  "./plugins/pakkasmarja-berries-scheluders"
 ];
