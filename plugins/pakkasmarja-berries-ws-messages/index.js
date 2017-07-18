@@ -119,7 +119,7 @@
                           "created": moment(newsArticle.createdAt).format(),
                           "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
                           "image": newsArticle.imageUrl,
-                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt
+                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt.getTime()
                         };
                       })
                     }
@@ -714,7 +714,7 @@
       return new Promise((resolve, reject) => {
         this.models.findItemRead(id, userId)
           .then((itemRead) => {
-            resolve(itemRead ? itemRead.createdAt : null);
+            resolve(itemRead ? itemRead.updatedAt : null);
           })
           .catch(reject);
       });
