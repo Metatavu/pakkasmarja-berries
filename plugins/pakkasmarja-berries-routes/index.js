@@ -35,6 +35,10 @@
     getSystemPing(req, res) {
       res.send("PONG");
     }
+
+    getVersion(req, res) {
+      res.send("1.1");
+    }
     
     getImagesWordpress(req, res) {
       const contentUrl = config.get('wordpress:content-url');
@@ -262,6 +266,7 @@
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
+      app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
