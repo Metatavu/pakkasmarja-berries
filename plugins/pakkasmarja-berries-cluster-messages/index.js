@@ -347,7 +347,6 @@
       const userId = data['user-id'];
       const questionGroup = data['question-group'];
       const clients = this.webSockets.getClients();
-      
       _.forEach(clients, (client) => {
         const sessionId = client.getSessionId();
         if (sessionId) {
@@ -356,7 +355,7 @@
               if (session.userId === userId) {
                 this.getUserGroupIds(userId)
                   .then((userGroupIds) => {
-                    this.userManagement.getQuestionGroupUserRole(realm, questionGroup.id, userId)
+                    this.userManagement.getQuestionGroupUserRole(config.get('keycloak:realm'), questionGroup.id, userId)
                       .then((role) => {
                         client.sendMessage({
                           "type": "question-groups-added",
