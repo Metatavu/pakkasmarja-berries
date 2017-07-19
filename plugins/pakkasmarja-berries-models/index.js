@@ -43,7 +43,6 @@
         originId: { type: Sequelize.STRING },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
-        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -79,8 +78,6 @@
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
         userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
-      }, {
-        paranoid: true
       });
       
       this.defineModel('QuestionGroup', {
@@ -89,7 +86,6 @@
         originId: { type: Sequelize.STRING, allowNull: false },
         imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
       }, {
-        paranoid: true,
         hooks: {
           'afterFind': (object, options) => {
             if (!object) {
@@ -148,8 +144,6 @@
         contentType: { type: Sequelize.STRING, allowNull: false },
         fileName: { type: Sequelize.STRING },
         size: { type: Sequelize.BIGINT }
-      }, {
-        paranoid: true
       });
       
       this.defineModel('ItemRead', {
@@ -331,7 +325,7 @@
     // Messages
     
     createMessage(threadId, userId, contents) {
-      this.Message.create({
+     return this.Message.create({
         threadId: threadId,
         userId: userId,
         contents: contents
