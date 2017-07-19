@@ -206,7 +206,7 @@
     }
     
     findAllChatThreads() {
-      return this.Thread.findAll();
+      return this.Thread.findAll({ where: { type: 'conversation' } });
     }
     
     listConversationThreadsByUserGroupId(userGroupId) {
@@ -296,29 +296,41 @@
       return this.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
     }
     
-    updateThread(id, title, imageUrl) {
+    updateThread(id, title, imageUrl, silentUpdate) {
       return this.Thread.update({
         title: title,
         imageUrl: imageUrl
       }, {
         where: {
           id: id
-        }
+        },
+        silent: silentUpdate ? silentUpdate : false
       });
     }
     
     setThreadUserGroupRoles(threadId, roleMap) {
-      const createPromises = _.map(roleMap, (role, userGroupId) => {
-        return this.ThreadUserGroupRole.create({
-            threadId: threadId,
-            userGroupId: userGroupId,
-            role: role
-        });
+      const newUserGroups = _.map(roleMap, (role, userGroupId) => {
+        return userGroupId;
       });
       
-      return this.ThreadUserGroupRole.destroy({ where: { threadId : threadId } })
+      return this.ThreadUserGroupRole.destroy({ 
+          where: { 
+            threadId : threadId,
+            userGroupId: {
+              $notIn: newUserGroups
+            }
+          } 
+        })
         .then(() => {
-          return Promise.all(createPromises);
+          const roleUpsertPromises = _.map(roleMap, (role, userGroupId) => {
+            return this.ThreadUserGroupRole.upsert({
+              threadId: threadId,
+              userGroupId: userGroupId,
+              role: role
+            });
+          });
+
+          return Promise.all(roleUpsertPromises);
         });
     }
     
@@ -452,29 +464,41 @@
         });
     }
     
-    updateQuestionGroup(id, title, imageUrl) {
+    updateQuestionGroup(id, title, imageUrl, silentUpdate) {
       return this.QuestionGroup.update({
         title: title,
         imageUrl: imageUrl
       }, {
         where: {
           id: id
-        }
+        },
+        silent: silentUpdate ? silentUpdate : false
       });
     }
     
     setQuestionGroupUserGroupRoles(questionGroupId, roleMap) {
-      const createPromises = _.map(roleMap, (role, userGroupId) => {
-        return this.QuestionGroupUserGroupRole.create({
-            questionGroupId: questionGroupId,
-            userGroupId: userGroupId,
-            role: role
-        });
+      const newUserGroups = _.map(roleMap, (role, userGroupId) => {
+        return userGroupId;
       });
       
-      return this.QuestionGroupUserGroupRole.destroy({ where: { questionGroupId : questionGroupId } })
+      return this.QuestionGroupUserGroupRole.destroy({ 
+          where: { 
+            questionGroupId : questionGroupId,
+            userGroupId: {
+              $notIn: newUserGroups
+            }
+          } 
+        })
         .then(() => {
-          return Promise.all(createPromises);          
+          const roleUpsertPromises = _.map(roleMap, (role, userGroupId) => {
+            return this.QuestionGroupUserGroupRole.upsert({
+              questionGroupId: questionGroupId,
+              userGroupId: userGroupId,
+              role: role
+            });
+          });
+
+          return Promise.all(roleUpsertPromises);
         });
     }
     
@@ -557,7 +581,7 @@
       return this.NewsArticle.findAll({ offset: firstResult, limit: maxResults });
     }
     
-    updateNewsArticle(id, title, contents, imageUrl) {
+    updateNewsArticle(id, title, contents, imageUrl, silentUpdate) {
       return this.NewsArticle.update({
         title: title,
         contents: contents,
@@ -565,7 +589,8 @@
       }, {
         where: {
           id: id
-        }
+        },
+        silent: silentUpdate ? silentUpdate : false
       });
     }
     

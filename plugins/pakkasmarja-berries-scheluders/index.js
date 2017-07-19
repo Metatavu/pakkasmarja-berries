@@ -31,7 +31,7 @@
             }
             
             posts.forEach((wpPost) => {
-              this.pakkasmarjaBerriesUtils.updateOrCreateManagementPost(wpPost);
+              this.pakkasmarjaBerriesUtils.updateOrCreateManagementPost(wpPost, true);
             });
             
           });
@@ -57,7 +57,7 @@
               }
               
               wpChatThreads.forEach((thread) => {
-                this.pakkasmarjaBerriesUtils.updateOrCreateChatThread(thread);
+                this.pakkasmarjaBerriesUtils.updateOrCreateChatThread(thread, true);
               });
             });
         });
@@ -82,7 +82,7 @@
               }
               
               wpQuestionGroups.forEach((questionGroup) => {
-                this.pakkasmarjaBerriesUtils.updateOrCreateQuestionGroup(questionGroup);
+                this.pakkasmarjaBerriesUtils.updateOrCreateQuestionGroup(questionGroup, true);
               });
             });
         });

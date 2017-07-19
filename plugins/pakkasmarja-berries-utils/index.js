@@ -29,7 +29,7 @@
       return `${protocol}://${host}:${port}`;
     }
     
-    updateOrCreateManagementPost(wpPost) {
+    updateOrCreateManagementPost(wpPost, silentUpdate) {
       const baseUrl = this.getBaseUrl();
       const wpId = wpPost.id.toString();
       const wpTitle = wpPost.title.rendered;
@@ -42,7 +42,7 @@
       this.models.findNewsArticleByOriginId(wpId)
         .then((newsArticle) => {
           if (newsArticle) {
-            this.models.updateNewsArticle(newsArticle.id, wpTitle, contents, imageUrl)
+            this.models.updateNewsArticle(newsArticle.id, wpTitle, contents, imageUrl, silentUpdate)
               .then(() => {
                 this.logger.info(`News article ${newsArticle.id} updated`);
               }) 
@@ -54,7 +54,7 @@
               .then((newsArticle) => {
                 this.logger.info(`News article ${newsArticle.id} created`);
                 this.notifyClusterNewsArticleAdded(newsArticle);
-                this.pushNotifications.notifyNewsItemPublish(wpTitle);
+                //this.pushNotifications.notifyNewsItemPublish(wpTitle);
               }) 
               .catch((err) => {
                 this.logger.error(`Failed to create news article from ${wpId}`, err);
@@ -66,7 +66,7 @@
         });
     }        
     
-    updateOrCreateChatThread(wpChatThread) {
+    updateOrCreateChatThread(wpChatThread, silentUpdate) {
       const wpId = wpChatThread.id.toString();
       const wpUserGroupSetings = wpChatThread['user-group-setings'];
       const wpFeaturedMediaUrl = wpChatThread['better_featured_image'] ? wpChatThread['better_featured_image'].source_url : null;
@@ -82,12 +82,15 @@
       this.models.findThreadByOriginId(wpId)
         .then((thread) => {
           if (thread) {
-            this.models.updateThread(thread.id, wpTitle, imageUrl)
+            this.models.updateThread(thread.id, wpTitle, imageUrl, silentUpdate)
               .then(() => {
                 this.models.setThreadUserGroupRoles(thread.id, userGroupRoles)
                   .then(() => {
                     this.logger.info(`Thread ${thread.id} updated`);
                     this.notifyClusterConversationThreadAdded(thread);
+                  })
+                  .catch((err) => {
+                    this.logger.error(`Failed to update chat thread group roles for ${wpId}`, err);
                   });
               }) 
               .catch((err) => {
@@ -112,7 +115,7 @@
         });
     }
     
-    updateOrCreateQuestionGroup(wpQuestionGroup) {
+    updateOrCreateQuestionGroup(wpQuestionGroup, silentUpdate) {
       const wpId = wpQuestionGroup.id.toString();
       const wpUserGroupSetings = wpQuestionGroup['user-group-setings'];
       const wpFeaturedMediaUrl = wpQuestionGroup['better_featured_image'] ? wpQuestionGroup['better_featured_image'].source_url : null;
@@ -127,12 +130,15 @@
       this.models.findQuestionGroupByOriginId(wpId)
         .then((questionGroup) => {
           if (questionGroup) {
-            this.models.updateQuestionGroup(questionGroup.id, wpTitle, imageUrl)
+            this.models.updateQuestionGroup(questionGroup.id, wpTitle, imageUrl, silentUpdate)
               .then(() => {
                 this.models.setQuestionGroupUserGroupRoles(questionGroup.id, userGroupRoles)
                   .then(() => {
                     this.logger.info(`Group ${questionGroup.id} updated`);
                     this.notifyClusterQuestionGroupAdded(questionGroup);
+                  })
+                  .catch((err) => {
+                    this.logger.error(`Failed to update question group roles for ${wpId}`, err);
                   });
               }) 
               .catch((err) => {
@@ -145,6 +151,9 @@
                   .then(() => {
                     this.logger.info(`Group ${questionGroup.id} created`);
                     this.notifyClusterQuestionGroupAdded(questionGroup);
+                  })
+                  .catch((err) => {
+                    this.logger.error(`Failed to update question group roles for ${wpId}`, err);
                   });
               }) 
               .catch((err) => {
