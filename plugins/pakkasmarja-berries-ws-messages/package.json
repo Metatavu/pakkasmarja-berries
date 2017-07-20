@@ -11,9 +11,8 @@
       "logger",
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management",
-      "pakkasmarja-berries-wordpress",
       "pakkasmarja-berries-cluster-messages",
-      "pakkasmarja-berries-push-notifications",
+      "pakkasmarja-berries-utils",
       "shady-messages"
     ]
   }

@@ -3,29 +3,31 @@
 
 (() => {
   'use strict';
-  
-  const _ = require('lodash');
+
   const config = require('nconf');
   const FCM = require('fcm-push');
   const Promise = require('bluebird');
   
   class PushNotifications {
     
-    constructor (logger, models, userManagement) {
+    constructor (logger) {
       this.logger = logger;
-      this.models = models;
-      this.userManagement = userManagement;
       this.fcm = new FCM(config.get('firebase:server-key'));
     }
     
     sendPushNotification(to, title, body, sound) {
+      const notificationSettings = {
+        title: title,
+        body: body
+      }
+      
+      if (sound) {
+        notificationSettings.sound = 'default';
+      }
+      
       const message = {
         to: `/topics/${to}`,
-        notification: {
-          title: title,
-          body: body,
-          sound: sound ? 'news': null
-        }
+        notification: notificationSettings
       };
 
       this.fcm.send(message)
@@ -41,10 +43,8 @@
 
   module.exports = (options, imports, register) => {
     const logger = imports['logger'];
-    const models = imports['pakkasmarja-berries-models'];
-    const userManagement = imports['pakkasmarja-berries-user-management'];
     
-    const pushNotifications = new PushNotifications(logger, models, userManagement);
+    const pushNotifications = new PushNotifications(logger);
     register(null, {
       'pakkasmarja-berries-push-notifications': pushNotifications
     });

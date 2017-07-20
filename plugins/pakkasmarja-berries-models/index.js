@@ -193,7 +193,6 @@
     findUserSettingsByUserIdAndKey(userId, settingKey) {
       return this.UserSettings.findOne({ where: { userId: userId, settingKey: settingKey } });
     }
-    sound
     // Sessions
     
     findSession(id) {
@@ -215,7 +214,7 @@
     createThread(originId, title, type, imageUrl) {
       return this.Thread.create({
         originId: originId,
-        title: title ? title : 'Ei titleä',
+        title: title,
         type: type,
         imageUrl: imageUrl
       });
@@ -553,10 +552,8 @@
       return this.findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId)
         .then((questionGroupUserThread) => {
           if (questionGroupUserThread) {
-            console.log("asd ", questionGroupUserThread.threadId);
             return this.findThread(questionGroupUserThread.threadId)
               .then((thread) => {
-                console.log('2. ',thread);
                 return {
                   thread: thread,
                   created: false

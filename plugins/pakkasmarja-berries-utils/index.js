@@ -53,8 +53,17 @@
             this.models.createNewsArticle(wpId, wpTitle, contents, imageUrl)
               .then((newsArticle) => {
                 this.logger.info(`News article ${newsArticle.id} created`);
-                this.buildNewsPushNotification(wpTitle);
                 this.notifyClusterNewsArticleAdded(newsArticle);
+                this.userManagement.listUsers(config.get('keycloak:realm'))
+                  .then((users) => {
+                    const userIds = _.uniq(users.map((user) => {
+                      return user.id;
+                    }));
+                    this.buildPushNotification(userIds, 'Uusi ajankohtainen julkaistu.', wpTitle, 'news-push-notification');
+                  })
+                  .catch((err) => {
+                    this.logger.error('Failed to list users to create push notification', err);
+                  });
               }) 
               .catch((err) => {
                 this.logger.error(`Failed to create news article from ${wpId}`, err);
@@ -66,28 +75,19 @@
         });
     }
     
-    buildNewsPushNotification(wpTitle) {
-      this.userManagement.listUsers(config.get('keycloak:realm'))
-        .then((users) => {
-          const userIds = _.uniq(users.map((user) => {
-            return user.id;
-          }));
-          
-          const title = 'Uusi ajankohtainen julkaistu.';
-          const body = wpTitle;
-          
-          userIds.forEach((userId) => {
-            this.models.findUserSettingsByUserIdAndKey(userId, 'news-push-notification')
-              .then((userSetting) => {
-                if (userSetting) {
-                  const sound = userSetting.settingValue === 'enabled' ? true : false;
-                  this.pushNotifications.sendPushNotification(userId, title, body, sound);
-                } else {
-                  this.pushNotifications.sendPushNotification(userId, title, body, true);
-                }
-              });
+    buildPushNotification(userIds, title, body, notificationSetting) { 
+      userIds.forEach((userId) => {
+        this.models.findUserSettingsByUserIdAndKey(userId, notificationSetting)
+          .then((userSetting) => {
+            if (!userSetting) {
+              this.pushNotifications.sendPushNotification(userId, title, body, true);
+            } else {
+              if (userSetting.settingValue !== 'disabled') {
+                this.pushNotifications.sendPushNotification(userId, title, body, userSetting.settingValue !== 'silent');
+              }
+            }
           });
-        });
+      });
     }
     
     updateOrCreateChatThread(wpChatThread, silentUpdate) {

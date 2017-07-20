@@ -13,14 +13,13 @@
   
   class PakkasmarjaBerriesWebsocketMessages {
     
-    constructor (logger, models, shadyMessages, userManagement, wordpress, clusterMessages, pushNotifications) {
+    constructor (logger, models, shadyMessages, userManagement, clusterMessages, pakkasmarjaBerriesUtils) {
       this.logger = logger;
       this.models = models;
       this.shadyMessages = shadyMessages;
       this.userManagement = userManagement;
-      this.wordpress = wordpress;
       this.clusterMessages = clusterMessages;
-      this.pushNotifications = pushNotifications;
+      this.pakkasmarjaBerriesUtils = pakkasmarjaBerriesUtils;
     }
     
     handleWebSocketError(client, operation) {
@@ -35,26 +34,6 @@
       client.sendMessage({
         "type": "pong"
       });
-    }
-    
-    messagePushNotificationBuilder(threadId) {
-      this.models.findThread(threadId)
-        .then((thread) => {
-          this.userManagement.getThreadUserIds(config.get('keycloak:realm') ,threadId)
-            .then((userIds) => {
-              userIds.forEach((userId) => {
-                this.models.findUserSettingsByUserIdAndKey(userId, 'conversation-push-notifications')
-                  .then((userSetting) => {
-                    const title = 'Uusi viesti';
-                    const to = userId;
-                    const body = `Uusi viesti keskustelussa ${thread.title}`;
-                    const sound = true;
-                    
-                    this.pushNotifications.sendPushNotification(to, title, body, sound);
-                  });
-              });
-            });
-        });
     }
     
     onSendMessage(message, client) {
@@ -93,7 +72,10 @@
           const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
           messageBuilder.thread(thread).message(message).send()
             .then(() => {
-              this.messagePushNotificationBuilder(thread.id);
+              this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
+                .then((userIds) => {
+                  this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti', `Uusi viesti keskustelussa ${thread.title}`, 'conversation-push-notifications');
+                });
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
         })
@@ -121,13 +103,7 @@
                           this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), questionGroupUserGroupIds)
                           .then((questionGroupUserIds) => {
                             const userIds = _.uniq(threadUserIds.concat(questionGroupUserIds));
-                            const title = 'Uusi viesti kysymysryhmässä';
-                            const body = questionGroup.title;
-                            
-                            userIds.forEach((userId) => {
-                              const sound = true;
-                              this.pushNotifications.sendPushNotification(userId, title, body, sound);
-                            });
+                            this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti kysymysryhmässä', questionGroup.title, 'question-push-notifications');
                           });
                         });
                     });
@@ -746,11 +722,10 @@
     const models = imports['pakkasmarja-berries-models'];
     const shadyMessages = imports['shady-messages'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
-    const wordpress = imports['pakkasmarja-berries-wordpress'];
     const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
-    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
+    const pakkasmarjaBerriesUtils = imports['pakkasmarja-berries-utils'];
      
-    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, wordpress, clusterMessages, pushNotifications);
+    const websocketMessages = new PakkasmarjaBerriesWebsocketMessages(logger, models, shadyMessages, userManagement, clusterMessages, pakkasmarjaBerriesUtils);
     
     register(null, {
       'pakkasmarja-berries-ws-messages': websocketMessages
