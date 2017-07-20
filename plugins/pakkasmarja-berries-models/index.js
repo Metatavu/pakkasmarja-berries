@@ -23,24 +23,24 @@
       
       this.defineModel('Session', {
         id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, defaultValue: Sequelize.UUIDV4 },
-        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
       });
       
       this.defineModel('ConnectSession', {
         sid: {
-          type: Sequelize.STRING,
+          type: Sequelize.STRING(191),
           primaryKey: true
         },
-        userId: Sequelize.STRING,
+        userId: Sequelize.STRING(191),
         expires: Sequelize.DATE,
         data: Sequelize.TEXT
       });
       
       this.defineModel('UserSettings', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
-        settingKey: { type: Sequelize.STRING, allowNull: false },
-        settingValue: { type: Sequelize.STRING }
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        settingKey: { type: Sequelize.STRING(191), allowNull: false },
+        settingValue: { type: Sequelize.STRING(191) }
       }, {
         indexes: [{
           name: 'UN_USERSETTING_USERID_SETTINGKEY',
@@ -51,10 +51,10 @@
       
       this.defineModel('Thread', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        title: { type: Sequelize.STRING },
-        type: { type: Sequelize.STRING, allowNull: false },
-        originId: { type: Sequelize.STRING },
-        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+        title: { type: Sequelize.STRING(191) },
+        type: { type: Sequelize.STRING(191), allowNull: false },
+        originId: { type: Sequelize.STRING(191) },
+        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
       }, {
         hooks: {
           'afterFind': (object, options) => {
@@ -76,8 +76,8 @@
       this.defineModel('ThreadUserGroupRole', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
-        userGroupId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 }  },
-        role: { type: Sequelize.STRING, allowNull: false  }
+        userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
+        role: { type: Sequelize.STRING(191), allowNull: false  }
       }, {
         indexes: [{
           name: 'UN_THREADUSERGROUPROLE_THREADID_USERGROUPID',
@@ -89,15 +89,15 @@
       this.defineModel('Message', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
-        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
       });
       
       this.defineModel('QuestionGroup', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        title: { type: Sequelize.STRING, allowNull: false },
-        originId: { type: Sequelize.STRING, allowNull: false },
-        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+        title: { type: Sequelize.STRING(191), allowNull: false },
+        originId: { type: Sequelize.STRING(191), allowNull: false },
+        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
       }, {
         hooks: {
           'afterFind': (object, options) => {
@@ -119,8 +119,8 @@
       this.defineModel('QuestionGroupUserGroupRole', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
-        userGroupId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 }  },
-        role: { type: Sequelize.STRING, allowNull: false  }
+        userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
+        role: { type: Sequelize.STRING(191), allowNull: false  }
       }, {
         indexes: [{
           name: 'UN_QUESTIONGROUPUSERGROUPROLE_QUESTIONGROUPID_USERGROUPID',
@@ -133,7 +133,7 @@
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
-        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } }
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
       }, {
         indexes: [{
           name: 'UN_QUESTIONGROUPUSERTHREAD_QUESTIONGROUPID_THREADID',
@@ -144,25 +144,25 @@
       
       this.defineModel('NewsArticle', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        title: { type: Sequelize.STRING, allowNull: false },
+        title: { type: Sequelize.STRING(191), allowNull: false },
         contents: { type: 'LONGTEXT', allowNull: false },
-        originId: { type: Sequelize.STRING, allowNull: false },
-        imageUrl: { type: Sequelize.STRING, validate: { isUrl: true } }
+        originId: { type: Sequelize.STRING(191), allowNull: false },
+        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
       });
       
       this.defineModel('MessageAttachment', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: 'id' } },
         contents: { type: 'LONGBLOB', allowNull: false },
-        contentType: { type: Sequelize.STRING, allowNull: false },
-        fileName: { type: Sequelize.STRING },
+        contentType: { type: Sequelize.STRING(191), allowNull: false },
+        fileName: { type: Sequelize.STRING(191) },
         size: { type: Sequelize.BIGINT }
       });
       
       this.defineModel('ItemRead', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
-        itemId: { type: Sequelize.STRING, allowNull: false }
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        itemId: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
           name: 'UN_ITEMREAD_USERID_ITEMID',
