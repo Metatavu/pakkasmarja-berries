@@ -37,7 +37,7 @@
     }
 
     getVersion(req, res) {
-      res.send("1.1.1");
+      res.send("1.2.0");
     }
     
     getImagesWordpress(req, res) {
