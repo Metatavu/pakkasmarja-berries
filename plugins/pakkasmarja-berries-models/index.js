@@ -37,7 +37,8 @@
       });
       
       this.defineModel('UserSettings', {
-        userId: { type: Sequelize.STRING, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        userId: { type: Sequelize.STRING, allowNull: false, validate: { isUUID: 4 } },
         settingKey: { type: Sequelize.STRING, allowNull: false },
         settingValue: { type: Sequelize.STRING }
       }, {
