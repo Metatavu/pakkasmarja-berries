@@ -18,18 +18,15 @@
     sendPushNotification(to, title, body, sound) {
       const notificationSettings = {
         title: title,
-        body: body
-      }
-      
-      if (sound) {
-        notificationSettings.sound = 'default';
-      }
+        body: body,
+        sound: sound ? 'default' : 'silent'
+      };
       
       const message = {
         to: `/topics/${to}`,
         notification: notificationSettings
       };
-
+      
       this.fcm.send(message)
         .then((response) => {
           this.logger.info(`Push notification sent with message ${response}`);

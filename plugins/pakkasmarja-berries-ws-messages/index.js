@@ -75,6 +75,9 @@
               this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
                 .then((userIds) => {
                   this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti', `Uusi viesti keskustelussa ${thread.title}`, 'conversation-push-notifications');
+                  this.models.upsertItemRead(`thread-${thread.id}`, userId)
+                    .then(() => {})
+                    .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                 });
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
@@ -104,6 +107,9 @@
                           .then((questionGroupUserIds) => {
                             const userIds = _.uniq(threadUserIds.concat(questionGroupUserIds));
                             this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti kysymysryhmässä', questionGroup.title, 'question-push-notifications');
+                            this.models.upsertItemRead(`thread-${thread.id}`, userId)
+                              .then(() => {})
+                              .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
                           });
                         });
                     });
@@ -176,7 +182,13 @@
                           'read': !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
                         };
                       });
-                    
+                      
+                      threads.sort((a, b) => {
+                        let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+                        let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+                        return latestB - latestA;
+                      });
+                      
                       client.sendMessage({
                         "type": "conversation-threads-added",
                         "data": {
@@ -218,6 +230,12 @@
                           latestMessage: questionGroup.latestMessage,
                           role: roles[index]
                         };
+                      });
+                      
+                      questionGroups.sort((a, b) => {
+                        let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+                        let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+                        return latestB - latestA;
                       });
                       
                       const threadsReadPromises = _.map(questionGroups, (questionGroup, index) => {
@@ -356,6 +374,13 @@
 
                           Promise.all(threadPromises)
                             .then((threads) => {
+                              
+                              threads.sort((a, b) => {
+                                let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+                                let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+                                return latestB - latestA;
+                              });
+                              
                               client.sendMessage({
                                 "type": "question-group-threads-added",
                                 "data": {
@@ -458,9 +483,14 @@
         .then((userId) => {
           this.models.getUserSettings(userId)
           .then((userSettings) => {
+            const result = userSettings.map((userSetting) => {
+              return { settingKey: userSetting.settingKey, settingValue: userSetting.settingValue };
+            });
             client.sendMessage({
               "type": "user-settings",
-              "data": userSettings
+              "data": {
+                userSettings: result
+              }
             });  
           })
           .catch(this.handleWebSocketError(client, 'GET_USER_SETTINGS'));
