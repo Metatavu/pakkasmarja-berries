@@ -160,7 +160,8 @@
               this.models.createSession(userId)
                 .then((session) => {
                   res.send({
-                    sessionId: session.id
+                    sessionId: session.id,
+                    userId: userId
                   });
                 })
                 .catch((sessionErr) => {
