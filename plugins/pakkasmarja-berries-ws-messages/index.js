@@ -37,6 +37,26 @@
       });
     }
     
+    messagePushNotificationBuilder(threadId) {
+      this.models.findThread(threadId)
+        .then((thread) => {
+          this.userManagement.getThreadUserIds(config.get('keycloak:realm') ,threadId)
+            .then((userIds) => {
+              userIds.forEach((userId) => {
+                this.models.findUserSettingsByUserIdAndKey(userId, 'conversation-push-notifications')
+                  .then((userSetting) => {
+                    const title = 'Uusi viesti';
+                    const to = userId;
+                    const body = `Uusi viesti keskustelussa ${thread.title}`;
+                    const sound = true;
+                    
+                    this.pushNotifications.sendPushNotification(to, title, body, sound);
+                  });
+              });
+            });
+        });
+    }
+    
     onSendMessage(message, client) {
       this.getUserId(client)
         .then((userId) => {
@@ -72,8 +92,8 @@
         .then((message) => {
           const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
           messageBuilder.thread(thread).message(message).send()
-            .then(() => { 
-              this.pushNotifications.notifyConversationThreadMessage(thread.id, thread.title);
+            .then(() => {
+              this.messagePushNotificationBuilder(thread.id);
             })
             .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_CONVERSATION'));
         })
@@ -88,7 +108,29 @@
               this.clusterMessages.createMessageAddedBuilder()
                 .thread(thread).message(message).send()
                 .then(() => { 
-                  this.pushNotifications.notifyQuestionGroupThreadMessage(thread.id, questionGroup.title);
+                  
+                  this.models.findQuestionGroupUserThreadsByThreadId(thread.id)
+                    .then((questionGroupUserThreads) => {
+                      const questionGroupId = questionGroupUserThreads[0].questionGroupId;
+                      const threadUserIds = questionGroupUserThreads.map((questionGroupUserThread) => {
+                        return questionGroupUserThread.userId;
+                      });
+                      
+                      this.models.getQuestionGroupManagerUserGroupIds(questionGroupId)
+                        .then((questionGroupUserGroupIds) => {
+                          this.userManagement.listGroupsMemberIds(config.get('keycloak:realm'), questionGroupUserGroupIds)
+                          .then((questionGroupUserIds) => {
+                            const userIds = _.uniq(threadUserIds.concat(questionGroupUserIds));
+                            const title = 'Uusi viesti kysymysryhmässä';
+                            const body = questionGroup.title;
+                            
+                            userIds.forEach((userId) => {
+                              const sound = true;
+                              this.pushNotifications.sendPushNotification(userId, title, body, sound);
+                            });
+                          });
+                        });
+                    });
                 })
                 .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
             })
@@ -500,39 +542,6 @@
         });
     }
     
-    onSubscribableConversationThreads(message, client) {
-      this.getUserId(client)
-        .then((userId) => {
-          this.pushNotifications.getSubscribableConversationThreads(userId)
-            .then((threadIds) => {
-              client.sendMessage({
-                "type": "subscribable-conversation-threads-found",
-                "data": {
-                  'thread-ids': threadIds
-                }
-              });
-            })
-            .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_CONVERSATION_THREADS'));            
-      });
-    }
-    
-    onSubscribableQuestionGroupThreads(message, client) {
-      this.getUserId(client)
-        .then((userId) => {
-          this.pushNotifications.getSubscribableQuestionGroupThreads(userId)
-            .then((threadIds) => {
-              client.sendMessage({
-                "type": "subscribable-question-group-threads-found",
-                "data": {
-                  'thread-ids': threadIds
-                }
-              });
-            })
-            .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_QUESTION_GROUP_THREADS'));
-        })
-        .catch(this.handleWebSocketError(client, 'GET_SUBSCRIBABLE_QUESTION_GROUP_THREADS'));
-    }
-    
     onMessage(event) {
       const message = event.data.message;
       const client = event.client;
@@ -570,12 +579,6 @@
         break;
         case 'mark-item-read':
           this.onMarkItemRead(message, client);
-        break;
-        case 'get-subscribable-conversation-threads':
-          this.onSubscribableConversationThreads(message, client);
-        break;
-        case 'get-subscribable-question-group-threads':
-          this.onSubscribableQuestionGroupThreads(message, client);
         break;
         default:
           this.logger.error(util.format("Unknown message type %s", message.type));

@@ -36,6 +36,18 @@
         data: Sequelize.TEXT
       });
       
+      this.defineModel('UserSettings', {
+        userId: { type: Sequelize.UUID, primaryKey: true, allowNull: false },
+        settingKey: { type: Sequelize.STRING, allowNull: false },
+        settingValue: { type: Sequelize.STRING }
+      }, {
+        indexes: [{
+          name: 'UN_USERSETTING_USERID_SETTINGKEY',
+          unique: true,
+          fields: ['userId', 'settingKey']
+        }]
+      });
+      
       this.defineModel('Thread', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING },
@@ -170,6 +182,18 @@
       this.modelNames.push(name);
     }
     
+    // User settings
+    
+    createUserSettings(userId) {
+      return this.UserSettings.create({
+        userId: userId
+      });
+    }
+   
+    findUserSettingsByUserIdAndKey(userId, settingKey) {
+      return this.UserSettings.findOne({ where: { userId: userId, settingKey: settingKey } });
+    }
+    sound
     // Sessions
     
     findSession(id) {
@@ -242,19 +266,20 @@
     }
     
     getQuestionGroupManagerUserGroupIds(questionGroupId) {
-      return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
+      return this.findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, 'manager')
         .then((questionGroupUserGroupRoles) => {
           const result = [];
 
           _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
-            if (questionGroupUserGroupRole.role === 'manager') {
-              
-            }
             result.push(questionGroupUserGroupRole.userGroupId);
           });
 
           return result;
         });
+    }
+    
+    findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, role) {
+     return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
     }
     
     getQuestionGroupUserGroupRoleMap(questionGroupId) {
@@ -332,6 +357,10 @@
 
           return Promise.all(roleUpsertPromises);
         });
+    }
+    
+    findQuestionGroupUserThreadsByThreadId(threadId) {
+      return this.QuestionGroupUserThread.findAll({ where: { threadId: threadId } });
     }
     
     // Messages

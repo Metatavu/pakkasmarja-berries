@@ -137,7 +137,7 @@
         });
     });
     
-    //scheluders.start();
+    scheluders.start();
     routes.register(app, keycloak);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
