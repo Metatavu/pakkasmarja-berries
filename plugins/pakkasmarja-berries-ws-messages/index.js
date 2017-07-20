@@ -438,6 +438,36 @@
         .catch(this.handleWebSocketError(client, 'MARK_ITEM_READ'));
     }
     
+    onUserSettingsChanged(message, client) {
+      this.getUserId(client)
+        .then((userId) => {
+          const newUserSettings = message['userSettings'];
+          const settingUpsertPromises = _.map(newUserSettings, (settingValue, settingKey) => {
+            return this.models.upsertUserSetting(userId, settingKey, settingValue);
+          });
+          
+          Promise.all(settingUpsertPromises)
+            .then(() => {})
+            .catch(this.handleWebSocketError(client, 'USER_SETTINGS_CHANGED'));
+        })
+        .catch(this.handleWebSocketError(client, 'USER_SETTINGS_CHANGED'));
+    }
+    
+    onGetUserSettings(message, client) {
+      this.getUserId(client)
+        .then((userId) => {
+          this.models.getUserSettings(userId)
+          .then((userSettings) => {
+            client.sendMessage({
+              "type": "user-settings",
+              "data": userSettings
+            });  
+          })
+          .catch(this.handleWebSocketError(client, 'GET_USER_SETTINGS'));
+        })
+        .catch(this.handleWebSocketError(client, 'GET_USER_SETTINGS'));
+    }
+    
     onGetConversationsUnreadStatus(message, client) {
       this.getUserItemRead(client, 'conversations')
         .then((conversationsRead) => {
@@ -555,6 +585,12 @@
         break;
         case 'mark-item-read':
           this.onMarkItemRead(message, client);
+        break;
+        case 'user-settings-changed':
+          this.onUserSettingsChanged(message, client);
+        break;
+        case 'get-user-settings':
+          this.onGetUserSettings(message, client);
         break;
         default:
           this.logger.error(util.format("Unknown message type %s", message.type));

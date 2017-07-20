@@ -37,7 +37,7 @@
       });
       
       this.defineModel('UserSettings', {
-        userId: { type: Sequelize.UUID, primaryKey: true, allowNull: false },
+        userId: { type: Sequelize.STRING, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
         settingKey: { type: Sequelize.STRING, allowNull: false },
         settingValue: { type: Sequelize.STRING }
       }, {
@@ -184,10 +184,16 @@
     
     // User settings
     
-    createUserSettings(userId) {
-      return this.UserSettings.create({
-        userId: userId
+    upsertUserSetting(userId, settingKey, settingValue) {
+      return this.UserSettings.upsert({
+        userId: userId,
+        settingKey: settingKey,
+        settingValue: settingValue
       });
+    }
+    
+    getUserSettings(userId) {
+      return this.UserSettings.findAll({ where: { userId: userId } });
     }
    
     findUserSettingsByUserIdAndKey(userId, settingKey) {
