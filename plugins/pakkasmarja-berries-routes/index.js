@@ -37,7 +37,7 @@
     }
 
     getVersion(req, res) {
-      res.send("1.2.0");
+      res.send(config.get('app-version'));
     }
     
     getImagesWordpress(req, res) {
