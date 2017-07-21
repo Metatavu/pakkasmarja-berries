@@ -321,19 +321,6 @@
                     threads: [ thread ]
                   }
                 });
-                
-                this.pushNotifications.getSubscribableConversationThreads(userId)
-                  .then((threadIds) => {
-                    client.sendMessage({
-                      "type": "subscribable-conversation-threads-found",
-                      "data": {
-                        'thread-ids': threadIds
-                      }
-                    });
-                  })
-                  .catch((err) => {
-                    this.logger.error(`Failed to update subscriptions for session ${sessionId} on ${err}`);
-                  });
               }
             })
             .catch((err) => {
@@ -375,19 +362,6 @@
                   .catch((err) => {
                     this.logger.error(`Failed to list userGroupIds for ${userId} on ${err}`);
                   });
-                  
-                  this.pushNotifications.getSubscribableQuestionGroupThreads(userId)
-                    .then((threadIds) => {
-                      client.sendMessage({
-                        "type": "subscribable-question-group-threads-found",
-                        "data": {
-                          'thread-ids': threadIds
-                        }
-                      });
-                    })
-                    .catch((err) => {
-                      this.logger.error(`Failed to update subscriptions for session ${sessionId} on ${err}`);
-                    });
               }
             })
             .catch((err) => {
