@@ -102,7 +102,6 @@
                       const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
                       messageBuilder.threadId(threadId).messageId(messageId).send()
                         .then(() => {
-                          this.pushNotifications.notifyThreadMessage(threadId);
                           res.status(200).send();
                         })
                         .catch((err) => {
