@@ -16,6 +16,7 @@
     constructor (logger, models) {
       this.logger = logger;
       this.models = models;
+      this._client = null;
     }
     
     findUser(realm, id) {
@@ -240,7 +241,14 @@
     }
     
     getClient() {
-      return KeycloakAdminClient(config.get('keycloak:admin'));
+      if (!this._client) {
+        this._client = KeycloakAdminClient(config.get('keycloak:admin'));
+        setInterval(() => {
+          this._client = KeycloakAdminClient(config.get('keycloak:admin'));
+        }, 30 * 1000);
+      }
+      
+      return this._client;
     }
     
   };

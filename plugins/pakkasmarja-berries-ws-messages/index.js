@@ -211,17 +211,19 @@
               const questionGroupPromises = _.map(userGroupIds, (userGroupId) => {
                 return this.models.listQuestionGroupsByUserGroupId(userGroupId);
               });
-
               Promise.all(questionGroupPromises)
-                .then((datas) => {
-                  const data = _.flatten(datas);
-                  const rolePromises = _.map(data, (questionGroup) => {
-                    return this.userManagement.getQuestionGroupUserRole(config.get('keycloak:realm'), questionGroup.id, userId);
+                .then((questionGroupsResult) => {
+                  const questionGroupsData = _.flatten(questionGroupsResult);
+                  const rolePromises = _.map(questionGroupsData, (questionGroup) => {
+                    return this.models.getQuestionGroupUserGroupRoleMap(questionGroup.id)
+                      .then((userGroupRoleMap) => {
+                        return this.userManagement.getUserGroupRole(userGroupRoleMap, userGroupIds);
+                      });
                   });
-                  
+
                   Promise.all(rolePromises)
                     .then((roles) => {
-                      const questionGroups = _.map(data, (questionGroup, index) => {
+                      const questionGroups = _.map(questionGroupsData, (questionGroup, index) => {
                         return {
                           id: questionGroup.id,
                           title: questionGroup.title,
@@ -231,13 +233,13 @@
                           role: roles[index]
                         };
                       });
-                      
+
                       questionGroups.sort((a, b) => {
                         let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
                         let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
                         return latestB - latestA;
                       });
-                      
+
                       const threadsReadPromises = _.map(questionGroups, (questionGroup, index) => {
                         return this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroup.id)
                           .then((questionGroupUserThreads) => {
