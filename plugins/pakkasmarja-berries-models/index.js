@@ -54,7 +54,8 @@
         title: { type: Sequelize.STRING(191) },
         type: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191) },
-        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
+        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
+        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
           'afterFind': (object, options) => {
@@ -97,7 +98,8 @@
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191), allowNull: false },
-        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
+        imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
+        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
           'afterFind': (object, options) => {
@@ -217,7 +219,11 @@
     }
     
     // Threads
-            
+    
+    archiveThread(id) {
+      return this.Thread.update({ archived: true }, { where: { id: id } });
+    }
+    
     createThread(originId, title, type, imageUrl) {
       return this.Thread.create({
         originId: originId,
@@ -236,14 +242,15 @@
     }
     
     findAllChatThreads() {
-      return this.Thread.findAll({ where: { type: 'conversation' } });
+      return this.Thread.findAll({ where: { type: 'conversation', archived: false } });
     }
     
     listConversationThreadsByUserGroupId(userGroupId) {
       return this.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((threadUserGroupRoles) => {
           return this.Thread.findAll({ where: { 
-            id: {$in: _.map(threadUserGroupRoles, 'threadId') }
+            id: {$in: _.map(threadUserGroupRoles, 'threadId') },
+            archived: false
           }});
         });
     }
@@ -330,7 +337,8 @@
     updateThread(id, title, imageUrl, silentUpdate) {
       return this.Thread.update({
         title: title,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        archived: false
       }, {
         where: {
           id: id
@@ -379,47 +387,6 @@
       });
     }
     
-    removeThreadMessageAttachments(threadId) {
-      return this.Message.findAll({ where: { threadId: threadId } })
-        .then((messages) => {
-          const messageAttachmentRemovePromises = [];
-          for (let i = 0; i < messages.length; i++) {
-            messageAttachmentRemovePromises.push(this.MessageAttachment.destroy({ where: { messageId: messages[i].id } }));
-          }
-          return Promise.all(messageAttachmentRemovePromises);
-        });
-    }
-       
-    removeThread(id) {
-      return new Promise((resolve, reject) => {
-        this.removeThreadMessageAttachments(id)
-          .then(() => {
-            this.removeThreadMessages(id)
-              .then(() => {
-                this.removeThreadUserGroupRole(id)
-                  .then(() => {
-                    this.Thread.destroy({ where: { id : id } })
-                    .then(() => {
-                      resolve();
-                    })
-                    .catch(reject);
-                  })
-                  .catch(reject);
-              })
-              .catch(reject);
-          })
-          .catch(reject);
-      });
-    }
-    
-    removeThreadUserGroupRole(threadId) {
-      return this.ThreadUserGroupRole.destroy({ where: { threadId: threadId } });
-    }
-    
-    removeThreadMessages(threadId) {
-      return this.Message.destroy({ where: { threadId: threadId } });
-    }
-    
     findMessage(id) {
       return this.Message.findOne({ where: { id : id } });
     }
@@ -456,15 +423,8 @@
       });
     }
     
-    removeQuestionGroupUserGroupRoles(id) {
-      return this.QuestionGroupUserGroupRole.destroy({ where: { questionGroupId : id } });
-    }
-    
-    removeQuestionGroup(id) {
-      return this.removeQuestionGroupUserGroupRoles()
-        .then(() => {
-          return this.QuestionGroup.destroy({ where: { id : id } });
-        });
+    archiveQuestionGroup(id) {
+      return this.QuestionGroup.update({ archived: true }, { where: { id: id } });
     }
     
     findQuestionGroup(id) {
@@ -472,7 +432,7 @@
     }
     
     findAllQuestionGroups() {
-      return this.QuestionGroup.findAll();
+      return this.QuestionGroup.findAll({ where: { archived: false }});
     }
     
     findQuestionGroupByThreadId(threadId) {
@@ -494,7 +454,8 @@
       return this.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((questionGroupUserGroupRoles) => {
           return this.QuestionGroup.findAll({ where: { 
-            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') }
+            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') },
+            archived: false
           }});
         });
     }
@@ -502,7 +463,8 @@
     updateQuestionGroup(id, title, imageUrl, silentUpdate) {
       return this.QuestionGroup.update({
         title: title,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        archived: false
       }, {
         where: {
           id: id
