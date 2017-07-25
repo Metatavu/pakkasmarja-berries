@@ -53,7 +53,7 @@
               });
               
               for (let i = 0; i < chatThreadsToRemove.length; i++) {
-                this.models.removeThread(chatThreadsToRemove[i].id);
+                this.models.archiveThread(chatThreadsToRemove[i].id);
               }
               
               wpChatThreads.forEach((thread) => {
@@ -78,7 +78,7 @@
               });
               
               for (let i = 0; i < questionGroupsToRemove.length; i++) {
-                this.models.removeQuestionGroup(questionGroupsToRemove[i].id);
+                this.models.archiveQuestionGroup(questionGroupsToRemove[i].id);
               }
               
               wpQuestionGroups.forEach((questionGroup) => {

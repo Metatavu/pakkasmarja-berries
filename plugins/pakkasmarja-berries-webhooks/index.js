@@ -66,8 +66,21 @@
             this.pakkasmarjaBerriesUtils.updateOrCreateManagementPost(wpPost);
           })
           .catch((err) => {
-            console.error(err);
             this.logger.error(`Failed to fetch post ${id}`, err);
+          });
+      } else if (postStatus === 'trash') {
+        this.models.findNewsArticleByOriginId(id)
+          .then((newsArticle) => {
+            this.models.removeNewsArticle(newsArticle.id)
+              .then(() => {
+                this.logger.info(`News article ${newsArticle.id} removed`);
+              })
+              .catch((err) => {
+                this.logger.error(`Failed to remove news article ${newsArticle.id}`, err);
+              });
+          })
+          .catch((err) => {
+            this.logger.error(`Failed to fetch news article ${id}`, err);
           });
       }
     }        
@@ -82,6 +95,20 @@
           .catch((err) => {
             this.logger.error(`Failed to fetch chat thread ${id}`, err);
           });
+      } else if (postStatus === 'trash') {
+        this.models.findThreadByOriginId(id)
+          .then((thread) => {
+            this.models.archiveThread(thread.id)
+              .then(() => {
+                this.logger.info(`Thread ${thread.id} removed`);
+              })
+              .catch((err) => {
+                this.logger.error(`Failed to remove chat thread ${thread.id}`, err);
+              });
+          })
+          .catch((err) => {
+            this.logger.error(`Failed to fetch chat thread ${id}`, err);
+          });
       }
     }
     
@@ -91,6 +118,20 @@
         this.wordpress.findQuestionGroup(id)
           .then((wpQuestionGroup) => {
             this.pakkasmarjaBerriesUtils.updateOrCreateQuestionGroup(wpQuestionGroup);
+          })
+          .catch((err) => {
+            this.logger.error(`Failed to fetch question group ${id}`, err);
+          });
+      } else if (postStatus === 'trash') {
+        this.models.findQuestionGroupByOriginId(id)
+          .then((questionGroup) => {
+            this.models.archiveQuestionGroup(questionGroup.id)
+              .then(() => {
+                this.logger.info(`Question group ${questionGroup.id} removed`);
+              })
+              .catch((err) => {
+                this.logger.error(`Failed to remove question group ${questionGroup.id}`, err);
+              });
           })
           .catch((err) => {
             this.logger.error(`Failed to fetch question group ${id}`, err);
