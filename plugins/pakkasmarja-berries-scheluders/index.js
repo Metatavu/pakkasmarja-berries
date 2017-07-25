@@ -92,14 +92,16 @@
       this.syncManagementNewsArticlesInterval = setInterval(() => {
         this.syncManagementNewsArticles();
       }, 60 * 1000);
-
+      
+      //TODO: implement archiving system for threads
+      /**
       this.syncManagementChatThreadsInterval = setInterval(() => {
         this.syncManagementChatThreads();
       }, 60 * 1000);
       
       this.syncManagementQuestionGroupsInterval = setInterval(() => {
         this.syncManagementQuestionGroups();
-      }, 60 * 1000);
+      }, 60 * 1000); **/
     }
     
   }
