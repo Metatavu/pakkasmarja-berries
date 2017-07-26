@@ -718,19 +718,17 @@
       return new Promise((resolve, reject) => {
         this.getItemRead(userId, `thread-${threadId}`)
           .then((itemRead) => {
-            if (!itemRead) {
-              resolve(true);
-            } else {
-              this.models.findThread(threadId)
-                .then((thread) => {
-                  if (!thread) {
-                    resolve(false);
-                  } else {
-                    resolve(!thread.latestMessage || (thread.latestMessage.getTime() > itemRead.getTime()));
-                  }
-                })
-                .catch(reject);
-            }
+            this.models.findThread(threadId)
+              .then((thread) => {
+                if (!thread || !thread.latestMessage) {
+                  resolve(false);
+                } else if(!itemRead) {
+                  resolve(true);
+                } else {
+                  resolve(thread.latestMessage.getTime() > itemRead.getTime());
+                }
+              })
+              .catch(reject);
           })
           .catch(reject);
       });
