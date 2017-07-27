@@ -460,6 +460,19 @@
         });
     }
     
+    listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, role) {
+      return this.QuestionGroupUserGroupRole.findAll({ where: {
+          userGroupId: {$in: userGroupIds },
+          role: role
+        }})
+        .then((questionGroupUserGroupRoles) => {
+          return this.QuestionGroup.findAll({ where: { 
+            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') },
+            archived: false
+          }});
+        });
+    }
+    
     updateQuestionGroup(id, title, imageUrl, silentUpdate) {
       return this.QuestionGroup.update({
         title: title,

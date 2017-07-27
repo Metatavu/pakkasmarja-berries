@@ -162,6 +162,11 @@
                     sessionId: session.id,
                     userId: userId
                   });
+                  this.syncUserQuestionGroupThreads(userId)
+                    .then(() => {})
+                    .catch((err) => {
+                      this.logger.error('Error synchonizing user group threads', err);
+                    });
                 })
                 .catch((sessionErr) => {
                   this.logger.error(sessionErr);
@@ -293,6 +298,20 @@
       const port = config.get('client:server:port');
       const protocol = secure ? 'https' : 'http';
       return `${protocol}://${host}:${port}`;
+    }
+    
+    syncUserQuestionGroupThreads(userId) {
+      return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
+        .then((userGroupIds) => {
+          return this.models.listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, 'user')
+            .then((questionGroups) => {
+              const userGroupThreadUpsertPromises = [];
+              for (let i = 0; i < questionGroups.length; i++) {
+                userGroupThreadUpsertPromises.push(this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroups[i].id, userId));
+              }
+              return Promise.all(userGroupThreadUpsertPromises);
+            });
+        });
     }
     
   };
