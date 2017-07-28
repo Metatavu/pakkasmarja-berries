@@ -18,6 +18,9 @@
       this.models = models;
       this._client = null;
       this._requireFreshClient = true;
+      setInterval(() => {
+        this._requireFreshClient = true;
+      }, 45 * 1000);
     }
     
     findUser(realm, id) {
@@ -244,9 +247,7 @@
     getClient() {
       if (!this._client || this._requireFreshClient) {
         this._client = KeycloakAdminClient(config.get('keycloak:admin'));
-        setInterval(() => {
-          this._requireFreshClient = true;
-        }, 45 * 1000);
+        this._requireFreshClient = false;
       }
       
       return this._client;
