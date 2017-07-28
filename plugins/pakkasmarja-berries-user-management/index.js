@@ -244,9 +244,27 @@
         });
     }
     
-    checkPermissionToDeleteMessages() {
+    checkPermissionToDeleteMessages(realm, userId, messageId) {
       return new Promise((resolve, reject) => {
-        resolve(true);
+        this.getClient()
+          .then((client) => {
+            client.users.roleMappings.find(realm, userId)
+              .then((userRoleMappings) => {
+                let hasManagerRole = false;
+                if (userRoleMappings && userRoleMappings.realmMappings) {
+                  const realmRoles = userRoleMappings.realmMappings;
+                  for (let i = 0; i < realmRoles.length; i++) {
+                    if (realmRoles[i].name === 'app-manager') {
+                      hasManagerRole = true;
+                      break;
+                    }
+                  }
+                }
+                resolve(hasManagerRole);
+            })
+            .catch(reject);
+          })
+          .catch(reject);
       });
     }
     

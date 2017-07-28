@@ -454,7 +454,7 @@
     }
     
     onDeleteMessage(message, client) {
-      const messageId = message.messageId;
+      const messageId = message.id;
           
       this.getUserId(client)
         .then((userId) => {
@@ -465,7 +465,7 @@
                 return;
               }
               
-              return this.deleteMessageAttachmentsByMessageId(messageId)
+              return this.models.deleteMessageAttachmentsByMessageId(messageId)
                 .then(() => {
                   return this.models.deleteMessage(messageId);
                 });

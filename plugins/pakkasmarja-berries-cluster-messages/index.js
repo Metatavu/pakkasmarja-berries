@@ -440,7 +440,7 @@
     register(shadyMessages, webSockets) {
       this.webSockets = webSockets;
       shadyMessages.on("client:message-added", this.onMessageAdded.bind(this));
-      shadyMessages.on("client:message-delete", this.onMessageDelete.bind(this));
+      shadyMessages.on("client:message-deleted", this.onMessageDelete.bind(this));
       shadyMessages.on("client:conversation-thread-added", this.onConversationThreadAdded.bind(this));
       shadyMessages.on("client:question-group-added", this.onQuestionGroupAdded.bind(this));
       shadyMessages.on("client:question-group-thread-added", this.onQuestionGroupThreadAdded.bind(this));
