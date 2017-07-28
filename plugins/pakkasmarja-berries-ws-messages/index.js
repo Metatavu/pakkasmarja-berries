@@ -453,6 +453,30 @@
         });
     }
     
+    onDeleteMessage(message, client) {
+      const messageId = message.id;
+          
+      this.getUserId(client)
+        .then((userId) => {
+          return this.userManagement.checkPermissionToDeleteMessages(config.get('keycloak:realm'), userId, messageId)
+            .then((permission) => {
+              if (!permission) {
+                this.logger.warn(`User ${userId} attempted to delete message ${messageId}`);
+                return;
+              }
+              
+              return this.models.deleteMessageAttachmentsByMessageId(messageId)
+                .then(() => {
+                  return this.models.deleteMessage(messageId);
+                });
+            });
+        })
+        .then(() => {
+          this.clusterMessages.sendMessageDeleted(messageId);
+        })
+        .catch(this.handleWebSocketError(client, 'DELETE_MESSAGE'));
+    }
+    
     onMarkItemRead(message, client) {
       const id = message.id;
       
@@ -593,6 +617,9 @@
         break;
         case 'get-messages':
           this.onGetMessages(message, client);
+        break;
+        case 'delete-message':
+          this.onDeleteMessage(message, client);
         break;
         case 'get-conversation-threads':
           this.onGetConversationThreads(message, client);
