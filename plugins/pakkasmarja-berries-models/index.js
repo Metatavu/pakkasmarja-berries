@@ -409,6 +409,10 @@
       });
     }
     
+    deleteMessage(id) {
+      return this.Message.destroy({ where: { id : id } });
+    }
+    
     getLatestMessageCreatedByThreadIds(threadIds) {
       return this.Message.max('createdAt', { where: { threadId: { $in: threadIds } } });
     }
@@ -619,6 +623,12 @@
     findMessageAttachments(id) {
       return this.MessageAttachment.findOne({ where: { id : id } });
     }
+    
+    deleteMessageAttachmentsByMessageId(messageId) {
+      return this.MessageAttachment.destroy({ where: { messageId : messageId } });
+    }
+    
+    // ItemRead
     
     createItemRead(itemId, userId) {
       return this.ItemRead.create({

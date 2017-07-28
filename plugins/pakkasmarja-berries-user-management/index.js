@@ -244,6 +244,12 @@
         });
     }
     
+    checkPermissionToDeleteMessages() {
+      return new Promise((resolve, reject) => {
+        resolve(true);
+      });
+    }
+    
     getClient() {
       if (!this._client || this._requireFreshClient) {
         this._client = KeycloakAdminClient(config.get('keycloak:admin'));

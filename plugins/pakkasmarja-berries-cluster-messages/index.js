@@ -273,6 +273,12 @@
       return new MessageAddedBuilder(this.models, this.shadyMessages, this.userManagement);
     }
     
+    sendMessageDeleted(messageId) {
+      this.shadyMessages.trigger("client:message-deleted", {
+        "message-id": messageId
+      });
+    }
+    
     onMessageAdded(event, data) {
       const userId = data['user-id'];
       const message = data['message'];
@@ -301,6 +307,20 @@
               this.logger.error(`Failed to load session ${sessionId}`, err);
             });
         }
+      });
+    }
+    
+    onMessageDelete(event, data) {
+      const messageId = data['message-id'];
+      const clients = this.webSockets.getClients();
+      
+      _.forEach(clients, (client) => {
+        client.sendMessage({
+          "type": "message-deleted",
+          "data": {
+            'messageId': messageId
+          }
+        });
       });
     }
     
@@ -420,6 +440,7 @@
     register(shadyMessages, webSockets) {
       this.webSockets = webSockets;
       shadyMessages.on("client:message-added", this.onMessageAdded.bind(this));
+      shadyMessages.on("client:message-delete", this.onMessageDelete.bind(this));
       shadyMessages.on("client:conversation-thread-added", this.onConversationThreadAdded.bind(this));
       shadyMessages.on("client:question-group-added", this.onQuestionGroupAdded.bind(this));
       shadyMessages.on("client:question-group-thread-added", this.onQuestionGroupThreadAdded.bind(this));
