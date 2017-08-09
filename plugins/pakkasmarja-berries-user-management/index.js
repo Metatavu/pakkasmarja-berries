@@ -155,8 +155,8 @@
         return `${user.firstName} ${user.lastName}`;
       }
       
-      if (attributes['yritys']) {
-        return attributes['yritys'];
+      if (attributes.yritys) {
+        return attributes.yritys;
       }
       
       if (user.firstName) {
