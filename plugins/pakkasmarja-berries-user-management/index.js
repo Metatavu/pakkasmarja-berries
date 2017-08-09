@@ -140,7 +140,30 @@
     }
     
     getUserDisplayName(user) {
-      return user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `<${user.email}>`;
+      const attributes = {};
+
+      _.forEach(user.attributes||{}, (originalValue, key) => {
+        const value = _.isArray(originalValue) ? originalValue.join('') : originalValue;
+        attributes[String(key).toLowerCase()] = value;
+      });
+     
+      if (attributes['näyttönimi']) {
+        return attributes['näyttönimi'];
+      }
+      
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      }
+      
+      if (attributes['yritys']) {
+        return attributes['yritys'];
+      }
+      
+      if (user.firstName) {
+        return `${user.firstName}`;
+      }
+      
+      return `<${user.email}>`;
     }
     
     getUserImage(user) {
