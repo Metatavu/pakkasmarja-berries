@@ -151,16 +151,19 @@
         return attributes['näyttönimi'];
       }
       
-      if (user.firstName && user.lastName) {
-        return `${user.firstName} ${user.lastName}`;
+      const company = attributes.yritys;
+      const name = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName ;
+      
+      if (company && name) {
+        return `${name} ${company}`;
       }
       
-      if (attributes.yritys) {
-        return attributes.yritys;
+      if (company) {
+        return company;
       }
       
-      if (user.firstName) {
-        return `${user.firstName}`;
+      if (name) {
+        return name;
       }
       
       return `<${user.email}>`;
