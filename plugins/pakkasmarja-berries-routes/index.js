@@ -6,6 +6,7 @@
   
   const _ = require('lodash');
   const fs = require('fs');
+  const path = require('path');
   const moment = require('moment');
   const uuid = require('uuid4');
   const config = require('nconf');
@@ -26,10 +27,8 @@
       this.pushNotifications = pushNotifications;
     }
     
-    getIndex(req, res) {
-      res.render('index', Object.assign({ 
-
-      }, req.pakkasmarjaBerries));
+    getWebApp(req, res) {
+      res.sendFile(path.join(__dirname, '..', '..', 'webapp', 'index.html'));
     }
     
     getSystemPing(req, res) {
@@ -270,7 +269,7 @@
     register(app, keycloak) {
       // Navigation     
       
-      app.get("/", this.getIndex.bind(this));
+      app.get("/", this.getWebApp.bind(this));
       app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       
