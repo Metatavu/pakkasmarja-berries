@@ -126,13 +126,18 @@
     webSockets.on("close", (data) => {
       const client = data.client;
       const sessionId = client.getSessionId();
-      models.deleteSession(sessionId)
-        .then(() => {
-          logger.info(`Session ${sessionId} removed`);
-        })
-        .catch((e) => {
-          logger.error(`Failed to delete session ${e}`);
-        });
+      
+      //FIXME: remove timeout and fix this on the application side
+      
+      setTimeout(() => {
+        models.deleteSession(sessionId)
+          .then(() => {
+            logger.info(`Session ${sessionId} removed`);
+          })
+          .catch((e) => {
+            logger.error(`Failed to delete session ${e}`);
+          });
+      }, 1000 * 15);
     });
     
     scheluders.start();
