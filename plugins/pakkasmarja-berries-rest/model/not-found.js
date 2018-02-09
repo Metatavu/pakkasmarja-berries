@@ -2,6 +2,7 @@
   module.exports = factory(require('../model-utils'));
 }(this, function(ApiClient) {
   'use strict';
+  const _ = require('lodash');
 
 
 

@@ -30,6 +30,10 @@
     return;
   }
   
+  process.on('unhandledRejection', function(error, promise) {
+    console.error("UNHANDLED REJECTION", error.stack);
+  });
+  
   architect.createApp(architectConfig, (err, architectApp) => {
     if (err) {
       console.error(err);

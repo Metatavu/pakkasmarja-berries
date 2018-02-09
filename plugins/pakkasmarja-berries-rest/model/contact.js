@@ -2,6 +2,8 @@
   module.exports = factory(require('../model-utils'));
 }(this, function(ApiClient) {
   'use strict';
+  const _ = require('lodash');
+  const Address = require(`${__dirname}/${_.kebabCase('Address')}`);
 
 
 
@@ -22,6 +24,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
   };
 
   /**
@@ -38,8 +51,41 @@
       if (data.hasOwnProperty('id')) {
         obj['id'] = ApiClient.convertToType(data['id'], 'String');
       }
-      if (data.hasOwnProperty('status')) {
-        obj['status'] = ApiClient.convertToType(data['status'], 'String');
+      if (data.hasOwnProperty('sapId')) {
+        obj['sapId'] = ApiClient.convertToType(data['sapId'], 'String');
+      }
+      if (data.hasOwnProperty('firstName')) {
+        obj['firstName'] = ApiClient.convertToType(data['firstName'], 'String');
+      }
+      if (data.hasOwnProperty('lastName')) {
+        obj['lastName'] = ApiClient.convertToType(data['lastName'], 'String');
+      }
+      if (data.hasOwnProperty('companyName')) {
+        obj['companyName'] = ApiClient.convertToType(data['companyName'], 'String');
+      }
+      if (data.hasOwnProperty('phoneNumbes')) {
+        obj['phoneNumbes'] = ApiClient.convertToType(data['phoneNumbes'], ['String']);
+      }
+      if (data.hasOwnProperty('email')) {
+        obj['email'] = ApiClient.convertToType(data['email'], 'String');
+      }
+      if (data.hasOwnProperty('addresses')) {
+        obj['addresses'] = ApiClient.convertToType(data['addresses'], [Address]);
+      }
+      if (data.hasOwnProperty('BIC')) {
+        obj['BIC'] = ApiClient.convertToType(data['BIC'], 'String');
+      }
+      if (data.hasOwnProperty('IBAN')) {
+        obj['IBAN'] = ApiClient.convertToType(data['IBAN'], 'String');
+      }
+      if (data.hasOwnProperty('taxCode')) {
+        obj['taxCode'] = ApiClient.convertToType(data['taxCode'], 'String');
+      }
+      if (data.hasOwnProperty('vatLiable')) {
+        obj['vatLiable'] = ApiClient.convertToType(data['vatLiable'], 'String');
+      }
+      if (data.hasOwnProperty('audit')) {
+        obj['audit'] = ApiClient.convertToType(data['audit'], 'String');
       }
     }
     return obj;
@@ -50,37 +96,66 @@
    */
   exports.prototype['id'] = undefined;
   /**
-   * @member {module:model/Contact.StatusEnum} status
+   * @member {String} sapId
    */
-  exports.prototype['status'] = undefined;
+  exports.prototype['sapId'] = undefined;
+  /**
+   * @member {String} firstName
+   */
+  exports.prototype['firstName'] = undefined;
+  /**
+   * @member {String} lastName
+   */
+  exports.prototype['lastName'] = undefined;
+  /**
+   * @member {String} companyName
+   */
+  exports.prototype['companyName'] = undefined;
+  /**
+   * @member {Array.<String>} phoneNumbes
+   */
+  exports.prototype['phoneNumbes'] = undefined;
+  /**
+   * @member {String} email
+   */
+  exports.prototype['email'] = undefined;
+  /**
+   * @member {Array.<module:model/Address>} addresses
+   */
+  exports.prototype['addresses'] = undefined;
+  /**
+   * @member {String} BIC
+   */
+  exports.prototype['BIC'] = undefined;
+  /**
+   * @member {String} IBAN
+   */
+  exports.prototype['IBAN'] = undefined;
+  /**
+   * @member {String} taxCode
+   */
+  exports.prototype['taxCode'] = undefined;
+  /**
+   * @member {module:model/Contact.VatLiableEnum} vatLiable
+   */
+  exports.prototype['vatLiable'] = undefined;
+  /**
+   * @member {String} audit
+   */
+  exports.prototype['audit'] = undefined;
 
 
   /**
-   * Allowed values for the <code>status</code> property.
+   * Allowed values for the <code>vatLiable</code> property.
    * @enum {String}
    * @readonly
    */
-  exports.StatusEnum = {
+  exports.VatLiableEnum = {
     /**
-     * value: "approved"
+     * value: "EU"
      * @const
      */
-    "approved": "approved",
-    /**
-     * value: "onhold"
-     * @const
-     */
-    "onhold": "onhold",
-    /**
-     * value: "draft"
-     * @const
-     */
-    "draft": "draft",
-    /**
-     * value: "terminated"
-     * @const
-     */
-    "terminated": "terminated"  };
+    "EU": "EU"  };
 
 
   return exports;

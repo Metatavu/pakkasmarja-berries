@@ -45,7 +45,7 @@
           } else if (Array.isArray(type)) {
             // for array type like: ['String']
             var itemType = type[0];
-            return data.map(function(item) {
+            return (data||[]).map(function(item) {
               return ModelUtils.convertToType(item, itemType);
             });
           } else if (typeof type === 'object') {
