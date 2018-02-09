@@ -63,8 +63,8 @@
       if (data.hasOwnProperty('companyName')) {
         obj['companyName'] = ApiClient.convertToType(data['companyName'], 'String');
       }
-      if (data.hasOwnProperty('phoneNumbes')) {
-        obj['phoneNumbes'] = ApiClient.convertToType(data['phoneNumbes'], ['String']);
+      if (data.hasOwnProperty('phoneNumbers')) {
+        obj['phoneNumbers'] = ApiClient.convertToType(data['phoneNumbers'], ['String']);
       }
       if (data.hasOwnProperty('email')) {
         obj['email'] = ApiClient.convertToType(data['email'], 'String');
@@ -112,9 +112,9 @@
    */
   exports.prototype['companyName'] = undefined;
   /**
-   * @member {Array.<String>} phoneNumbes
+   * @member {Array.<String>} phoneNumbers
    */
-  exports.prototype['phoneNumbes'] = undefined;
+  exports.prototype['phoneNumbers'] = undefined;
   /**
    * @member {String} email
    */

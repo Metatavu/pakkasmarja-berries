@@ -39,20 +39,20 @@
         
         return Contact.constructFromObject({
           'id': user.id,
-          'status': this.getSingleAttribute(user.attributes, 'status'),
-          'sapId': this.getSingleAttribute(user.attributes, 'sapId'),
+          'sapId': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID),
           'firstName': user.firstName,
           'lastName': user.lastName,
-          'companyName': '',
-          'phoneNumbes': this.resolveKeycloakUserPhones(user),
+          'companyName': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME),
+          'phoneNumbers': this.resolveKeycloakUserPhones(user),
           'email': user.email,
           'addresses': this.resolveKeycloakUserAddresses(user),
-          'BIC': '',
-          'IBAN': '',
-          'taxCode': '',
-          'vatLiable': '',
-          'audit': ''  
+          'BIC': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_BIC),
+          'IBAN': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_IBAN),
+          'taxCode': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE),
+          'vatLiable': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_VAT_LIABLE),
+          'audit': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_AUDIT)
         });
+    
       });
       
       res.status(200).send(contacts);
@@ -67,8 +67,8 @@
     resolveKeycloakUserPhones(user) {
       const result = [];
       if (user && user.attributes) {
-        const phoneNumber1 = this.getSingleAttribute(user.attributes, 'Puhelin 1');
-        const phoneNumber2 = this.getSingleAttribute(user.attributes, 'Puhelin 2');
+        const phoneNumber1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_1);
+        const phoneNumber2 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_2);
         
         if (phoneNumber1) {
           result.push(phoneNumber1);
@@ -91,11 +91,11 @@
     resolveKeycloakUserAddresses(user) {
       const result = [];
       if (user && user.attributes) {
-        const postalCode1 = this.getSingleAttribute(user.attributes, 'Postinro');
-        const postalCode2 = this.getSingleAttribute(user.attributes, 'tilan postinro');
-        const streetAddress1 = this.getSingleAttribute(user.attributes, 'Postiosoite');
-        const streetAddress2 = this.getSingleAttribute(user.attributes, 'Tilan osoite');
-        
+        const postalCode1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_1);
+        const postalCode2 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_2);
+        const streetAddress1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_1);
+        const streetAddress2 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_2);
+         
         if (postalCode1 && streetAddress1) {
           result.push(Address.constructFromObject({
             "streetAddress": streetAddress1,
@@ -105,16 +105,6 @@
       }
       
       return result;
-    }
-    
-    getSingleAttribute(attributes, name) {
-      const values = _.isArray(attributes[name]) ? _.compact(attributes[name]) : [];
-      
-      if (values.length === 1) {
-        return values[0];
-      }
-      
-      return null;
     }
     
   };

@@ -48,8 +48,8 @@
       if (data.hasOwnProperty('streetAddress')) {
         obj['streetAddress'] = ApiClient.convertToType(data['streetAddress'], 'String');
       }
-      if (data.hasOwnProperty('zipCode')) {
-        obj['zipCode'] = ApiClient.convertToType(data['zipCode'], 'String');
+      if (data.hasOwnProperty('postalCode')) {
+        obj['postalCode'] = ApiClient.convertToType(data['postalCode'], 'String');
       }
       if (data.hasOwnProperty('city')) {
         obj['city'] = ApiClient.convertToType(data['city'], 'String');
@@ -71,9 +71,9 @@
    */
   exports.prototype['streetAddress'] = undefined;
   /**
-   * @member {String} zipCode
+   * @member {String} postalCode
    */
-  exports.prototype['zipCode'] = undefined;
+  exports.prototype['postalCode'] = undefined;
   /**
    * @member {String} city
    */

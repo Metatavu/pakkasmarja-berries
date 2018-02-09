@@ -294,6 +294,28 @@
       });
     }
     
+    /**
+     * Returns single user attribute
+     * 
+     * @param {Object} user Keycloak user
+     * @param {String[]} names attribute name or names
+     * @return {String} attribute value or null if not found
+     */
+    getSingleAttribute(user, names) {
+      const attributes = user.attributes || {};
+      const nameAttr = _.isArray(names) ? names : [ names ];
+      for (let i = 0; i < nameAttr.length; i++) {
+        const name = nameAttr[i];        
+        const values = _.isArray(attributes[name]) ? _.compact(attributes[name]) : [];
+
+        if (values.length === 1) {
+          return values[0];
+        }
+      }
+      
+      return null;
+    }
+    
     getClient() {
       if (!this._client || this._requireFreshClient) {
         this._client = KeycloakAdminClient(config.get('keycloak:admin'));
@@ -301,6 +323,58 @@
       }
       
       return this._client;
+    }
+    
+    get ATTRIBUTE_SAP_ID() {
+      return 'sapId';
+    }
+    
+    get ATTRIBUTE_COMPANY_NAME() {
+      return 'yritys';
+    }
+    
+    get ATTRIBUTE_BIC() {
+      return 'BIC';
+    }
+    
+    get ATTRIBUTE_IBAN() {
+      return 'IBAN';
+    }
+    
+    get ATTRIBUTE_TAX_CODE() {
+      return 'verotunniste';
+    }
+    
+    get ATTRIBUTE_VAT_LIABLE() {
+      return 'arvonlisäverovelvollisuus';
+    }
+    
+    get ATTRIBUTE_AUDIT() {
+      return 'auditointi';
+    }
+    
+    get ATTRIBUTE_PHONE_1() {
+      return 'Puhelin 1';
+    }
+    
+    get ATTRIBUTE_PHONE_2() {
+      return 'Puhelin 2';
+    }
+    
+    get ATTRIBUTE_POSTAL_CODE_1() {
+      return 'Postinro';
+    }
+    
+    get ATTRIBUTE_POSTAL_CODE_2() {
+      return 'tilan postinro';
+    }
+    
+    get ATTRIBUTE_STREET_1() {
+      return 'Postiosoite';
+    }
+    
+    get ATTRIBUTE_STREET_2() {
+      return 'Tilan osoite';
     }
     
   };
