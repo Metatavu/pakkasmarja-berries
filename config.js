@@ -26,6 +26,7 @@ module.exports = [
   "shady-websockets",
   "shady-worker",
   "./plugins/pakkasmarja-berries-models",
+  "./plugins/pakkasmarja-berries-rest",
   "./plugins/pakkasmarja-berries-routes",
   "./plugins/pakkasmarja-berries-ws-messages",
   "./plugins/pakkasmarja-berries-cluster-messages",

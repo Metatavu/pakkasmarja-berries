@@ -1,0 +1,16 @@
+{
+  "name": "pakkasmarja-berries-rest",
+  "version": "0.0.1",
+  "description": "REST services for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-rest"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-models",
+      "pakkasmarja-berries-user-management"
+    ]
+  }
+}

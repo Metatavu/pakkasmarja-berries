@@ -35,15 +35,15 @@
       });
     }
     
+    /**
+     * Lists users from Keycloak. 
+     * 
+     * @param {String} realm realm (optional)
+     * @return {Promise}
+     */
     listUsers(realm) {
-      return new Promise((resolve, reject) => {
-        this.getClient()
-          .then((client) => {
-            client.users.find(realm)
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+      return this.getClient().then((client) => {
+        return client.users.find(realm || config.get('keycloak:realm'));
       });
     }
     

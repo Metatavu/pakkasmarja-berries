@@ -44,6 +44,7 @@
     const WebSockets = architectApp.getService('shady-websockets');
     const models = architectApp.getService('pakkasmarja-berries-models');
     const routes = architectApp.getService('pakkasmarja-berries-routes');
+    const rest = architectApp.getService('pakkasmarja-berries-rest');
     const webSocketMessages = architectApp.getService('pakkasmarja-berries-ws-messages');
     const scheluders = architectApp.getService('pakkasmarja-berries-scheluders');
     const clusterMessages = architectApp.getService('pakkasmarja-berries-cluster-messages');
@@ -142,6 +143,7 @@
     
     scheluders.start();
     routes.register(app, keycloak);
+    rest.register(app);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
 
