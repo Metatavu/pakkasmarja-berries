@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - "8"
+before_script:
+  - ./scripts/start-keycloak.sh
+  - ./start 1 &
+  - sleep 5
+script:
+  - tape test/*-test.js | node_modules/.bin/tap-spec
