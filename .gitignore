@@ -3,4 +3,5 @@ node_modules
 config.json
 .sass-cache
 webapp
-keycloak*
+keycloak-3.*
+keycloak.log
