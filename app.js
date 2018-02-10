@@ -30,8 +30,8 @@
     return;
   }
   
-  process.on('unhandledRejection', function(error, promise) {
-    console.error("UNHANDLED REJECTION", error.stack);
+  process.on('unhandledRejection', (error, promise) => {
+    console.error("UNHANDLED REJECTION", error ? error.stack : null);
   });
   
   architect.createApp(architectConfig, (err, architectApp) => {
@@ -150,7 +150,6 @@
     rest.register(app);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
-
   });
 
 })();
