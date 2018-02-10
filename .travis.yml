@@ -20,5 +20,6 @@ script:
   - npm run test
 after_success:
   - npm run coverage
+  - ls coverage
   - cat ./coverage/lcov.info
   - cat ./coverage/lcov.info | coveralls
