@@ -4,8 +4,8 @@
 
 function waitForServer {
   # Give the server some time to start up. Look for a well-known
-  # bit of text in the log file. Try at most 50 times before giving up.
-  C=50
+  # bit of text in the log file. Try at most 100 times before giving up.
+  C=100
   while [ $C -gt 0 ]
   do
     grep "Keycloak ${VERSION} (WildFly Core 2.0.10.Final) started" keycloak.log
