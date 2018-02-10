@@ -36,10 +36,10 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "localhost",
+    "host": "127.0.0.1",
     "database": "pm",
     "username": "travis",
-    "password": "pass",
+    "password": "",
     "port": "3306"
   },
   "rest": {
