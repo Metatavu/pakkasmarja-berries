@@ -5,6 +5,7 @@
   'use strict';
   
   const ContactsServiceImpl = require(`${__dirname}/impl/contacts-service`);
+  const SystemServiceImpl = require(`${__dirname}/impl/system-service`);
   
   /**
    * Rest services
@@ -20,6 +21,7 @@
      */
     constructor (logger, models, userManagement) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
+      this.systemService = new SystemServiceImpl();
     }
     
     /**
@@ -29,6 +31,7 @@
      */
     register(app) {
       this.contactsService.register(app);
+      this.systemService.register(app);
     }
     
   };

@@ -19,7 +19,7 @@ before_script:
 script:
   - npm run test
 after_success:
-  - kill `ps x |grep -v grep|grep istanbul|awk {'print $1'}`
+  - curl -XPOST http://localhost:3002/rest/v1/system/shutdown
   - npm run coverage
   - ls coverage
   - cat ./coverage/lcov.info

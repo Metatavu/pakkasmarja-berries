@@ -21,7 +21,7 @@
       next();
     }
    
-  };
+  }
 
   module.exports = AbstractService;
 

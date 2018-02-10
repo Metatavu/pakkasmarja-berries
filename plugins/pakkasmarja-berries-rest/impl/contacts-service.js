@@ -32,6 +32,7 @@
    /**
     * @inheritdoc
     **/
+   /* jshint ignore:start */
     async listContacts(req, res) {
       const users = await this.userManagement.listUsers();
       const contacts = users.map((user) => {
@@ -57,7 +58,7 @@
       
       res.status(200).send(contacts);
     }
-    
+    /* jshint ignore:end */
     /**
      * Resolves Keycloak user's phone numbers
      * 
@@ -107,7 +108,7 @@
       return result;
     }
     
-  };
+  }
 
   module.exports = ContactsServiceImpl;
 
