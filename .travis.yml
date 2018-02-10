@@ -1,10 +1,14 @@
 language: node_js
 node_js:
   - "8"
+cache:
+  directories:
+    - keycloak-3.4.3.Final
 services:
   - mysql
   - rabbitmq
 before_script:
+  - npm install -g coveralls
   - cp test/config.json .
   - mysql -e 'CREATE DATABASE pm;'
   - ./scripts/start-keycloak.sh
