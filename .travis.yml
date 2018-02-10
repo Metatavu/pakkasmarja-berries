@@ -16,4 +16,7 @@ before_script:
   - node app.js --port 3002 --host localhost &
   - sleep 5
 script:
-  - tape test/*-test.js | node_modules/.bin/tap-spec
+  - nyc tape test/*-test.js | node_modules/.bin/tap-spec
+after_success:
+  - nyc report --reporter=text-lcov > ./coverage/lcov.info
+  - cat ./coverage/lcov.info | coveralls
