@@ -1,7 +1,12 @@
 language: node_js
 node_js:
   - "8"
+services:
+  - mysql
+  - rabbitmq
 before_script:
+  - cp test/config.json .
+  - mysql -e 'CREATE DATABASE pm;'
   - ./scripts/start-keycloak.sh
   - ./start 1 &
   - sleep 5
