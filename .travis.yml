@@ -12,7 +12,7 @@ before_script:
   - cp test/config.json .
   - mysql -e 'CREATE DATABASE pm;'
   - ./scripts/start-keycloak.sh
-  - ./start.sh 1 &
+  - node app.js --port 3002 --host localhost &
   - sleep 5
 script:
   - tape test/*-test.js | node_modules/.bin/tap-spec
