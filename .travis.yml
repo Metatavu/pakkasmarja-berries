@@ -8,7 +8,7 @@ services:
   - mysql
   - rabbitmq
 before_script:
-  - rmdir keycloak-3.4.3.Final
+  - rmdir keycloak-3.4.3.Final --ignore-fail-on-non-empty
   - npm install -g coveralls
   - cp test/config.json .
   - mysql -e 'CREATE DATABASE pm;'
