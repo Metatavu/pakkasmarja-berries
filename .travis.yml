@@ -19,6 +19,7 @@ before_script:
 script:
   - npm run test
 after_success:
+  - killall node
   - npm run coverage
   - ls coverage
   - cat ./coverage/lcov.info

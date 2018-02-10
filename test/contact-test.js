@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 'use strict';
 
 const test = require('blue-tape');
@@ -42,6 +43,6 @@ test('Test listing contacts', (t) => {
         vatLiable: null,
         audit: 'YES'
       });
-    });s
+    });
 
 });
