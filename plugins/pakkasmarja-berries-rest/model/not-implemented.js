@@ -1,3 +1,4 @@
+/* jshint ignore:start */
 (function(root, factory) {
   module.exports = factory(require('../model-utils'));
 }(this, function(ApiClient) {
@@ -61,3 +62,4 @@
 }));
 
 
+/* jshint ignore:end */
