@@ -75,8 +75,8 @@
         return;
       }
       
-      const updateContact = Contact.constructFromObject(req.body);
-      if (!updateContact) {
+      const updateContact = _.isObject(req.body) ? Contact.constructFromObject(req.body) : null;
+      if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
         this.sendBadRequest(res, "Failed to parse body");
         return;
       }

@@ -93,7 +93,21 @@
       });
   });
   
+  test('Test update contact not found', (t) => {
+    return request('http://localhost:3002')
+      .put(`/rest/v1/contacts/5ddca0e8-0f2f-11e8-aaee-fbf8db060bc5`)
+      .send(contactDatas["677e99fd-b854-479f-afa6-74f295052770"])
+      .set('Accept', 'application/json')
+      .expect(404);
+  });
   
+  test('Test update contact malformed', (t) => {
+    return request('http://localhost:3002')
+      .put(`/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770`)
+      .send('malformed data')
+      .set('Accept', 'application/json')
+      .expect(400);
+  });
   
   
 })();
