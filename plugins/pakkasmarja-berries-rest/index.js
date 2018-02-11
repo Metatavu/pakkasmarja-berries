@@ -34,7 +34,7 @@
       this.systemService.register(app);
     }
     
-  };
+  }
 
   module.exports = (options, imports, register) => {
     /* jshint ignore:start */
