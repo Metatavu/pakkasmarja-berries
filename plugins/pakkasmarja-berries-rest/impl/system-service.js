@@ -4,6 +4,7 @@
 (() => {
   'use strict';
 
+  const config = require('nconf');
   const AbstractSystemService = require(`${__dirname}/../service/system-service`);
 
   /**
@@ -20,10 +21,11 @@
     **/
     systemShutdown(req, res) {
       if (config.get('mode') !== 'TEST') {
-        app.status(403).send("I'm sorry Dave, I'm afraid I can't do that");
+        res.status(403).send("I'm sorry Dave, I'm afraid I can't do that");
         return;
       }
-            try {
+      
+      try {
         res.status(204).send();
       } finally {
         process.exit(0);
