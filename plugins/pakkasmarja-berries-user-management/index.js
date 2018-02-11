@@ -23,15 +23,30 @@
       }, 45 * 1000);
     }
     
+    /**
+     * Finds single user from Keycloak.
+     * 
+     * @param {String} realm realm (optional)
+     * @param {String} id user id
+     * @return {Promise} promise for a user or null if not found
+     */
     findUser(realm, id) {
       return new Promise((resolve, reject) => {
-        this.getClient()
-          .then((client) => {
-            client.users.find(realm, { userId: id })
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+        return this.getClient().then((client) => {
+          const keycloakRealm = arguments.length === 2 ? realm : null;
+          const keycloakId = arguments.length === 2 ? id : realm;
+          return client.users.find(keycloakRealm || config.get('keycloak:realm'), { userId: keycloakId })
+            .then((user) => {
+              resolve(user);
+            })
+            .catch((err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(null);
+              }
+            });
+        });
       });
     }
     
@@ -39,7 +54,7 @@
      * Lists users from Keycloak. 
      * 
      * @param {String} realm realm (optional)
-     * @return {Promise}
+     * @return {Promise} promise for users
      */
     listUsers(realm) {
       return this.getClient().then((client) => {

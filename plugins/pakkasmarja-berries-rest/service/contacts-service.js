@@ -50,9 +50,9 @@
     * @param app express object
     **/
     register(app) {
-      app.get('/rest/v1/contacts/{id}', [ this.restAuth.bind(this) ], this.findContact.bind(this));
-      app.get('/rest/v1/contacts', [ this.restAuth.bind(this) ], this.listContacts.bind(this));
-      app.put('/rest/v1/contacts/{id}', [ this.restAuth.bind(this) ], this.updateContact.bind(this));
+      app.get(`/rest/v1${this.toPath('/contacts/{id}')}`, [ this.restAuth.bind(this) ], this.findContact.bind(this));
+      app.get(`/rest/v1${this.toPath('/contacts')}`, [ this.restAuth.bind(this) ], this.listContacts.bind(this));
+      app.put(`/rest/v1${this.toPath('/contacts/{id}')}`, [ this.restAuth.bind(this) ], this.updateContact.bind(this));
     }
   };
 

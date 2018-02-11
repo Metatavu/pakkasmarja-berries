@@ -28,37 +28,66 @@
       this.models = models;
       this.userManagement = userManagement;
     }
-
-   /**
-    * @inheritdoc
-    **/
-   /* jshint ignore:start */
+    
+    /**
+     * @inheritdoc
+     */
+    /* jshint ignore:start */
+    async findContact(req, res) {
+      const userId = req.params.id;
+      if (!userId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const user = await this.userManagement.findUser(userId);
+      if (!user) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      res.status(200).send(this.translateKeycloakUser(user));
+    }
+    /* jshint ignore:end */
+    
+    /**
+     * @inheritdoc
+     */
+    /* jshint ignore:start */
     async listContacts(req, res) {
       const users = await this.userManagement.listUsers();
       const contacts = users.map((user) => {
-        const attributes = user.attributes || {};
-        
-        return Contact.constructFromObject({
-          'id': user.id,
-          'sapId': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID),
-          'firstName': user.firstName,
-          'lastName': user.lastName,
-          'companyName': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME),
-          'phoneNumbers': this.resolveKeycloakUserPhones(user),
-          'email': user.email,
-          'addresses': this.resolveKeycloakUserAddresses(user),
-          'BIC': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_BIC),
-          'IBAN': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_IBAN),
-          'taxCode': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE),
-          'vatLiable': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_VAT_LIABLE),
-          'audit': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_AUDIT)
-        });
-    
+        return this.translateKeycloakUser(user);
       });
       
       res.status(200).send(contacts);
     }
     /* jshint ignore:end */
+    
+    /**
+     * Translates Keycloak user into Contact
+     * 
+     * @param {Object} user Keycloak user
+     * @return {Contact} contact 
+     */
+    translateKeycloakUser(user) {
+      return Contact.constructFromObject({
+        'id': user.id,
+        'sapId': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID),
+        'firstName': user.firstName,
+        'lastName': user.lastName,
+        'companyName': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME),
+        'phoneNumbers': this.resolveKeycloakUserPhones(user),
+        'email': user.email,
+        'addresses': this.resolveKeycloakUserAddresses(user),
+        'BIC': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_BIC),
+        'IBAN': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_IBAN),
+        'taxCode': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE),
+        'vatLiable': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_VAT_LIABLE),
+        'audit': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_AUDIT)
+      });
+    }
+    
     /**
      * Resolves Keycloak user's phone numbers
      * 

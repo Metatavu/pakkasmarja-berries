@@ -5,8 +5,7 @@
   'use strict';
 
   const AbstractService = require(`${__dirname}/../abstract-service`);
-  const config = require('nconf');
-  
+
   /**
    * Abstract base class for System REST service
    */
@@ -28,9 +27,8 @@
     *
     * @param app express object
     **/
-   
     register(app) {
-      app.post('/rest/v1/system/shutdown', [ this.restAuth.bind(this) ], this.systemShutdown.bind(this));
+      app.post(`/rest/v1${this.toPath('/system/shutdown')}`, [ this.restAuth.bind(this) ], this.systemShutdown.bind(this));
     }
   };
 
