@@ -19,7 +19,11 @@
     * @param {http.ServerResponse} res server response object
     **/
     systemShutdown(req, res) {
-      try {
+      if (config.get('mode') !== 'TEST') {
+        app.status(403).send("I'm sorry Dave, I'm afraid I can't do that");
+        return;
+      }
+            try {
         res.status(204).send();
       } finally {
         process.exit(0);
