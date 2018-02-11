@@ -1,5 +1,6 @@
 /*jshint esversion: 6 */
 /* global __dirname */
+/* jshint ignore:start */
 
 (() => {
   'use strict';
@@ -88,4 +89,4 @@
   module.exports = ModelUtils;
 
 })();
-
+/* jshint ignore:end */
