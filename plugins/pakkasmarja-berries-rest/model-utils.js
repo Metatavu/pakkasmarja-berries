@@ -83,7 +83,7 @@
       return new Date(str.replace(/T/i, ' '));
     }
    
-  };
+  }
 
   module.exports = ModelUtils;
 

@@ -37,9 +37,11 @@
   };
 
   module.exports = (options, imports, register) => {
+    /* jshint ignore:start */
     const logger = imports['logger'];
     const models = imports['pakkasmarja-berries-models'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
+    /* jshint ignore:end */
     
     const restServices = new RestServices(logger, models, userManagement);
     register(null, {
