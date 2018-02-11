@@ -65,6 +65,43 @@
     /* jshint ignore:end */
     
     /**
+     * @inheritdoc
+     */
+    /* jshint ignore:start */
+    async updateContact(req, res) {
+      const userId = req.params.id;
+      if (!userId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const updateContact = Contact.constructFromObject(req.body);
+      if (!updateContact) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+      
+      const user = await this.userManagement.findUser(userId);
+      if (!user) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      this.userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
+        .then(() => {
+          return this.userManagement.findUser(userId);
+        })
+        .then((updatedUser) => {
+          res.status(200).send(this.translateKeycloakUser(updatedUser));
+        })
+        .catch((err) => {
+          this.sendInternalServerError(res, err);
+          return;
+        });
+    }
+    /* jshint ignore:end */
+    
+    /**
      * Translates Keycloak user into Contact
      * 
      * @param {Object} user Keycloak user
@@ -86,6 +123,37 @@
         'vatLiable': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_VAT_LIABLE),
         'audit': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_AUDIT)
       });
+    }
+    
+    /**
+     * Updates Keycloak user from contact entity
+     * 
+     * @param {Object} keycloakUser Keycloak user
+     * @param {Contact} contact contact entity
+     * @return {Object} updated Keycloak user
+     */
+    updateKeycloakUserModel(keycloakUser, contact) {
+      const user = Object.assign({}, keycloakUser, {
+        'firstName': contact.firstName,
+        'lastName': contact.lastName,
+        'email': contact.email
+      });
+      
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID, contact.sapId);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME, contact.companyName);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_BIC, contact.BIC);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_IBAN, contact.IBAN);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE, contact.taxCode);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_VAT_LIABLE, contact.vatLiable);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_AUDIT, contact.audit);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_1, contact.phoneNumbers.length > 0 ? contact.phoneNumbers[0] : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_2, contact.phoneNumbers.length > 1 ? contact.phoneNumbers[1] : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_1, contact.addresses.length > 0 ? contact.addresses[0].postalCode : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_1, contact.addresses.length > 0 ? contact.addresses[0].streetAddress : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_2, contact.addresses.length > 1 ? contact.addresses[1].postalCode : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_2, contact.addresses.length > 1 ? contact.addresses[1].streetAddress : null);
+      
+      return user;
     }
     
     /**

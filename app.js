@@ -106,6 +106,7 @@
 
     app.use(morgan('combined'));
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, 'webapp')));
     
     const webSockets = new WebSockets(httpServer, (sessionId, callback) => {

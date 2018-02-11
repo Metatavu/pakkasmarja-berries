@@ -51,6 +51,22 @@
     }
     
     /**
+     * Updates user into Keycloak
+     * 
+     * @param {String} realm realm (optional)
+     * @param {Object} user user object
+     * @return {Promise} promise that resolves on success and rejects on failure
+     */
+    updateUser(realm, user) {
+      return this.getClient().then((client) => {
+        const keycloakRealm = arguments.length === 2 ? realm : null;
+        const keycloakUser = arguments.length === 2 ? user : realm;
+
+        return client.users.update(keycloakRealm || config.get('keycloak:realm'), keycloakUser);
+      });
+    }
+    
+    /**
      * Lists users from Keycloak. 
      * 
      * @param {String} realm realm (optional)
@@ -329,6 +345,25 @@
       }
       
       return null;
+    }
+    
+    /**
+     * Sets single user attribute
+     * 
+     * @param {Object} user Keycloak user
+     * @param {String} name name of the attribute
+     * @param {String} value value
+     */
+    setSingleAttribute(user, name, value) {
+      if (!user.attributes) {
+        user.attributes = {};
+      }
+      
+      if (value) {
+        user.attributes[name] = value;
+      } else {
+        delete user.attributes[name];
+      }
     }
     
     getClient() {
