@@ -1,5 +1,10 @@
 /nbproject
 node_modules
-config.json
+/config.json
 .sass-cache
 webapp
+keycloak-3.*
+keycloak.log
+.instrument
+.nyc_output
+coverage

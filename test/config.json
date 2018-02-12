@@ -1,0 +1,53 @@
+{
+  "server-group": "group-1",
+  "app-version": "1.2.7",
+  "session-secret": "session-secret",
+  "mode": "TEST",
+  "keycloak": {
+    "auth-server-url": "http://localhost:8080/auth",
+    "realm": "pm",
+    "ssl-required": "external",
+    "resource": "pm",
+    "public-client": true,
+    "admin" : {
+      "baseUrl": "http://localhost:8080/auth",
+      "username": "admin",
+      "password": "admin",
+      "grant_type": "password",
+      "client_id": "admin-cli"
+    }
+  },
+  "amqp": {
+    "url": "amqp://localhost"
+  }, 
+  "client": {
+    "server": {
+      "host": "localhost",
+      "port": "3002",
+      "secure": false
+    }
+  },
+  "wordpress": {
+    "api-url": "http://localhost/wp-json",
+    "username": "user",
+    "password": "pass",
+    "content-url": "http://localhost/wp-content"
+  },
+  "firebase": {
+    "server-key": "NA"
+  },
+  "mysql": {
+    "host": "127.0.0.1",
+    "database": "pm",
+    "username": "travis",
+    "password": "",
+    "port": "3306"
+  },
+  "rest": {
+    "clients": {
+      "fakeuser": {
+        "secret": "fakesecret" 
+      } 
+    }
+  }
+}

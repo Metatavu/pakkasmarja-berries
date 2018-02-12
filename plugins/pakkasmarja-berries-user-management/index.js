@@ -23,27 +23,58 @@
       }, 45 * 1000);
     }
     
+    /**
+     * Finds single user from Keycloak.
+     * 
+     * @param {String} realm realm (optional)
+     * @param {String} id user id
+     * @return {Promise} promise for a user or null if not found
+     */
     findUser(realm, id) {
       return new Promise((resolve, reject) => {
-        this.getClient()
-          .then((client) => {
-            client.users.find(realm, { userId: id })
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+        return this.getClient().then((client) => {
+          const keycloakRealm = arguments.length === 2 ? realm : null;
+          const keycloakId = arguments.length === 2 ? id : realm;
+          return client.users.find(keycloakRealm || config.get('keycloak:realm'), { userId: keycloakId })
+            .then((user) => {
+              resolve(user);
+            })
+            .catch((err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve(null);
+              }
+            });
+        });
       });
     }
     
+    /**
+     * Updates user into Keycloak
+     * 
+     * @param {String} realm realm (optional)
+     * @param {Object} user user object
+     * @return {Promise} promise that resolves on success and rejects on failure
+     */
+    updateUser(realm, user) {
+      return this.getClient().then((client) => {
+        const keycloakRealm = arguments.length === 2 ? realm : null;
+        const keycloakUser = arguments.length === 2 ? user : realm;
+
+        return client.users.update(keycloakRealm || config.get('keycloak:realm'), keycloakUser);
+      });
+    }
+    
+    /**
+     * Lists users from Keycloak. 
+     * 
+     * @param {String} realm realm (optional)
+     * @return {Promise} promise for users
+     */
     listUsers(realm) {
-      return new Promise((resolve, reject) => {
-        this.getClient()
-          .then((client) => {
-            client.users.find(realm)
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+      return this.getClient().then((client) => {
+        return client.users.find(realm || config.get('keycloak:realm'));
       });
     }
     
@@ -294,6 +325,47 @@
       });
     }
     
+    /**
+     * Returns single user attribute
+     * 
+     * @param {Object} user Keycloak user
+     * @param {String[]} names attribute name or names
+     * @return {String} attribute value or null if not found
+     */
+    getSingleAttribute(user, names) {
+      const attributes = user.attributes || {};
+      const nameAttr = _.isArray(names) ? names : [ names ];
+      for (let i = 0; i < nameAttr.length; i++) {
+        const name = nameAttr[i];        
+        const values = _.isArray(attributes[name]) ? _.compact(attributes[name]) : [];
+
+        if (values.length === 1) {
+          return values[0];
+        }
+      }
+      
+      return null;
+    }
+    
+    /**
+     * Sets single user attribute
+     * 
+     * @param {Object} user Keycloak user
+     * @param {String} name name of the attribute
+     * @param {String} value value
+     */
+    setSingleAttribute(user, name, value) {
+      if (!user.attributes) {
+        user.attributes = {};
+      }
+      
+      if (value) {
+        user.attributes[name] = value;
+      } else {
+        delete user.attributes[name];
+      }
+    }
+    
     getClient() {
       if (!this._client || this._requireFreshClient) {
         this._client = KeycloakAdminClient(config.get('keycloak:admin'));
@@ -301,6 +373,58 @@
       }
       
       return this._client;
+    }
+    
+    get ATTRIBUTE_SAP_ID() {
+      return 'sapId';
+    }
+    
+    get ATTRIBUTE_COMPANY_NAME() {
+      return 'yritys';
+    }
+    
+    get ATTRIBUTE_BIC() {
+      return 'BIC';
+    }
+    
+    get ATTRIBUTE_IBAN() {
+      return 'IBAN';
+    }
+    
+    get ATTRIBUTE_TAX_CODE() {
+      return 'verotunniste';
+    }
+    
+    get ATTRIBUTE_VAT_LIABLE() {
+      return 'arvonlisäverovelvollisuus';
+    }
+    
+    get ATTRIBUTE_AUDIT() {
+      return 'auditointi';
+    }
+    
+    get ATTRIBUTE_PHONE_1() {
+      return 'Puhelin 1';
+    }
+    
+    get ATTRIBUTE_PHONE_2() {
+      return 'Puhelin 2';
+    }
+    
+    get ATTRIBUTE_POSTAL_CODE_1() {
+      return 'Postinro';
+    }
+    
+    get ATTRIBUTE_POSTAL_CODE_2() {
+      return 'tilan postinro';
+    }
+    
+    get ATTRIBUTE_STREET_1() {
+      return 'Postiosoite';
+    }
+    
+    get ATTRIBUTE_STREET_2() {
+      return 'Tilan osoite';
     }
     
   };

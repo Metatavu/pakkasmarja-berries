@@ -30,6 +30,10 @@
     return;
   }
   
+  process.on('unhandledRejection', (error, promise) => {
+    console.error("UNHANDLED REJECTION", error ? error.stack : null);
+  });
+  
   architect.createApp(architectConfig, (err, architectApp) => {
     if (err) {
       console.error(err);
@@ -44,6 +48,7 @@
     const WebSockets = architectApp.getService('shady-websockets');
     const models = architectApp.getService('pakkasmarja-berries-models');
     const routes = architectApp.getService('pakkasmarja-berries-routes');
+    const rest = architectApp.getService('pakkasmarja-berries-rest');
     const webSocketMessages = architectApp.getService('pakkasmarja-berries-ws-messages');
     const scheluders = architectApp.getService('pakkasmarja-berries-scheluders');
     const clusterMessages = architectApp.getService('pakkasmarja-berries-cluster-messages');
@@ -101,6 +106,7 @@
 
     app.use(morgan('combined'));
     app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, 'webapp')));
     
     const webSockets = new WebSockets(httpServer, (sessionId, callback) => {
@@ -142,9 +148,9 @@
     
     scheluders.start();
     routes.register(app, keycloak);
+    rest.register(app);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
-
   });
 
 })();
