@@ -25,7 +25,7 @@
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
       this.systemService = new SystemServiceImpl();
       this.contractsService = new ContractsServiceImpl();
-      this.itemGroupsService = new ItemGroupsServiceImpl();
+      this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
     }
     
     /**

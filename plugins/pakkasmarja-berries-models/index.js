@@ -172,6 +172,18 @@
           fields: ['userId', 'itemId']
         }]
       });
+      
+      this.defineModel('ItemGroup', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        name: { type: Sequelize.STRING(191), allowNull: false }
+      }, {
+        indexes: [{
+          name: 'UN_ITEMGROUP_EXTERNAL_ID',
+          unique: true,
+          fields: ['externalId']
+        }]
+      });
     }
     
     defineModel(name, attributes, options) {
@@ -724,6 +736,80 @@
             questionGroup.latestMessage = maxCreatedAt;
           });
         });
+    }
+    
+    // ItemGroups
+    
+    /**
+     * new item group
+     * 
+     * @param {type} externalId externalId
+     * @param {type} name name
+     * @return {Promise} promise for created item group
+     */
+    createItemGroup(externalId, name) {
+     return this.ItemGroup.create({
+        externalId: externalId,
+        name: name
+      });
+    }
+    
+    /**
+     * Finds a item group by id
+     * 
+     * @param {int} id item group id
+     * @return {Promise} promise for item group
+     */
+    findItemGroupById(id) {
+      return this.ItemGroup.findOne({ where: { id : id } });
+    }
+    
+    /**
+     * Finds a item group by externalId
+     * 
+     * @param {String} externalId item group externalId
+     * @return {Promise} promise for item group
+     */
+    findItemGroupByExternalId(externalId) {
+      return this.ItemGroup.findOne({ where: { externalId : externalId } });
+    }
+    
+    /**
+     * Lists item groups
+     * 
+     * @param {int} firstResult first result
+     * @param {int} maxResults max results
+     * @return {Promise} promise for item groups
+     */
+    listItemGroups(firstResult, maxResults) {
+      return this.ItemGroup.findAll({ where: { }, offset: firstResult, limit: maxResults });
+    }
+    
+    /**
+     * Updates item group
+     * 
+     * @param {int} id item group id
+     * @param {String} name name
+     * @return {Promise} promise for updated item group
+     */
+    updateItemGroup(id, name) {
+      return this.ItemGroup.update({
+        name: name
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+    
+    /**
+     * Deletes an item group
+     * 
+     * @param {int} id item group id
+     * @return {Promise} promise that resolves on successful removal
+     */
+    deleteItemGroup(id) {
+      return this.ItemGroup.destroy({ where: { id : id } });
     }
   } 
   
