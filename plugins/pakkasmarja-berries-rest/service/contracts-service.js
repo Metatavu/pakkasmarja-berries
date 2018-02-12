@@ -50,9 +50,9 @@
     * @param app express object
     **/
     register(app) {
-      app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.findContract.bind(this));
-      app.get(`/rest/v1${this.toPath('/contracts')}`, [ this.restAuth.bind(this) ], this.listContracts.bind(this));
-      app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.updateContract.bind(this));
+      app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.findContract.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contracts')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.listContracts.bind(this)));
+      app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.updateContract.bind(this)));
     }
   };
 

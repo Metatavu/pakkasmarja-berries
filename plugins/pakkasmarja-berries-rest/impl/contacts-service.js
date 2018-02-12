@@ -39,13 +39,13 @@
         this.sendNotFound(res);
         return;
       }
-      
+
       const user = await this.userManagement.findUser(userId);
       if (!user) {
         this.sendNotFound(res);
         return;
       }
-      
+
       res.status(200).send(this.translateKeycloakUser(user));
     }
     /* jshint ignore:end */

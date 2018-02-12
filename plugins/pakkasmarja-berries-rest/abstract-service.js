@@ -4,6 +4,7 @@
 (() => {
   'use strict';
 
+  const Promise = require('bluebird');
   const NotFound = require(`${__dirname}/model/not-found`);
   const BadRequest = require(`${__dirname}/model/bad-request`);
   const InternalServerError = require(`${__dirname}/model/internal-server-error`);
@@ -23,6 +24,20 @@
     restAuth(req, res, next) {
       // TODO: Implement
       next();
+    }
+    
+    /**
+     * Catch unhandled promise errors
+     * 
+     * @param {function} handler handler function
+     * @return {Function} decorated handler function
+     */
+    catchAsync(handler) {
+      return (req, res) => {
+        return Promise.resolve(handler(req, res)).catch((err) => {
+          res.status(500).send(err);
+        });
+      };
     }
     
     /**

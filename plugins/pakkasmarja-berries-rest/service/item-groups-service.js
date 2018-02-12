@@ -39,8 +39,8 @@
     * @param app express object
     **/
     register(app) {
-      app.get(`/rest/v1${this.toPath('/itemGroups/{id}')}`, [ this.restAuth.bind(this) ], this.findItemGroup.bind(this));
-      app.get(`/rest/v1${this.toPath('/itemGroups')}`, [ this.restAuth.bind(this) ], this.listItemGroups.bind(this));
+      app.get(`/rest/v1${this.toPath('/itemGroups/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.findItemGroup.bind(this)));
+      app.get(`/rest/v1${this.toPath('/itemGroups')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.listItemGroups.bind(this)));
     }
   };
 
