@@ -24,7 +24,7 @@
     constructor (logger, models, userManagement) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
       this.systemService = new SystemServiceImpl();
-      this.contractsService = new ContractsServiceImpl();
+      this.contractsService = new ContractsServiceImpl(logger, models);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
     }
     

@@ -33,6 +33,10 @@
         case 'String':
           return String(data);
         case 'Date':
+          if (data instanceof Date) {
+            return data; 
+          }
+          
           return ModelUtils.parseDate(String(data));
         case 'Blob':
           return data;
@@ -80,7 +84,7 @@
      * @param {String} str The date value as a string.
      * @returns {Date} The parsed date object.
      */
-    parseDate (str) {
+    static parseDate (str) {
       return new Date(str.replace(/T/i, ' '));
     }
    

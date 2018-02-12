@@ -65,7 +65,6 @@
   
   test('Test update contact', (t) => {
     const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
-      "sapId": "updated sap id",
       "firstName": "Updated first name",
       "lastName": "Updated last name",
       "companyName": "Updated company name",

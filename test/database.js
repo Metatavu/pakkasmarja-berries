@@ -4,6 +4,7 @@
 (() => {
   'use strict';
 
+  const Promise = require('bluebird');
   const mysql = require('mysql2/promise');
   const fs = require('fs');
   const config = require('nconf');
@@ -21,29 +22,32 @@
      * @return {Promise} promise for results
      */
     executeSql(sql) {
-      return mysql.createConnection({
+      const options = {
         host: config.get('mysql:host'),
         user: config.get('mysql:username'),
         database: config.get('mysql:database'),
         password: config.get('mysql:password')
-      })
-      .then((connection) => {
-        return connection.execute(sql)
-          .then(() => {
-            connection.end();
-          });
+      };
+      
+      return mysql.createConnection(options)
+        .then((connection) => {
+          return connection.execute(sql)
+            .then(() => {
+              return connection.end();
+            });
       });
     }
     
     /**
      * Executes a SQL file
      * 
-     * @param {String} file path to file
+     * @param {String} parentFolder parent folder
+     * @param {String} file file name
      * @return {Promise} promise for results
      */
-    executeFile(file) {
+    executeFile(parentFolder, file) {
       return new Promise((resolve, reject) => {
-        fs.readFile(file, "utf8", (err, sql) => {
+        fs.readFile(`${parentFolder}/${file}`, "utf8", (err, sql) => {
           if (err) {
             reject(err);
           } else {
@@ -53,6 +57,23 @@
           }
         });
       });
+    }
+    
+    /**
+     * Executes SQL files
+     * 
+     * @param {String} parentFolder parent folder
+     * @param {String[]} files file names
+     * @return {Promise} promise for results
+     */
+    executeFiles(parentFolder, files) {
+      let result = Promise.resolve();
+      
+      files.forEach((file) => {
+        result = result.then(() => { return this.executeFile(parentFolder, file); });
+      });
+      
+      return result;
     }
     
   }

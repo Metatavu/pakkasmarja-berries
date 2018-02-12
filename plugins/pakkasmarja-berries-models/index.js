@@ -184,6 +184,25 @@
           fields: ['externalId']
         }]
       });
+      
+      this.defineModel('Contract', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
+        quantity: { type: Sequelize.BIGINT },
+        startDate: Sequelize.DATE,
+        endDate: Sequelize.DATE,
+        signDate: Sequelize.DATE,
+        termDate: Sequelize.DATE,
+        status: { type: Sequelize.STRING(191), allowNull: false },
+        remarks: Sequelize.TEXT
+      }, {
+        indexes: [{
+          name: 'UN_CONTRACT_EXTERNAL_ID',
+          unique: true,
+          fields: ['externalId']
+        }]
+      });
     }
     
     defineModel(name, attributes, options) {
@@ -810,6 +829,49 @@
      */
     deleteItemGroup(id) {
       return this.ItemGroup.destroy({ where: { id : id } });
+    }
+    
+    // Contracts
+    
+    /**
+     * Finds a contract by id
+     * 
+     * @param {int} id contract id
+     * @return {Promise} promise for contract
+     */
+    findContractById(id) {
+      return this.Contract.findOne({ where: { id : id } });
+    }
+    
+    /**
+     * Finds a contract by externalId
+     * 
+     * @param {String} externalId contract externalId
+     * @return {Promise} promise for contract
+     */
+    findContractByExternalId(externalId) {
+      return this.Contract.findOne({ where: { externalId : externalId } });
+    }
+    
+    /**
+     * Lists contracts
+     * 
+     * @param {int} firstResult first result
+     * @param {int} maxResults max results
+     * @return {Promise} promise for contracts
+     */
+    listContracts(firstResult, maxResults) {
+      return this.Contract.findAll({ where: { }, offset: firstResult, limit: maxResults });
+    }
+    
+    /**
+     * Deletes an contract
+     * 
+     * @param {int} id contract id
+     * @return {Promise} promise that resolves on successful removal
+     */
+    deleteContract(id) {
+      return this.Contract.destroy({ where: { id : id } });
     }
   } 
   

@@ -35,7 +35,6 @@
 
 
 
-
   };
 
   /**
@@ -51,9 +50,6 @@
 
       if (data.hasOwnProperty('id')) {
         obj['id'] = ApiClient.convertToType(data['id'], 'String');
-      }
-      if (data.hasOwnProperty('sapId')) {
-        obj['sapId'] = ApiClient.convertToType(data['sapId'], 'String');
       }
       if (data.hasOwnProperty('firstName')) {
         obj['firstName'] = ApiClient.convertToType(data['firstName'], 'String');
@@ -96,10 +92,6 @@
    * @member {String} id
    */
   exports.prototype['id'] = undefined;
-  /**
-   * @member {String} sapId
-   */
-  exports.prototype['sapId'] = undefined;
   /**
    * @member {String} firstName
    */

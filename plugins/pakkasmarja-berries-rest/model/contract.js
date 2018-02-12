@@ -31,6 +31,7 @@
 
 
 
+
   };
 
   /**
@@ -52,6 +53,9 @@
       }
       if (data.hasOwnProperty('quantity')) {
         obj['quantity'] = ApiClient.convertToType(data['quantity'], 'Number');
+      }
+      if (data.hasOwnProperty('delivered')) {
+        obj['delivered'] = ApiClient.convertToType(data['delivered'], 'Number');
       }
       if (data.hasOwnProperty('startDate')) {
         obj['startDate'] = ApiClient.convertToType(data['startDate'], 'Date');
@@ -87,6 +91,10 @@
    * @member {Number} quantity
    */
   exports.prototype['quantity'] = undefined;
+  /**
+   * @member {Number} delivered
+   */
+  exports.prototype['delivered'] = undefined;
   /**
    * @member {Date} startDate
    */
