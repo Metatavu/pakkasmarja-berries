@@ -9,6 +9,7 @@
   const database = require(`${__dirname}/database`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   
+  /* jshint ignore:start */
   test('Test listing contracts', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
     
@@ -60,5 +61,6 @@
         await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
       });
   });
+  /* jshint ignore:end */
   
 })();

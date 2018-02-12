@@ -9,6 +9,7 @@
   const database = require(`${__dirname}/database`);
   const itemGroupDatas = require(`${__dirname}/data/item-groups.json`);
   
+  /* jshint ignore:start */
   test('Test listing item groups', async (t) => {
     await database.executeFile(`${__dirname}/data`, 'item-groups-setup.sql');
     
@@ -61,5 +62,6 @@
         await database.executeFile(`${__dirname}/data`, 'item-groups-teardown.sql');
       });
   });
+  /* jshint ignore:end */
   
 })();
