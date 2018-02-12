@@ -26,7 +26,6 @@
 
 
 
-
   };
 
   /**
@@ -40,9 +39,6 @@
     if (data) {
       obj = obj || new exports();
 
-      if (data.hasOwnProperty('id')) {
-        obj['id'] = ApiClient.convertToType(data['id'], 'Number');
-      }
       if (data.hasOwnProperty('type')) {
         obj['type'] = ApiClient.convertToType(data['type'], 'String');
       }
@@ -59,10 +55,6 @@
     return obj;
   }
 
-  /**
-   * @member {Number} id
-   */
-  exports.prototype['id'] = undefined;
   /**
    * @member {String} type
    */

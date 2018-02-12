@@ -28,7 +28,7 @@
     * @param app express object
     **/
     register(app) {
-      app.post(`/rest/v1${this.toPath('/system/shutdown')}`, [ this.restAuth.bind(this) ], this.systemShutdown.bind(this));
+      app.post(`/rest/v1${this.toPath('/system/shutdown')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.systemShutdown.bind(this)));
     }
   };
 

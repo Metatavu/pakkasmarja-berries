@@ -1,7 +1,6 @@
 {
   "6f1cd486-107e-404c-a73f-50cc1fdabdd6": {
     "id": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
-    "sapId": null,
     "firstName": "Test 1",
     "lastName": "User 1",
     "companyName": null,
@@ -16,7 +15,6 @@
   },
   "677e99fd-b854-479f-afa6-74f295052770": {
     "id": "677e99fd-b854-479f-afa6-74f295052770",
-    "sapId": "tusap2",
     "firstName": "Test 2",
     "lastName": "User 2",
     "companyName": "Test Corp.",
