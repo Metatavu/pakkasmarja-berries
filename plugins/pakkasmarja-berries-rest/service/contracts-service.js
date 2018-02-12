@@ -23,6 +23,17 @@
     }
 
    /**
+    * Returns contract document
+    * Returns contract document by type
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    getContractDocument(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Lists contracts
     * Lists contracts
     *
@@ -51,6 +62,7 @@
     **/
     register(app) {
       app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.findContract.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.getContractDocument.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.listContracts.bind(this)));
       app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.updateContract.bind(this)));
     }
@@ -59,4 +71,3 @@
   module.exports = AbstractContractsService;
 
 })();
-

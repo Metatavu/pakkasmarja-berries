@@ -188,6 +188,7 @@
       this.defineModel('Contract', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
         quantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
@@ -203,6 +204,26 @@
           fields: ['externalId']
         }]
       });
+      
+      this.defineModel('DocumentTemplate', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        contents: { type: 'LONGTEXT', allowNull: false }
+      });
+      
+      this.defineModel('ItemGroupDocumentTemplate', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
+        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
+        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+      });
+      
+      this.defineModel('ContractDocumentTemplate', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
+        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: 'id' } },
+        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+      });
+      
     }
     
     defineModel(name, attributes, options) {
@@ -873,6 +894,32 @@
     deleteContract(id) {
       return this.Contract.destroy({ where: { id : id } });
     }
+    
+    // DocumentTemplate
+    
+    /**
+     * Finds a document template by id
+     * 
+     * @param {int} id document template id
+     * @return {Promise} promise for document template
+     */
+    findDocumentTemplateById(id) {
+      return this.DocumentTemplate.findOne({ where: { id : id } });
+    }
+    
+    // ContractDocumentTemplate
+      
+    /**
+     * Finds a contract document template by type and contract id
+     * 
+     * @param {String} type document template type
+     * @param {int} contractId contract id
+     * @return {Promise} promise for contract document template
+     */
+    findContractDocumentTemplateByTypeAndContractId(type, contractId) {
+      return this.ContractDocumentTemplate.findOne({ where: { type : type, contractId: contractId } });
+    }
+    
   } 
   
   module.exports = (options, imports, register) => {
