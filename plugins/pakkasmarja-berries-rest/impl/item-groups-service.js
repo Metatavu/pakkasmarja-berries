@@ -26,6 +26,24 @@
       this.models = models;
     }
     
+    /* jshint ignore:start */
+    async findItemGroup(req, res) {
+      const itemGroupId = req.params.id;
+      if (!itemGroupId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      res.status(200).send(this.translateDatabaseItemGroup(databaseItemGroup));
+    }
+    /* jshint ignore:end */
+    
     /**
      * @inheritdoc
      */
