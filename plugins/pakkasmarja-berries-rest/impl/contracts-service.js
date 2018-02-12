@@ -64,6 +64,7 @@
      * @param {Object} contract Sequelize contract model
      * @return {Contract} REST entity
      */
+    /* jshint ignore:start */
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       
@@ -80,6 +81,7 @@
       });
       
     }
+    /* jshint ignore:end */
     
   }
 
