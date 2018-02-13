@@ -49,10 +49,10 @@
     *
     * @param app express object
     **/
-    register(app) {
-      app.get(`/rest/v1${this.toPath('/contacts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.findContact.bind(this)));
-      app.get(`/rest/v1${this.toPath('/contacts')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.listContacts.bind(this)));
-      app.put(`/rest/v1${this.toPath('/contacts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.updateContact.bind(this)));
+    register(app, keycloak) {
+      app.get(`/rest/v1${this.toPath('/contacts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findContact.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contacts')}`, [ keycloak.protect() ], this.catchAsync(this.listContacts.bind(this)));
+      app.put(`/rest/v1${this.toPath('/contacts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContact.bind(this)));
     }
   };
 
