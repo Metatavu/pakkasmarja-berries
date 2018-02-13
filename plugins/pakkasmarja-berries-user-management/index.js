@@ -35,7 +35,7 @@
         return this.getClient().then((client) => {
           const keycloakRealm = arguments.length === 2 ? realm : null;
           const keycloakId = arguments.length === 2 ? id : realm;
-          return client.users.find(keycloakRealm || config.get('keycloak:realm'), { userId: keycloakId })
+          return client.users.find(keycloakRealm || config.get('keycloak:admin:realm'), { userId: keycloakId })
             .then((user) => {
               resolve(user);
             })
@@ -62,7 +62,7 @@
         const keycloakRealm = arguments.length === 2 ? realm : null;
         const keycloakUser = arguments.length === 2 ? user : realm;
 
-        return client.users.update(keycloakRealm || config.get('keycloak:realm'), keycloakUser);
+        return client.users.update(keycloakRealm || config.get('keycloak:admin:realm'), keycloakUser);
       });
     }
     
@@ -74,7 +74,7 @@
      */
     listUsers(realm) {
       return this.getClient().then((client) => {
-        return client.users.find(realm || config.get('keycloak:realm'));
+        return client.users.find(realm || config.get('keycloak:admin:realm'));
       });
     }
     

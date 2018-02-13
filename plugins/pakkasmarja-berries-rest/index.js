@@ -33,11 +33,11 @@
      * 
      * @param {Object} express
      */
-    register(app) {
-      this.contactsService.register(app);
-      this.systemService.register(app);
-      this.contractsService.register(app);
-      this.itemGroupsService.register(app);
+    register(app, keycloak) {
+      this.contactsService.register(app, keycloak);
+      this.systemService.register(app, keycloak);
+      this.contractsService.register(app, keycloak);
+      this.itemGroupsService.register(app, keycloak);
     }
     
   }

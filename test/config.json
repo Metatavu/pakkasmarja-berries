@@ -4,17 +4,29 @@
   "session-secret": "session-secret",
   "mode": "TEST",
   "keycloak": {
-    "auth-server-url": "http://localhost:8080/auth",
-    "realm": "pm",
-    "ssl-required": "external",
-    "resource": "pm",
-    "public-client": true,
-    "admin" : {
+    "admin": {
+      "realm": "pm",
       "baseUrl": "http://localhost:8080/auth",
       "username": "admin",
       "password": "admin",
       "grant_type": "password",
       "client_id": "admin-cli"
+    },
+    "rest": {
+      "realm": "pm",
+      "bearer-only": true,
+      "auth-server-url": "http://localhost:8080/auth",
+      "ssl-required": "external",
+      "resource": "pm-rest",
+      "confidential-port": 0
+    },
+    "app": {
+      "realm": "pm",
+      "auth-server-url": "http://localhost:8080/auth",
+      "ssl-required": "external",
+      "resource": "pm",
+      "public-client": true,
+      "confidential-port": 0
     }
   },
   "amqp": {

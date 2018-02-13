@@ -7,14 +7,16 @@
   const test = require('blue-tape');
   const request = require('supertest');
   const database = require(`${__dirname}/database`);
+  const auth = require(`${__dirname}/auth`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   
   /* jshint ignore:start */
   test('Test listing contracts', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
-    
+
     return request('http://localhost:3002')
       .get('/rest/v1/contracts')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
       .set('Accept', 'application/json')
       .expect(200)
       .then(async response => {
@@ -25,11 +27,37 @@
       });
   });
   
+  test('Test listing contracts - without token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts')
+      .set('Accept', 'application/json')
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
+  test('Test listing contracts - invalid token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts')
+      .set('Authorization', 'Bearer FAKE')
+      .set('Accept', 'application/json')
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
   test('Test finding contracts', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
     
     return request('http://localhost:3002')
       .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
       .set('Accept', 'application/json')
       .expect(200)
       .then(async response => {
@@ -38,11 +66,37 @@
       });
   });
   
+  test('Test finding contracts - without token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976')
+      .set('Accept', 'application/json')
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
+  test('Test finding contracts - invalid token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976')
+      .set('Authorization', 'Bearer FAKE')
+      .set('Accept', 'application/json')
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
   test('Test finding contract - not found', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
     
     return request('http://localhost:3002')
       .get('/rest/v1/contracts/c74e5468-0fb1-11e8-a4e2-87868e24ee8b')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
       .set('Accept', 'application/json')
       .expect(404)
       .then(async response => {
@@ -55,6 +109,7 @@
     
     return request('http://localhost:3002')
       .get('/rest/v1/contracts/not-uuid')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
       .set('Accept', 'application/json')
       .expect(404)
       .then(async response => {
