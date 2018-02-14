@@ -286,7 +286,7 @@
       app.get("/", this.getWebApp.bind(this));
       app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
-      app.get("/system/shutdown", this.postSystemShutdown.bind(this));
+      app.post("/system/shutdown", this.postSystemShutdown.bind(this));
       
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
       app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
