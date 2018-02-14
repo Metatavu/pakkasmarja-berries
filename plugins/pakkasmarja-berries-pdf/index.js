@@ -38,21 +38,21 @@
      * @return {Promise} promise for pdf stream
      */
     renderPdf(html, header, footer, baseUrl) {
-      return new Promise((resolve, reject) => {
-        this.createTempFiles(header, footer).then((tempFiles) => {
-          const options = {
-            "debug": false,
-            "printMediaType": true
-          };
+      return this.createTempFiles(header, footer).then((tempFiles) => {
+        const options = {
+          "debug": false,
+          "printMediaType": true
+        };
 
-          if (tempFiles.headerPath) {
-            options.headerHtml = `file://${tempFiles.headerPath}`;
-          }
+        if (tempFiles.headerPath) {
+          options.headerHtml = `file://${tempFiles.headerPath}`;
+        }
 
-          if (tempFiles.footerPath) {
-            options.footerHtml = `file://${tempFiles.footerPath}`;
-          }
-          
+        if (tempFiles.footerPath) {
+          options.footerHtml = `file://${tempFiles.footerPath}`;
+        }
+
+        return new Promise((resolve, reject) => {
           wkhtmltopdf(html, options, (err, pdfStream) => {
             tempFiles.cleanup();
 
@@ -65,7 +65,7 @@
                   callback();
                 }
               });
-              
+
               pdfStream.pipe(transformStream);
               resolve(transformStream);
             }
