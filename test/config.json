@@ -61,5 +61,8 @@
         "secret": "fakesecret" 
       } 
     }
+  },
+  "wkhtmltopdf": {
+    "command": "/home/travis/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
   }
 }
