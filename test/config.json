@@ -63,6 +63,6 @@
     }
   },
   "wkhtmltopdf": {
-    "command": "/home/travis/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
+    "command": "/home/travis/build/Metatavu/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
   }
 }
