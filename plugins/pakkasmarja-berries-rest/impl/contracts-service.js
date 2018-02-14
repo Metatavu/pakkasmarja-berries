@@ -127,8 +127,8 @@
               pdfStream.pipe(res);
             })
             .catch((err) => {
-              this.logger.error(`PDF Rendering failed on ${err}`);
-              this.sendInternalServerError(err);
+              this.logger.error(`PDF Rendering failed on ${err} html: ${html}, header: ${header}, footer: ${footer}`);
+              this.sendInternalServerError(res, err);
             });
         break;
       }
