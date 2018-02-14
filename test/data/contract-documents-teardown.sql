@@ -1,0 +1,2 @@
+DELETE FROM ContractDocumentTemplates;
+DELETE FROM DocumentTemplates;

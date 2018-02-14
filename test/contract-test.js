@@ -4,9 +4,11 @@
 (() => {
   'use strict';
 
+  const fs = require('fs');
   const test = require('blue-tape');
   const request = require('supertest');
   const database = require(`${__dirname}/database`);
+  const pdf = require(`${__dirname}/pdf`);
   const auth = require(`${__dirname}/auth`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   
@@ -112,6 +114,50 @@
       .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
       .set('Accept', 'application/json')
       .expect(404)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
+  test('Test contract pdf', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql', 'contract-documents-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contract-documents-teardown.sql', 'contracts-teardown.sql', 'item-groups-teardown.sql']);
+        await pdf.extractPdfDataFromBuffer(response.body)
+          .then((pdfData) => {
+            t.ok(pdfData.rawTextContent.indexOf("1 (1)") > -1, "Contains header page number");
+            t.ok(pdfData.rawTextContent.indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
+            t.ok(pdfData.rawTextContent.indexOf("https://www.example.com") > -1, "contains footer");
+          });
+      });
+  });
+  
+  test('Test contract pdf - without token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF')
+      .set('Accept', 'application/json')
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
+      });
+  });
+  
+  test('Test contract pdf - invalid token', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF')
+      .set('Authorization', 'Bearer FAKE')
+      .set('Accept', 'application/json')
+      .expect(403)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
       });

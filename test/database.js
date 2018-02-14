@@ -31,7 +31,11 @@
       
       return mysql.createConnection(options)
         .then((connection) => {
-          return connection.execute(sql)
+          const executes = sql.split(/;\n/).map((statement) => {
+            return connection.execute(statement);
+          });
+          
+          return Promise.all(executes)
             .then(() => {
               return connection.end();
             });
