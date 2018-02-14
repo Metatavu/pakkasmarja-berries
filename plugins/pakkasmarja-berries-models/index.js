@@ -922,6 +922,19 @@
       return this.ContractDocumentTemplate.findOne({ where: { type : type, contractId: contractId } });
     }
     
+    // ItemGroupDocumentTemplate
+      
+    /**
+     * Finds an item group document template by type and itemGroupId id
+     * 
+     * @param {String} type document template type
+     * @param {int} contractId contract id
+     * @return {Promise} promise for contract document template
+     */
+    findItemGroupDocumentTemplateByTypeAndItemGroupId(type, itemGroupId) {
+      return this.ItemGroupDocumentTemplate.findOne({ where: { type : type, itemGroupId: itemGroupId } });
+    }
+    
   } 
   
   module.exports = (options, imports, register) => {

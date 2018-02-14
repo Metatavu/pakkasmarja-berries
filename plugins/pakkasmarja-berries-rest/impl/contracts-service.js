@@ -81,12 +81,15 @@
       }
       
       const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
-      if (!contractDocumentTemplate) {
+      const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
+      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
         this.sendNotFound(res);
         return;
       }
       
-      const documentTemplate = await this.models.findDocumentTemplateById(contractDocumentTemplate.documentTemplateId);
+      const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
+      
+      const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
       if (!documentTemplate) {
         this.sendNotFound(res);
         return;
@@ -104,13 +107,12 @@
         companyName: this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME)
       };
       
-      const bodyContent = Mustache.render(documentTemplate.contents, templateData);
-      if (!bodyContent) {
+      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, 'contract-document.pug', templateData);
+      if (!html) {
         this.sendNotFound(res);
         return;
       }
       
-      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, 'contract-document.pug', templateData);
       const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, 'contract-header.pug', templateData);
       const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, 'contract-footer.pug', templateData);
       

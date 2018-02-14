@@ -138,6 +138,23 @@
       });
   });
   
+  test('Test contract pdf - item group', async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql', 'contract-documents-setup.sql']);
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=PDF')
+      .set('Authorization', `Bearer ${await auth.getTokenDefault()}`)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ['contract-documents-teardown.sql', 'contracts-teardown.sql', 'item-groups-teardown.sql']);
+        await pdf.extractPdfDataFromBuffer(response.body)
+          .then((pdfData) => {
+            t.ok(pdfData.rawTextContent.indexOf("Example group purchase contract") > -1, "Contains contents");
+          });
+      });
+  });
+  
   test('Test contract pdf - without token', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
     
