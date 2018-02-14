@@ -260,12 +260,33 @@
         });
     }
     
+    /**
+    * Shutdown system
+    * Shuts the system down
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    postSystemShutdown(req, res) {
+      if (config.get('mode') !== 'TEST') {
+        res.status(403).send("I'm sorry Dave, I'm afraid I can't do that");
+        return;
+      }
+      
+      try {
+        res.status(204).send();
+      } finally {
+        process.exit(0);
+      }
+    }
+    
     register(app, keycloak) {
       // Navigation     
       
       app.get("/", this.getWebApp.bind(this));
       app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
+      app.get("/system/shutdown", this.postSystemShutdown.bind(this));
       
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
       app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));

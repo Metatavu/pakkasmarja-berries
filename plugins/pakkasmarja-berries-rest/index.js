@@ -7,7 +7,6 @@
   const ContactsServiceImpl = require(`${__dirname}/impl/contacts-service`);
   const ContractsServiceImpl = require(`${__dirname}/impl/contracts-service`);
   const ItemGroupsServiceImpl = require(`${__dirname}/impl/item-groups-service`);
-  const SystemServiceImpl = require(`${__dirname}/impl/system-service`);
   
   /**
    * Rest services
@@ -24,7 +23,6 @@
      */
     constructor (logger, models, userManagement, pdf) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
-      this.systemService = new SystemServiceImpl();
       this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
     }
@@ -36,7 +34,6 @@
      */
     register(app, keycloak) {
       this.contactsService.register(app, keycloak);
-      this.systemService.register(app, keycloak);
       this.contractsService.register(app, keycloak);
       this.itemGroupsService.register(app, keycloak);
     }
