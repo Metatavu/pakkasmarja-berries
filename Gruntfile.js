@@ -7,22 +7,21 @@ module.exports = function(grunt) {
   require('load-grunt-tasks')(grunt);
   
   grunt.initConfig({
-    'babel': {
-      options: {
-        sourceMap: true,
-        minified: true
-      },
+    'sass': {
       client: {
+        options: {
+          style: 'compressed'
+        },
         files: [{
           expand: true,
-          cwd: 'client-src/js',
-          src: ['*.js'],
-          dest: 'public/js',
-          ext: '.js'
+          cwd: 'client-src/scss',
+          src: ['**/*.scss'],
+          dest: 'public/css',
+          ext: '.min.css'
         }]
       }
     }
   });
   
-  grunt.registerTask('default', [ 'babel:client' ]);
+  grunt.registerTask('default', [ 'sass:client' ]);
 };

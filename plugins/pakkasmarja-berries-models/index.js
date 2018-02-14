@@ -207,7 +207,9 @@
       
       this.defineModel('DocumentTemplate', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        contents: { type: 'LONGTEXT', allowNull: false }
+        contents: { type: 'LONGTEXT', allowNull: false },
+        header: { type: 'LONGTEXT', allowNull: true },
+        footer: { type: 'LONGTEXT', allowNull: true }
       });
       
       this.defineModel('ItemGroupDocumentTemplate', {
