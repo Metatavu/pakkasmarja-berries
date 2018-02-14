@@ -7,12 +7,13 @@ cache:
 services:
   - mysql
   - rabbitmq
+before_install:
+  - gem install sass
 install: npm install && grunt
 before_script:
   - curl -sSL "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz"|tar -xvJ
   - rmdir keycloak-3.4.3.Final --ignore-fail-on-non-empty
   - npm install -g coveralls
-  - gem install sass
   - cp test/config.json .
   - mysql -e 'CREATE DATABASE pm;'
   - ./scripts/start-keycloak.sh
