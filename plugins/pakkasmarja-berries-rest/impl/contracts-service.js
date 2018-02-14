@@ -125,6 +125,10 @@
             .then((pdfStream) => {
               res.setHeader("content-type", 'application/pdf');
               pdfStream.pipe(res);
+            })
+            .catch((err) => {
+              this.logger.error(`PDF Rendering failed on ${err}`);
+              this.sendInternalServerError(err);
             });
         break;
       }
