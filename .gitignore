@@ -8,3 +8,4 @@ keycloak.log
 .instrument
 .nyc_output
 coverage
+/public/css/

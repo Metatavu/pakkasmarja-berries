@@ -102,6 +102,7 @@
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, 'webapp')));
+    app.use(express.static(path.join(__dirname, 'public')));
     
     const webSockets = new WebSockets(httpServer, (sessionId, callback) => {
       try {

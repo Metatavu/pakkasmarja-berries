@@ -7,7 +7,6 @@
   const ContactsServiceImpl = require(`${__dirname}/impl/contacts-service`);
   const ContractsServiceImpl = require(`${__dirname}/impl/contracts-service`);
   const ItemGroupsServiceImpl = require(`${__dirname}/impl/item-groups-service`);
-  const SystemServiceImpl = require(`${__dirname}/impl/system-service`);
   
   /**
    * Rest services
@@ -20,11 +19,11 @@
      * @param {Object} logger logger
      * @param {Object} models models
      * @param {Object} userManagement user management
+     * @param {Object} pdf PDF rendering functionalities
      */
-    constructor (logger, models, userManagement) {
+    constructor (logger, models, userManagement, pdf) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
-      this.systemService = new SystemServiceImpl();
-      this.contractsService = new ContractsServiceImpl(logger, models);
+      this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
     }
     
@@ -35,7 +34,6 @@
      */
     register(app, keycloak) {
       this.contactsService.register(app, keycloak);
-      this.systemService.register(app, keycloak);
       this.contractsService.register(app, keycloak);
       this.itemGroupsService.register(app, keycloak);
     }
@@ -47,9 +45,10 @@
     const logger = imports['logger'];
     const models = imports['pakkasmarja-berries-models'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
+    const pdf = imports['pakkasmarja-berries-pdf'];
     /* jshint ignore:end */
     
-    const restServices = new RestServices(logger, models, userManagement);
+    const restServices = new RestServices(logger, models, userManagement, pdf);
     register(null, {
       'pakkasmarja-berries-rest': restServices
     });
