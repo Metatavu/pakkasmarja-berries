@@ -67,13 +67,7 @@
     
     sessionStore.sync();
     
-    const keycloak = new Keycloak({ store: sessionStore }, {
-      "realm": config.get('keycloak:realm'),
-      "auth-server-url": config.get('keycloak:auth-server-url'),
-      "ssl-required": config.get('keycloak:ssl-required'),
-      "resource": config.get('keycloak:resource'),
-      "public-client": config.get('keycloak:public-client')
-    });
+    const keycloak = new Keycloak({ store: sessionStore }, config.get('keycloak:rest'));
     
     httpServer.listen(port, () => {
       logger.info('Http server started');
@@ -149,7 +143,7 @@
     
     scheluders.start();
     routes.register(app, keycloak);
-    rest.register(app);
+    rest.register(app, keycloak);
     webSocketMessages.register(webSockets);
     clusterMessages.register(shadyMessages, webSockets);
   });

@@ -60,11 +60,11 @@
     *
     * @param app express object
     **/
-    register(app) {
-      app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.findContract.bind(this)));
-      app.get(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.getContractDocument.bind(this)));
-      app.get(`/rest/v1${this.toPath('/contracts')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.listContracts.bind(this)));
-      app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ this.restAuth.bind(this) ], this.catchAsync(this.updateContract.bind(this)));
+    register(app, keycloak) {
+      app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
+      app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContract.bind(this)));
     }
   };
 
