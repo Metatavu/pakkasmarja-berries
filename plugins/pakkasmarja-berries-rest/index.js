@@ -20,10 +20,12 @@
      * @param {Object} models models
      * @param {Object} userManagement user management
      * @param {Object} pdf PDF rendering functionalities
+     * @param {Object} signature signature functionalities
+     * @param {Object} tasks task queue functionalities
      */
-    constructor (logger, models, userManagement, pdf) {
+    constructor (logger, models, userManagement, pdf, signature, tasks) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
-      this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf);
+      this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf, signature, tasks);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
     }
     
@@ -46,9 +48,11 @@
     const models = imports['pakkasmarja-berries-models'];
     const userManagement = imports['pakkasmarja-berries-user-management'];
     const pdf = imports['pakkasmarja-berries-pdf'];
+    const signature = imports['pakkasmarja-berries-signature'];
+    const tasks = imports['pakkasmarja-berries-tasks'];
     /* jshint ignore:end */
     
-    const restServices = new RestServices(logger, models, userManagement, pdf);
+    const restServices = new RestServices(logger, models, userManagement, pdf, signature, tasks);
     register(null, {
       'pakkasmarja-berries-rest': restServices
     });

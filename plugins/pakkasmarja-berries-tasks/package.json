@@ -1,0 +1,16 @@
+{
+  "name": "pakkasmarja-berries-tasks",
+  "version": "0.0.1",
+  "description": "Task queue functionalities for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-tasks"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-signature",
+      "pakkasmarja-berries-models"
+    ]
+  }
+}

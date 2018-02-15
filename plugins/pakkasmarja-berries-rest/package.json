@@ -11,7 +11,9 @@
       "logger",
       "pakkasmarja-berries-models",
       "pakkasmarja-berries-user-management",
-      "pakkasmarja-berries-pdf"
+      "pakkasmarja-berries-pdf",
+      "pakkasmarja-berries-signature",
+      "pakkasmarja-berries-tasks"
     ]
   }
 }

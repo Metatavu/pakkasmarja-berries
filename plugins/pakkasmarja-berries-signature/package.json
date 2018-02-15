@@ -1,0 +1,14 @@
+{
+  "name": "pakkasmarja-berries-signature",
+  "version": "0.0.1",
+  "description": "Digital signature functionalities for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-signature"
+    ],
+    "consumes": [
+      "logger"
+    ]
+  }
+}

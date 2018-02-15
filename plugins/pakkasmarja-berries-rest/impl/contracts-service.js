@@ -11,6 +11,10 @@
   const path = require('path');
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
+  const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
+  const toArray = require('stream-to-array');
+  const slugify = require('slugify');
+  const moment = require('moment');
   
   const config = require('nconf');
   const wkhtmltopdf = require('wkhtmltopdf');
@@ -27,14 +31,18 @@
      * @param {Object} models models
      * @param {Object} userManagement userManagement
      * @param {Object} pdf PDF rendering functionalities
+     * @param {Object} signature Digital signature functionalities
+     * @param {Object} tasks task queue functionalities
      */
-    constructor (logger, models, userManagement, pdf) {
+    constructor (logger, models, userManagement, pdf, signature, tasks) {
       super();
       
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.pdf = pdf;
+      this.signature = signature;
+      this.tasks = tasks;
     }
     
     /* jshint ignore:start */
@@ -80,54 +88,25 @@
         return;
       }
       
-      const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
-      const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
-      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
-        this.sendNotFound(res);
-        return;
-      }
-      
-      const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
-      
-      const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
-      if (!documentTemplate) {
-        this.sendNotFound(res);
-        return;
-      }
-      
-      const user = await this.userManagement.findUser(contract.userId);
-      if (!user) {
-        this.sendNotFound(res);
-        return;
-      }
-      
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      
-      const templateData = {
-        companyName: this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME)
-      };
-      
-      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, 'contract-document.pug', templateData);
-      if (!html) {
-        this.sendNotFound(res);
-        return;
-      }
-      
-      const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, 'contract-header.pug', templateData);
-      const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, 'contract-footer.pug', templateData);
-      
       switch (format) {
         case 'HTML':
-         res.status(200).send(html);
+          this.sendNotImplemented(res);
+          return;
         break;
         case 'PDF':
-          this.pdf.renderPdf(html, header, footer, baseUrl)
-            .then((pdfStream) => {
-              res.setHeader("content-type", 'application/pdf');
-              pdfStream.pipe(res);
+          this.getContractDocumentPdf(`${req.protocol}://${req.get('host')}`, contract, type)
+            .then((document) => {
+              if (!document) {
+                this.sendNotFound(res);
+              } else {
+                const pdfStream = document.dataStream;
+                res.setHeader("Content-type", 'application/pdf');
+                res.setHeader('Content-disposition', `attachment; filename=${document.filename}`);
+                pdfStream.pipe(res);
+              }
             })
             .catch((err) => {
-              this.logger.error(`PDF Rendering failed on ${err} html: ${html}, header: ${header}, footer: ${footer}`);
+              this.logger.error(`PDF Rendering failed on ${err}`);
               this.sendInternalServerError(res, err);
             });
         break;
@@ -139,7 +118,7 @@
     /**
      * Renders a document template component into HTML text
      * 
-     * @param {String} base url
+     * @param {String} baseurl base url
      * @param {String} mustacheTemplate mustache template
      * @param {String} pugTemplateName pug template name
      * @param {Object} mustacheData data passed to Mustache renderer
@@ -183,6 +162,43 @@
     /* jshint ignore:end */
     
     /**
+     * @inheritdoc
+     */
+    /* jshint ignore:start */
+    async createContractDocumentSignRequest(req, res) {
+      
+      const contractId = req.params.id;
+      const type = req.params.type;
+      
+      if (!contractId || !type) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const contract = await this.models.findContractByExternalId(contractId);
+      if (!contract) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get('host')}`, contract, type);
+      if (!document) {
+        this.sendNotFound(res);
+      } else {
+        const parts = await toArray(document.dataStream);
+        const buffers = parts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part));
+        const fileBuffer = Buffer.concat(buffers);
+        
+        const vismaSignDocumentId = await this.signature.createDocument(document.documentName);
+        const redirectUrl = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
+        const contractDocument = await this.models.createContractDocument(type, contract.id, vismaSignDocumentId);
+        this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
+        res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
+      }
+    }
+    /* jshint ignore:end */
+    
+    /**
      * Translates Database contract into REST entity
      * 
      * @param {Object} contract Sequelize contract model
@@ -206,6 +222,46 @@
       
     }
     /* jshint ignore:end */
+    
+    async getContractDocumentPdf(baseUrl, contract, type) {
+      const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
+      const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
+      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
+        return null;
+      }
+      
+      const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
+      
+      const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
+      if (!documentTemplate) {
+        return null;
+      }
+      
+      const user = await this.userManagement.findUser(contract.userId);
+      if (!user) {
+        return null;
+      }
+      
+      const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+      
+      const templateData = {
+        companyName: companyName
+      };
+      
+      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, 'contract-document.pug', templateData);
+      if (!html) {
+        return null;
+      }
+      
+      const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, 'contract-header.pug', templateData);
+      const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, 'contract-footer.pug', templateData);
+      
+      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+      const documentName = `${moment().format('YYYY')} - ${itemGroup.name}, ${companyName}`;
+      const filename =`${slugify(documentName)}.pdf`;
+      
+      return { documentName:documentName, filename: filename, dataStream: await this.pdf.renderPdf(html, header, footer, baseUrl) };      
+    }
   }
 
   module.exports = ContractsServiceImpl;

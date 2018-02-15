@@ -211,12 +211,18 @@
         header: { type: 'LONGTEXT', allowNull: true },
         footer: { type: 'LONGTEXT', allowNull: true }
       });
-      
+
       await this.defineModel('ItemGroupDocumentTemplate', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+      }, {
+        indexes: [{
+          name: 'UN_ITEM_GROUP_TEMPLATE_ITEM_GROUP_ID_TYPE',
+          unique: true,
+          fields: ['type', 'itemGroupId']
+        }]
       });
       
       await this.defineModel('ContractDocumentTemplate', {
@@ -224,8 +230,27 @@
         type: { type: Sequelize.STRING(191), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: 'id' } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+      }, {
+        indexes: [{
+          name: 'UN_CONTRACT_DOCUMENT_TEMPLATE_CONTRACT_ID_TYPE',
+          unique: true,
+          fields: ['type', 'contractId']
+        }]
       });
-      
+
+      await this.defineModel('ContractDocument', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
+        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: 'id' } },
+        vismaSignDocumentId: { type: Sequelize.STRING(191), allowNull: false },
+        signed: { type: Sequelize.BOOLEAN, allowNull: false }
+      }, {
+        indexes: [{
+          name: 'UN_CONTRACT_DOCUMENT_CONTRACT_ID_TYPE',
+          unique: true,
+          fields: ['type', 'contractId']
+        }]
+      });
     }
     /* jshint ignore:end */
     
@@ -936,7 +961,64 @@
       return this.ItemGroupDocumentTemplate.findOne({ where: { type : type, itemGroupId: itemGroupId } });
     }
     
-  } 
+    // ContractDocument
+    
+    /**
+     * Create contract document
+     * 
+     * @param {String} type type
+     * @param {int} contractId contract id
+     * @param {String} vismaSignDocumentId visma sign document id
+     * @returns {Promise} Promise for ContractDocument
+     */
+    createContractDocument(type, contractId, vismaSignDocumentId) {
+      return this.ContractDocument.create({
+        type: type,
+        contractId: contractId,
+        vismaSignDocumentId: vismaSignDocumentId,
+        signed: false
+      });
+    }
+    
+    /**
+     * Finds contract document by id
+     * 
+     * @param {int} id id
+     * @returns {Promise} Promise for ContractDocument
+     */
+    findContractDocumentById(id) {
+      return this.ContractDocument.findOne({ where: { id : id } });
+    }
+    
+    /**
+     * Lists contracts documents by signed
+     * 
+     * @param {boolean} signed signed
+     * @returns {Promise} Promise for ContractDocuments
+     */
+    listContractDocumentsBySigned(signed) {
+      return this.ContractDocument.findAll({ where: { signed: signed } });
+    }
+    
+    
+    /**
+     * Updates contract document signing status
+     * 
+     * @param {int} id id
+     * @param {boolean} signed signed
+     * @returns {Promise} Promise for ContractDocument
+     */
+    updateContractDocumentSigned(id, signed) {
+      return this.ContractDocument.update({
+        signed: signed
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+    
+  }
   
   module.exports = (options, imports, register) => {
     const shadySequelize = imports['shady-sequelize'];
