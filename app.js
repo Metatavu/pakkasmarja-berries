@@ -1,10 +1,9 @@
 /* jshint esversion: 6 */
 /* global __dirname */
 (() => {
-  'use strict';
+  "use strict";
   
   const architect = require('architect');
-  const _ = require('lodash');
   const http = require('http');
   const util = require('util');
   const path = require('path');
