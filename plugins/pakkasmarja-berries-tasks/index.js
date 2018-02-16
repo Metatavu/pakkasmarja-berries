@@ -94,7 +94,7 @@
     /**
      * Fills the checkContractDocumentSignatureStatus queue with unsigned contract documents
      */
-      async fillCheckContractDocumentSignatureStatusQueue() {
+    async fillCheckContractDocumentSignatureStatusQueue() {
       try {
         const unsignedContractDocuments = await this.models.listContractDocumentsBySigned(false);
         unsignedContractDocuments.forEach((unsignedContractDocument) => {
