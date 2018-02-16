@@ -1,7 +1,7 @@
 /* jshint esversion: 6 */
 /* global __dirname, Promise */
 (() => {
-  'use strict';
+  "use strict";
   
   const Promise = require('bluebird');
   const path = require('path');
