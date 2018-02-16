@@ -8,6 +8,7 @@
   const NotFound = require(`${__dirname}/model/not-found`);
   const BadRequest = require(`${__dirname}/model/bad-request`);
   const InternalServerError = require(`${__dirname}/model/internal-server-error`);
+  const NotImplemented = require(`${__dirname}/model/not-implemented`);
 
   /**
    * Abstract base class for all REST services
@@ -87,6 +88,20 @@
       res.status(500).send(InternalServerError.constructFromObject({
         "code": 500,
         "message": message || "Bad Request"
+      }));
+    }
+    
+    
+    /**
+     * Responds with 501 - not implemented
+     * 
+     * @param {http.ServerResponse} res server response object
+     * @param {String} message (optional)
+     */
+    sendNotImplemented(res, message) {
+      res.status(501).send(NotImplemented.constructFromObject({
+        "code": 501,
+        "message": message || "Not implemented yet"
       }));
     }
    
