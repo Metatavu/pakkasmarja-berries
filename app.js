@@ -16,7 +16,6 @@
   const Keycloak = require('keycloak-connect');  
   const session = require('express-session');
   const SequelizeStore = require('connect-session-sequelize')(session.Store);
-   const SHA256 = new Hashes.SHA256; 
   
   config.file({file: __dirname + '/config.json'});
    

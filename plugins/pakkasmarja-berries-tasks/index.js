@@ -1,7 +1,7 @@
 /* jshint esversion: 6 */
 /* global __dirname, Promise */
 (() => {
-  'use strict';
+  "use strict";
   
   const Promise = require('bluebird');
   const path = require('path');
@@ -94,7 +94,7 @@
     /**
      * Fills the checkContractDocumentSignatureStatus queue with unsigned contract documents
      */
-    async fillCheckContractDocumentSignatureStatusQueue() {
+      async fillCheckContractDocumentSignatureStatusQueue() {
       try {
         const unsignedContractDocuments = await this.models.listContractDocumentsBySigned(false);
         unsignedContractDocuments.forEach((unsignedContractDocument) => {
