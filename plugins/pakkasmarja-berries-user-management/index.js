@@ -49,7 +49,88 @@
         });
       });
     }
-    
+
+    /**
+     * Finds user by attribute
+     * 
+     * @param {String} name attribute name 
+     * @param {String} value attribute value 
+     */
+    findUserByProperty(name, value) {
+      let page  = 0;
+      let size = 25;
+      const maxPages = 50;
+
+      return new Promise(async (resolve, reject) => {
+        try {
+          while (page < maxPages) {
+            const result = await this.listUserByPropertyPaged(name, value, page * size, size);
+            if (result.count === 0) {
+              resolve(null);
+              return;
+            } else {
+              if (result.users.length === 1) {
+                resolve(result.users[0]);
+                return;
+              } else if (result.users.length > 1) {
+                reject(`Found ${result.users.length} users with attribute ${name} === ${value}`);
+                return;
+              } else {
+                page++; 
+              }
+            }
+          }
+
+          reject(`Max page count ${maxPages} exceeded`);        
+        } catch (e) {
+          console.log(e);
+          reject(e);
+        }
+      });
+    }
+
+    /**
+     * Finds user by email
+     * 
+     * @param {String} email email address 
+     */
+    findUserByEmail(email) {
+      return this.listUsers({ email: email })
+        .then((users) => {
+          if (users.length === 1) {
+            return users[0];
+          } else if (users.length > 1) {
+            throw new Error(`Found ${result.users.length} users with attribute ${name} === ${value}`);
+          } else {
+            return null;
+          }
+        });
+    }
+
+    /**
+     * Lists users in specified page by property  
+     * 
+     * @param {String} name propery name
+     * @param {String} value  property value
+     * @param {Integer} first first result
+     * @param {Integer} maxResults maxResults
+     */
+    listUserByPropertyPaged(name, value, first, maxResults) {
+      return this.listUsers({
+        first: first,
+        max: maxResults
+      })
+        .then((users) => {
+          const count = users.length;
+          return {
+            count: count,
+            users: users.filter((user) => {
+              return this.getSingleAttribute(user, name) === value;
+            })
+          };
+        });
+    }
+
     /**
      * Updates user into Keycloak
      * 
@@ -69,12 +150,12 @@
     /**
      * Lists users from Keycloak. 
      * 
-     * @param {String} realm realm (optional)
+     * @param {Object} options options (optional)
      * @return {Promise} promise for users
      */
-    listUsers(realm) {
+    listUsers(options) {
       return this.getClient().then((client) => {
-        return client.users.find(realm || config.get('keycloak:admin:realm'));
+        return client.users.find(config.get('keycloak:admin:realm'), options);
       });
     }
     
@@ -425,6 +506,14 @@
     
     get ATTRIBUTE_STREET_2() {
       return 'Tilan osoite';
+    }
+    
+    get ATTRIBUTE_CITY_1() {
+      return 'Kaupunki';
+    }
+    
+    get ATTRIBUTE_CITY_2() {
+      return 'Tilan kaupunki';
     }
     
   };
