@@ -3,6 +3,31 @@
   "app-version": "1.2.7",
   "session-secret": "session-secret",
   "mode": "TEST",
+  "tasks": {
+    "tableName": "tasks",
+    "queues": {
+      "contractDocumentStatus": {
+        "concurrent": 1,
+        "afterProcessDelay": 5000,
+        "maxTimeout": 20000
+      },
+      "contractDocumentStatusBatch": {
+        "concurrent": 1,
+        "afterProcessDelay": 5000,
+        "maxTimeout": 20000
+      },
+      "readSapImportFile": {
+        "concurrent": 1,
+        "afterProcessDelay": 5000,
+        "maxTimeout": 20000
+      },
+      "sapContactUpdate": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      }
+    }
+  },
   "keycloak": {
     "admin": {
       "realm": "pm",

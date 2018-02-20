@@ -54,7 +54,7 @@
               .then((newsArticle) => {
                 this.logger.info(`News article ${newsArticle.id} created`);
                 this.notifyClusterNewsArticleAdded(newsArticle);
-                this.userManagement.listUsers(config.get('keycloak:realm'))
+                this.userManagement.listUsers()
                   .then((users) => {
                     const userIds = _.uniq(users.map((user) => {
                       return user.id;

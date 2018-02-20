@@ -10,6 +10,7 @@
     "consumes": [
       "logger",
       "pakkasmarja-berries-signature",
+      "pakkasmarja-berries-user-management",
       "pakkasmarja-berries-models"
     ]
   }
