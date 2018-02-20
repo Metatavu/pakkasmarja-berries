@@ -3,8 +3,7 @@
 
 (() => {
   "use strict";
-  
-  const util = require("util"); 
+
   const config = require("nconf");
   const _ = require("lodash");
   const crypto = require("crypto");
@@ -35,7 +34,7 @@
         return this.getClient().then((client) => {
           const keycloakRealm = arguments.length === 2 ? realm : null;
           const keycloakId = arguments.length === 2 ? id : realm;
-          return client.users.find(keycloakRealm || config.get("keycloak:admin:realm"), { userId: keycloakId })
+          return client.users.find(keycloakRealm || config.get("keycloak:admin:realm"), { userId: keycloakId })
             .then((user) => {
               resolve(user);
             })
