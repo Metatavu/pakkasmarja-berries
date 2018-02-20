@@ -82,7 +82,6 @@
 
           reject(`Max page count ${maxPages} exceeded`);
         } catch (e) {
-          console.log(e);
           reject(e);
         }
       });
