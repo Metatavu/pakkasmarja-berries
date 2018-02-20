@@ -89,7 +89,9 @@
      * Enqueues import file synchronization from SAP
      */
     enqueueReadSapImportFile() {
-      this.readSapImportFileQueue.push({id: 1});
+      if (config.get("sap:import-file")) {
+        this.readSapImportFileQueue.push({id: 1});
+      }
     }
     
     /**
