@@ -80,7 +80,7 @@
             }
           }
 
-          reject(`Max page count ${maxPages} exceeded`);
+          reject(`Max page count ${maxPages} exceeded`);
         } catch (e) {
           reject(e);
         }
@@ -141,7 +141,7 @@
         const keycloakRealm = arguments.length === 2 ? realm : null;
         const keycloakUser = arguments.length === 2 ? user : realm;
 
-        return client.users.update(keycloakRealm || config.get("keycloak:admin:realm"), keycloakUser);
+        return client.users.update(keycloakRealm || config.get("keycloak:admin:realm"), keycloakUser);
       });
     }
     
@@ -344,7 +344,7 @@
     }
     
     isValidUserId(userId) {
-      if (typeof userId === "string") {
+      if (typeof userId === "string") {
         return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
       }
       
