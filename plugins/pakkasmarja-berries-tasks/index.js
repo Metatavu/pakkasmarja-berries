@@ -4,7 +4,6 @@
   "use strict";
   
   const Promise = require("bluebird");
-  const path = require("path");
   const fs = require("fs");
   const config = require("nconf");
   const Queue = require("better-queue");
