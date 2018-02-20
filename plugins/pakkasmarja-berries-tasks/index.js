@@ -3,13 +3,13 @@
 (() => {
   "use strict";
   
-  const Promise = require('bluebird');
-  const path = require('path');
-  const fs = require('fs');
-  const config = require('nconf');
-  const Queue = require('better-queue');
-  const SQLStore = require('better-queue-sql');
-  const xml2js = require('xml2js');
+  const Promise = require("bluebird");
+  const path = require("path");
+  const fs = require("fs");
+  const config = require("nconf");
+  const Queue = require("better-queue");
+  const SQLStore = require("better-queue-sql");
+  const xml2js = require("xml2js");
 
   /**
    * Task queue functionalities for Pakkasmarja Berries
@@ -29,10 +29,10 @@
       this.models = models;
       this.userManagement = userManagement;
 
-      this.createQueue('contractDocumentStatus', this.checkContractDocumentSignatureStatusTask.bind(this));
-      this.createQueue('contractDocumentStatusBatch', this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
-      this.createQueue('readSapImportFile', this.readSapImportFileTask.bind(this));
-      this.createQueue('sapContactUpdate', this.sapContactUpdateTask.bind(this));
+      this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
+      this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
+      this.createQueue("readSapImportFile", this.readSapImportFileTask.bind(this));
+      this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
 
       this.enqueueContractDocumentStatusBatchQueue();
       this.enqueueReadSapImportFile();
@@ -47,13 +47,13 @@
     createQueue(name, fn) {
       this[`${name}Queue`] = new Queue(fn, config.get(`tasks:queues:${name}`));
       this[`${name}Queue`].use(new SQLStore({
-        dialect: 'mysql',
-        tableName: `${config.get('tasks:tableName')}_${name}`,
-        dbname: config.get('mysql:database'),
-        host: config.get('mysql:host') || 'localhost',
-        port: config.get('mysql:port') || 3306,
-        username: config.get('mysql:username'),
-        password: config.get('mysql:password')
+        dialect: "mysql",
+        tableName: `${config.get("tasks:tableName")}_${name}`,
+        dbname: config.get("mysql:database"),
+        host: config.get("mysql:host") || "localhost",
+        port: config.get("mysql:port") || 3306,
+        username: config.get("mysql:username"),
+        password: config.get("mysql:password")
       }));
     }
 
@@ -66,7 +66,7 @@
     createDocument(name) {
       return this.documentsApi.createDocument({"document":{"name": name}}).then((data) => {
         const location = data.location;
-        return location.substring(location.lastIndexOf('/') + 1);
+        return location.substring(location.lastIndexOf("/") + 1);
       });
     }
 
@@ -113,26 +113,26 @@
      */
     async readSapImportFileTask(data, callback) {
       try {
-        const data = await this.parseXmlFile(config.get('sap:import-file'));
+        const data = await this.parseXmlFile(config.get("sap:import-file"));
         if (!data) {
-          this.logger.error('Failed to read SAP import file');
+          this.logger.error("Failed to read SAP import file");
           return;
         }
 
         const sap = data.SAP;
         if (!sap) {
-          this.logger.error('Could not find SAP root entry');
+          this.logger.error("Could not find SAP root entry");
           return;
         }
 
         if (!sap.BusinessPartners) {
-          this.logger.error('Failed to read SAP business parterns');
+          this.logger.error("Failed to read SAP business parterns");
           return;
         }
 
         const businessPartners = sap.BusinessPartners.BusinessPartners;
         if (!businessPartners) {
-          this.logger.error('Failed to read SAP business parterns list');
+          this.logger.error("Failed to read SAP business parterns list");
           return;
         }
 
@@ -140,7 +140,7 @@
           this.enqueueSapContactUpdate(businessPartner);
         });
       } catch (e) {
-        this.logger.error('Failed to parse SAP import file', e);
+        this.logger.error("Failed to parse SAP import file", e);
       } finally {
         callback(null);
         this.enqueueReadSapImportFile();
@@ -157,7 +157,7 @@
           this.enqueueContractDocumentStatusTask(unsignedContractDocument.id);
         });
       } catch (err) {
-        this.logger.error('Error processing queue', err);
+        this.logger.error("Error processing queue", err);
       } finally {
         callback(null);
         this.enqueueContractDocumentStatusBatchQueue();
@@ -177,7 +177,7 @@
         if (!contractDocument.signed) {
           const response = await this.signature.getDocumentStatus(contractDocument.vismaSignDocumentId);
           const documentStatus = response ? response.status : null;
-          if (documentStatus === 'signed') {
+          if (documentStatus === "signed") {
             documentSigned = true;
             this.models.updateContractDocumentSigned(data.contractDocumentId, true);
           }
@@ -185,7 +185,7 @@
           documentSigned = true;
         }
       } catch(err) {
-        this.logger.error('Error finding document status with', err);
+        this.logger.error("Error finding document status with", err);
       } finally {
         if (!documentSigned) {
           this.enqueueContractDocumentStatusTask(data.contractDocumentId);
@@ -316,14 +316,14 @@
   }
   
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
-    const signature = imports['pakkasmarja-berries-signature'];
-    const models = imports['pakkasmarja-berries-models'];
-    const userManagement = imports['pakkasmarja-berries-user-management'];
+    const logger = imports["logger"];
+    const signature = imports["pakkasmarja-berries-signature"];
+    const models = imports["pakkasmarja-berries-models"];
+    const userManagement = imports["pakkasmarja-berries-user-management"];
     const tasks = new TaskQueue(logger, models, signature, userManagement);
     
     register(null, {
-      'pakkasmarja-berries-tasks': tasks
+      "pakkasmarja-berries-tasks": tasks
     });
   };
   

@@ -2,14 +2,14 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
   
-  const util = require('util'); 
-  const config = require('nconf');
-  const _ = require('lodash');
-  const crypto = require('crypto');
-  const KeycloakAdminClient = require('keycloak-admin-client');
-  const Promise = require('bluebird');
+  const util = require("util"); 
+  const config = require("nconf");
+  const _ = require("lodash");
+  const crypto = require("crypto");
+  const KeycloakAdminClient = require("keycloak-admin-client");
+  const Promise = require("bluebird");
   
   class PakkasmarjaBerriesUserManagement {
     
@@ -35,7 +35,7 @@
         return this.getClient().then((client) => {
           const keycloakRealm = arguments.length === 2 ? realm : null;
           const keycloakId = arguments.length === 2 ? id : realm;
-          return client.users.find(keycloakRealm || config.get('keycloak:admin:realm'), { userId: keycloakId })
+          return client.users.find(keycloakRealm || config.get("keycloak:admin:realm"), { userId: keycloakId })
             .then((user) => {
               resolve(user);
             })
@@ -81,7 +81,7 @@
             }
           }
 
-          reject(`Max page count ${maxPages} exceeded`);        
+          reject(`Max page count ${maxPages} exceeded`);
         } catch (e) {
           console.log(e);
           reject(e);
@@ -143,7 +143,7 @@
         const keycloakRealm = arguments.length === 2 ? realm : null;
         const keycloakUser = arguments.length === 2 ? user : realm;
 
-        return client.users.update(keycloakRealm || config.get('keycloak:admin:realm'), keycloakUser);
+        return client.users.update(keycloakRealm || config.get("keycloak:admin:realm"), keycloakUser);
       });
     }
     
@@ -155,7 +155,7 @@
      */
     listUsers(options) {
       return this.getClient().then((client) => {
-        return client.users.find(config.get('keycloak:admin:realm'), options);
+        return client.users.find(config.get("keycloak:admin:realm"), options);
       });
     }
     
@@ -163,7 +163,7 @@
       return new Promise((resolve, reject) => {
         this.listUserGroups(realm, userId)
           .then((userGroup) => {
-            resolve(_.uniq(_.map(userGroup, 'id')));
+            resolve(_.uniq(_.map(userGroup, "id")));
           })
           .catch(reject);
       });
@@ -197,7 +197,7 @@
       return new Promise((resolve, reject) => {
         this.listGroupsMembers(realm, groupIds)
           .then((members) => {
-            resolve(_.uniq(_.map(members, 'id')));
+            resolve(_.uniq(_.map(members, "id")));
           })
           .catch(reject);
       });
@@ -255,12 +255,12 @@
       const attributes = {};
 
       _.forEach(user.attributes||{}, (originalValue, key) => {
-        const value = _.isArray(originalValue) ? originalValue.join('') : originalValue;
+        const value = _.isArray(originalValue) ? originalValue.join("") : originalValue;
         attributes[String(key).toLowerCase()] = value;
       });
      
-      if (attributes['näyttönimi']) {
-        return attributes['näyttönimi'];
+      if (attributes["näyttönimi"]) {
+        return attributes["näyttönimi"];
       }
       
       const company = attributes.yritys;
@@ -282,9 +282,9 @@
     }
     
     getUserImage(user) {
-      const shasum = crypto.createHash('sha1');
+      const shasum = crypto.createHash("sha1");
       shasum.update(user.email.toLowerCase());
-      const hash = shasum.digest('hex');
+      const hash = shasum.digest("hex");
       return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
     }
     
@@ -322,9 +322,9 @@
     }
     
     getRoleIndex(role) {
-      if (role === 'manager') {
+      if (role === "manager") {
         return 2;
-      } else if (role === 'user') {
+      } else if (role === "user") {
         return 1;
       }
       
@@ -346,7 +346,7 @@
     }
     
     isValidUserId(userId) {
-      if (typeof userId === 'string') {
+      if (typeof userId === "string") {
         return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
       }
       
@@ -392,7 +392,7 @@
                 if (userRoleMappings && userRoleMappings.realmMappings) {
                   const realmRoles = userRoleMappings.realmMappings;
                   for (let i = 0; i < realmRoles.length; i++) {
-                    if (realmRoles[i].name === 'app-manager') {
+                    if (realmRoles[i].name === "app-manager") {
                       hasManagerRole = true;
                       break;
                     }
@@ -449,7 +449,7 @@
     
     getClient() {
       if (!this._client || this._requireFreshClient) {
-        this._client = KeycloakAdminClient(config.get('keycloak:admin'));
+        this._client = KeycloakAdminClient(config.get("keycloak:admin"));
         this._requireFreshClient = false;
       }
       
@@ -457,73 +457,73 @@
     }
     
     get ATTRIBUTE_SAP_ID() {
-      return 'sapId';
+      return "sapId";
     }
     
     get ATTRIBUTE_COMPANY_NAME() {
-      return 'yritys';
+      return "yritys";
     }
     
     get ATTRIBUTE_BIC() {
-      return 'BIC';
+      return "BIC";
     }
     
     get ATTRIBUTE_IBAN() {
-      return 'IBAN';
+      return "IBAN";
     }
     
     get ATTRIBUTE_TAX_CODE() {
-      return 'verotunniste';
+      return "verotunniste";
     }
     
     get ATTRIBUTE_VAT_LIABLE() {
-      return 'arvonlisäverovelvollisuus';
+      return "arvonlisäverovelvollisuus";
     }
     
     get ATTRIBUTE_AUDIT() {
-      return 'auditointi';
+      return "auditointi";
     }
     
     get ATTRIBUTE_PHONE_1() {
-      return 'Puhelin 1';
+      return "Puhelin 1";
     }
     
     get ATTRIBUTE_PHONE_2() {
-      return 'Puhelin 2';
+      return "Puhelin 2";
     }
     
     get ATTRIBUTE_POSTAL_CODE_1() {
-      return 'Postinro';
+      return "Postinro";
     }
     
     get ATTRIBUTE_POSTAL_CODE_2() {
-      return 'tilan postinro';
+      return "tilan postinro";
     }
     
     get ATTRIBUTE_STREET_1() {
-      return 'Postiosoite';
+      return "Postiosoite";
     }
     
     get ATTRIBUTE_STREET_2() {
-      return 'Tilan osoite';
+      return "Tilan osoite";
     }
     
     get ATTRIBUTE_CITY_1() {
-      return 'Kaupunki';
+      return "Kaupunki";
     }
     
     get ATTRIBUTE_CITY_2() {
-      return 'Tilan kaupunki';
+      return "Tilan kaupunki";
     }
     
   };
 
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
-    const models = imports['pakkasmarja-berries-models'];
+    const logger = imports["logger"];
+    const models = imports["pakkasmarja-berries-models"];
     const pakkasmarjaBerriesUserManagement = new PakkasmarjaBerriesUserManagement(logger, models);
     register(null, {
-      'pakkasmarja-berries-user-management': pakkasmarjaBerriesUserManagement
+      "pakkasmarja-berries-user-management": pakkasmarjaBerriesUserManagement
     });
   };
 
