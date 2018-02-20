@@ -100,7 +100,7 @@
           if (users.length === 1) {
             return users[0];
           } else if (users.length > 1) {
-            throw new Error(`Found ${result.users.length} users with attribute ${name} === ${value}`);
+            throw new Error(`Found ${users.length} users with email ${email}`);
           } else {
             return null;
           }
