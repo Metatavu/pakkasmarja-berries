@@ -12,7 +12,7 @@
   /**
    * The Contact model module.
    * @module model/Contact
-   * @version 0.0.1
+   * @version 0.0.2
    */
 
   /**
@@ -144,6 +144,16 @@
    * @readonly
    */
   exports.VatLiableEnum = {
+    /**
+     * value: "YES"
+     * @const
+     */
+    "YES": "YES",
+    /**
+     * value: "NO"
+     * @const
+     */
+    "NO": "NO",
     /**
      * value: "EU"
      * @const

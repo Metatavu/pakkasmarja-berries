@@ -54,6 +54,18 @@
         username: config.get("mysql:username"),
         password: config.get("mysql:password")
       }));
+
+      this[`${name}Queue`].on("task_finish", (taskId, result) => {
+        if (result && result.operationReportItemId) {
+          this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
+        }
+      });
+
+      this[`${name}Queue`].on("task_failed", (taskId, result) => {
+        if (result && result.operationReportItemId) {
+          this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
+        }
+      });
     }
 
     /**
@@ -99,10 +111,13 @@
      * 
      * @param {Object} businessPartner SAP business partner object 
      */
-    enqueueSapContactUpdate(businessPartner) {
+    async enqueueSapContactUpdate(operationReportId, businessPartner) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
+
       this.sapContactUpdateQueue.push({
         id: businessPartner.CardCode,
-        businessPartner: businessPartner
+        businessPartner: businessPartner,
+        operationReportItemId: operationReportItem.id
       });
     }
 
@@ -137,11 +152,13 @@
           return;
         }
 
+        const operationReport = await this.models.createOperationReport("SAP_CONTACT_SYNC");
+
         businessPartners.forEach((businessPartner) => {
-          this.enqueueSapContactUpdate(businessPartner);
+          this.enqueueSapContactUpdate(operationReport.id, businessPartner);
         });
       } catch (e) {
-        this.logger.error("Failed to parse SAP import file", e);
+        this.logger.error(`Failed to parse SAP import file ${e}`);
       } finally {
         callback(null);
         this.enqueueReadSapImportFile();
@@ -228,7 +245,10 @@
 
         if (!user) {
           this.logger.error(`Could not find user with SAP id ${sapId} nor with email ${email}`);
-          callback(`Could not find user with SAP id ${sapId} nor with email ${email}`);
+          callback({
+            message: `Could not find user with SAP id ${sapId} nor with email ${email}`,
+            operationReportItemId: data.operationReportItemId
+          });
           return;
         }
 
@@ -254,10 +274,16 @@
 
         await this.userManagement.updateUser(user);
 
-        callback(null);
+        callback(null, {
+          message: `Synchronized contact details from SAP ${email} / ${sapId}`,
+          operationReportItemId: data.operationReportItemId
+        });
       } catch (err) {
         this.logger.error(`Error processing queue ${err}`);
-        callback(err);
+        callback({
+          message: err,
+          operationReportItemId: data.operationReportItemId
+        });
       }
     }
 

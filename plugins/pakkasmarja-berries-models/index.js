@@ -1,12 +1,10 @@
 /* jshint esversion: 6 */
 /* global __dirname, Promise */
 (() => {
-  'use strict';
+  "use strict";
   
-  const _ = require('lodash');
-  const async = require('async');
-  const util = require('util');
-  const Promise = require('bluebird');
+  const _ = require("lodash");
+  const Promise = require("bluebird");
   
   class Models {
     
@@ -14,19 +12,18 @@
       this.logger = logger;
       this.sequelize = shadySequelize.sequelize;
       this.Sequelize = shadySequelize.Sequelize;
-      this.defineModels();
     }
     
     /* jshint ignore:start */
     async defineModels() {
       const Sequelize = this.Sequelize;
       
-      await this.defineModel('Session', {
+      await this.defineModel("Session", {
         id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
       });
       
-      await this.defineModel('ConnectSession', {
+      await this.defineModel("ConnectSession", {
         sid: {
           type: Sequelize.STRING(191),
           primaryKey: true
@@ -36,20 +33,20 @@
         data: Sequelize.TEXT
       });
       
-      await this.defineModel('UserSettings', {
+      await this.defineModel("UserSettings", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         settingKey: { type: Sequelize.STRING(191), allowNull: false },
         settingValue: { type: Sequelize.STRING(191) }
       }, {
         indexes: [{
-          name: 'UN_USERSETTING_USERID_SETTINGKEY',
+          name: "UN_USERSETTING_USERID_SETTINGKEY",
           unique: true,
-          fields: ['userId', 'settingKey']
+          fields: ["userId", "settingKey"]
         }]
       });
       
-      await this.defineModel('Thread', {
+      await this.defineModel("Thread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191) },
         type: { type: Sequelize.STRING(191), allowNull: false },
@@ -58,7 +55,7 @@
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
-          'afterFind': (object, options) => {
+          "afterFind": (object) => {
             if (!object) {
               return;  
             }
@@ -74,27 +71,27 @@
         }
       });
       
-      await this.defineModel('ThreadUserGroupRole', {
+      await this.defineModel("ThreadUserGroupRole", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
         userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
         role: { type: Sequelize.STRING(191), allowNull: false  }
       }, {
         indexes: [{
-          name: 'UN_THREADUSERGROUPROLE_THREADID_USERGROUPID',
+          name: "UN_THREADUSERGROUPROLE_THREADID_USERGROUPID",
           unique: true,
-          fields: ['threadId', 'userGroupId']
+          fields: ["threadId", "userGroupId"]
         }]
       });
       
-      await this.defineModel('Message', {
+      await this.defineModel("Message", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
       });
       
-      await this.defineModel('QuestionGroup', {
+      await this.defineModel("QuestionGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191), allowNull: false },
@@ -102,7 +99,7 @@
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
-          'afterFind': (object, options) => {
+          "afterFind": (object) => {
             if (!object) {
               return;  
             }
@@ -118,78 +115,78 @@
         }
       });
       
-      await this.defineModel('QuestionGroupUserGroupRole', {
+      await this.defineModel("QuestionGroupUserGroupRole", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
+        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: "id" } },
         userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
         role: { type: Sequelize.STRING(191), allowNull: false  }
       }, {
         indexes: [{
-          name: 'UN_QUESTIONGROUPUSERGROUPROLE_QUESTIONGROUPID_USERGROUPID',
+          name: "UN_QUESTIONGROUPUSERGROUPROLE_QUESTIONGROUPID_USERGROUPID",
           unique: true,
-          fields: ['questionGroupId', 'userGroupId']
+          fields: ["questionGroupId", "userGroupId"]
         }]
       });
       
-      await this.defineModel('QuestionGroupUserThread', {
+      await this.defineModel("QuestionGroupUserThread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: 'id' } },
-        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: 'id' } },
+        questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: "id" } },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
       }, {
         indexes: [{
-          name: 'UN_QUESTIONGROUPUSERTHREAD_QUESTIONGROUPID_THREADID',
+          name: "UN_QUESTIONGROUPUSERTHREAD_QUESTIONGROUPID_THREADID",
           unique: true,
-          fields: ['questionGroupId', 'threadId']
+          fields: ["questionGroupId", "threadId"]
         }]
       });
       
-      await this.defineModel('NewsArticle', {
+      await this.defineModel("NewsArticle", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
-        contents: { type: 'LONGTEXT', allowNull: false },
+        contents: { type: "LONGTEXT", allowNull: false },
         originId: { type: Sequelize.STRING(191), allowNull: false },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
       });
       
-      await this.defineModel('MessageAttachment', {
+      await this.defineModel("MessageAttachment", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: 'id' } },
-        contents: { type: 'LONGBLOB', allowNull: false },
+        messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: "id" } },
+        contents: { type: "LONGBLOB", allowNull: false },
         contentType: { type: Sequelize.STRING(191), allowNull: false },
         fileName: { type: Sequelize.STRING(191) },
         size: { type: Sequelize.BIGINT }
       });
       
-      await this.defineModel('ItemRead', {
+      await this.defineModel("ItemRead", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemId: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
-          name: 'UN_ITEMREAD_USERID_ITEMID',
+          name: "UN_ITEMREAD_USERID_ITEMID",
           unique: true,
-          fields: ['userId', 'itemId']
+          fields: ["userId", "itemId"]
         }]
       });
       
-      await this.defineModel('ItemGroup', {
+      await this.defineModel("ItemGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
-          name: 'UN_ITEMGROUP_EXTERNAL_ID',
+          name: "UN_ITEMGROUP_EXTERNAL_ID",
           unique: true,
-          fields: ['externalId']
+          fields: ["externalId"]
         }]
       });
       
-      await this.defineModel('Contract', {
+      await this.defineModel("Contract", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
-        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
+        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         quantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
         endDate: Sequelize.DATE,
@@ -199,66 +196,80 @@
         remarks: Sequelize.TEXT
       }, {
         indexes: [{
-          name: 'UN_CONTRACT_EXTERNAL_ID',
+          name: "UN_CONTRACT_EXTERNAL_ID",
           unique: true,
-          fields: ['externalId']
+          fields: ["externalId"]
         }]
       });
       
-      await this.defineModel('DocumentTemplate', {
+      await this.defineModel("DocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        contents: { type: 'LONGTEXT', allowNull: false },
-        header: { type: 'LONGTEXT', allowNull: true },
-        footer: { type: 'LONGTEXT', allowNull: true }
+        contents: { type: "LONGTEXT", allowNull: false },
+        header: { type: "LONGTEXT", allowNull: true },
+        footer: { type: "LONGTEXT", allowNull: true }
       });
 
-      await this.defineModel('ItemGroupDocumentTemplate', {
+      await this.defineModel("ItemGroupDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
-        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: 'id' } },
-        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
+        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
         indexes: [{
-          name: 'UN_ITEM_GROUP_TEMPLATE_ITEM_GROUP_ID_TYPE',
+          name: "UN_ITEM_GROUP_TEMPLATE_ITEM_GROUP_ID_TYPE",
           unique: true,
-          fields: ['type', 'itemGroupId']
+          fields: ["type", "itemGroupId"]
         }]
       });
       
-      await this.defineModel('ContractDocumentTemplate', {
+      await this.defineModel("ContractDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
-        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: 'id' } },
-        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: 'id' } }
+        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
+        documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
         indexes: [{
-          name: 'UN_CONTRACT_DOCUMENT_TEMPLATE_CONTRACT_ID_TYPE',
+          name: "UN_CONTRACT_DOCUMENT_TEMPLATE_CONTRACT_ID_TYPE",
           unique: true,
-          fields: ['type', 'contractId']
+          fields: ["type", "contractId"]
         }]
       });
 
-      await this.defineModel('ContractDocument', {
+      await this.defineModel("ContractDocument", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
-        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: 'id' } },
+        contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
         vismaSignDocumentId: { type: Sequelize.STRING(191), allowNull: false },
         signed: { type: Sequelize.BOOLEAN, allowNull: false }
       }, {
         indexes: [{
-          name: 'UN_CONTRACT_DOCUMENT_CONTRACT_ID_TYPE',
+          name: "UN_CONTRACT_DOCUMENT_CONTRACT_ID_TYPE",
           unique: true,
-          fields: ['type', 'contractId']
+          fields: ["type", "contractId"]
         }]
+      });
+      
+      await this.defineModel("OperationReport", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+        type: { type: Sequelize.STRING(191), allowNull: false }
+      });
+      
+      await this.defineModel("OperationReportItem", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        message: { type: "LONGBLOB", allowNull: true },
+        operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.OperationReport, key: "id" } },
+        completed: { type: Sequelize.BOOLEAN, allowNull: false },
+        success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
     /* jshint ignore:end */
     
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
-        charset: 'utf8mb4',
+        charset: "utf8mb4",
         dialectOptions: {
-          collate: 'utf8mb4_unicode_ci'
+          collate: "utf8mb4_unicode_ci"
         }
       }));
       
@@ -322,14 +333,14 @@
     }
     
     findAllChatThreads() {
-      return this.Thread.findAll({ where: { type: 'conversation', archived: false } });
+      return this.Thread.findAll({ where: { type: "conversation", archived: false } });
     }
     
     listConversationThreadsByUserGroupId(userGroupId) {
       return this.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((threadUserGroupRoles) => {
           return this.Thread.findAll({ where: { 
-            id: {$in: _.map(threadUserGroupRoles, 'threadId') },
+            id: {$in: _.map(threadUserGroupRoles, "threadId") },
             archived: false
           }});
         });
@@ -338,7 +349,7 @@
     getThreadUserGroupRoleMap(threadId) {
       return this.findThread(threadId)
         .then((thread) => {
-          if (thread.type === 'conversation') {
+          if (thread.type === "conversation") {
             return this.listThreadUserGroupRolesByThreadId(thread.id)
               .then((threadUserGroupRoles) => {
                 const result = {};
@@ -349,7 +360,7 @@
                 
                 return result;
               });
-          } else if (thread.type === 'question') {
+          } else if (thread.type === "question") {
             return this.findQuestionGroupByThreadId(thread.id)
               .then((questionGroup) => {
                 return this.getQuestionGroupUserGroupRoleMap(questionGroup.id);
@@ -359,7 +370,7 @@
     }
     
     getQuestionGroupManagerUserGroupIds(questionGroupId) {
-      return this.findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, 'manager')
+      return this.findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, "manager")
         .then((questionGroupUserGroupRoles) => {
           const result = [];
 
@@ -395,12 +406,12 @@
             this.logger.error("Thread not found");
             return [];
           } else {
-            if (thread.type === 'conversation') {
+            if (thread.type === "conversation") {
               return this.listThreadUserGroupRolesByThreadId(thread.id)
                 .then((threadUserGroupRole) => {
-                  return _.map(threadUserGroupRole, 'userGroupId');
+                  return _.map(threadUserGroupRole, "userGroupId");
                 });
-            } else if (thread.type === 'question') {
+            } else if (thread.type === "question") {
               return this.findQuestionGroupByThreadId(thread.id)
                 .then((questionGroup) => {
                   return this.listQuestionGroupUserGroupIds(questionGroup.id);
@@ -476,7 +487,7 @@
         return Promise.resolve([]);
       }
       
-      return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ 'createdAt', 'DESC' ] ] });
+      return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
     }
     
     updateMessage(id, contents) {
@@ -493,8 +504,8 @@
       return this.Message.destroy({ where: { id : id } });
     }
     
-    getLatestMessageCreatedByThreadIds(threadIds) {
-      return this.Message.max('createdAt', { where: { threadId: { $in: threadIds } } });
+    getLatestMessageCreatedByThreadIds(threadIds) {
+      return this.Message.max("createdAt", { where: { threadId: { $in: threadIds } } });
     }
   
     // QuestionGroup
@@ -538,7 +549,7 @@
       return this.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((questionGroupUserGroupRoles) => {
           return this.QuestionGroup.findAll({ where: { 
-            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') },
+            id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
             archived: false
           }});
         });
@@ -551,7 +562,7 @@
         }})
         .then((questionGroupUserGroupRoles) => {
           return this.QuestionGroup.findAll({ where: { 
-            id: {$in: _.map(questionGroupUserGroupRoles, 'questionGroupId') },
+            id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
             archived: false
           }});
         });
@@ -762,7 +773,7 @@
     listQuestionGroupUserGroupIds(questionGroupId) {
       return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
         .then((questionGroupUserGroupRole) => {
-          return _.map(questionGroupUserGroupRole, 'userGroupId');
+          return _.map(questionGroupUserGroupRole, "userGroupId");
         });
     }
     
@@ -799,7 +810,7 @@
     createQuestionGroupLatestMessagePromise(questionGroup) {
       return this.listQuestionGroupUserThreadsByQuestionGroupId(questionGroup.id)
         .then((questionGroupUserThreads) => {
-          const threadIds = _.map(questionGroupUserThreads, 'threadId');
+          const threadIds = _.map(questionGroupUserThreads, "threadId");
           return this.getLatestMessageCreatedByThreadIds(threadIds).then((maxCreatedAt) => {
             questionGroup.latestMessage = maxCreatedAt;
           });
@@ -1000,7 +1011,6 @@
       return this.ContractDocument.findAll({ where: { signed: signed } });
     }
     
-    
     /**
      * Updates contract document signing status
      * 
@@ -1018,15 +1028,142 @@
       });
     }
     
+    // OperationReport
+    
+    /**
+     * Create operation report
+     * 
+     * @param {String} type type
+     * @returns {Promise} Promise for OperationReport
+     */
+    createOperationReport(type) {
+      return this.OperationReport.create({
+        type: type
+      });
+    }
+
+    /**
+     * Finds a operation report by externalId
+     * 
+     * @param {String} externalId operation report externalId
+     * @return {Promise} promise for operation report
+     */
+    findOperationReportByExternalId(externalId) {
+      return this.OperationReport .findOne({ where: { externalId : externalId } });
+    }
+
+    /**
+     * List operation reports
+     * 
+     * @param orderBy order by column (defaults to createdAt)
+     * @param orderDir order direction (defaults to DESC)
+     * @param firstResult first result
+     * @param maxResults maximum number of results
+     * @returns {Promise} Promise for OperationReports
+     */
+    listOperationReports(orderBy, orderDir, firstResult, maxResults) {
+      return this.OperationReport.findAll({ offset: firstResult, limit: maxResults, order: [ [ orderBy || "createdAt", orderDir || "DESC" ] ] });
+    }
+
+    /**
+     * List operation reports by type
+     * 
+     * @param {String} type type
+     * @param orderBy order by column (defaults to createdAt)
+     * @param orderDir order direction (defaults to DESC)
+     * @param firstResult first result
+     * @param maxResults maximum number of results
+     * @returns {Promise} Promise for OperationReports
+     */
+    listOperationReportsByType(type, orderBy, orderDir, firstResult, maxResults) {
+      return this.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [[orderBy || "createdAt", orderDir || "DESC" ]] });
+    }
+
+    // OperationReportItem
+    
+    /**
+     * Create operation report item
+     * 
+     * @param {Integer} operationReportId operationReportId
+     * @param {String} message message
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for OperationReportItem
+     */
+    createOperationReportItem(operationReportId, message, completed, success) {
+      return this.OperationReportItem.create({
+        operationReportId: operationReportId,
+        message: message,
+        completed: completed,
+        success: success
+      });
+    }
+
+    /**
+     * List operation report items by operationReportId
+     * 
+     * @param {int} operationReportId operationReportId
+     * @returns {Promise} Promise for OperationReportItems
+     */
+    listOperationReportItemsByOperationReportId(operationReportId) {
+      return this.OperationReportItem.findAll({ where: { operationReportId: operationReportId } });
+    }
+
+    /**
+     * Count operation report items by operationReportId and completed
+     * 
+     * @param {int} operationReportId operationReportId
+     * @param {Boolean} completed completed
+     * @returns {Promise} Promise for OperationReportItems count
+     */
+    countOperationReportItemsByOperationIdCompleted(operationReportId, completed) {
+      return this.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed } });
+    }
+
+    /**
+     * Count operation report items by operationReportId, completed and success
+     * 
+     * @param {int} operationReportId operationReportId
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for OperationReportItems count
+     */
+    countOperationReportItemsByOperationIdCompletedAndSuccess(operationReportId, completed, success) {
+      return this.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed, success: success } });
+    }
+
+    /**
+     * Updates operation report item
+     * 
+     * @param {int} id id
+     * @param {String} message message
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for ContractDocument
+     */
+    updateOperationReportItem(id, message, completed, success) {
+      return this.OperationReportItem.update({
+        message: message,
+        completed: completed,
+        success: success
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+    
   }
   
   module.exports = (options, imports, register) => {
-    const shadySequelize = imports['shady-sequelize'];
-    const logger = imports['logger'];
+    const shadySequelize = imports["shady-sequelize"];
+    const logger = imports["logger"];
     const models = new Models(logger, shadySequelize);
     
-    register(null, {
-      'pakkasmarja-berries-models': models
+    models.defineModels().then(() => {
+      register(null, {
+        "pakkasmarja-berries-models": models
+      });
     });
     
   };
