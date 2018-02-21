@@ -33,8 +33,8 @@
       const type = req.query.type;
       const sortBy = req.query.sortBy;
       const orderDir = req.query.sortDir;
-      const firstResult = parseInt(req.query.firstResult) || 0;
-      const maxResults = parseInt(req.query.maxResults) || 20;
+      const firstResult = parseInt(req.query.firstResult) || 0;
+      const maxResults = parseInt(req.query.maxResults) || 20;
 
       if (sortBy && sortBy !== "CREATED") {
         this.sendBadRequest(res, `invalid sort by ${sortBy}`);
