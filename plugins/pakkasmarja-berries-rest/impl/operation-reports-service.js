@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const AbstractOperationReportsService = require(`${__dirname}/../service/operation-reports-service`);
   const OperationReport = require(`${__dirname}/../model/operation-report`);
@@ -36,17 +36,17 @@
       const firstResult = parseInt(req.query.firstResult) || 0;
       const maxResults = parseInt(req.query.maxResults) || 20;
 
-      if (sortBy && sortBy !== 'CREATED') {
+      if (sortBy && sortBy !== "CREATED") {
         this.sendBadRequest(res, `invalid sort by ${sortBy}`);
         return;
       }
 
-      if (orderDir && ['ASC', 'DESC'].indexOf(orderDir) === -1) {
+      if (orderDir && ["ASC", "DESC"].indexOf(orderDir) === -1) {
         this.sendBadRequest(res, `invalid sort dir ${orderDir}`);
         return;
       }
 
-      const orderBy = sortBy === 'CREATED' ? 'createdAt' : null;
+      const orderBy = sortBy === "CREATED" ? "createdAt" : null;
       const reports = type ? await this.models.listOperationReportsByType(type, orderBy, orderDir, firstResult, maxResults) : await this.models.listOperationReports(orderBy, orderDir, firstResult, maxResults);
       const result = await Promise.all(reports.map((report) => {
         return this.translateDatabaseOperationReport(report);
@@ -110,12 +110,12 @@
       const successCount = await this.models.countOperationReportItemsByOperationIdCompletedAndSuccess(operationReport.id, true, true);
 
       return OperationReport.constructFromObject({
-        'id': operationReport.externalId,
-        'started': operationReport.createdAt,
-        'type': operationReport.type,
-        'pendingCount': pendingCount,
-        'failedCount': failedCount,
-        'successCount': successCount
+        "id": operationReport.externalId,
+        "started": operationReport.createdAt,
+        "type": operationReport.type,
+        "pendingCount": pendingCount,
+        "failedCount": failedCount,
+        "successCount": successCount
       });
     }
 
@@ -126,10 +126,10 @@
      * @return {OperationReportItem} REST entity
      */
     translateDatabaseOperationReportItem(operationReportItem) {
-      const status = operationReportItem.completed ? operationReportItem.success ? 'SUCCESS' : 'FAILURE' : 'PENDING';
+      const status = operationReportItem.completed ? operationReportItem.success ? "SUCCESS" : "FAILURE" : "PENDING";
       return OperationReportItem.constructFromObject({
-        'message': operationReportItem.message,
-        'status': status
+        "message": operationReportItem.message,
+        "status": status
       });
     }
   }

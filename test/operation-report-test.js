@@ -77,14 +77,14 @@
       });
   });
 
-  test("Test listing operation reports - without token", async (t) => {
+  test("Test listing operation reports - without token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports")
       .set("Accept", "application/json")
       .expect(403);
   });
   
-  test("Test listing operation reports - invalid token", async (t) => {
+  test("Test listing operation reports - invalid token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports")
       .set("Authorization", "Bearer FAKE")
@@ -107,14 +107,14 @@
       });
   });
 
-  test("Test find operation report - without token", async (t) => {
+  test("Test find operation report - without token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
       .set("Accept", "application/json")
       .expect(403);
   });
   
-  test("Test find operation report - invalid token", async (t) => {
+  test("Test find operation report - invalid token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
       .set("Authorization", "Bearer FAKE")
@@ -122,7 +122,7 @@
       .expect(403);
   });
   
-  test("Test find operation report not found", async (t) => {
+  test("Test find operation report not found", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
