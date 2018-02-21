@@ -32,6 +32,7 @@
       this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
       this.createQueue("readSapImportFile", this.readSapImportFileTask.bind(this));
       this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
+      this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
 
       this.enqueueContractDocumentStatusBatchQueue();
       this.enqueueReadSapImportFile();
@@ -122,6 +123,23 @@
     }
 
     /**
+     * Enqueues SAP item group update task
+     * 
+     * @param {Object} itemGroup SAP item group object 
+     */
+    async enqueueSapItemGroupUpdate(operationReportId, itemGroup) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
+
+      this.sapItemGroupUpdateQueue.push({
+        id: itemGroup.ItemGroupCode,
+        itemGroup: itemGroup,
+        operationReportItemId: operationReportItem.id
+      });
+    }
+
+    
+
+    /**
      * Reads import file from sap and fills tasks queues with data from file
      * 
      * @param data task data
@@ -141,28 +159,64 @@
           return;
         }
 
-        if (!sap.BusinessPartners) {
-          this.logger.error("Failed to read SAP business parterns");
-          return;
-        }
-
-        const businessPartners = sap.BusinessPartners.BusinessPartners;
-        if (!businessPartners) {
-          this.logger.error("Failed to read SAP business parterns list");
-          return;
-        }
-
-        const operationReport = await this.models.createOperationReport("SAP_CONTACT_SYNC");
-
-        businessPartners.forEach((businessPartner) => {
-          this.enqueueSapContactUpdate(operationReport.id, businessPartner);
-        });
+        this.readSapImportBusinessPartners(sap);
+        this.readSapImportItemGroups(sap);
       } catch (e) {
         this.logger.error(`Failed to parse SAP import file ${e}`);
       } finally {
         callback(null);
         this.enqueueReadSapImportFile();
       }
+    }
+
+    /**
+     * Reads business partners from sap and fills related task queue with data from file
+     * 
+     * @param {Object} sap SAP data object 
+     */
+    async readSapImportBusinessPartners(sap) {
+      if (!sap.BusinessPartners) {
+        this.logger.error("Failed to read SAP business parterns");
+        return;
+      }
+
+      const businessPartners = sap.BusinessPartners.BusinessPartners;
+      if (!businessPartners) {
+        this.logger.error("Failed to read SAP business parterns list");
+        return;
+      }
+
+      const operationReport = await this.models.createOperationReport("SAP_CONTACT_SYNC");
+
+      businessPartners.forEach((businessPartner) => {
+        this.enqueueSapContactUpdate(operationReport.id, businessPartner);
+      });
+    }
+
+    /**
+     * Reads business partners from sap and fills related task queue with data from file
+     * 
+     * @param {Object} sap SAP data object 
+     */
+    async readSapImportItemGroups(sap) {
+      console.log("readSapImportItemGroups");
+
+      if (!sap.ItemGroups) {
+        this.logger.error("Failed to read SAP business parterns");
+        return;
+      }
+
+      const itemGroups = sap.ItemGroups.ItemGroup;
+      if (!itemGroups) {
+        this.logger.error("Failed to read SAP item group list");
+        return;
+      }
+
+      const operationReport = await this.models.createOperationReport("SAP_ITEM_GROUP_SYNC");
+
+      itemGroups.forEach((itemGroup) => {
+        this.enqueueSapItemGroupUpdate(operationReport.id, itemGroup);
+      });
     }
 
     /**
@@ -280,6 +334,38 @@
         });
       } catch (err) {
         this.logger.error(`Error processing queue ${err}`);
+        callback({
+          message: err,
+          operationReportItemId: data.operationReportItemId
+        });
+      }
+    }
+
+    /**
+     * Executes a SAP item group update task
+     * 
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
+     */
+    async sapItemGroupUpdateTask(data, callback) {
+      try {
+        const sapItemGroup = data.itemGroup;
+        const sapId = sapItemGroup.ItemGroupCode;
+        const name = sapItemGroup.ItemGroupName;
+
+        const itemGroup = await this.models.findItemGroupBySapId(sapId);
+        if (itemGroup) {
+          this.models.updateItemGroup(itemGroup.id, name);
+        } else {
+          this.models.createItemGroup(sapId, name);
+        }
+
+        callback(null, {
+          message: `Synchronized item group details from SAP ${name} / ${sapId}`,
+          operationReportItemId: data.operationReportItemId
+        });
+      } catch (err) {
+        this.logger.error(`Error processing item group update queue ${err}`);
         callback({
           message: err,
           operationReportItemId: data.operationReportItemId

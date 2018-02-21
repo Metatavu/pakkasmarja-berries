@@ -9,3 +9,4 @@ keycloak.log
 .nyc_output
 coverage
 /public/css/
+*~

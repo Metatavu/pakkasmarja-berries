@@ -172,7 +172,8 @@
       
       await this.defineModel("ItemGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        sapId: { type: Sequelize.STRING(191), allowNull: false },
+        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
@@ -251,7 +252,7 @@
       
       await this.defineModel("OperationReport", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false }
       });
       
@@ -822,13 +823,13 @@
     /**
      * new item group
      * 
-     * @param {type} externalId externalId
-     * @param {type} name name
+     * @param {String} sapId sapId
+     * @param {String} name name
      * @return {Promise} promise for created item group
      */
-    createItemGroup(externalId, name) {
+    createItemGroup(sapId, name) {
      return this.ItemGroup.create({
-        externalId: externalId,
+        sapId: sapId,
         name: name
       });
     }
@@ -851,6 +852,16 @@
      */
     findItemGroupByExternalId(externalId) {
       return this.ItemGroup.findOne({ where: { externalId : externalId } });
+    }
+    
+    /**
+     * Finds a item group by sapId
+     * 
+     * @param {String} sapId item group sapId
+     * @return {Promise} promise for item group
+     */
+    findItemGroupBySapId(sapId) {
+      return this.ItemGroup.findOne({ where: { sapId : sapId } });
     }
     
     /**
