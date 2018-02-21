@@ -14,7 +14,6 @@
       this.logger = logger;
       this.sequelize = shadySequelize.sequelize;
       this.Sequelize = shadySequelize.Sequelize;
-      this.defineModels();
     }
     
     /* jshint ignore:start */
@@ -250,6 +249,19 @@
           unique: true,
           fields: ['type', 'contractId']
         }]
+      });
+      
+      await this.defineModel('OperationReport', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false }
+      });
+      
+      await this.defineModel('OperationReportItem', {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        message: { type: 'LONGBLOB', allowNull: true },
+        operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.OperationReport, key: 'id' } },
+        completed: { type: Sequelize.BOOLEAN, allowNull: false },
+        success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
     /* jshint ignore:end */
@@ -1000,7 +1012,6 @@
       return this.ContractDocument.findAll({ where: { signed: signed } });
     }
     
-    
     /**
      * Updates contract document signing status
      * 
@@ -1018,6 +1029,61 @@
       });
     }
     
+    // OperationReport
+    
+    /**
+     * Create operation report
+     * 
+     * @param {String} type type
+     * @returns {Promise} Promise for OperationReport
+     */
+    createOperationReport(type) {
+      return this.OperationReport.create({
+        type: type
+      });
+    }
+    
+    // OperationReportItem
+    
+    /**
+     * Create operation report item
+     * 
+     * @param {Integer} operationReportId operationReportId
+     * @param {String} message message
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for OperationReportItem
+     */
+    createOperationReportItem(operationReportId, message, completed, success) {
+      return this.OperationReportItem.create({
+        operationReportId: operationReportId,
+        message: message,
+        completed: completed,
+        success: success
+      });
+    }
+    
+    /**
+     * Updates operation report item
+     * 
+     * @param {int} id id
+     * @param {String} message message
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for ContractDocument
+     */
+    updateOperationReportItem(id, message, completed, success) {
+      return this.OperationReportItem.update({
+        message: message,
+        completed: completed,
+        success: success
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+    
   }
   
   module.exports = (options, imports, register) => {
@@ -1025,8 +1091,10 @@
     const logger = imports['logger'];
     const models = new Models(logger, shadySequelize);
     
-    register(null, {
-      'pakkasmarja-berries-models': models
+    models.defineModels().then(() => {
+      register(null, {
+        'pakkasmarja-berries-models': models
+      });
     });
     
   };
