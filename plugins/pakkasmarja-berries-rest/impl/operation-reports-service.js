@@ -71,7 +71,7 @@
         return;
       }
 
-      res.status(200).send(this.translateDatabaseOperationReport(operationReport));
+      res.status(200).send(await this.translateDatabaseOperationReport(operationReport));
     }
 
     /**
