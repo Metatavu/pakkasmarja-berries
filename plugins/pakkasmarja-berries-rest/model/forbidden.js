@@ -11,7 +11,7 @@
   /**
    * The Forbidden model module.
    * @module model/Forbidden
-   * @version 0.0.1
+   * @version 0.0.2
    */
 
   /**

@@ -253,6 +253,7 @@
       
       await this.defineModel('OperationReport', {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false }
       });
       
@@ -1042,7 +1043,44 @@
         type: type
       });
     }
-    
+
+    /**
+     * Finds a operation report by externalId
+     * 
+     * @param {String} externalId operation report externalId
+     * @return {Promise} promise for operation report
+     */
+    findOperationReportByExternalId(externalId) {
+      return this.OperationReport .findOne({ where: { externalId : externalId } });
+    }
+
+    /**
+     * List operation reports
+     * 
+     * @param orderBy order by column (defaults to createdAt)
+     * @param orderDir order direction (defaults to DESC)
+     * @param firstResult first result
+     * @param maxResults maximum number of results
+     * @returns {Promise} Promise for OperationReports
+     */
+    listOperationReports(orderBy, orderDir, firstResult, maxResults) {
+      return this.OperationReport.findAll({ offset: firstResult, limit: maxResults, order: [ [ orderBy || 'createdAt', orderDir || 'DESC' ] ] });
+    }
+
+    /**
+     * List operation reports by type
+     * 
+     * @param {String} type type
+     * @param orderBy order by column (defaults to createdAt)
+     * @param orderDir order direction (defaults to DESC)
+     * @param firstResult first result
+     * @param maxResults maximum number of results
+     * @returns {Promise} Promise for OperationReports
+     */
+    listOperationReportsByType(type, orderBy, orderDir, firstResult, maxResults) {
+      return this.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [ [ orderBy || 'createdAt', orderDir || 'DESC' ] ]  });
+    }
+
     // OperationReportItem
     
     /**
@@ -1062,7 +1100,40 @@
         success: success
       });
     }
-    
+
+    /**
+     * List operation report items by operationReportId
+     * 
+     * @param {int} operationReportId operationReportId
+     * @returns {Promise} Promise for OperationReportItems
+     */
+    listOperationReportItemsByOperationReportId(operationReportId) {
+      return this.OperationReportItem.findAll({ where: { operationReportId: operationReportId } });
+    }
+
+    /**
+     * Count operation report items by operationReportId and completed
+     * 
+     * @param {int} operationReportId operationReportId
+     * @param {Boolean} completed completed
+     * @returns {Promise} Promise for OperationReportItems count
+     */
+    countOperationReportItemsByOperationIdCompleted(operationReportId, completed) {
+      return this.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed } });
+    }
+
+    /**
+     * Count operation report items by operationReportId, completed and success
+     * 
+     * @param {int} operationReportId operationReportId
+     * @param {Boolean} completed completed
+     * @param {Boolean} success success
+     * @returns {Promise} Promise for OperationReportItems count
+     */
+    countOperationReportItemsByOperationIdCompletedAndSuccess(operationReportId, completed, success) {
+      return this.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed, success: success } });
+    }
+
     /**
      * Updates operation report item
      * 
