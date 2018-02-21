@@ -4,8 +4,6 @@
   "use strict";
   
   const _ = require("lodash");
-  const async = require("async");
-  const util = require("util");
   const Promise = require("bluebird");
   
   class Models {
@@ -57,7 +55,7 @@
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
-          "afterFind": (object, options) => {
+          "afterFind": (object) => {
             if (!object) {
               return;  
             }
@@ -101,7 +99,7 @@
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
       }, {
         hooks: {
-          "afterFind": (object, options) => {
+          "afterFind": (object) => {
             if (!object) {
               return;  
             }
