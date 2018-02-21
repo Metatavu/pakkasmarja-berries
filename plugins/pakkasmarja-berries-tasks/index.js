@@ -55,17 +55,17 @@
         password: config.get("mysql:password")
       }));
 
-      this[`${name}Queue`].on('task_finish', (taskId, result, stats) => {
+      this[`${name}Queue`].on("task_finish", (taskId, result) => {
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
         }
       });
 
-      this[`${name}Queue`].on('task_failed', (taskId, result, stats) => {
+      this[`${name}Queue`].on("task_failed", (taskId, result) => {
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
         }
-      })
+      });
     }
 
     /**
