@@ -4,9 +4,9 @@
 (() => {
   "use strict";
 
-  const _ = require('lodash');
+  const _ = require("lodash");
   const xml2js = require("xml2js");
-  const config = require('nconf');
+  const config = require("nconf");
   const fs = require("fs");
   const AbstractOperationsService = require(`${__dirname}/../service/operations-service`);
   const Operation = require(`${__dirname}/../model/operation`);
@@ -54,10 +54,10 @@
             type: operation.type,
             operationReportId: operationReport.externalId
           }));
-        break;
+          break;
         default:
           this.sendBadRequest(res, `Invalid type ${operation.type}`);
-        break;
+          break;
       }
     }
 
