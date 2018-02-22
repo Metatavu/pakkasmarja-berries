@@ -11,10 +11,6 @@
   const AbstractOperationsService = require(`${__dirname}/../service/operations-service`);
   const Operation = require(`${__dirname}/../model/operation`);
 
-  const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
-  const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
-  const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
-  
   /**
    * Implementation for Operation REST service
    */
@@ -52,9 +48,9 @@
       }
 
       switch (type) {
-        case OPERATION_SAP_CONTACT_SYNC:
-        case OPERATION_SAP_ITEM_GROUP_SYNC:
-        case OPERATION_SAP_CONTRACT_SYNC:
+        case "SAP_CONTACT_SYNC":
+        case "SAP_ITEM_GROUP_SYNC":
+        case "SAP_CONTRACT_SYNC":
           const operationReport = await this.readSapImportFileTask(type);
           res.status(200).send(Operation.constructFromObject({
             type: operation.type,
@@ -87,11 +83,11 @@
         }
 
         switch (type) {
-          case OPERATION_SAP_CONTACT_SYNC:
+          case "SAP_CONTACT_SYNC":
             return this.readSapImportBusinessPartners(sap);
-          case OPERATION_SAP_ITEM_GROUP_SYNC:
+          case "SAP_ITEM_GROUP_SYNC":
             return this.readSapImportItemGroups(sap);
-          case OPERATION_SAP_CONTRACT_SYNC:
+          case "SAP_CONTRACT_SYNC":
             return this.readSapImportContracts(sap);
         }
       } catch (e) {
