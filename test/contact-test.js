@@ -8,29 +8,10 @@
   const request = require("supertest");
   const auth = require(`${__dirname}/auth`);
   const database = require(`${__dirname}/database`);
+  const users = require(`${__dirname}/users`);
   const operations = require(`${__dirname}/operations`);
   const contactDatas = require(`${__dirname}/data/contacts.json`);
   const contactDataSync = require(`${__dirname}/data/contacts-sync.json`);
-  
-  /**
-   * Resets user back to original state
-   * 
-   * @param {String} userId
-   * @return {Promise} promise
-   */
-  async function resetUser(userId, t) {
-    const user = contactDatas[userId];
-   
-    return request("http://localhost:3002")
-      .put(`/rest/v1/contacts/${user.id}`)
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
-      .send(user)
-      .set("Accept", "application/json")
-      .expect(200)
-      .then(response => {
-        t.deepEqual(response.body, user);
-      });
-  }
   
   test("Test listing contacts", async (t) => {
     return request("http://localhost:3002")
@@ -128,7 +109,7 @@
       .expect(200)
       .then(response => {
         t.deepEqual(response.body, updateData);
-        return resetUser(updateData.id, t);
+        return users.resetUser(updateData.id, t);
       });
   });
   
@@ -213,8 +194,7 @@
       .then(async response => {
         t.deepEqual(response.body, contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"]);
         await Promise.all([
-          resetUser("6f1cd486-107e-404c-a73f-50cc1fdabdd6", t), 
-          resetUser("677e99fd-b854-479f-afa6-74f295052770", t),
+          users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
           database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
         ]);
       });

@@ -8,6 +8,7 @@
   const request = require("supertest");
   const database = require(`${__dirname}/database`);
   const operations = require(`${__dirname}/operations`);
+  const users = require(`${__dirname}/users`);
   const pdf = require(`${__dirname}/pdf`);
   const auth = require(`${__dirname}/auth`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
@@ -207,8 +208,7 @@
         });        
 
         await Promise.all([
-          resetUser("6f1cd486-107e-404c-a73f-50cc1fdabdd6", t), 
-          resetUser("677e99fd-b854-479f-afa6-74f295052770", t),
+          users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
           database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
         ]);
       });
