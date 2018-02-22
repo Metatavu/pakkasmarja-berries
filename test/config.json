@@ -89,5 +89,8 @@
   },
   "wkhtmltopdf": {
     "command": "/home/travis/build/Metatavu/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
+  },
+  "sap": {
+    "import-file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export.xml"
   }
 }
