@@ -180,9 +180,10 @@
       });
   });
 
-  test("Test sync contact", async (t) => {
+  test("Test sync contracts", async (t) => {
     const accessToken = await auth.getTokenDefault();
     
+    await operations.createOperationAndWait(accessToken, "SAP_CONTACT_SYNC");
     await operations.createOperationAndWait(accessToken, "SAP_ITEM_GROUP_SYNC");
     await operations.createOperationAndWait(accessToken, "SAP_CONTRACT_SYNC");
     
@@ -206,6 +207,8 @@
         });        
 
         await Promise.all([
+          resetUser("6f1cd486-107e-404c-a73f-50cc1fdabdd6", t), 
+          resetUser("677e99fd-b854-479f-afa6-74f295052770", t),
           database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
         ]);
       });
