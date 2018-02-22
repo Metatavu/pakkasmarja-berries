@@ -65,7 +65,7 @@
       }
 
       if (!operationReport) {
-        this.sendInternalServerError(res, 'Failed to create operation report');
+        this.sendInternalServerError(res, "Failed to create operation report");
         return;
       }
 

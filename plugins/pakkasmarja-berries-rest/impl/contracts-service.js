@@ -2,23 +2,23 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
-  const Promise = require('bluebird');
-  const _ = require('lodash');
-  const Mustache = require('mustache');
-  const pug = require('pug');
-  const path = require('path');
+  const Promise = require("bluebird");
+  const _ = require("lodash");
+  const Mustache = require("mustache");
+  const pug = require("pug");
+  const path = require("path");
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
-  const toArray = require('stream-to-array');
-  const slugify = require('slugify');
-  const moment = require('moment');
+  const toArray = require("stream-to-array");
+  const slugify = require("slugify");
+  const moment = require("moment");
   
-  const config = require('nconf');
-  const wkhtmltopdf = require('wkhtmltopdf');
-  wkhtmltopdf.command = config.get('wkhtmltopdf:command');
+  const config = require("nconf");
+  const wkhtmltopdf = require("wkhtmltopdf");
+  wkhtmltopdf.command = config.get("wkhtmltopdf:command");
   
   /**
    * Implementation for Contracts REST service
@@ -89,19 +89,19 @@
       }
       
       switch (format) {
-        case 'HTML':
+        case "HTML":
           this.sendNotImplemented(res);
           return;
         break;
-        case 'PDF':
-          this.getContractDocumentPdf(`${req.protocol}://${req.get('host')}`, contract, type)
+        case "PDF":
+          this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type)
             .then((document) => {
               if (!document) {
                 this.sendNotFound(res);
               } else {
                 const pdfStream = document.dataStream;
-                res.setHeader("Content-type", 'application/pdf');
-                res.setHeader('Content-disposition', `attachment; filename=${document.filename}`);
+                res.setHeader("Content-type", "application/pdf");
+                res.setHeader("Content-disposition", `attachment; filename=${document.filename}`);
                 pdfStream.pipe(res);
               }
             })
@@ -181,7 +181,7 @@
         return;
       }
       
-      const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get('host')}`, contract, type);
+      const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type);
       if (!document) {
         this.sendNotFound(res);
       } else {
@@ -209,16 +209,16 @@
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       
       return Contract.constructFromObject({
-        'id': contract.externalId,
-        'contactId': contract.userId,
-        'itemGroupId': itemGroup.externalId,
-        'quantity': contract.quantity,
-        'startDate': contract.startDate,
-        'endDate': contract.endDate,
-        'signDate': contract.signDate,
-        'termDate': contract.termDate,
-        'status': contract.status,
-        'remarks': contract.remarks
+        "id": contract.externalId,
+        "contactId": contract.userId,
+        "itemGroupId": itemGroup.externalId,
+        "quantity": contract.quantity,
+        "startDate": contract.startDate,
+        "endDate": contract.endDate,
+        "signDate": contract.signDate,
+        "termDate": contract.termDate,
+        "status": contract.status,
+        "remarks": contract.remarks
       });
       
     }
@@ -249,16 +249,16 @@
         companyName: companyName
       };
       
-      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, 'contract-document.pug', templateData);
+      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
       if (!html) {
         return null;
       }
       
-      const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, 'contract-header.pug', templateData);
-      const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, 'contract-footer.pug', templateData);
+      const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
+      const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
       
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
-      const documentName = `${moment().format('YYYY')} - ${itemGroup.name}, ${companyName}`;
+      const documentName = `${moment().format("YYYY")} - ${itemGroup.name}, ${companyName}`;
       const filename =`${slugify(documentName)}.pdf`;
       
       return { documentName:documentName, filename: filename, dataStream: await this.pdf.renderPdf(html, header, footer, baseUrl) };      
