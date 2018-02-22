@@ -4,7 +4,6 @@
 (() => {
   "use strict";
 
-  const fs = require("fs");
   const test = require("blue-tape");
   const request = require("supertest");
   const database = require(`${__dirname}/database`);
@@ -30,7 +29,7 @@
       });
   });
   
-  test("Test listing contracts - without token", async (t) => {
+  test("Test listing contracts - without token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
 
     return request("http://localhost:3002")
@@ -42,7 +41,7 @@
       });
   });
   
-  test("Test listing contracts - invalid token", async (t) => {
+  test("Test listing contracts - invalid token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
 
     return request("http://localhost:3002")
@@ -69,7 +68,7 @@
       });
   });
   
-  test("Test finding contracts - without token", async (t) => {
+  test("Test finding contracts - without token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -81,7 +80,7 @@
       });
   });
   
-  test("Test finding contracts - invalid token", async (t) => {
+  test("Test finding contracts - invalid token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -94,7 +93,7 @@
       });
   });
   
-  test("Test finding contract - not found", async (t) => {
+  test("Test finding contract - not found", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -107,7 +106,7 @@
       });
   });
   
-  test("Test finding contract - malformed id", async (t) => {
+  test("Test finding contract - malformed id", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -156,7 +155,7 @@
       });
   });
   
-  test("Test contract pdf - without token", async (t) => {
+  test("Test contract pdf - without token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -168,7 +167,7 @@
       });
   });
   
-  test("Test contract pdf - invalid token", async (t) => {
+  test("Test contract pdf - invalid token", async () => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")

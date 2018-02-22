@@ -78,7 +78,7 @@
       .expect(403);
   });
   
-  test("Test find contact - invalid token", async (t) => {
+  test("Test find contact - invalid token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
       .set("Authorization", "Bearer FAKE")
@@ -86,7 +86,7 @@
       .expect(403);
   });
   
-  test("Test find contact not found", async (t) => {
+  test("Test find contact not found", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/a0b445c6-0f05-11e8-8e96-5ffcb5929488")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
@@ -94,7 +94,7 @@
       .expect(404);
   });
   
-  test("Test find contact invalid id", async (t) => {
+  test("Test find contact invalid id", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/not-uuid")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
@@ -132,7 +132,7 @@
       });
   });
   
-  test("Test update contact - without token", async (t) => {
+  test("Test update contact - without token", async () => {
     const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
       "firstName": "Updated first name",
       "lastName": "Updated last name",
@@ -157,7 +157,7 @@
       .expect(403);
   });
   
-  test("Test update contact - invalid token", async (t) => {
+  test("Test update contact - invalid token", async () => {
     const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
       "firstName": "Updated first name",
       "lastName": "Updated last name",
@@ -183,7 +183,7 @@
       .expect(403);
   });
   
-  test("Test update contact not found", async (t) => {
+  test("Test update contact not found", async () => {
     return request("http://localhost:3002")
       .put(`/rest/v1/contacts/5ddca0e8-0f2f-11e8-aaee-fbf8db060bc5`)
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
