@@ -1,0 +1,42 @@
+[
+  {
+    "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
+    "quantity": 10000,
+    "startDate": null,
+    "endDate": null,
+    "signDate": null,
+    "termDate": null,
+    "status": "UNKNOWN",
+    "remarks": null
+  },
+  {
+    "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
+    "quantity": 20000,
+    "startDate": null,
+    "endDate": null,
+    "signDate": null,
+    "termDate": null,
+    "status": "UNKNOWN",
+    "remarks": null
+  },
+  {
+    "contactId": "677e99fd-b854-479f-afa6-74f295052770",
+    "quantity": 300000,
+    "startDate": null,
+    "endDate": null,
+    "signDate": null,
+    "termDate": null,
+    "status": "UNKNOWN",
+    "remarks": null
+  },
+  {
+    "contactId": "677e99fd-b854-479f-afa6-74f295052770",
+    "quantity": 400000,
+    "startDate": null,
+    "endDate": null,
+    "signDate": null,
+    "termDate": null,
+    "status": "UNKNOWN",
+    "remarks": null
+  }
+]

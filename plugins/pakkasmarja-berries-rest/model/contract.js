@@ -32,6 +32,7 @@
 
 
 
+
   };
 
   /**
@@ -47,6 +48,9 @@
 
       if (data.hasOwnProperty('id')) {
         obj['id'] = ApiClient.convertToType(data['id'], 'String');
+      }
+      if (data.hasOwnProperty('contactId')) {
+        obj['contactId'] = ApiClient.convertToType(data['contactId'], 'String');
       }
       if (data.hasOwnProperty('itemGroupId')) {
         obj['itemGroupId'] = ApiClient.convertToType(data['itemGroupId'], 'String');
@@ -83,6 +87,10 @@
    * @member {String} id
    */
   exports.prototype['id'] = undefined;
+  /**
+   * @member {String} contactId
+   */
+  exports.prototype['contactId'] = undefined;
   /**
    * @member {String} itemGroupId
    */

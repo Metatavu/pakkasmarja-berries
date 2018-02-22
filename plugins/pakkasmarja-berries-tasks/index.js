@@ -4,11 +4,9 @@
   "use strict";
   
   const Promise = require("bluebird");
-  const fs = require("fs");
   const config = require("nconf");
   const Queue = require("better-queue");
   const SQLStore = require("better-queue-sql");
-  const xml2js = require("xml2js");
 
   /**
    * Task queue functionalities for Pakkasmarja Berries
@@ -30,11 +28,11 @@
 
       this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
       this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
-      this.createQueue("readSapImportFile", this.readSapImportFileTask.bind(this));
       this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
+      this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
+      this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
 
       this.enqueueContractDocumentStatusBatchQueue();
-      this.enqueueReadSapImportFile();
     }
 
     /**
@@ -44,7 +42,8 @@
      * @param {Function} fn fn
      */
     createQueue(name, fn) {
-      this[`${name}Queue`] = new Queue(fn, config.get(`tasks:queues:${name}`));
+      const options = config.get(`tasks:queues:${name}`) || {};
+      this[`${name}Queue`] = new Queue(fn, options);
       this[`${name}Queue`].use(new SQLStore({
         dialect: "mysql",
         tableName: `${config.get("tasks:tableName")}_${name}`,
@@ -97,15 +96,6 @@
       this.contractDocumentStatusBatchQueue.push({id: 1});
     }
 
-    /** 
-     * Enqueues import file synchronization from SAP
-     */
-    enqueueReadSapImportFile() {
-      if (config.get("sap:import-file")) {
-        this.readSapImportFileQueue.push({id: 1});
-      }
-    }
-    
     /**
      * Enqueues SAP contact update task
      * 
@@ -122,47 +112,33 @@
     }
 
     /**
-     * Reads import file from sap and fills tasks queues with data from file
+     * Enqueues SAP item group update task
      * 
-     * @param data task data
-     * @param callback callback method 
+     * @param {Object} itemGroup SAP item group object 
      */
-    async readSapImportFileTask(data, callback) {
-      try {
-        const data = await this.parseXmlFile(config.get("sap:import-file"));
-        if (!data) {
-          this.logger.error("Failed to read SAP import file");
-          return;
-        }
+    async enqueueSapItemGroupUpdate(operationReportId, itemGroup) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
 
-        const sap = data.SAP;
-        if (!sap) {
-          this.logger.error("Could not find SAP root entry");
-          return;
-        }
+      this.sapItemGroupUpdateQueue.push({
+        id: itemGroup.ItemGroupCode,
+        itemGroup: itemGroup,
+        operationReportItemId: operationReportItem.id
+      });
+    }
 
-        if (!sap.BusinessPartners) {
-          this.logger.error("Failed to read SAP business parterns");
-          return;
-        }
+    /**
+     * Enqueues SAP contract update task
+     * 
+     * @param {Object} contract SAP contract object 
+     */
+    async enqueueSapContractUpdate(operationReportId, contract, lineIndex) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
 
-        const businessPartners = sap.BusinessPartners.BusinessPartners;
-        if (!businessPartners) {
-          this.logger.error("Failed to read SAP business parterns list");
-          return;
-        }
-
-        const operationReport = await this.models.createOperationReport("SAP_CONTACT_SYNC");
-
-        businessPartners.forEach((businessPartner) => {
-          this.enqueueSapContactUpdate(operationReport.id, businessPartner);
-        });
-      } catch (e) {
-        this.logger.error(`Failed to parse SAP import file ${e}`);
-      } finally {
-        callback(null);
-        this.enqueueReadSapImportFile();
-      }
+      this.sapContractUpdateQueue.push({
+        contract: contract,
+        lineIndex: lineIndex,
+        operationReportItemId: operationReportItem.id
+      });
     }
 
     /**
@@ -288,56 +264,93 @@
     }
 
     /**
-     * Read a file as Promise
+     * Executes a SAP item group update task
      * 
-     * @param {String} file path to file
-     * @return {Promise} promise for file data 
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
      */
-    readFile(file) {
-      return new Promise((resolve, reject) => {
-        fs.readFile(file, (err, data) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(data);
-          }
+    async sapItemGroupUpdateTask(data, callback) {
+      try {
+        const sapItemGroup = data.itemGroup;
+        const sapId = sapItemGroup.ItemGroupCode;
+        const name = sapItemGroup.ItemGroupName;
+
+        const itemGroup = await this.models.findItemGroupBySapId(sapId);
+        if (itemGroup) {
+          this.models.updateItemGroup(itemGroup.id, name);
+        } else {
+          this.models.createItemGroup(sapId, name);
+        }
+
+        callback(null, {
+          message: `Synchronized item group details from SAP ${name} / ${sapId}`,
+          operationReportItemId: data.operationReportItemId
         });
-      });
+      } catch (err) {
+        this.logger.error(`Error processing item group update queue ${err}`);
+        callback({
+          message: err,
+          operationReportItemId: data.operationReportItemId
+        });
+      }
     }
 
     /**
-     * Parses XML string into object
+     * Executes a SAP contract update task
      * 
-     * @param {String} data XML string
-     * @returns {Promise} promise for parsed object  
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
      */
-    parseXml(data) {
-      return new Promise((resolve, reject) => {
-        const options = {
-          explicitArray: false
-        };
+    async sapContractUpdateTask(data, callback) {
+      try {
+        const sapContract = data.contract;
+        const sapContractLine = sapContract.ContractLines.ContractLine[data.lineIndex];
+        const sapItemGroupId = sapContractLine.ItemGroupCode;
+        const sapUserId = sapContractLine.CardCode;
+        const year = sapContract.Year;
+        const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
 
-        xml2js.parseString(data, options, (err, result) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(result);
-          }
+        const itemGroup = await this.models.findItemGroupBySapId(sapItemGroupId);
+        if (!itemGroup) {
+          throw new Error(`Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`);
+        }
+
+        const user = await this.userManagement.findUserByProperty(this.userManagement.ATTRIBUTE_SAP_ID, sapUserId);
+        if (!user) {
+          throw new Error(`Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`);
+        }
+
+        const quantity = sapContractLine.Quantity;
+        const userId = user.id;
+        const itemGroupId = itemGroup.id;
+        const startDate = null;
+        const endDate = null;
+        const signDate = null;
+        const termDate = null;
+        const status = "UNKNOWN";
+        const remarks = null;
+
+        const contract = await this.models.findContractBySapId(sapId);
+        if (!contract) {
+          await this.models.createContract(userId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          callback(null, {
+            message: `Created new contract from SAP ${sapId}`,
+            operationReportItemId: data.operationReportItemId
+          });
+        } else {
+          await this.models.updateContract(contract.id, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          callback(null, {
+            message: `Updated contract details from SAP ${sapId}`,
+            operationReportItemId: data.operationReportItemId
+          });
+        }
+      } catch (err) {
+        this.logger.error(`Error processing contract update queue ${err}`);
+        callback({
+          message: err,
+          operationReportItemId: data.operationReportItemId
         });
-      });
-    }
-    
-    /**
-     * Parses XML file into object
-     * 
-     * @param {String} file path to file
-     * @returns {Promise} promise for parsed object 
-     */
-    parseXmlFile(file) {
-      return this.readFile(file)
-        .then((data) => {
-          return this.parseXml(data);
-        });
+      }
     }
 
   }

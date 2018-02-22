@@ -16,12 +16,17 @@
         "afterProcessDelay": 5000,
         "maxTimeout": 20000
       },
-      "readSapImportFile": {
+      "sapContactUpdate": {
         "concurrent": 1,
-        "afterProcessDelay": 5000,
+        "afterProcessDelay": 1000,
         "maxTimeout": 20000
       },
-      "sapContactUpdate": {
+      "sapItemGroupUpdate": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      },
+      "sapContractUpdate": {
         "concurrent": 1,
         "afterProcessDelay": 1000,
         "maxTimeout": 20000
@@ -89,5 +94,8 @@
   },
   "wkhtmltopdf": {
     "command": "/home/travis/build/Metatavu/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
+  },
+  "sap": {
+    "import-file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export.xml"
   }
 }

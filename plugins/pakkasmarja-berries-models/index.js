@@ -14,7 +14,6 @@
       this.Sequelize = shadySequelize.Sequelize;
     }
     
-    /* jshint ignore:start */
     async defineModels() {
       const Sequelize = this.Sequelize;
       
@@ -172,7 +171,8 @@
       
       await this.defineModel("ItemGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        sapId: { type: Sequelize.STRING(191), allowNull: false },
+        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
@@ -184,9 +184,10 @@
       
       await this.defineModel("Contract", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
+        sapId: { type: Sequelize.STRING(191), allowNull: false },
         quantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
         endDate: Sequelize.DATE,
@@ -199,6 +200,10 @@
           name: "UN_CONTRACT_EXTERNAL_ID",
           unique: true,
           fields: ["externalId"]
+        }, {
+          name: "UN_CONTRACT_SAP_ID",
+          unique: true,
+          fields: ["sapId"]
         }]
       });
       
@@ -251,7 +256,7 @@
       
       await this.defineModel("OperationReport", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false }
       });
       
@@ -263,7 +268,6 @@
         success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
-    /* jshint ignore:end */
     
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
@@ -822,13 +826,13 @@
     /**
      * new item group
      * 
-     * @param {type} externalId externalId
-     * @param {type} name name
+     * @param {String} sapId sapId
+     * @param {String} name name
      * @return {Promise} promise for created item group
      */
-    createItemGroup(externalId, name) {
+    createItemGroup(sapId, name) {
      return this.ItemGroup.create({
-        externalId: externalId,
+        sapId: sapId,
         name: name
       });
     }
@@ -851,6 +855,16 @@
      */
     findItemGroupByExternalId(externalId) {
       return this.ItemGroup.findOne({ where: { externalId : externalId } });
+    }
+    
+    /**
+     * Finds a item group by sapId
+     * 
+     * @param {String} sapId item group sapId
+     * @return {Promise} promise for item group
+     */
+    findItemGroupBySapId(sapId) {
+      return this.ItemGroup.findOne({ where: { sapId : sapId } });
     }
     
     /**
@@ -892,7 +906,68 @@
     }
     
     // Contracts
-    
+
+    /**
+     * Create new contract
+     * 
+     * @param {String} userId 
+     * @param {int} itemGroupId 
+     * @param {String} sapId 
+     * @param {int} quantity 
+     * @param {Date} startDate 
+     * @param {Date} endDate 
+     * @param {Date} signDate 
+     * @param {Date} termDate 
+     * @param {String} status 
+     * @param {String} remarks 
+     * 
+     * @returns {Promise} promise for new contract
+     */
+    createContract(userId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+      return this.Contract.create({
+        userId: userId,
+        itemGroupId: itemGroupId,
+        sapId: sapId,
+        quantity: quantity,
+        startDate: startDate,
+        endDate: endDate,
+        signDate: signDate,
+        termDate: termDate,
+        status: status,
+        remarks: remarks
+      });
+    }
+
+    /**
+     * Updates a contract 
+     * 
+     * @param {int} id 
+     * @param {int} quantity 
+     * @param {Date} startDate 
+     * @param {Date} endDate 
+     * @param {Date} signDate 
+     * @param {Date} termDate 
+     * @param {String} status 
+     * @param {String} remarks 
+     * 
+     * @returns {Promise} promise for updated contract
+     */
+    updateContract(id, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+      return this.Contract.update({
+        quantity: quantity,
+        startDate: startDate,
+        endDate: endDate,
+        signDate: signDate,
+        termDate: termDate,
+        status: status,
+        remarks: remarks
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
     /**
      * Finds a contract by id
      * 
@@ -913,6 +988,16 @@
       return this.Contract.findOne({ where: { externalId : externalId } });
     }
     
+    /**
+     * Finds a contract by sapId
+     * 
+     * @param {String} sapId contract sapId
+     * @return {Promise} promise for contract
+     */
+    findContractBySapId(sapId) {
+      return this.Contract.findOne({ where: { sapId : sapId } });
+    }
+
     /**
      * Lists contracts
      * 
