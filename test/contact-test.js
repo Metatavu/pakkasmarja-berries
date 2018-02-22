@@ -45,14 +45,14 @@
       });
   });
   
-  test("Test listing contacts - without token", async (t) => {
+  test("Test listing contacts - without token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts")
       .set("Accept", "application/json")
       .expect(403);
   });
   
-  test("Test listing contacts - invalid token", async (t) => {
+  test("Test listing contacts - invalid token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts")
       .set("Authorization", "Bearer FAKE")
@@ -71,7 +71,7 @@
       });
   });
   
-  test("Test find contact - without token", async (t) => {
+  test("Test find contact - without token", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
       .set("Accept", "application/json")

@@ -42,7 +42,7 @@
      * @param {Function} fn fn
      */
     createQueue(name, fn) {
-      const options = config.get(`tasks:queues:${name}`) || {};
+      const options = config.get(`tasks:queues:${name}`) || {};
       this[`${name}Queue`] = new Queue(fn, options);
       this[`${name}Queue`].use(new SQLStore({
         dialect: "mysql",
@@ -286,7 +286,7 @@
           message: `Synchronized item group details from SAP ${name} / ${sapId}`,
           operationReportItemId: data.operationReportItemId
         });
-      } catch (err) {
+      } catch (err) {
         this.logger.error(`Error processing item group update queue ${err}`);
         callback({
           message: err,
@@ -344,7 +344,7 @@
             operationReportItemId: data.operationReportItemId
           });
         }
-      } catch (err) {
+      } catch (err) {
         this.logger.error(`Error processing contract update queue ${err}`);
         callback({
           message: err,
