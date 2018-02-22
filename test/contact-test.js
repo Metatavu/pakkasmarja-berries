@@ -7,7 +7,10 @@
   const test = require('blue-tape');
   const request = require('supertest');
   const auth = require(`${__dirname}/auth`);
+  const database = require(`${__dirname}/database`);
+  const operations = require(`${__dirname}/operations`);
   const contactDatas = require(`${__dirname}/data/contacts.json`);
+  const contactDataSync = require(`${__dirname}/data/contacts-sync.json`);
   
   /**
    * Resets user back to original state
@@ -15,7 +18,6 @@
    * @param {String} userId
    * @return {Promise} promise
    */
-  /* jshint ignore:start */
   async function resetUser(userId, t) {
     const user = contactDatas[userId];
    
@@ -198,6 +200,24 @@
       .set('Accept', 'application/json')
       .expect(400);
   });
-  /* jshint ignore:end */
+
+  test('Test sync contact', async (t) => {
+    const accessToken = await auth.getTokenDefault();
+    const operationReport = await operations.createOperationAndWait(accessToken, 'SAP_CONTACT_SYNC');
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .then(async response => {
+        t.deepEqual(response.body, contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"]);
+        await Promise.all([
+          resetUser("6f1cd486-107e-404c-a73f-50cc1fdabdd6", t), 
+          resetUser("677e99fd-b854-479f-afa6-74f295052770", t),
+          database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql', 'operation-reports-teardown.sql'])
+        ]);
+      });
+  });
   
 })();

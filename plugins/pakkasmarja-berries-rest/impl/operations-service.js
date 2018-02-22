@@ -49,8 +49,11 @@
         case OPERATION_SAP_CONTACT_SYNC:
         case OPERATION_SAP_ITEM_GROUP_SYNC:
         case OPERATION_SAP_CONTRACT_SYNC:
-          await this.readSapImportFileTask(operation.type);
-          res.status(201).send();
+          const operationReport = await this.readSapImportFileTask(operation.type);
+          res.status(200).send(Operation.constructFromObject({
+            type: operation.type,
+            operationReportId: operationReport.externalId
+          }));
         break;
         default:
           this.sendBadRequest(res, `Invalid type ${operation.type}`);
@@ -112,6 +115,8 @@
       businessPartners.forEach((businessPartner) => {
         this.tasks.enqueueSapContactUpdate(operationReport.id, businessPartner);
       });
+
+      return operationReport;
     }
 
     /**
@@ -136,6 +141,8 @@
       itemGroups.forEach((itemGroup) => {
         this.tasks.enqueueSapItemGroupUpdate(operationReport.id, itemGroup);
       });
+
+      return operationReport;
     }
 
     /**
@@ -156,15 +163,14 @@
       }
 
       const operationReport = await this.models.createOperationReport("SAP_CONTRACT_SYNC");
-      const result = [];
 
       contracts.forEach((contract) => {
         for (let i = 0; i < contract.ContractLines.ContractLine.length; i++) {
-          result.push(this.tasks.enqueueSapContractUpdate(operationReport.id, contract, i));
+          this.tasks.enqueueSapContractUpdate(operationReport.id, contract, i);
         }
       });
 
-      return result;
+      return operationReport;
     }
 
     /**

@@ -23,6 +23,7 @@
     var _this = this;
 
 
+
   };
 
   /**
@@ -39,6 +40,9 @@
       if (data.hasOwnProperty('type')) {
         obj['type'] = ApiClient.convertToType(data['type'], 'String');
       }
+      if (data.hasOwnProperty('operationReportId')) {
+        obj['operationReportId'] = ApiClient.convertToType(data['operationReportId'], 'String');
+      }
     }
     return obj;
   }
@@ -47,6 +51,10 @@
    * @member {String} type
    */
   exports.prototype['type'] = undefined;
+  /**
+   * @member {String} operationReportId
+   */
+  exports.prototype['operationReportId'] = undefined;
 
 
 

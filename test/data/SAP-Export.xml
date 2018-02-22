@@ -1,0 +1,130 @@
+<SAP>
+  <ItemGroups>
+    <ItemGroup>
+      <ItemGroupCode>123</ItemGroupCode>
+      <ItemGroupName>Test Group 1</ItemGroupName>
+    </ItemGroup>
+    <ItemGroup>
+      <ItemGroupCode>234</ItemGroupCode>
+      <ItemGroupName>Test Group 2</ItemGroupName>
+    </ItemGroup>
+    <ItemGroup>
+      <ItemGroupCode>456</ItemGroupCode>
+      <ItemGroupName>Test Group 3</ItemGroupName>
+    </ItemGroup>
+  </ItemGroups>
+  <DeliveryPlaces>
+    <DeliveryPlaces>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+    </DeliveryPlaces>
+  </DeliveryPlaces>
+  <BusinessPartners>
+    <BusinessPartners>
+      <CardType>S</CardType>
+      <CardCode>tusap1</CardCode>
+      <CardName>Test Corp 2.</CardName>
+      <UserName>
+      </UserName>
+      <Phone1>+358 22 222 2222</Phone1>
+      <Phone2>+358 33 333 3333</Phone2>
+      <Email>test2@testrealm2.com</Email>
+      <BillStreet>Test Street 222</BillStreet>
+      <BillZipCode>22222</BillZipCode>
+      <BillCity>Demo</BillCity>
+      <ShipStreet></ShipStreet>
+      <ShipZipCode></ShipZipCode>
+      <ShipCity></ShipCity>
+      <IBAN>FI2222222222222222</IBAN>
+      <BIC>DEMO1234</BIC>
+      <FederalTaxID>DM22233344</FederalTaxID>
+      <VatLiable>EU</VatLiable>
+      <Audit>2030</Audit>
+      <Mansikka></Mansikka>
+      <Vadelma></Vadelma>
+      <Herukka></Herukka>
+      <Pensasmustikka></Pensasmustikka>
+      <Muu></Muu>
+      <Tuoremansikka></Tuoremansikka>
+    </BusinessPartners>
+    <BusinessPartners>
+      <CardType>S</CardType>
+      <CardCode>tusap2</CardCode>
+      <CardName>Test Corp.</CardName>
+      <UserName>
+      </UserName>
+      <Phone1>+358 12 345 6789</Phone1>
+      <Phone2>+358 23 456 7890</Phone2>
+      <Email>test2@testrealm1.com</Email>
+      <BillStreet>Test Street 123</BillStreet>
+      <BillZipCode>10100</BillZipCode>
+      <BillCity>Test</BillCity>
+      <ShipStreet>PL 123 Example</ShipStreet>
+      <ShipZipCode>20200</ShipZipCode>
+      <ShipCity>Demo</ShipCity>
+      <IBAN>FI2112345600000786</IBAN>
+      <BIC>DABAIE2D</BIC>
+      <FederalTaxID>FI12345678</FederalTaxID>
+      <VatLiable>Y</VatLiable>
+      <Audit>2020</Audit>
+      <Mansikka></Mansikka>
+      <Vadelma></Vadelma>
+      <Herukka></Herukka>
+      <Pensasmustikka></Pensasmustikka>
+      <Muu></Muu>
+      <Tuoremansikka></Tuoremansikka>
+    </BusinessPartners>
+  </BusinessPartners>
+  <Contracts>
+    <Contracts>
+      <ContractId>123</ContractId>
+      <ContractNumber>123</ContractNumber>
+      <CardCode>tusap1</CardCode>
+      <CardName></CardName>
+      <Year>2020</Year>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+      <ContractLines>
+        <ContractLine>
+          <CardCode>tusap1</CardCode>
+          <ItemGroupCode>123</ItemGroupCode>
+          <Quantity>10000</Quantity>
+          <PlaceCode>
+          </PlaceCode>
+        </ContractLine>
+        <ContractLine>
+          <CardCode>tusap1</CardCode>
+          <ItemGroupCode>234</ItemGroupCode>
+          <Quantity>20000</Quantity>
+          <PlaceCode>
+          </PlaceCode>
+        </ContractLine>
+      </ContractLines>
+    </Contracts>
+    <Contracts>
+      <ContractId>234</ContractId>
+      <ContractNumber>234</ContractNumber>
+      <CardCode>tusap2</CardCode>
+      <CardName>Test Corp.</CardName>
+      <Year>2021</Year>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+      <ContractLines>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>123</ItemGroupCode>
+          <Quantity>300000</Quantity>
+          <PlaceCode>
+          </PlaceCode>
+        </ContractLine>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>456</ItemGroupCode>
+          <Quantity>400000</Quantity>
+          <PlaceCode>
+          </PlaceCode>
+        </ContractLine>
+      </ContractLines>
+    </Contracts>
+  </Contracts>
+</SAP>
