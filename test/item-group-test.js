@@ -29,7 +29,7 @@
       });
   });
   
-  test("Test listing item groups - without token", async (t) => {
+  test("Test listing item groups - without token", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")
@@ -41,7 +41,7 @@
       });
   });
   
-  test("Test listing item groups - invalid token", async (t) => {
+  test("Test listing item groups - invalid token", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")
