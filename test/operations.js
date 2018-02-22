@@ -50,18 +50,28 @@
      * @param {int} operationReportId operation report id
      */
     waitOperationReport(accessToken, operationReportId) {
-      return new Promise((resolve) => {
-        const intervalId = setInterval(() => {
+      return new Promise((resolve, reject) => {
+        let intervalId;
+        let timeoutId;
+
+        intervalId = setInterval(() => {
           this.checkOperationReport(accessToken, operationReportId)
             .then((result) => {
               const operationReport = result.body;
-
               if (operationReport.pendingCount === 0) {
                 clearInterval(intervalId);
+                clearTimeout(timeoutId);
                 resolve(operationReport);
               }
             });
         }, 300);
+
+        timeoutId = setTimeout(() => {
+          clearInterval(intervalId);
+          clearTimeout(timeoutId);
+          reject("Timeout");          
+        }, 60000);
+
       });
     }
 
