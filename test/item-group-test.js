@@ -68,7 +68,7 @@
       });
   });
   
-  test("Test finding item group - without token", async (t) => {
+  test("Test finding item group - without token", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")
@@ -80,7 +80,7 @@
       });
   });
   
-  test("Test finding item group - invalid token", async (t) => {
+  test("Test finding item group - invalid token", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")
@@ -93,7 +93,7 @@
       });
   });
   
-  test("Test finding item group - not found", async (t) => {
+  test("Test finding item group - not found", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")
@@ -106,7 +106,7 @@
       });
   });
   
-  test("Test finding item group - malformed id", async (t) => {
+  test("Test finding item group - malformed id", async () => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
     return request("http://localhost:3002")

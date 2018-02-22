@@ -2,10 +2,10 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
-  const Promise = require('bluebird');
-  const request = require('supertest');
+  const Promise = require("bluebird");
+  const request = require("supertest");
   
   /**
    * Operations utility class for tests
@@ -33,10 +33,10 @@
      * @param {String} type operation type
      */
     createOperation(accessToken, type) {
-      return request('http://localhost:3002')
-        .post('/rest/v1/operations/')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .set('Accept', 'application/json')
+      return request("http://localhost:3002")
+        .post("/rest/v1/operations/")
+        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Accept", "application/json")
         .send({
           type: type
         })
@@ -50,10 +50,10 @@
      * @param {int} operationReportId operation report id
      */
     waitOperationReport(accessToken, operationReportId) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const intervalId = setInterval(() => {
           this.checkOperationReport(accessToken, operationReportId)
-            .then((result) => {
+            .then((result) => {
               const operationReport = result.body;
 
               if (operationReport.pendingCount === 0) {
@@ -72,10 +72,10 @@
      * @param {int} operationReportId operation report id
      */
     checkOperationReport(accessToken, operationReportId) {
-      return request('http://localhost:3002')
+      return request("http://localhost:3002")
         .get(`/rest/v1/operationReports/${operationReportId}`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .set('Accept', 'application/json')
+        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Accept", "application/json")
         .expect(200);
     }
     
