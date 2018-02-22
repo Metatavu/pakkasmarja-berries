@@ -45,18 +45,24 @@
         return;
       }
 
-      switch (operation.type) {
+      const type = operation.type;
+      if (!type) {
+        this.sendBadRequest(res, "Missing type");
+        return;
+      }
+
+      switch (type) {
         case OPERATION_SAP_CONTACT_SYNC:
         case OPERATION_SAP_ITEM_GROUP_SYNC:
         case OPERATION_SAP_CONTRACT_SYNC:
-          const operationReport = await this.readSapImportFileTask(operation.type);
+          const operationReport = await this.readSapImportFileTask(type);
           res.status(200).send(Operation.constructFromObject({
             type: operation.type,
             operationReportId: operationReport.externalId
           }));
           break;
         default:
-          this.sendBadRequest(res, `Invalid type ${operation.type}`);
+          this.sendBadRequest(res, `Invalid type ${type}`);
           break;
       }
     }
