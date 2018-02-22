@@ -5,10 +5,8 @@
   "use strict";
 
   const Promise = require("bluebird");
-  const _ = require("lodash");
   const Mustache = require("mustache");
   const pug = require("pug");
-  const path = require("path");
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
