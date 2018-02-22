@@ -210,6 +210,7 @@
       
       return Contract.constructFromObject({
         'id': contract.externalId,
+        'contactId': contract.userId,
         'itemGroupId': itemGroup.externalId,
         'quantity': contract.quantity,
         'startDate': contract.startDate,
