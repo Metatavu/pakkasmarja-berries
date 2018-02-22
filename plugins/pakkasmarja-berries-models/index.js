@@ -14,7 +14,6 @@
       this.Sequelize = shadySequelize.Sequelize;
     }
     
-    /* jshint ignore:start */
     async defineModels() {
       const Sequelize = this.Sequelize;
       
@@ -269,7 +268,6 @@
         success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
-    /* jshint ignore:end */
     
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
