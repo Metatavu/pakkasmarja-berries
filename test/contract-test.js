@@ -8,11 +8,12 @@
   const test = require('blue-tape');
   const request = require('supertest');
   const database = require(`${__dirname}/database`);
+  const operations = require(`${__dirname}/operations`);
   const pdf = require(`${__dirname}/pdf`);
   const auth = require(`${__dirname}/auth`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
+  const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
   
-  /* jshint ignore:start */
   test('Test listing contracts', async (t) => {
     await database.executeFiles(`${__dirname}/data`, ['item-groups-setup.sql', 'contracts-setup.sql']);
 
@@ -179,6 +180,36 @@
         await database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql']);
       });
   });
-  /* jshint ignore:end */
+
+  test('Test sync contact', async (t) => {
+    const accessToken = await auth.getTokenDefault();
+    
+    await operations.createOperationAndWait(accessToken, 'SAP_ITEM_GROUP_SYNC');
+    await operations.createOperationAndWait(accessToken, 'SAP_CONTRACT_SYNC');
+    
+    return request('http://localhost:3002')
+      .get('/rest/v1/contracts')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .then(async response => {
+        const actualContracts = response.body;
+        actualContracts.sort((c1, c2) => {
+          return c1.quantity - c2.quantity;
+        });
+
+        contractDatasSync.forEach((expectedContract, contractIndex) => {
+          Object.keys(expectedContract).forEach((expectKey) => {
+            const expectValue = expectedContract[expectKey];
+            const actualValue = response.body[contractIndex][expectKey];
+            t.equal(actualValue, expectValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
+          });
+        });        
+
+        await Promise.all([
+          database.executeFiles(`${__dirname}/data`, ['contracts-teardown.sql', 'item-groups-teardown.sql', 'operation-reports-teardown.sql'])
+        ]);
+      });
+  });
   
 })();
