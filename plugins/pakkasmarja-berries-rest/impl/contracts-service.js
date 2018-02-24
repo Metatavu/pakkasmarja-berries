@@ -13,6 +13,7 @@
   const toArray = require("stream-to-array");
   const slugify = require("slugify");
   const moment = require("moment");
+  const i18n = require("i18n");
   
   const config = require("nconf");
   const wkhtmltopdf = require("wkhtmltopdf");
@@ -29,21 +30,22 @@
      * @param {Object} models models
      * @param {Object} userManagement userManagement
      * @param {Object} pdf PDF rendering functionalities
+     * @param {Object} xlsx Excel rendering functionalities
      * @param {Object} signature Digital signature functionalities
      * @param {Object} tasks task queue functionalities
      */
-    constructor (logger, models, userManagement, pdf, signature, tasks) {
+    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks) {
       super();
       
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.pdf = pdf;
+      this.xlsx = xlsx;
       this.signature = signature;
       this.tasks = tasks;
     }
     
-    /* jshint ignore:start */
     async findContract(req, res) {
       const contractId = req.params.id;
       if (!contractId) {
@@ -59,7 +61,45 @@
       
       res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
-    /* jshint ignore:end */
+
+    /**
+     * @inheritdoc
+     */
+    async exportContract(req, res) {
+      const contractId = req.params.id;
+      if (!contractId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const contract = await this.models.findContractByExternalId(contractId);
+      if (!contract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const name = 'export';
+      const filename =`${slugify(name)}.xlsx`;
+
+      const columnHeaders = [
+        i18n.__("contracts.exports.supplierId"),
+        i18n.__("contracts.exports.companyName"),
+        i18n.__("contracts.exports.itemGroupName"),
+        i18n.__("contracts.exports.quantity"),
+        i18n.__("contracts.exports.placeName"),
+        i18n.__("contracts.exports.remarks"),
+        i18n.__("contracts.exports.signDate"),
+        i18n.__("contracts.exports.approvalDate")
+      ];
+
+      const rows = await this.getContractXLSXRows([contract]);
+      const data = this.xlsx.buildXLSX(name, columnHeaders, rows);
+
+      res.setHeader("Content-type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-disposition", `attachment; filename=${filename}`);
+
+      res.status(200).send(data);
+    }
     
     /**
      * @inheritdoc
@@ -202,7 +242,6 @@
      * @param {Object} contract Sequelize contract model
      * @return {Contract} REST entity
      */
-    /* jshint ignore:start */
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       
@@ -220,7 +259,49 @@
       });
       
     }
-    /* jshint ignore:end */
+
+    /**
+     * Returns contract datas as Excel rows 
+     * 
+     * @param {Contract[]} contracts array of contract objects
+     * @returns {Promise} promise for XLSX rows
+     */
+    getContractXLSXRows(contracts) {
+      return Promise.all(contracts.map((contract) => {
+        return this.getContractXLSXRow(contract);
+      }));
+    }
+
+    /**
+     * Returns contract data as Excel row 
+     * 
+     * @param {Contract} contract contract object 
+     * @returns {Promise} promise for XLSX row
+     */
+    async getContractXLSXRow(contract) {
+      const user = await this.userManagement.findUser(contract.userId);
+      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+      
+      const supplierId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
+      const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+      const itemGroupName = itemGroup.name;
+      const quantity = contract.quantity;
+      const placeName = '';
+      const remarks = contract.remarks;
+      const signDate = contract.signDate;
+      const approvalDate = contract.termDate;
+
+      return [
+        supplierId,
+        companyName,
+        itemGroupName,
+        quantity,
+        placeName,
+        remarks,
+        signDate,
+        approvalDate
+      ];
+    }
     
     async getContractDocumentPdf(baseUrl, contract, type) {
       const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
