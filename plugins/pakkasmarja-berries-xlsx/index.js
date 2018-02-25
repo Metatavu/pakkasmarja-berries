@@ -3,7 +3,7 @@
 (() => {
   "use strict";
   
-  const xlsx = require("node-xlsx");
+  const xlsx = require("node-xlsx").default;
   
   /**
    * Excel rendering functionalities for Pakkasmarja Berries

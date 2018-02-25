@@ -6,14 +6,17 @@
 
   const test = require("blue-tape");
   const request = require("supertest");
+  const requestUtils = require(`${__dirname}/request-utils`);
   const database = require(`${__dirname}/database`);
   const operations = require(`${__dirname}/operations`);
   const users = require(`${__dirname}/users`);
   const pdf = require(`${__dirname}/pdf`);
   const auth = require(`${__dirname}/auth`);
+  const xlsx = require(`${__dirname}/xlsx`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
-  
+  const contractExcelSingle = require(`${__dirname}/data/contract-xlsx-single.json`);
+
   test("Test listing contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
 
@@ -211,6 +214,61 @@
           users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
           database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
         ]);
+      });
+  });
+
+  test("Test contract xlsx", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .parse(requestUtils.createBinaryParser())
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql"]);
+        const xlsxJson = xlsx.parseXlsx(response.body);
+        t.equal(response.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        t.deepEqual(xlsxJson, contractExcelSingle);
+      });
+  });
+
+  test("Test contract xlsx - invalid format", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=UNSUPPORTED")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(400)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql"]);
+      });
+  });
+  
+  test("Test contract xlsx - without token", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
+      .set("Accept", "application/json")
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql"]);
+      });
+  });
+  
+  test("Test contract xlsx - invalid token", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
+      .set("Authorization", "Bearer FAKE")
+      .set("Accept", "application/json")
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql"]);
       });
   });
   

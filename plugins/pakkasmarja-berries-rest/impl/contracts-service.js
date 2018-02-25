@@ -14,7 +14,8 @@
   const slugify = require("slugify");
   const moment = require("moment");
   const i18n = require("i18n");
-  
+  const stream = require('stream');
+
   const config = require("nconf");
   const wkhtmltopdf = require("wkhtmltopdf");
   wkhtmltopdf.command = config.get("wkhtmltopdf:command");
@@ -78,6 +79,12 @@
         return;
       }
 
+      const format = req.query.format;
+      if (format !== 'XLSX') {
+        this.sendBadRequest(res, `Unsupported format ${format}`);
+        return;
+      }
+
       const name = 'export';
       const filename =`${slugify(name)}.xlsx`;
 
@@ -93,12 +100,12 @@
       ];
 
       const rows = await this.getContractXLSXRows([contract]);
-      const data = this.xlsx.buildXLSX(name, columnHeaders, rows);
+      const buffer = this.xlsx.buildXLSX(name, columnHeaders, rows);
 
       res.setHeader("Content-type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.setHeader("Content-disposition", `attachment; filename=${filename}`);
 
-      res.status(200).send(data);
+      res.status(200).send(buffer);
     }
     
     /**
