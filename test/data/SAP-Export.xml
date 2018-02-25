@@ -18,6 +18,10 @@
       <PlaceCode>01</PlaceCode>
       <PlaceName>Test</PlaceName>
     </DeliveryPlaces>
+    <DeliveryPlaces>
+      <PlaceCode>02</PlaceCode>
+      <PlaceName>Test 2</PlaceName>
+    </DeliveryPlaces>
   </DeliveryPlaces>
   <BusinessPartners>
     <BusinessPartners>
@@ -89,15 +93,13 @@
           <CardCode>tusap1</CardCode>
           <ItemGroupCode>123</ItemGroupCode>
           <Quantity>10000</Quantity>
-          <PlaceCode>
-          </PlaceCode>
+          <PlaceCode>01</PlaceCode>
         </ContractLine>
         <ContractLine>
           <CardCode>tusap1</CardCode>
           <ItemGroupCode>234</ItemGroupCode>
           <Quantity>20000</Quantity>
-          <PlaceCode>
-          </PlaceCode>
+          <PlaceCode>01</PlaceCode>
         </ContractLine>
       </ContractLines>
     </Contracts>
@@ -114,15 +116,13 @@
           <CardCode>tusap2</CardCode>
           <ItemGroupCode>123</ItemGroupCode>
           <Quantity>300000</Quantity>
-          <PlaceCode>
-          </PlaceCode>
+          <PlaceCode>01</PlaceCode>
         </ContractLine>
         <ContractLine>
           <CardCode>tusap2</CardCode>
           <ItemGroupCode>456</ItemGroupCode>
           <Quantity>400000</Quantity>
-          <PlaceCode>
-          </PlaceCode>
+          <PlaceCode>01</PlaceCode>
         </ContractLine>
       </ContractLines>
     </Contracts>

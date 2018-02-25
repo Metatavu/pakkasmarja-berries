@@ -58,7 +58,7 @@
     const host = options.getOption("host");
     const app = express();
     const httpServer = http.createServer(app);
-    
+
     const sessionStore = new SequelizeStore({
       db: sequelize,
       table: "ConnectSession"
@@ -76,9 +76,9 @@
       locales:["fi"],
       directory: `${__dirname}/locales`,
       defaultLocale: "fi",
-      autoReload: true
+      autoReload: false
     });
-    
+
     app.use(session({
       store: sessionStore,
       resave: false,

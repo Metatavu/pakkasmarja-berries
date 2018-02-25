@@ -181,12 +181,30 @@
           fields: ["externalId"]
         }]
       });
+
+      await this.defineModel("DeliveryPlace", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        sapId: { type: Sequelize.STRING(191), allowNull: false },
+        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        name: { type: Sequelize.STRING(191), allowNull: false }
+      }, {
+        indexes: [{
+          name: "UN_DELIVERY_PLACE_SAP_ID",
+          unique: true,
+          fields: ["sapId"]
+        }, {
+          name: "UN_DELIVERY_PLACE_EXTERNAL_ID",
+          unique: true,
+          fields: ["externalId"]
+        }]
+      });
       
       await this.defineModel("Contract", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
+        deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
         quantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
@@ -905,12 +923,97 @@
       return this.ItemGroup.destroy({ where: { id : id } });
     }
     
+    // DeliveryPlaces
+    
+    /**
+     * new delivery place
+     * 
+     * @param {String} sapId sapId
+     * @param {String} name name
+     * @return {Promise} promise for created delivery place
+     */
+    createDeliveryPlace(sapId, name) {
+      return this.DeliveryPlace.create({
+         sapId: sapId,
+         name: name
+       });
+     }
+     
+     /**
+      * Finds a delivery place by id
+      * 
+      * @param {int} id delivery place id
+      * @return {Promise} promise for delivery place
+      */
+     findDeliveryPlaceById(id) {
+       return this.DeliveryPlace.findOne({ where: { id : id } });
+     }
+     
+     /**
+      * Finds a delivery place by externalId
+      * 
+      * @param {String} externalId delivery place externalId
+      * @return {Promise} promise for delivery place
+      */
+     findDeliveryPlaceByExternalId(externalId) {
+       return this.DeliveryPlace.findOne({ where: { externalId : externalId } });
+     }
+     
+     /**
+      * Finds a delivery place by sapId
+      * 
+      * @param {String} sapId delivery place sapId
+      * @return {Promise} promise for delivery place
+      */
+     findDeliveryPlaceBySapId(sapId) {
+       return this.DeliveryPlace.findOne({ where: { sapId : sapId } });
+     }
+     
+     /**
+      * Lists delivery places
+      * 
+      * @param {int} firstResult first result
+      * @param {int} maxResults max results
+      * @return {Promise} promise for delivery places
+      */
+     listDeliveryPlaces(firstResult, maxResults) {
+       return this.DeliveryPlace.findAll({ where: { }, offset: firstResult, limit: maxResults });
+     }
+     
+     /**
+      * Updates delivery place
+      * 
+      * @param {int} id delivery place id
+      * @param {String} name name
+      * @return {Promise} promise for updated delivery place
+      */
+     updateDeliveryPlace(id, name) {
+       return this.DeliveryPlace.update({
+         name: name
+       }, {
+         where: {
+           id: id
+         }
+       });
+     }
+     
+     /**
+      * Deletes an delivery place
+      * 
+      * @param {int} id delivery place id
+      * @return {Promise} promise that resolves on successful removal
+      */
+     deleteDeliveryPlace(id) {
+       return this.DeliveryPlace.destroy({ where: { id : id } });
+     }
+
     // Contracts
 
     /**
      * Create new contract
      * 
      * @param {String} userId 
+     * @param {int} deliveryPlaceId
      * @param {int} itemGroupId 
      * @param {String} sapId 
      * @param {int} quantity 
@@ -923,9 +1026,10 @@
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+    createContract(userId, deliveryPlaceId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.create({
         userId: userId,
+        deliveryPlaceId: deliveryPlaceId,
         itemGroupId: itemGroupId,
         sapId: sapId,
         quantity: quantity,

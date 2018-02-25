@@ -21,6 +21,11 @@
         "afterProcessDelay": 1000,
         "maxTimeout": 20000
       },
+      "sapDeliveryPlaceUpdate": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      },
       "sapItemGroupUpdate": {
         "concurrent": 1,
         "afterProcessDelay": 1000,
