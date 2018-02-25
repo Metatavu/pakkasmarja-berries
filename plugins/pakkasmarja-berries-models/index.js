@@ -938,75 +938,75 @@
      */
     createDeliveryPlace(sapId, name) {
       return this.DeliveryPlace.create({
-         sapId: sapId,
-         name: name
-       });
-     }
+        sapId: sapId,
+        name: name
+      });
+    }
      
-     /**
-      * Finds a delivery place by id
-      * 
-      * @param {int} id delivery place id
-      * @return {Promise} promise for delivery place
-      */
-     findDeliveryPlaceById(id) {
-       return this.DeliveryPlace.findOne({ where: { id : id } });
-     }
+    /**
+     * Finds a delivery place by id
+     * 
+     * @param {int} id delivery place id
+     * @return {Promise} promise for delivery place
+     */
+    findDeliveryPlaceById(id) {
+      return this.DeliveryPlace.findOne({ where: { id : id } });
+    }
      
-     /**
-      * Finds a delivery place by externalId
-      * 
-      * @param {String} externalId delivery place externalId
-      * @return {Promise} promise for delivery place
-      */
-     findDeliveryPlaceByExternalId(externalId) {
-       return this.DeliveryPlace.findOne({ where: { externalId : externalId } });
-     }
+    /**
+     * Finds a delivery place by externalId
+     * 
+     * @param {String} externalId delivery place externalId
+     * @return {Promise} promise for delivery place
+     */
+    findDeliveryPlaceByExternalId(externalId) {
+      return this.DeliveryPlace.findOne({ where: { externalId : externalId } });
+    }
      
-     /**
-      * Finds a delivery place by sapId
-      * 
-      * @param {String} sapId delivery place sapId
-      * @return {Promise} promise for delivery place
-      */
-     findDeliveryPlaceBySapId(sapId) {
-       return this.DeliveryPlace.findOne({ where: { sapId : sapId } });
-     }
+    /**
+     * Finds a delivery place by sapId
+     * 
+     * @param {String} sapId delivery place sapId
+     * @return {Promise} promise for delivery place
+     */
+    findDeliveryPlaceBySapId(sapId) {
+      return this.DeliveryPlace.findOne({ where: { sapId : sapId } });
+    }
      
-     /**
-      * Lists delivery places
-      * 
-      * @param {int} firstResult first result
-      * @param {int} maxResults max results
-      * @return {Promise} promise for delivery places
-      */
-     listDeliveryPlaces(firstResult, maxResults) {
-       return this.DeliveryPlace.findAll({ where: { }, offset: firstResult, limit: maxResults });
-     }
+    /**
+     * Lists delivery places
+     * 
+     * @param {int} firstResult first result
+     * @param {int} maxResults max results
+     * @return {Promise} promise for delivery places
+     */
+    listDeliveryPlaces(firstResult, maxResults) {
+      return this.DeliveryPlace.findAll({ where: { }, offset: firstResult, limit: maxResults });
+    }
      
-     /**
-      * Updates delivery place
-      * 
-      * @param {int} id delivery place id
-      * @param {String} name name
-      * @return {Promise} promise for updated delivery place
-      */
-     updateDeliveryPlace(id, name) {
-       return this.DeliveryPlace.update({
-         name: name
-       }, {
-         where: {
-           id: id
-         }
-       });
-     }
+    /**
+     * Updates delivery place
+     * 
+     * @param {int} id delivery place id
+     * @param {String} name name
+     * @return {Promise} promise for updated delivery place
+     */
+    updateDeliveryPlace(id, name) {
+      return this.DeliveryPlace.update({
+        name: name
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
      
-     /**
-      * Deletes an delivery place
-      * 
-      * @param {int} id delivery place id
-      * @return {Promise} promise that resolves on successful removal
-      */
+    /**
+     * Deletes an delivery place
+     * 
+     * @param {int} id delivery place id
+     * @return {Promise} promise that resolves on successful removal
+     */
     deleteDeliveryPlace(id) {
       return this.DeliveryPlace.destroy({ where: { id : id } });
     }

@@ -263,7 +263,7 @@
      * @returns {Object} object containing exported data buffer, filename and sheet name
      */
     async getContractsAsXLSX(contracts) {
-      const name = 'export';
+      const name = "export";
       const filename =`${slugify(name)}.xlsx`;
 
       const columnHeaders = [
