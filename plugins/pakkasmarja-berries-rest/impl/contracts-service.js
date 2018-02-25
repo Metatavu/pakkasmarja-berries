@@ -239,11 +239,13 @@
      */
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+      const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
       
       return Contract.constructFromObject({
         "id": contract.externalId,
         "contactId": contract.userId,
         "itemGroupId": itemGroup.externalId,
+        "deliveryPlaceId": deliveryPlace.externalId,
         "quantity": contract.quantity,
         "startDate": contract.startDate,
         "endDate": contract.endDate,
