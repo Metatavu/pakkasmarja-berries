@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   /**
    * Utility class for test requests
@@ -14,14 +14,14 @@
     */
     createBinaryParser() {
       return (res, callback) => {
-        res.setEncoding('binary');
-        res.data = '';
-        res.on('data', (chunk) => {
+        res.setEncoding("binary");
+        res.data = "";
+        res.on("data", (chunk) => {
           res.data += chunk;
         });
         
-        res.on('end', () => {
-          callback(null, new Buffer(res.data, 'binary'));
+        res.on("end", () => {
+          callback(null, new Buffer(res.data, "binary"));
         });
       };
     }

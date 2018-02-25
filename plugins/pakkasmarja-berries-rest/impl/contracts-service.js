@@ -14,7 +14,6 @@
   const slugify = require("slugify");
   const moment = require("moment");
   const i18n = require("i18n");
-  const stream = require('stream');
 
   const config = require("nconf");
   const wkhtmltopdf = require("wkhtmltopdf");
@@ -55,7 +54,7 @@
       }
       
       const databaseContract = await this.models.findContractByExternalId(contractId);
-      if (!databaseContract) {
+      if (!databaseContract) {
         this.sendNotFound(res);
         return;
       }
@@ -91,7 +90,7 @@
       const type = req.params.type;
       const format = req.query.format;
       
-      if (!contractId || !type) {
+      if (!contractId || !type) {
         this.sendNotFound(res);
         return;
       }
@@ -102,7 +101,7 @@
       }
       
       const contract = await this.models.findContractByExternalId(contractId);
-      if (!contract) {
+      if (!contract) {
         this.sendNotFound(res);
         return;
       }
@@ -204,13 +203,13 @@
       const contractId = req.params.id;
       const type = req.params.type;
       
-      if (!contractId || !type) {
+      if (!contractId || !type) {
         this.sendNotFound(res);
         return;
       }
       
       const contract = await this.models.findContractByExternalId(contractId);
-      if (!contract) {
+      if (!contract) {
         this.sendNotFound(res);
         return;
       }
@@ -263,7 +262,7 @@
      * @param {Contract[]} contracts array of contracts
      * @returns {Object} object containing exported data buffer, filename and sheet name
      */
-    async getContractsAsXLSX(contracts) {
+    async getContractsAsXLSX(contracts) {
       const name = 'export';
       const filename =`${slugify(name)}.xlsx`;
 
@@ -285,7 +284,7 @@
         filename: filename,
         contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         buffer: this.xlsx.buildXLSX(name, columnHeaders, rows) 
-      }
+      };
     }
 
     /**
@@ -335,19 +334,19 @@
     async getContractDocumentPdf(baseUrl, contract, type) {
       const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
       const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
-      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
+      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
         return null;
       }
       
       const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
       
       const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
-      if (!documentTemplate) {
+      if (!documentTemplate) {
         return null;
       }
       
       const user = await this.userManagement.findUser(contract.userId);
-      if (!user) {
+      if (!user) {
         return null;
       }
       
@@ -358,7 +357,7 @@
       };
       
       const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
-      if (!html) {
+      if (!html) {
         return null;
       }
       

@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
   
   const ContactsServiceImpl = require(`${__dirname}/impl/contacts-service`);
   const ContractsServiceImpl = require(`${__dirname}/impl/contracts-service`);
@@ -51,18 +51,18 @@
 
   module.exports = (options, imports, register) => {
     /* jshint ignore:start */
-    const logger = imports['logger'];
-    const models = imports['pakkasmarja-berries-models'];
-    const userManagement = imports['pakkasmarja-berries-user-management'];
-    const pdf = imports['pakkasmarja-berries-pdf'];
-    const xlsx = imports['pakkasmarja-berries-xlsx'];
-    const signature = imports['pakkasmarja-berries-signature'];
-    const tasks = imports['pakkasmarja-berries-tasks'];
+    const logger = imports["logger"];
+    const models = imports["pakkasmarja-berries-models"];
+    const userManagement = imports["pakkasmarja-berries-user-management"];
+    const pdf = imports["pakkasmarja-berries-pdf"];
+    const xlsx = imports["pakkasmarja-berries-xlsx"];
+    const signature = imports["pakkasmarja-berries-signature"];
+    const tasks = imports["pakkasmarja-berries-tasks"];
     /* jshint ignore:end */
     
     const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks);
     register(null, {
-      'pakkasmarja-berries-rest': restServices
+      "pakkasmarja-berries-rest": restServices
     });
   };
 

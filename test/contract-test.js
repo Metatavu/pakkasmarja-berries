@@ -253,7 +253,7 @@
       });
   });
 
-  test("Test contract xlsx - invalid format", async (t) => {
+  test("Test contract xlsx - invalid format", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -273,7 +273,7 @@
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
       .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(403)
-      .then(async response => {
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });

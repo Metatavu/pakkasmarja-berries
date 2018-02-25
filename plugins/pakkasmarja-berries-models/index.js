@@ -1007,9 +1007,9 @@
       * @param {int} id delivery place id
       * @return {Promise} promise that resolves on successful removal
       */
-     deleteDeliveryPlace(id) {
-       return this.DeliveryPlace.destroy({ where: { id : id } });
-     }
+    deleteDeliveryPlace(id) {
+      return this.DeliveryPlace.destroy({ where: { id : id } });
+    }
 
     // Contracts
 
