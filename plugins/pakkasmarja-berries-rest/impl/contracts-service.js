@@ -85,27 +85,16 @@
         return;
       }
 
-      const name = 'export';
-      const filename =`${slugify(name)}.xlsx`;
+      const xlsxData = await this.getContractsAsXLSX([contract]);
+      if (!xlsxData) {
+        this.sendInternalServerError(res, 'Exporting failed');
+        return;
+      }
 
-      const columnHeaders = [
-        i18n.__("contracts.exports.supplierId"),
-        i18n.__("contracts.exports.companyName"),
-        i18n.__("contracts.exports.itemGroupName"),
-        i18n.__("contracts.exports.quantity"),
-        i18n.__("contracts.exports.placeName"),
-        i18n.__("contracts.exports.remarks"),
-        i18n.__("contracts.exports.signDate"),
-        i18n.__("contracts.exports.approvalDate")
-      ];
+      res.setHeader("Content-type", xlsxData.contentType);
+      res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
 
-      const rows = await this.getContractXLSXRows([contract]);
-      const buffer = this.xlsx.buildXLSX(name, columnHeaders, rows);
-
-      res.setHeader("Content-type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      res.setHeader("Content-disposition", `attachment; filename=${filename}`);
-
-      res.status(200).send(buffer);
+      res.status(200).send(xlsxData.buffer);
     }
     
     /**
@@ -265,6 +254,37 @@
         "remarks": contract.remarks
       });
       
+    }
+
+    /**
+     * Exports array contracts as XLSX 
+     * 
+     * @param {Contract[]} contracts array of contracts
+     * @returns {Object} object containing exported data buffer, filename and sheet name
+     */
+    async getContractsAsXLSX(contracts) {
+      const name = 'export';
+      const filename =`${slugify(name)}.xlsx`;
+
+      const columnHeaders = [
+        i18n.__("contracts.exports.supplierId"),
+        i18n.__("contracts.exports.companyName"),
+        i18n.__("contracts.exports.itemGroupName"),
+        i18n.__("contracts.exports.quantity"),
+        i18n.__("contracts.exports.placeName"),
+        i18n.__("contracts.exports.remarks"),
+        i18n.__("contracts.exports.signDate"),
+        i18n.__("contracts.exports.approvalDate")
+      ];
+
+      const rows = await this.getContractXLSXRows(contracts);
+
+      return {
+        name: name,
+        filename: filename,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        buffer: this.xlsx.buildXLSX(name, columnHeaders, rows) 
+      }
     }
 
     /**
