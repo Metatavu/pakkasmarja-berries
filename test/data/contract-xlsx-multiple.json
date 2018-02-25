@@ -1,0 +1,35 @@
+[{
+  "name": "export",
+  "data": [
+    [
+      "Toimittajanumero",
+      "Toimittajan nimi",
+      "Marjalaji",
+      "Sopimusmäärä",
+      "Toimituspaikka",
+      "Huomautuskenttä",
+      "Viljelijän allekirjoituspäivä",
+      "Pakkasmarjan hyväksyntäpäivä"
+    ],
+    [
+      "tusap1",
+      null,
+      "Test Group 1",
+      50000,
+      "",
+      "Ready for testing",
+      43813,
+      43832
+    ],
+    [
+      "tusap2",
+      "Test Corp.",
+      "Test Group 2",
+      75200,
+      "",
+      null,
+      43772,
+      43836
+    ]
+  ]
+}]

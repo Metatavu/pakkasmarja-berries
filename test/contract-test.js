@@ -16,6 +16,24 @@
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
   const contractExcelSingle = require(`${__dirname}/data/contract-xlsx-single.json`);
+  const contractExcelMultiple = require(`${__dirname}/data/contract-xlsx-multiple.json`);
+
+  test("Test listing contracts", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .expect(200)
+      .parse(requestUtils.createBinaryParser())
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql"]);
+        const xlsxJson = xlsx.parseXlsx(response.body);
+        t.equal(response.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        t.deepEqual(xlsxJson, contractExcelMultiple);
+      });
+  });
 
   test("Test listing contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
@@ -221,9 +239,9 @@
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
-      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
-      .set("Accept", "application/json")
+      .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(200)
       .parse(requestUtils.createBinaryParser())
       .then(async response => {
@@ -238,9 +256,9 @@
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
-      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=UNSUPPORTED")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
-      .set("Accept", "application/json")
+      .set("Accept", "application/xml")
       .expect(400)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql"]);
@@ -251,21 +269,8 @@
     await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
-      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
-      .set("Accept", "application/json")
-      .expect(403)
-      .then(async response => {
-        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql"]);
-      });
-  });
-  
-  test("Test contract xlsx - invalid token", async () => {
-    await database.executeFiles(`${__dirname}/data`, ["item-groups-setup.sql", "contracts-setup.sql"]);
-    
-    return request("http://localhost:3002")
-      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/export?format=XLSX")
-      .set("Authorization", "Bearer FAKE")
-      .set("Accept", "application/json")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
+      .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(403)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql"]);

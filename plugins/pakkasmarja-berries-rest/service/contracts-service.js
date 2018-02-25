@@ -23,17 +23,6 @@
     }
 
    /**
-    * Export contract data
-    * Exports contract's data in specified format
-    *
-    * @param {http.ClientRequest} req client request object
-    * @param {http.ServerResponse} res server response object
-    **/
-    exportContract(req, res) {
-      res.status(501).send();
-    }
-
-   /**
     * Find contract
     * Finds contract by id
     *
@@ -84,7 +73,6 @@
     **/
     register(app, keycloak) {
       app.post(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}/signRequests')}`, [ keycloak.protect() ], this.catchAsync(this.createContractDocumentSignRequest.bind(this)));
-      app.get(`/rest/v1${this.toPath('/contracts/{id}/export')}`, [ keycloak.protect() ], this.catchAsync(this.exportContract.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));

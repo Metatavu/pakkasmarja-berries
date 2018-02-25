@@ -59,42 +59,27 @@
         this.sendNotFound(res);
         return;
       }
-      
-      res.status(200).send(await this.translateDatabaseContract(databaseContract));
-    }
 
-    /**
-     * @inheritdoc
-     */
-    async exportContract(req, res) {
-      const contractId = req.params.id;
-      if (!contractId) {
-        this.sendNotFound(res);
-        return;
-      }
-      
-      const contract = await this.models.findContractByExternalId(contractId);
-      if (!contract) {
-        this.sendNotFound(res);
+      const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      const accept = req.header("accept") || "application/json";
+      if (expectedTypes.indexOf(accept) === -1) {
+        this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
         return;
       }
 
-      const format = req.query.format;
-      if (format !== 'XLSX') {
-        this.sendBadRequest(res, `Unsupported format ${format}`);
-        return;
+      res.setHeader("Content-type", accept);
+      let xlsxData = null;
+          
+      switch (accept) {
+        case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          xlsxData = await this.getContractsAsXLSX([databaseContract]);
+          res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
+          res.status(200).send(xlsxData.buffer);
+          break;
+        default:
+          res.status(200).send(await this.translateDatabaseContract(databaseContract));
+          break;
       }
-
-      const xlsxData = await this.getContractsAsXLSX([contract]);
-      if (!xlsxData) {
-        this.sendInternalServerError(res, 'Exporting failed');
-        return;
-      }
-
-      res.setHeader("Content-type", xlsxData.contentType);
-      res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
-
-      res.status(200).send(xlsxData.buffer);
     }
     
     /**
@@ -184,21 +169,36 @@
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async listContracts(req, res) {
       const databaseContracts = await this.models.listContracts();
-      const contracts = await Promise.all(databaseContracts.map((databaseContract) => {
-        return this.translateDatabaseContract(databaseContract);
-      }));
-      
-      res.status(200).send(contracts);
+
+      const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      const accept = req.header("accept") || "application/json";
+      if (expectedTypes.indexOf(accept) === -1) {
+        this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
+        return;
+      }
+
+      res.setHeader("Content-type", accept);
+      let xlsxData = null;
+          
+      switch (accept) {
+        case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          xlsxData = await this.getContractsAsXLSX(databaseContracts);
+          res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
+          res.status(200).send(xlsxData.buffer);
+          break;
+        default:
+          res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
+            return this.translateDatabaseContract(databaseContract);
+          })));
+          break;
+      }
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async createContractDocumentSignRequest(req, res) {
       
       const contractId = req.params.id;
@@ -230,7 +230,6 @@
         res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
       }
     }
-    /* jshint ignore:end */
     
     /**
      * Translates Database contract into REST entity
