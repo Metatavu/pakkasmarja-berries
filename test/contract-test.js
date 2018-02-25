@@ -216,6 +216,11 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await Promise.all([
+          users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
+          database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
+        ]);
+
         const actualContracts = response.body;
         actualContracts.sort((c1, c2) => {
           return c1.quantity - c2.quantity;
@@ -227,12 +232,7 @@
             const actualValue = response.body[contractIndex][expectKey];
             t.equal(actualValue, expectValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
           });
-        });        
-
-        await Promise.all([
-          users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
-          database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
-        ]);
+        });
       });
   });
 
