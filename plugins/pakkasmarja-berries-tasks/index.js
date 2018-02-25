@@ -399,7 +399,7 @@
             operationReportItemId: data.operationReportItemId
           });
         } else {
-          await this.models.updateContract(contract.id, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.updateContract(contract.id, deliveryPlaceId, itemGroupId, quantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
