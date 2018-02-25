@@ -176,6 +176,10 @@
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
+          name: "UN_ITEMGROUP_SAP_ID",
+          unique: true,
+          fields: ["sapId"]
+        }, {
           name: "UN_ITEMGROUP_EXTERNAL_ID",
           unique: true,
           fields: ["externalId"]
@@ -1046,6 +1050,8 @@
      * Updates a contract 
      * 
      * @param {int} id 
+     * @param {int} deliveryPlaceId
+     * @param {int} itemGroupId 
      * @param {int} quantity 
      * @param {Date} startDate 
      * @param {Date} endDate 
@@ -1056,7 +1062,7 @@
      * 
      * @returns {Promise} promise for updated contract
      */
-    updateContract(id, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+    updateContract(id, deliveryPlaceId, itemGroupId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.update({
         quantity: quantity,
         startDate: startDate,
