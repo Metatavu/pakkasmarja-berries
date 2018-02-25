@@ -306,13 +306,14 @@
      */
     async getContractXLSXRow(contract) {
       const user = await this.userManagement.findUser(contract.userId);
+      const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
-      
+
       const supplierId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
-      const itemGroupName = itemGroup.name;
+      const itemGroupName = itemGroup ? itemGroup.name : null;
       const quantity = contract.quantity;
-      const placeName = '';
+      const placeName = deliveryPlace ? deliveryPlace.name : null;
       const remarks = contract.remarks;
       const signDate = contract.signDate;
       const approvalDate = contract.termDate;
