@@ -261,7 +261,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/xml")
       .expect(400)
-      .then(async response => {
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
