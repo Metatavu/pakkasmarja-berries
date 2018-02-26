@@ -245,7 +245,8 @@
         "contactId": contract.userId,
         "itemGroupId": itemGroup.externalId,
         "deliveryPlaceId": deliveryPlace.externalId,
-        "quantity": contract.quantity,
+        "contractQuantity": contract.contractQuantity,
+        "deliveredQuantity": contract.deliveredQuantity,
         "startDate": contract.startDate,
         "endDate": contract.endDate,
         "signDate": contract.signDate,
@@ -270,7 +271,7 @@
         i18n.__("contracts.exports.supplierId"),
         i18n.__("contracts.exports.companyName"),
         i18n.__("contracts.exports.itemGroupName"),
-        i18n.__("contracts.exports.quantity"),
+        i18n.__("contracts.exports.contractQuantity"),
         i18n.__("contracts.exports.placeName"),
         i18n.__("contracts.exports.remarks"),
         i18n.__("contracts.exports.signDate"),
@@ -313,7 +314,7 @@
       const supplierId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
       const itemGroupName = itemGroup ? itemGroup.name : null;
-      const quantity = contract.quantity;
+      const contractQuantity = contract.contractQuantity;
       const placeName = deliveryPlace ? deliveryPlace.name : null;
       const remarks = contract.remarks;
       const signDate = contract.signDate;
@@ -323,7 +324,7 @@
         supplierId,
         companyName,
         itemGroupName,
-        quantity,
+        contractQuantity,
         placeName,
         remarks,
         signDate,

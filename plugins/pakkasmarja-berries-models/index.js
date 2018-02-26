@@ -210,7 +210,8 @@
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
-        quantity: { type: Sequelize.BIGINT },
+        contractQuantity: { type: Sequelize.BIGINT },
+        deliveredQuantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
         endDate: Sequelize.DATE,
         signDate: Sequelize.DATE,
@@ -1020,7 +1021,8 @@
      * @param {int} deliveryPlaceId
      * @param {int} itemGroupId 
      * @param {String} sapId 
-     * @param {int} quantity 
+     * @param {int} contractQuantity
+     * @param {int} deliveredQuantity 
      * @param {Date} startDate 
      * @param {Date} endDate 
      * @param {Date} signDate 
@@ -1030,13 +1032,14 @@
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, deliveryPlaceId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+    createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.create({
         userId: userId,
         deliveryPlaceId: deliveryPlaceId,
         itemGroupId: itemGroupId,
         sapId: sapId,
-        quantity: quantity,
+        contractQuantity: contractQuantity,
+        deliveredQuantity: deliveredQuantity,
         startDate: startDate,
         endDate: endDate,
         signDate: signDate,
@@ -1052,7 +1055,8 @@
      * @param {int} id 
      * @param {int} deliveryPlaceId
      * @param {int} itemGroupId 
-     * @param {int} quantity 
+     * @param {int} contractQuantity
+     * @param {int} deliveredQuantity 
      * @param {Date} startDate 
      * @param {Date} endDate 
      * @param {Date} signDate 
@@ -1062,9 +1066,12 @@
      * 
      * @returns {Promise} promise for updated contract
      */
-    updateContract(id, deliveryPlaceId, itemGroupId, quantity, startDate, endDate, signDate, termDate, status, remarks) {
+    updateContract(id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.update({
-        quantity: quantity,
+        deliveryPlaceId: deliveryPlaceId, 
+        itemGroupId: itemGroupId,
+        contractQuantity: contractQuantity,
+        deliveredQuantity: deliveredQuantity,
         startDate: startDate,
         endDate: endDate,
         signDate: signDate,

@@ -2,7 +2,7 @@
   "contracts.exports.supplierId": "Toimittajanumero",
   "contracts.exports.companyName": "Toimittajan nimi",
   "contracts.exports.itemGroupName": "Marjalaji",
-  "contracts.exports.quantity": "Sopimusmäärä",
+  "contracts.exports.contractQuantity": "Sopimusmäärä",
   "contracts.exports.placeName": "Toimituspaikka",
   "contracts.exports.remarks": "Huomautuskenttä",
   "contracts.exports.signDate": "Viljelijän allekirjoituspäivä",

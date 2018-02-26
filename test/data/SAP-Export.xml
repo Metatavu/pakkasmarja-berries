@@ -92,13 +92,15 @@
         <ContractLine>
           <CardCode>tusap1</CardCode>
           <ItemGroupCode>123</ItemGroupCode>
-          <Quantity>10000</Quantity>
+          <ContractQuantity>10000</ContractQuantity>
+          <DeliveredQuantity>5000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
         <ContractLine>
           <CardCode>tusap1</CardCode>
           <ItemGroupCode>234</ItemGroupCode>
-          <Quantity>20000</Quantity>
+          <ContractQuantity>20000</ContractQuantity>
+          <DeliveredQuantity>6000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
       </ContractLines>
@@ -115,13 +117,15 @@
         <ContractLine>
           <CardCode>tusap2</CardCode>
           <ItemGroupCode>123</ItemGroupCode>
-          <Quantity>300000</Quantity>
+          <ContractQuantity>300000</ContractQuantity>
+          <DeliveredQuantity>7000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
         <ContractLine>
           <CardCode>tusap2</CardCode>
           <ItemGroupCode>456</ItemGroupCode>
-          <Quantity>400000</Quantity>
+          <ContractQuantity>400000</ContractQuantity>
+          <DeliveredQuantity>8000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
       </ContractLines>
