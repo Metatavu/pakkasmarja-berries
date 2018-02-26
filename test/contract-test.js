@@ -221,7 +221,7 @@
         
         const actualContracts = response.body;
         actualContracts.sort((c1, c2) => {
-          return c1.quantity - c2.quantity;
+          return c1.contractQuantity - c2.contractQuantity;
         });
 
         contractDatasSync.forEach((expectedContract, contractIndex) => {

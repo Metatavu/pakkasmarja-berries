@@ -380,7 +380,8 @@
           throw new Error(`Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`);
         }
 
-        const quantity = sapContractLine.Quantity;
+        const contractQuantity = sapContractLine.ContractQuantity;
+        const deliveredQuantity = sapContractLine.DeliveredQuantity;
         const userId = user.id;
         const itemGroupId = itemGroup.id;
         const deliveryPlaceId = deliveryPlace.id;
@@ -393,13 +394,13 @@
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
-          await this.models.createContract(userId, deliveryPlaceId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Created new contract from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
           });
         } else {
-          await this.models.updateContract(contract.id, deliveryPlaceId, itemGroupId, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.updateContract(contract.id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId

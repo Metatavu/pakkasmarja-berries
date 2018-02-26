@@ -59,11 +59,11 @@
       if (data.hasOwnProperty('itemGroupId')) {
         obj['itemGroupId'] = ApiClient.convertToType(data['itemGroupId'], 'String');
       }
-      if (data.hasOwnProperty('quantity')) {
-        obj['quantity'] = ApiClient.convertToType(data['quantity'], 'Number');
+      if (data.hasOwnProperty('contractQuantity')) {
+        obj['contractQuantity'] = ApiClient.convertToType(data['contractQuantity'], 'Number');
       }
-      if (data.hasOwnProperty('delivered')) {
-        obj['delivered'] = ApiClient.convertToType(data['delivered'], 'Number');
+      if (data.hasOwnProperty('deliveredQuantity')) {
+        obj['deliveredQuantity'] = ApiClient.convertToType(data['deliveredQuantity'], 'Number');
       }
       if (data.hasOwnProperty('startDate')) {
         obj['startDate'] = ApiClient.convertToType(data['startDate'], 'Date');
@@ -104,13 +104,13 @@
    */
   exports.prototype['itemGroupId'] = undefined;
   /**
-   * @member {Number} quantity
+   * @member {Number} contractQuantity
    */
-  exports.prototype['quantity'] = undefined;
+  exports.prototype['contractQuantity'] = undefined;
   /**
-   * @member {Number} delivered
+   * @member {Number} deliveredQuantity
    */
-  exports.prototype['delivered'] = undefined;
+  exports.prototype['deliveredQuantity'] = undefined;
   /**
    * @member {Date} startDate
    */
