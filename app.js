@@ -3,24 +3,22 @@
 (() => {
   "use strict";
   
-  const architect = require('architect');
-  const http = require('http');
-  const util = require('util');
-  const path = require('path');
-  const express = require('express');
-  const morgan = require('morgan');
-  const request = require('request');
-  const bodyParser = require('body-parser');
-  const config = require('nconf');
-  const Hashes = require('jshashes');
-  const Keycloak = require('keycloak-connect');  
-  const session = require('express-session');
-  const SequelizeStore = require('connect-session-sequelize')(session.Store);
+  const architect = require("architect");
+  const http = require("http");
+  const path = require("path");
+  const express = require("express");
+  const morgan = require("morgan");
+  const bodyParser = require("body-parser");
+  const config = require("nconf");
+  const Keycloak = require("keycloak-connect");  
+  const session = require("express-session");
+  const i18n = require("i18n");
+  const SequelizeStore = require("connect-session-sequelize")(session.Store);
   
-  config.file({file: __dirname + '/config.json'});
+  config.file({file: __dirname + "/config.json"});
    
-  const options = require(__dirname + '/options');
-  const architectConfig = architect.loadConfig(__dirname + '/config.js');
+  const options = require(__dirname + "/options");
+  const architectConfig = architect.loadConfig(__dirname + "/config.js");
   
   if (!options.isOk()) {
     options.printUsage();
@@ -28,7 +26,7 @@
     return;
   }
   
-  process.on('unhandledRejection', (error, promise) => {
+  process.on("unhandledRejection", (error) => {
     console.error("UNHANDLED REJECTION", error ? error.stack : null);
   });
   
@@ -39,25 +37,24 @@
       return;
     }
     
-    const sequelize = architectApp.getService('shady-sequelize').sequelize;
-    const Sequelize = architectApp.getService('shady-sequelize').Sequelize;
-    const shadyMessages = architectApp.getService('shady-messages');
-    const shadyWorker = architectApp.getService('shady-worker');
-    const WebSockets = architectApp.getService('shady-websockets');
-    const models = architectApp.getService('pakkasmarja-berries-models');
-    const routes = architectApp.getService('pakkasmarja-berries-routes');
-    const rest = architectApp.getService('pakkasmarja-berries-rest');
-    const webSocketMessages = architectApp.getService('pakkasmarja-berries-ws-messages');
-    const scheluders = architectApp.getService('pakkasmarja-berries-scheluders');
-    const clusterMessages = architectApp.getService('pakkasmarja-berries-cluster-messages');
-    const logger = architectApp.getService('logger');
-    const workerId = shadyWorker.start(config.get("server-group"), options.getOption('port'), options.getOption('host'));
+    const sequelize = architectApp.getService("shady-sequelize").sequelize;
+    const shadyMessages = architectApp.getService("shady-messages");
+    const shadyWorker = architectApp.getService("shady-worker");
+    const WebSockets = architectApp.getService("shady-websockets");
+    const models = architectApp.getService("pakkasmarja-berries-models");
+    const routes = architectApp.getService("pakkasmarja-berries-routes");
+    const rest = architectApp.getService("pakkasmarja-berries-rest");
+    const webSocketMessages = architectApp.getService("pakkasmarja-berries-ws-messages");
+    const scheluders = architectApp.getService("pakkasmarja-berries-scheluders");
+    const clusterMessages = architectApp.getService("pakkasmarja-berries-cluster-messages");
+    const logger = architectApp.getService("logger");
+    
+    shadyWorker.start(config.get("server-group"), options.getOption("port"), options.getOption("host"));
 
-    const port = options.getOption('port');
-    const host = options.getOption('host');
+    const port = options.getOption("port");
     const app = express();
     const httpServer = http.createServer(app);
-    
+
     const sessionStore = new SequelizeStore({
       db: sequelize,
       table: "ConnectSession"
@@ -65,21 +62,28 @@
     
     sessionStore.sync();
     
-    const keycloak = new Keycloak({ store: sessionStore }, config.get('keycloak:rest'));
+    const keycloak = new Keycloak({ store: sessionStore }, config.get("keycloak:rest"));
     
     httpServer.listen(port, () => {
-      logger.info('Http server started');
+      logger.info("Http server started");
     });
-    
+
+    i18n.configure({
+      locales:["fi"],
+      directory: `${__dirname}/locales`,
+      defaultLocale: "fi",
+      autoReload: false
+    });
+
     app.use(session({
       store: sessionStore,
       resave: false,
       saveUninitialized: true,
-      secret: config.get('session-secret')
+      secret: config.get("session-secret")
     }));
     
     app.use(keycloak.middleware({
-      logout: '/logout'
+      logout: "/logout"
     }));
     
     app.use((req, res, next) => {
@@ -96,12 +100,13 @@
       next();
     });
 
-    app.use(morgan('combined'));
+    app.use(morgan("combined"));
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
-    app.use(express.static(path.join(__dirname, 'webapp')));
-    app.use(express.static(path.join(__dirname, 'public')));
-    
+    app.use(express.static(path.join(__dirname, "webapp")));
+    app.use(express.static(path.join(__dirname, "public")));
+    app.use(i18n.init);
+
     const webSockets = new WebSockets(httpServer, (sessionId, callback) => {
       try {
         if (!sessionId) {

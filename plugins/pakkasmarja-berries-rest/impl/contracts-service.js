@@ -13,7 +13,8 @@
   const toArray = require("stream-to-array");
   const slugify = require("slugify");
   const moment = require("moment");
-  
+  const i18n = require("i18n");
+
   const config = require("nconf");
   const wkhtmltopdf = require("wkhtmltopdf");
   wkhtmltopdf.command = config.get("wkhtmltopdf:command");
@@ -29,21 +30,22 @@
      * @param {Object} models models
      * @param {Object} userManagement userManagement
      * @param {Object} pdf PDF rendering functionalities
+     * @param {Object} xlsx Excel rendering functionalities
      * @param {Object} signature Digital signature functionalities
      * @param {Object} tasks task queue functionalities
      */
-    constructor (logger, models, userManagement, pdf, signature, tasks) {
+    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks) {
       super();
       
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.pdf = pdf;
+      this.xlsx = xlsx;
       this.signature = signature;
       this.tasks = tasks;
     }
     
-    /* jshint ignore:start */
     async findContract(req, res) {
       const contractId = req.params.id;
       if (!contractId) {
@@ -52,14 +54,32 @@
       }
       
       const databaseContract = await this.models.findContractByExternalId(contractId);
-      if (!databaseContract) {
+      if (!databaseContract) {
         this.sendNotFound(res);
         return;
       }
-      
-      res.status(200).send(await this.translateDatabaseContract(databaseContract));
+
+      const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      const accept = req.header("accept") || "application/json";
+      if (expectedTypes.indexOf(accept) === -1) {
+        this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
+        return;
+      }
+
+      res.setHeader("Content-type", accept);
+      let xlsxData = null;
+          
+      switch (accept) {
+        case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          xlsxData = await this.getContractsAsXLSX([databaseContract]);
+          res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
+          res.status(200).send(xlsxData.buffer);
+          break;
+        default:
+          res.status(200).send(await this.translateDatabaseContract(databaseContract));
+          break;
+      }
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
@@ -70,7 +90,7 @@
       const type = req.params.type;
       const format = req.query.format;
       
-      if (!contractId || !type) {
+      if (!contractId || !type) {
         this.sendNotFound(res);
         return;
       }
@@ -81,7 +101,7 @@
       }
       
       const contract = await this.models.findContractByExternalId(contractId);
-      if (!contract) {
+      if (!contract) {
         this.sendNotFound(res);
         return;
       }
@@ -148,33 +168,48 @@
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async listContracts(req, res) {
       const databaseContracts = await this.models.listContracts();
-      const contracts = await Promise.all(databaseContracts.map((databaseContract) => {
-        return this.translateDatabaseContract(databaseContract);
-      }));
-      
-      res.status(200).send(contracts);
+
+      const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      const accept = req.header("accept") || "application/json";
+      if (expectedTypes.indexOf(accept) === -1) {
+        this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
+        return;
+      }
+
+      res.setHeader("Content-type", accept);
+      let xlsxData = null;
+          
+      switch (accept) {
+        case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          xlsxData = await this.getContractsAsXLSX(databaseContracts);
+          res.setHeader("Content-disposition", `attachment; filename=${xlsxData.filename}`);
+          res.status(200).send(xlsxData.buffer);
+          break;
+        default:
+          res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
+            return this.translateDatabaseContract(databaseContract);
+          })));
+          break;
+      }
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async createContractDocumentSignRequest(req, res) {
       
       const contractId = req.params.id;
       const type = req.params.type;
       
-      if (!contractId || !type) {
+      if (!contractId || !type) {
         this.sendNotFound(res);
         return;
       }
       
       const contract = await this.models.findContractByExternalId(contractId);
-      if (!contract) {
+      if (!contract) {
         this.sendNotFound(res);
         return;
       }
@@ -194,7 +229,6 @@
         res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
       }
     }
-    /* jshint ignore:end */
     
     /**
      * Translates Database contract into REST entity
@@ -202,14 +236,15 @@
      * @param {Object} contract Sequelize contract model
      * @return {Contract} REST entity
      */
-    /* jshint ignore:start */
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+      const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
       
       return Contract.constructFromObject({
         "id": contract.externalId,
         "contactId": contract.userId,
         "itemGroupId": itemGroup.externalId,
+        "deliveryPlaceId": deliveryPlace.externalId,
         "quantity": contract.quantity,
         "startDate": contract.startDate,
         "endDate": contract.endDate,
@@ -220,24 +255,98 @@
       });
       
     }
-    /* jshint ignore:end */
+
+    /**
+     * Exports array contracts as XLSX 
+     * 
+     * @param {Contract[]} contracts array of contracts
+     * @returns {Object} object containing exported data buffer, filename and sheet name
+     */
+    async getContractsAsXLSX(contracts) {
+      const name = "export";
+      const filename =`${slugify(name)}.xlsx`;
+
+      const columnHeaders = [
+        i18n.__("contracts.exports.supplierId"),
+        i18n.__("contracts.exports.companyName"),
+        i18n.__("contracts.exports.itemGroupName"),
+        i18n.__("contracts.exports.quantity"),
+        i18n.__("contracts.exports.placeName"),
+        i18n.__("contracts.exports.remarks"),
+        i18n.__("contracts.exports.signDate"),
+        i18n.__("contracts.exports.approvalDate")
+      ];
+
+      const rows = await this.getContractXLSXRows(contracts);
+
+      return {
+        name: name,
+        filename: filename,
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        buffer: this.xlsx.buildXLSX(name, columnHeaders, rows) 
+      };
+    }
+
+    /**
+     * Returns contract datas as Excel rows 
+     * 
+     * @param {Contract[]} contracts array of contract objects
+     * @returns {Promise} promise for XLSX rows
+     */
+    getContractXLSXRows(contracts) {
+      return Promise.all(contracts.map((contract) => {
+        return this.getContractXLSXRow(contract);
+      }));
+    }
+
+    /**
+     * Returns contract data as Excel row 
+     * 
+     * @param {Contract} contract contract object 
+     * @returns {Promise} promise for XLSX row
+     */
+    async getContractXLSXRow(contract) {
+      const user = await this.userManagement.findUser(contract.userId);
+      const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
+      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+
+      const supplierId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
+      const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+      const itemGroupName = itemGroup ? itemGroup.name : null;
+      const quantity = contract.quantity;
+      const placeName = deliveryPlace ? deliveryPlace.name : null;
+      const remarks = contract.remarks;
+      const signDate = contract.signDate;
+      const approvalDate = contract.termDate;
+
+      return [
+        supplierId,
+        companyName,
+        itemGroupName,
+        quantity,
+        placeName,
+        remarks,
+        signDate,
+        approvalDate
+      ];
+    }
     
     async getContractDocumentPdf(baseUrl, contract, type) {
       const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
       const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
-      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
+      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
         return null;
       }
       
       const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
       
       const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
-      if (!documentTemplate) {
+      if (!documentTemplate) {
         return null;
       }
       
       const user = await this.userManagement.findUser(contract.userId);
-      if (!user) {
+      if (!user) {
         return null;
       }
       
@@ -248,7 +357,7 @@
       };
       
       const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
-      if (!html) {
+      if (!html) {
         return null;
       }
       

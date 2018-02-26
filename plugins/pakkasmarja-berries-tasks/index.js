@@ -29,6 +29,7 @@
       this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
       this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
       this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
+      this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
       this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
       this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
 
@@ -122,6 +123,21 @@
       this.sapItemGroupUpdateQueue.push({
         id: itemGroup.ItemGroupCode,
         itemGroup: itemGroup,
+        operationReportItemId: operationReportItem.id
+      });
+    }
+
+    /**
+     * Enqueues SAP delivery place update task
+     * 
+     * @param {Object} deliveryPlace SAP delivery place object 
+     */
+    async enqueueSapDeliveryPlaceUpdate(operationReportId, deliveryPlace) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
+
+      this.sapDeliveryPlaceUpdateQueue.push({
+        id: deliveryPlace.PlaceCode,
+        deliveryPlace: deliveryPlace,
         operationReportItemId: operationReportItem.id
       });
     }
@@ -264,6 +280,44 @@
     }
 
     /**
+     * Executes a SAP delivery place update task
+     * 
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
+     */
+    async sapDeliveryPlaceUpdateTask(data, callback) {
+      try {
+        const sapDeliveryPlace = data.deliveryPlace;
+        const sapId = sapDeliveryPlace.PlaceCode;
+        const name = sapDeliveryPlace.PlaceName;
+
+        const deliveryPlace = await this.models.findDeliveryPlaceBySapId(sapId);
+        if (deliveryPlace) {
+          this.models.updateDeliveryPlace(deliveryPlace.id, name);
+          
+          callback(null, {
+            message: `Updated devivery place from SAP ${name} / ${sapId}`,
+            operationReportItemId: data.operationReportItemId
+          });
+        } else {
+          this.models.createDeliveryPlace(sapId, name);
+
+          callback(null, {
+            message: `Created new devivery place from SAP ${name} / ${sapId}`,
+            operationReportItemId: data.operationReportItemId
+          });
+        }
+
+      } catch (err) {
+        this.logger.error(`Error processing delivery place update queue ${err}`);
+        callback({
+          message: err,
+          operationReportItemId: data.operationReportItemId
+        });
+      }
+    }
+
+    /**
      * Executes a SAP item group update task
      * 
      * @param {Object} data task data
@@ -306,9 +360,15 @@
         const sapContract = data.contract;
         const sapContractLine = sapContract.ContractLines.ContractLine[data.lineIndex];
         const sapItemGroupId = sapContractLine.ItemGroupCode;
+        const sapDeliveryPlaceId = sapContractLine.PlaceCode;
         const sapUserId = sapContractLine.CardCode;
         const year = sapContract.Year;
         const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
+        
+        const deliveryPlace = await this.models.findDeliveryPlaceBySapId(sapDeliveryPlaceId);
+        if (!deliveryPlace) {
+          throw new Error(`Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`);
+        }
 
         const itemGroup = await this.models.findItemGroupBySapId(sapItemGroupId);
         if (!itemGroup) {
@@ -323,6 +383,7 @@
         const quantity = sapContractLine.Quantity;
         const userId = user.id;
         const itemGroupId = itemGroup.id;
+        const deliveryPlaceId = deliveryPlace.id;
         const startDate = null;
         const endDate = null;
         const signDate = null;
@@ -332,13 +393,13 @@
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
-          await this.models.createContract(userId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.createContract(userId, deliveryPlaceId, itemGroupId, sapId, quantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Created new contract from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
           });
         } else {
-          await this.models.updateContract(contract.id, quantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.updateContract(contract.id, deliveryPlaceId, itemGroupId, quantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId

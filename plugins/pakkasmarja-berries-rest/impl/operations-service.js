@@ -12,6 +12,7 @@
   const Operation = require(`${__dirname}/../model/operation`);
 
   const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
+  const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
   const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
   const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
   
@@ -55,7 +56,8 @@
 
       switch (type) {
         case OPERATION_SAP_CONTACT_SYNC:
-        case OPERATION_SAP_ITEM_GROUP_SYNC:
+        case OPERATION_SAP_DELIVERY_PLACE_SYNC:
+        case OPERATION_SAP_ITEM_GROUP_SYNC:        
         case OPERATION_SAP_CONTRACT_SYNC:
           operationReport = await this.readSapImportFileTask(type);
           break;
@@ -97,6 +99,8 @@
         switch (type) {
           case OPERATION_SAP_CONTACT_SYNC:
             return this.readSapImportBusinessPartners(sap);
+          case OPERATION_SAP_DELIVERY_PLACE_SYNC:
+            return this.readSapImportDeliveryPlaces(sap);
           case OPERATION_SAP_ITEM_GROUP_SYNC:
             return this.readSapImportItemGroups(sap);
           case OPERATION_SAP_CONTRACT_SYNC:
@@ -128,6 +132,31 @@
 
       businessPartners.forEach((businessPartner) => {
         this.tasks.enqueueSapContactUpdate(operationReport.id, businessPartner);
+      });
+
+      return operationReport;
+    }
+
+    /**
+     * Reads delivery places from sap and fills related task queue with data from file
+     * 
+     * @param {Object} sap SAP data object 
+     */
+    async readSapImportDeliveryPlaces(sap) {
+      if (!sap.DeliveryPlaces) {
+        this.logger.error("Failed to read SAP item groups");
+        return;
+      }
+
+      const deliveryPlaces = sap.DeliveryPlaces.DeliveryPlaces;
+      if (!deliveryPlaces) {
+        this.logger.error("Failed to read SAP delivery places list");
+        return;
+      }
+
+      const operationReport = await this.models.createOperationReport(OPERATION_SAP_DELIVERY_PLACE_SYNC);
+      deliveryPlaces.forEach((deliveryPlace) => {
+        this.tasks.enqueueSapDeliveryPlaceUpdate(operationReport.id, deliveryPlace);
       });
 
       return operationReport;
