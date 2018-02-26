@@ -18,7 +18,8 @@
   const contractExcelSingle = require(`${__dirname}/data/contract-xlsx-single.json`);
   const contractExcelMultiple = require(`${__dirname}/data/contract-xlsx-multiple.json`);
 
-  test("Test listing contracts", async (t) => {
+  test("Test listing contracts - xlsx", async (t) => {
+    await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
     return request("http://localhost:3002")
