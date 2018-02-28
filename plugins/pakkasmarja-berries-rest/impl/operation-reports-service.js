@@ -48,10 +48,13 @@
 
       const orderBy = sortBy === "CREATED" ? "createdAt" : null;
       const reports = type ? await this.models.listOperationReportsByType(type, orderBy, orderDir, firstResult, maxResults) : await this.models.listOperationReports(orderBy, orderDir, firstResult, maxResults);
+      const count = type ? await this.models.countOperationReportsByType(type) : await this.models.countOperationReports();
+             
       const result = await Promise.all(reports.map((report) => {
         return this.translateDatabaseOperationReport(report);
       }));
 
+      res.header("Total-Count", count);
       res.status(200).send(result);
     }
 

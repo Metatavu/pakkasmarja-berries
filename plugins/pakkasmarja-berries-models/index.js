@@ -1281,6 +1281,25 @@
       return this.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [[orderBy || "createdAt", orderDir || "DESC" ]] });
     }
 
+    /**
+     * Counts operation reports
+     * 
+     * @returns {Promise} Promise for count
+     */
+    countOperationReports() {
+      return this.OperationReport.count();
+    }
+
+    /**
+     * List operation reports by type
+     * 
+     * @param {String} type type
+     * @returns {Promise} Promise for count
+     */
+    countOperationReportsByType(type) {
+      return this.OperationReport.count({ where: { type: type }});
+    }
+
     // OperationReportItem
     
     /**
