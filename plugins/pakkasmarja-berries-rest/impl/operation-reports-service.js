@@ -54,7 +54,7 @@
         return this.translateDatabaseOperationReport(report);
       }));
 
-      res.header('Total-Count', count);
+      res.header("Total-Count", count);
       res.status(200).send(result);
     }
 
