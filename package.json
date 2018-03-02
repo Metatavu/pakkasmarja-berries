@@ -25,6 +25,7 @@
     "command-line-args": "^5.0.2",
     "command-line-usage": "^4.1.0",
     "connect-session-sequelize": "^5.2.0",
+    "cors": "^2.8.4",
     "express": "4.16.2",
     "express-session": "^1.15.6",
     "fcm-push": "^1.1.3",
