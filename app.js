@@ -13,7 +13,7 @@
   const Keycloak = require("keycloak-connect");  
   const session = require("express-session");
   const i18n = require("i18n");
-  const cors = require('cors')
+  const cors = require("cors");
   const SequelizeStore = require("connect-session-sequelize")(session.Store);
   
   config.file({file: __dirname + "/config.json"});
