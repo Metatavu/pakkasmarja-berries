@@ -290,14 +290,14 @@
       if (!sapVatLiable) {
         return null; 
       }
-
+      
       switch (sapVatLiable) {
-        case 'Y':
-          return 'YES';
-        case 'N':
-          return 'NO';
-        case 'EU':
-          return 'EU';
+        case "Y":
+          return "YES";
+        case "N":
+          return "NO";
+        case "EU":
+          return "EU";
       }
 
       this.logger.error(`Failed to translate ${sapVatLiable} into vat liable value`);
