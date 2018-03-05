@@ -9,14 +9,14 @@
 
 
   /**
-   * The ItemGroup model module.
-   * @module model/ItemGroup
+   * The DeliveryPlace model module.
+   * @module model/DeliveryPlace
    * @version 0.0.3
    */
 
   /**
-   * Constructs a new <code>ItemGroup</code>.
-   * @alias module:model/ItemGroup
+   * Constructs a new <code>DeliveryPlace</code>.
+   * @alias module:model/DeliveryPlace
    * @class
    */
   var exports = function() {
@@ -27,11 +27,11 @@
   };
 
   /**
-   * Constructs a <code>ItemGroup</code> from a plain JavaScript object, optionally creating a new instance.
+   * Constructs a <code>DeliveryPlace</code> from a plain JavaScript object, optionally creating a new instance.
    * Copies all relevant properties from <code>data</code> to <code>obj</code> if supplied or a new instance if not.
    * @param {Object} data The plain JavaScript object bearing properties of interest.
-   * @param {module:model/ItemGroup} obj Optional instance to populate.
-   * @return {module:model/ItemGroup} The populated <code>ItemGroup</code> instance.
+   * @param {module:model/DeliveryPlace} obj Optional instance to populate.
+   * @return {module:model/DeliveryPlace} The populated <code>DeliveryPlace</code> instance.
    */
   exports.constructFromObject = function(data, obj) {
     if (data) {

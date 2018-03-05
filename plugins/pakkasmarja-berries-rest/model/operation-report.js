@@ -11,7 +11,7 @@
   /**
    * The OperationReport model module.
    * @module model/OperationReport
-   * @version 0.0.2
+   * @version 0.0.3
    */
 
   /**

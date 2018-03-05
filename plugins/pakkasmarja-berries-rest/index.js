@@ -7,6 +7,7 @@
   const ContactsServiceImpl = require(`${__dirname}/impl/contacts-service`);
   const ContractsServiceImpl = require(`${__dirname}/impl/contracts-service`);
   const ItemGroupsServiceImpl = require(`${__dirname}/impl/item-groups-service`);
+  const DeliveryPlacesServiceImpl = require(`${__dirname}/impl/delivery-places-service`);
   const OperationReportsServiceImpl = require(`${__dirname}/impl/operation-reports-service`);
   const OperationsServiceImpl = require(`${__dirname}/impl/operations-service`);
   
@@ -30,6 +31,7 @@
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
       this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf, xlsx, signature, tasks);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
+      this.deliveryPlacesService = new DeliveryPlacesServiceImpl(logger, models);
       this.operationReportsService = new OperationReportsServiceImpl(logger, models);
       this.operationsService = new OperationsServiceImpl(logger, models, tasks);
     }
@@ -43,6 +45,7 @@
       this.contactsService.register(app, keycloak);
       this.contractsService.register(app, keycloak);
       this.itemGroupsService.register(app, keycloak);
+      this.deliveryPlacesService.register(app, keycloak);
       this.operationReportsService.register(app, keycloak);
       this.operationsService.register(app, keycloak);
     }
