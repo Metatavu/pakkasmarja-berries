@@ -2,9 +2,8 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
-  const _ = require('lodash');
   const AbstractDeliveryPlacesService = require(`${__dirname}/../service/delivery-places-service`);
   const DeliveryPlace = require(`${__dirname}/../model/delivery-place`);
 
@@ -35,7 +34,7 @@
       }
       
       const databaseDeliveryPlace = await this.models.findDeliveryPlaceByExternalId(deliveryPlaceId);
-      if (!databaseDeliveryPlace) {
+      if (!databaseDeliveryPlace) {
         this.sendNotFound(res);
         return;
       }
@@ -66,8 +65,8 @@
      */
     translateDatabaseDeliveryPlace(deliveryPlace) {
       return DeliveryPlace.constructFromObject({
-        'id': deliveryPlace.externalId,
-        'name': deliveryPlace.name
+        "id": deliveryPlace.externalId,
+        "name": deliveryPlace.name
       });
     }
   }

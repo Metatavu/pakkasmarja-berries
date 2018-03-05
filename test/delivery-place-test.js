@@ -36,7 +36,7 @@
       .get("/rest/v1/deliveryPlaces")
       .set("Accept", "application/json")
       .expect(403)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
@@ -49,7 +49,7 @@
       .set("Authorization", "Bearer FAKE")
       .set("Accept", "application/json")
       .expect(403)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
@@ -75,7 +75,7 @@
       .get("/rest/v1/deliveryPlaces/bad02318-1a44-11e8-87a4-c7808d590a07")
       .set("Accept", "application/json")
       .expect(403)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
@@ -88,7 +88,7 @@
       .set("Authorization", "Bearer FAKE")
       .set("Accept", "application/json")
       .expect(403)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
@@ -101,7 +101,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
@@ -114,7 +114,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then(async response => {
+      .then(() => {
         await database.executeFile(`${__dirname}/data`, "delivery-places-teardown.sql");
       });
   });
