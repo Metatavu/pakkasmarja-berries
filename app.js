@@ -13,6 +13,7 @@
   const Keycloak = require("keycloak-connect");  
   const session = require("express-session");
   const i18n = require("i18n");
+  const cors = require("cors");
   const SequelizeStore = require("connect-session-sequelize")(session.Store);
   
   config.file({file: __dirname + "/config.json"});
@@ -94,11 +95,7 @@
       next();
     });
     
-    app.use((req, res, next) => {
-      res.header("Access-Control-Allow-Origin", "*");
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-      next();
-    });
+    app.use(cors());
 
     app.use(morgan("combined"));
     app.use(bodyParser.urlencoded({ extended: true }));

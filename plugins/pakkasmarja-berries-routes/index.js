@@ -132,8 +132,8 @@
     }
     
     postJoin(req, res) {
-      const keycloakServerUrl = config.get('keycloak:auth-server-url');
-      const keycloakRealm = config.get('keycloak:realm');
+      const keycloakServerUrl = config.get("keycloak:app:auth-server-url");
+      const keycloakRealm = config.get("keycloak:app:realm");
       const keycloakUrl = `${keycloakServerUrl}/realms/${keycloakRealm}/protocol/openid-connect/userinfo`;
       
       request.get(keycloakUrl, {
