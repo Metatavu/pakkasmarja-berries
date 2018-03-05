@@ -7,7 +7,7 @@
     "endDate": null,
     "signDate": null,
     "termDate": null,
-    "status": "UNKNOWN",
+    "status": "DRAFT",
     "remarks": null
   },
   {
@@ -18,7 +18,7 @@
     "endDate": null,
     "signDate": null,
     "termDate": null,
-    "status": "UNKNOWN",
+    "status": "DRAFT",
     "remarks": null
   },
   {
@@ -29,7 +29,7 @@
     "endDate": null,
     "signDate": null,
     "termDate": null,
-    "status": "UNKNOWN",
+    "status": "DRAFT",
     "remarks": null
   },
   {
@@ -40,7 +40,7 @@
     "endDate": null,
     "signDate": null,
     "termDate": null,
-    "status": "UNKNOWN",
+    "status": "DRAFT",
     "remarks": null
   }
 ]

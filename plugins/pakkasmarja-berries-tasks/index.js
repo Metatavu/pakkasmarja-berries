@@ -227,8 +227,9 @@
         const iban = businessPartner.IBAN.trim();
         const bic = businessPartner.BIC.trim();
         const taxCode = businessPartner.FederalTaxID.trim();
-        const vatLiable = businessPartner.VatLiable.trim();
+        const sapVatLiable = businessPartner.VatLiable.trim();
         const audit = businessPartner.Audit.trim();
+        const vatLiable = this.translateSapVatLiable(sapVatLiable);
         
         let user = await this.userManagement.findUserByProperty(this.userManagement.ATTRIBUTE_SAP_ID, sapId);
         if (!user) {
@@ -277,6 +278,31 @@
           operationReportItemId: data.operationReportItemId
         });
       }
+    }
+
+    /**
+     * Translates vat liable value from SAP into format used by application
+     * 
+     * @param {String} sapVatLiable vat liable from SAP
+     * @requires {String} vat liable in appilcation format
+     */
+    translateSapVatLiable(sapVatLiable) {
+      if (!sapVatLiable) {
+        return null; 
+      }
+      
+      switch (sapVatLiable) {
+        case "Y":
+          return "YES";
+        case "N":
+          return "NO";
+        case "EU":
+          return "EU";
+      }
+
+      this.logger.error(`Failed to translate ${sapVatLiable} into vat liable value`);
+
+      return null;
     }
 
     /**
@@ -367,17 +393,32 @@
         
         const deliveryPlace = await this.models.findDeliveryPlaceBySapId(sapDeliveryPlaceId);
         if (!deliveryPlace) {
-          throw new Error(`Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`);
+          callback({
+            message: `Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`,
+            operationReportItemId: data.operationReportItemId
+          });
+
+          return;
         }
 
         const itemGroup = await this.models.findItemGroupBySapId(sapItemGroupId);
         if (!itemGroup) {
-          throw new Error(`Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`);
+          callback({
+            message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`,
+            operationReportItemId: data.operationReportItemId
+          });
+          
+          return;
         }
 
         const user = await this.userManagement.findUserByProperty(this.userManagement.ATTRIBUTE_SAP_ID, sapUserId);
         if (!user) {
-          throw new Error(`Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`);
+          callback({
+            message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,
+            operationReportItemId: data.operationReportItemId
+          });
+          
+          return;
         }
 
         const contractQuantity = sapContractLine.ContractQuantity;
@@ -389,7 +430,7 @@
         const endDate = null;
         const signDate = null;
         const termDate = null;
-        const status = "UNKNOWN";
+        const status = "DRAFT";
         const remarks = null;
 
         const contract = await this.models.findContractBySapId(sapId);

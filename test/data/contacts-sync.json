@@ -40,7 +40,7 @@
     "BIC": "DABAIE2D",
     "IBAN": "FI2112345600000786",
     "taxCode": "FI12345678",
-    "vatLiable": "Y",
+    "vatLiable": "YES",
     "audit": "2020"
   }
 }
