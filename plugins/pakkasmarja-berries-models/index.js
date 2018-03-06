@@ -1064,7 +1064,7 @@
      * @param {String} status 
      * @param {String} remarks 
      * 
-     * @returns {Promise} promise for updated contract
+     * @returns {Promise} promise for update
      */
     updateContract(id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.update({
