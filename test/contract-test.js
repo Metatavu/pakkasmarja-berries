@@ -15,6 +15,7 @@
   const xlsx = require(`${__dirname}/xlsx`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
+  const contractDatasUpdate = require(`${__dirname}/data/contracts-update.json`);
   const contractExcelSingle = require(`${__dirname}/data/contract-xlsx-single.json`);
   const contractExcelMultiple = require(`${__dirname}/data/contract-xlsx-multiple.json`);
 
@@ -275,6 +276,21 @@
       .expect(403)
       .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
+  test("Test updating contracts", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .put("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send(contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"])
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.deepEqual(response.body, contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
       });
   });
   

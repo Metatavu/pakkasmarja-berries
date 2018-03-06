@@ -4,6 +4,7 @@
 (() => {
   "use strict";
 
+  const _ = require('lodash');
   const Promise = require("bluebird");
   const Mustache = require("mustache");
   const pug = require("pug");
@@ -46,6 +47,9 @@
       this.tasks = tasks;
     }
     
+    /**
+     * @inheritdoc
+     */
     async findContract(req, res) {
       const contractId = req.params.id;
       if (!contractId) {
@@ -79,6 +83,73 @@
           res.status(200).send(await this.translateDatabaseContract(databaseContract));
           break;
       }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async updateContract(req, res) {
+      const contractId = req.params.id;
+      if (!contractId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseContract = await this.models.findContractByExternalId(contractId);
+      if (!databaseContract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const updateContract = _.isObject(req.body) ? Contract.constructFromObject(req.body) : null;
+      if (!updateContract) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      if (!updateContract.itemGroupId) {
+        this.sendBadRequest(res, "itemGroupId is required");
+        return;
+      }
+
+      const deliveryPlace = await this.models.findDeliveryPlaceByExternalId(updateContract.deliveryPlaceId);
+      const itemGroup = await this.models.findItemGroupByExternalId(updateContract.itemGroupId);
+
+      if (!itemGroup) {
+        this.sendBadRequest(res, "Invalid itemGroupId");
+        return;
+      }
+      
+      const deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
+      const itemGroupId = itemGroup.id;
+      const contractQuantity = updateContract.contractQuantity;
+      const deliveredQuantity = updateContract.deliveredQuantity;
+      const startDate = updateContract.startDate;
+      const endDate = updateContract.endDate;
+      const signDate = updateContract.signDate;
+      const termDate = updateContract.termDate;
+      const status = updateContract.status;
+      const remarks = updateContract.remarks;
+      
+      await this.models.updateContract(databaseContract.id, 
+        deliveryPlaceId, 
+        itemGroupId, 
+        contractQuantity, 
+        deliveredQuantity, 
+        startDate, 
+        endDate, 
+        signDate, 
+        termDate, 
+        status, 
+        remarks);
+
+      const updatedDatabaseContract = await this.models.findContractById(databaseContract.id);
+      if (!updatedDatabaseContract) {
+        this.sendInternalServerError(res, "Failed to update contract");
+        return; 
+      }
+      
+      res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
     }
     
     /**
@@ -239,7 +310,7 @@
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
-      
+
       return Contract.constructFromObject({
         "id": contract.externalId,
         "contactId": contract.userId,
