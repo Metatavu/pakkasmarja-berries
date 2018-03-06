@@ -4,7 +4,7 @@
 (() => {
   "use strict";
 
-  const _ = require('lodash');
+  const _ = require("lodash");
   const Promise = require("bluebird");
   const Mustache = require("mustache");
   const pug = require("pug");
