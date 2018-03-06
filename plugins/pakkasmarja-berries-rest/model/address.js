@@ -11,7 +11,7 @@
   /**
    * The Address model module.
    * @module model/Address
-   * @version 0.0.2
+   * @version 0.0.3
    */
 
   /**

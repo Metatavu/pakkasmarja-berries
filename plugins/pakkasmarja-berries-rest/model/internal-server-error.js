@@ -11,7 +11,7 @@
   /**
    * The InternalServerError model module.
    * @module model/InternalServerError
-   * @version 0.0.2
+   * @version 0.0.3
    */
 
   /**

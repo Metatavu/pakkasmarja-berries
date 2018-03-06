@@ -42,9 +42,9 @@
      * @return {Promise} promise
      */
     resetUsers(userIds, t) {
-      return userIds.map((userId) => {
+      return Promise.all(userIds.map((userId) => {
         return this.resetUser(userId, t);
-      });
+      }));
     }
 
   }
