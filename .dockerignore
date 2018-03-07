@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.sass-cache
+/nbproject
+.sass-cache
+keycloak-3.*
+keycloak.log
+.instrument
+.nyc_output
+coverage
+*~

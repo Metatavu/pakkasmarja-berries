@@ -16,7 +16,10 @@
   const cors = require("cors");
   const SequelizeStore = require("connect-session-sequelize")(session.Store);
   
-  config.file({file: __dirname + "/config.json"});
+  config
+    .env()
+    .file({file: __dirname + "/config.json"})
+    .defaults(require( __dirname + "/default-config.json"));
    
   const options = require(__dirname + "/options");
   const architectConfig = architect.loadConfig(__dirname + "/config.js");
