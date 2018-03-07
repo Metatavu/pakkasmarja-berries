@@ -17,7 +17,11 @@
   const SequelizeStore = require("connect-session-sequelize")(session.Store);
   
   config
-    .env()
+    .env({
+      separator: "_",
+      lowerCase: true,
+      parseValues: true
+    })
     .file({file: __dirname + "/config.json"})
     .defaults(require( __dirname + "/default-config.json"));
    
@@ -53,9 +57,12 @@
     const clusterMessages = architectApp.getService("pakkasmarja-berries-cluster-messages");
     const logger = architectApp.getService("logger");
     
-    shadyWorker.start(config.get("server-group"), options.getOption("port"), options.getOption("host"));
+    const port = options.getOption("port") || 3000;
+    const host = options.getOption("host") || "localhost";
+    
+    shadyWorker.start(config.get("server-group"), port, host);
 
-    const port = options.getOption("port");
+    
     const app = express();
     const httpServer = http.createServer(app);
 

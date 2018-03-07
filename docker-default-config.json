@@ -41,7 +41,7 @@
     }
   },
   "amqp": {
-    "url": "amqp://localhost"
+    "url": "amqp://rabbitmq"
   },
   "firebase": {
     "server-key": "NA"
@@ -63,7 +63,7 @@
     }
   },
   "mysql": {
-    "host": "localhost",
+    "host": "mysql",
     "port": "3306"
   }
 }
