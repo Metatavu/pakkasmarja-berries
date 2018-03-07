@@ -20,7 +20,11 @@
     .env({
       separator: "_",
       lowerCase: true,
-      parseValues: true
+      parseValues: true,
+      transform: (obj) => {
+        obj.key = obj.key.replace(/([^_])_([^_])/g, '$1-$2');
+        return obj;
+      }
     })
     .file({file: __dirname + "/config.json"})
     .defaults(require( __dirname + "/default-config.json"));
