@@ -18,7 +18,7 @@
   
   config
     .env({
-      separator: "_",
+      separator: "__",
       lowerCase: true,
       parseValues: true,
       transform: (obj) => {
