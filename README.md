@@ -109,9 +109,9 @@ Change following variables to match your configuration
 
     docker run -p ${KEYCLOAK_PORT}10:8080 --name keycloak --link mysql:mysql -e MYSQL_DATABASE=keycloak -e MYSQL_USER=keycloak -e MYSQL_PASSWORD=kcpass -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -e PROXY_ADDRESS_FORWARDING=true -d jboss/keycloak
 
-### Setup Keycloak realm
-
 Now the Keycloak should be running in https://somewhere.example.com:445. 
+
+### Setup Keycloak realm
 
 You should create new realm called 'pm' and add following clients:
 
@@ -134,7 +134,7 @@ You should create new realm called 'pm' and add following clients:
 
 ### Wordpress
 
-Setup environment variables
+#### Setup environment variables
 
     export KEYCLOAK_CLIENT_SECRET=[client secret from pmwp credentials]
     export KEYCLOAK_BASE=https://$SERVER_NAME:${KEYCLOAK_PORT}/auth/realms/pm
@@ -142,6 +142,8 @@ Setup environment variables
     export REALM_ADMIN_EMAIL=someone@example.com
     export WORDPRESS_MANAGEMENT_CONF='{ "api-url": "https://${SERVER_NAME}:'${APP_PORT}'/rest/v1" }'
     export WORDPRESS_OPENID_CONF='{ "login_type":"auto", "client_id":"pmwp", "client_secret":"${KEYCLOAK_CLIENT_SECRET}", "scope":"openid", "endpoint_login":"'${KEYCLOAK_BASE}'\/protocol\/openid-connect\/auth", "endpoint_userinfo":"'${KEYCLOAK_BASE}'\/protocol\/openid-connect\/userinfo", "endpoint_token":"'${KEYCLOAK_BASE}'\/protocol\/openid-connect\/token", "endpoint_end_session":"'${KEYCLOAK_BASE}'\/protocol\/openid-connect\/logout", "identity_key":"preferred_username", "no_sslverify":"0", "http_request_timeout":"5", "enforce_privacy":"1", "alternate_redirect_uri":"0", "nickname_key":"preferred_username", "email_format":"{email}", "displayname_format":"", "identify_with_username":"0", "link_existing_users":"1", "redirect_user_back":"0", "enable_logging":"1", "log_limit":"1000" }'
+
+#### Install
 
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8'
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE USER wordpress IDENTIFIED BY "wppass"'
@@ -156,6 +158,8 @@ Setup environment variables
     docker run -u33 -it --rm --volumes-from wordpress --network container:wordpress wordpress:cli option update pakkasmarja_management "$WORDPRESS_MANAGEMENT_CONF" --format=json && 
     docker run -u33 -it --rm --volumes-from wordpress --network container:wordpress wordpress:cli option update openid_connect_generic_settings "$WORDPRESS_OPENID_CONF" --format=json && 
     docker run -u33 -it --rm --volumes-from wordpress --network container:wordpress wordpress:cli language core install fi --activate
+    
+Now the Wordpress should be running in https://somewhere.example.com:444. 
 
 ### Pakkasmarja Server
 
@@ -190,6 +194,8 @@ Setup environment variables
       -e MYSQL__PASSWORD=pmpass \
       -e SAP__IMPORT_FILE=/usr/src/SAP-Export.xml \
       metatavu/pakkasmarja-berries
+
+Now the Server should be running in https://somewhere.example.com:443.
 
 ### SAP data
 
