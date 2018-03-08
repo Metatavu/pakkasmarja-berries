@@ -36,7 +36,7 @@
         return 'help';
       }
       
-      const required = ['port', 'host'];  
+      const required = [];  
       
       for (var i = 0; i < required.length; i++) {
         var requiredOption = required[i];
