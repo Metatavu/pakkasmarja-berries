@@ -5,7 +5,7 @@ Shady Engine backend worker for Pakkasmarja Berries application
 
 ### Prerequisites
 
-Setup a dns address to point into your server.
+These instructions assume that system is being installed on machine with Ubuntu 16.04 OS and that you have DNS address pointing to your server.
 
 ### Install Docker
 
