@@ -191,6 +191,7 @@ Now the Wordpress should be running in https://somewhere.example.com:444.
       -e MYSQL__DATABASE=pakkasmarja \
       -e MYSQL__USERNAME=pakkasmarja \
       -e MYSQL__PASSWORD=pmpass \
+      -e WKHTMLTOPDF__COMMAND=/opt/wkhtmltopdf/wkhtmltox/bin/wkhtmltopdf \
       -e SAP__IMPORT_FILE=/usr/src/SAP-Export.xml \
       metatavu/pakkasmarja-berries
 
