@@ -5,6 +5,8 @@ WORKDIR /usr/src/pakkasmarja
 COPY package*.json ./
 COPY docker-default-config.json ./default-config.json
 RUN npm install
+RUN npm install grunt -g
+RUN grunt
 COPY . .
 EXPOSE 3000
 CMD [ "npm", "start" ]
