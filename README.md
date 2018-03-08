@@ -145,11 +145,10 @@ You should create new realm called 'pm' and add following clients:
 
 #### Install
 
-    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8'
-    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE USER wordpress IDENTIFIED BY "wppass"'
-    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'GRANT ALL ON wordpress.* TO wordpress'
-    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'FLUSH PRIVILEGES'
-
+    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE DATABASE wordpress DEFAULT CHARACTER SET utf8' &&
+    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE USER wordpress IDENTIFIED BY "wppass"' &&
+    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'GRANT ALL ON wordpress.* TO wordpress' &&
+    docker exec -e MYSQL_PWD=mypass mysql mysql -e 'FLUSH PRIVILEGES' &&
     docker run -p ${WP_PORT}10:80 --name wordpress --link mysql:mysql -e WORDPRESS_DB_USER="wordpress" -e WORDPRESS_DB_PASSWORD="wppass" -d wordpress &&
     docker run -u33 -it --rm --volumes-from wordpress --network container:wordpress wordpress:cli core install --url="https://${SERVER_NAME}:${WP_PORT}/" --title="Pakkasmarja Hallinta - testi" --admin_user="${REALM_ADMIN_USER}" --admin_email="${REALM_ADMIN_EMAIL}" &&
     docker run -u33 -it --rm --volumes-from wordpress --network container:wordpress wordpress:cli plugin install members --activate && 
