@@ -109,8 +109,8 @@
       next();
     });
     
+    app.set('trust proxy', true);
     app.use(cors());
-
     app.use(morgan("combined"));
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
