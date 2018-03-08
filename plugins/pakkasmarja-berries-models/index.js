@@ -1157,6 +1157,27 @@
     findDocumentTemplateById(id) {
       return this.DocumentTemplate.findOne({ where: { id : id } });
     }
+
+    /**
+     * Updates a document template
+     * 
+     * @param {int} id document template id
+     * @param {String} contents template contents
+     * @param {String} header template header
+     * @param {String} footer template footer
+     * @return {Promise} promise for update
+     */
+    updateDocumentTemplate(id, contents, header, footer) {
+      return this.DocumentTemplate.update({
+        contents: contents, 
+        header: header,
+        footer: footer
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
     
     // ContractDocumentTemplate
       

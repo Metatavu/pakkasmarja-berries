@@ -120,7 +120,58 @@
 
       res.status(200).send(itemGroupDocumentTemplates);
     }
-    
+
+   /**
+     * @inheritdoc
+     */
+    async updateItemGroupDocumentTemplate(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const id = req.params.id;
+      if (!itemGroupId || !id) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseItemGroupDocumentTemplate = await this.models.findItemGroupDocumentTemplateByExternalId(id);
+      if (!databaseItemGroupDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databaseItemGroupDocumentTemplate.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseDocumentTemplate = await this.models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
+      if (!databaseDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? ItemGroupDocumentTemplate.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      await this.models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header, payload.footer);
+
+      const updatedDocumentTemplate = await this.models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
+      if (!updatedDocumentTemplate) {
+        this.sendInternalServerError(res, "Failed to update document template");
+        return;
+      }
+      
+      res.status(200).send(this.translateItemGroupDocumentTemplate(databaseItemGroupDocumentTemplate, databaseItemGroup, updatedDocumentTemplate));
+    }
+
     /**
      * Translates Database item group into REST entity
      * 
