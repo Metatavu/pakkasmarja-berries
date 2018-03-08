@@ -162,7 +162,7 @@
       .expect(200)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-        t.deepEqual(response.body, itemGroupDocumentTemplateDatas['2fe6ad72-2227-11e8-a5fd-efc457362c53']);
+        t.deepEqual(response.body, itemGroupDocumentTemplateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
       });
   });
 
@@ -192,7 +192,7 @@
       });
   });
   
-  test("Test find item group document template - incorrect id", async (t) => {
+  test("Test find item group document template - incorrect id", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -205,7 +205,7 @@
       });
   });
   
-  test("Test find item group document template - invalid id", async (t) => {
+  test("Test find item group document template - invalid id", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -229,7 +229,7 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.equal(response.body.length, 1);
-        t.deepEqual(response.body[0], itemGroupDocumentTemplateDatas['2fe6ad72-2227-11e8-a5fd-efc457362c53']);
+        t.deepEqual(response.body[0], itemGroupDocumentTemplateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
       });
   });
   
@@ -240,11 +240,11 @@
       .put("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
-      .send(itemGroupDocumentTemplateUpdateDatas['2fe6ad72-2227-11e8-a5fd-efc457362c53'])
+      .send(itemGroupDocumentTemplateUpdateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"])
       .expect(200)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-        t.deepEqual(response.body, itemGroupDocumentTemplateUpdateDatas['2fe6ad72-2227-11e8-a5fd-efc457362c53']);
+        t.deepEqual(response.body, itemGroupDocumentTemplateUpdateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
       });
   });
   

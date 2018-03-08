@@ -36,7 +36,7 @@
       }
       
       const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
-      if (!databaseItemGroup) {
+      if (!databaseItemGroup) {
         this.sendNotFound(res);
         return;
       }
@@ -69,13 +69,13 @@
       }
       
       const databaseItemGroupDocumentTemplate = await this.models.findItemGroupDocumentTemplateByExternalId(id);
-      if (!databaseItemGroupDocumentTemplate) {
+      if (!databaseItemGroupDocumentTemplate) {
         this.sendNotFound(res);
         return;
       }
 
       const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
-      if (!databaseItemGroup) {
+      if (!databaseItemGroup) {
         this.sendNotFound(res);
         return;
       }
@@ -86,7 +86,7 @@
       }
 
       const databaseDocumentTemplate = await this.models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
-      if (!databaseDocumentTemplate) {
+      if (!databaseDocumentTemplate) {
         this.sendNotFound(res);
         return;
       }
@@ -105,7 +105,7 @@
       }
 
       const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
-      if (!databaseItemGroup) {
+      if (!databaseItemGroup) {
         this.sendNotFound(res);
         return;
       }
@@ -121,7 +121,7 @@
       res.status(200).send(itemGroupDocumentTemplates);
     }
 
-   /**
+    /**
      * @inheritdoc
      */
     async updateItemGroupDocumentTemplate(req, res) {
@@ -133,13 +133,13 @@
       }
       
       const databaseItemGroupDocumentTemplate = await this.models.findItemGroupDocumentTemplateByExternalId(id);
-      if (!databaseItemGroupDocumentTemplate) {
+      if (!databaseItemGroupDocumentTemplate) {
         this.sendNotFound(res);
         return;
       }
 
       const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
-      if (!databaseItemGroup) {
+      if (!databaseItemGroup) {
         this.sendNotFound(res);
         return;
       }
@@ -150,7 +150,7 @@
       }
 
       const databaseDocumentTemplate = await this.models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
-      if (!databaseDocumentTemplate) {
+      if (!databaseDocumentTemplate) {
         this.sendNotFound(res);
         return;
       }
@@ -164,7 +164,7 @@
       await this.models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header, payload.footer);
 
       const updatedDocumentTemplate = await this.models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
-      if (!updatedDocumentTemplate) {
+      if (!updatedDocumentTemplate) {
         this.sendInternalServerError(res, "Failed to update document template");
         return;
       }
