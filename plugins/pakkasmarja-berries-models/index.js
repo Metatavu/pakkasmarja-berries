@@ -239,11 +239,16 @@
 
       await this.defineModel("ItemGroupDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
         indexes: [{
+          name: "UN_ITEM_GROUP_TEMPLATE_EXTERNAL_ID",
+          unique: true,
+          fields: ["externalId"]
+        }, {
           name: "UN_ITEM_GROUP_TEMPLATE_ITEM_GROUP_ID_TYPE",
           unique: true,
           fields: ["type", "itemGroupId"]
@@ -252,11 +257,16 @@
       
       await this.defineModel("ContractDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
         indexes: [{
+          name: "UN_CONTRACT_DOCUMENT_TEMPLATE_EXTERNAL_ID",
+          unique: true,
+          fields: ["externalId"]
+        }, {
           name: "UN_CONTRACT_DOCUMENT_TEMPLATE_CONTRACT_ID_TYPE",
           unique: true,
           fields: ["type", "contractId"]
@@ -1151,6 +1161,16 @@
     // ContractDocumentTemplate
       
     /**
+     * Finds a contract document template by externalId
+     * 
+     * @param {String} externalId external id
+     * @return {Promise} promise for contract document template
+     */
+    findContractDocumentTemplateByExternalId(externalId) {
+      return this.ContractDocumentTemplate.findOne({ where: { externalId: externalId } });
+    }
+      
+    /**
      * Finds a contract document template by type and contract id
      * 
      * @param {String} type document template type
@@ -1172,6 +1192,26 @@
      */
     findItemGroupDocumentTemplateByTypeAndItemGroupId(type, itemGroupId) {
       return this.ItemGroupDocumentTemplate.findOne({ where: { type : type, itemGroupId: itemGroupId } });
+    }
+
+    /**
+     * Finds an item group document template by externalId
+     * 
+     * @param {String} externalId externalId
+     * @return {Promise} promise for contract document template
+     */
+    findItemGroupDocumentTemplateByExternalId(externalId) {
+      return this.ItemGroupDocumentTemplate.findOne({ where: { externalId: externalId } });
+    }
+      
+    /**
+     * List item group document templates by itemGroupId
+     * 
+     * @param {int} contractId contract id
+     * @return {Promise} promise for contract document templates
+     */
+    listItemGroupDocumentTemplateByItemGroupId(itemGroupId) {
+      return this.ItemGroupDocumentTemplate.findAll({ where: { itemGroupId: itemGroupId } });
     }
     
     // ContractDocument
