@@ -170,6 +170,12 @@ Now the Wordpress should be running in https://somewhere.example.com:444.
     cd /tmp
     https://github.com/Metatavu/pakkasmarja-berries.git
     cd pakkasmarja-berries
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    npm install -g grunt
+    sudo apt-get install ruby-sass
+    npm install
+    grunt    
     docker build -t metatavu/pakkasmarja-berries .
 
     docker run -p ${APP_PORT}10:3000 -d --name pakkasmarja-berries --link mysql:mysql --link rabbitmq:rabbitmq \
