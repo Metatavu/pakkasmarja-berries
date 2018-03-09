@@ -167,10 +167,10 @@ Now the Wordpress should be running in https://somewhere.example.com:444.
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'FLUSH PRIVILEGES'
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE USER pakkasmarja IDENTIFIED BY "pmpass"'
 
-    npm install -g cordova
     curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
     sudo apt-get install -y nodejs
     npm install -g grunt
+    npm install -g cordova
     sudo apt-get install ruby-sass
     
     cd /tmp
