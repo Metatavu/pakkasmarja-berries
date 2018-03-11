@@ -311,7 +311,7 @@
       });
   });
 
-  test("Test find contract document template - incorrect contract", async (t) => {
+  test("Test find contract document template - incorrect contract", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -324,7 +324,7 @@
       });
   });
 
-  test("Test find contract document template - invalid contract", async (t) => {
+  test("Test find contract document template - invalid contract", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
