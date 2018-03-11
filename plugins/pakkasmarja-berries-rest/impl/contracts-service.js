@@ -11,6 +11,7 @@
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
+  const ContractDocumentTemplate = require(`${__dirname}/../model/contract-document-template`);
   const toArray = require("stream-to-array");
   const slugify = require("slugify");
   const moment = require("moment");
@@ -155,7 +156,6 @@
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async getContractDocument(req, res) {
       const contractId = req.params.id;
       const type = req.params.type;
@@ -202,8 +202,122 @@
       }
       
     }
-    /* jshint ignore:end */
+
+    /**
+     * @inheritdoc
+     */
+    async findContractDocumentTemplate(req, res) {
+      const contractId = req.params.contractId;
+      const contractDocumentTemplateId = req.params.contractDocumentTemplateId;
+      if (!contractId || !contractDocumentTemplateId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseContractDocumentTemplate = await this.models.findContractDocumentTemplateByExternalId(contractDocumentTemplateId);
+      if (!databaseContractDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseContract = await this.models.findContractByExternalId(contractId);
+      if (!databaseContract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databaseContractDocumentTemplate.contractId !== databaseContract.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseDocumentTemplate = await this.models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId);
+      if (!databaseDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, databaseDocumentTemplate));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async listContractDocumentTemplates(req, res) {
+      const contractId = req.params.contractId;
+      if (!contractId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const contract = await this.models.findContractByExternalId(contractId);
+      if (!contract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseContractDocumentTemplates = await this.models.listContractDocumentTemplateByContractId(contract.id);
+      const contractDocumentTemplates = await Promise.all(databaseContractDocumentTemplates.map((databaseContractDocumentTemplate) => {
+        return this.models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId)
+          .then((databaseDocumentTemplate) => {
+            return this.translateContractDocumentTemplate(databaseContractDocumentTemplate, contract, databaseDocumentTemplate);
+          });
+      }));
+
+      res.status(200).send(contractDocumentTemplates);
+    }
     
+    /**
+     * @inheritdoc
+     */
+    async updateContractDocumentTemplate(req, res) {
+      const contractId = req.params.contractId;
+      const contractDocumentTemplateId = req.params.contractDocumentTemplateId;
+      if (!contractId || !contractDocumentTemplateId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseContractDocumentTemplate = await this.models.findContractDocumentTemplateByExternalId(contractDocumentTemplateId);
+      if (!databaseContractDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseContract = await this.models.findContractByExternalId(contractId);
+      if (!databaseContract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databaseContractDocumentTemplate.contractId !== databaseContract.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseDocumentTemplate = await this.models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId);
+      if (!databaseDocumentTemplate) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? ContractDocumentTemplate.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      await this.models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header, payload.footer);
+
+      const updatedDocumentTemplate = await this.models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId);
+      if (!updatedDocumentTemplate) {
+        this.sendInternalServerError(res, "Failed to update document template");
+        return;
+      }
+      
+      res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, updatedDocumentTemplate));
+    }
+
     /**
      * Renders a document template component into HTML text
      * 
@@ -326,6 +440,24 @@
         "remarks": contract.remarks
       });
       
+    }
+
+    /**
+     * Translates Database ContractDocumentTemplate into REST entity
+     * 
+     * @param {*} databaseContractDocumentTemplate Sequelize contract document template
+     * @param {*} databaseContract Sequelize contract model
+     * @param {*} databaseDocumentTemplate Sequelize document template
+     */
+    translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, databaseDocumentTemplate) {
+      return ContractDocumentTemplate.constructFromObject({
+        "id": databaseContractDocumentTemplate.externalId,
+        "contractId": databaseContract.externalId,
+        "type": databaseContractDocumentTemplate.type,
+        "contents": databaseDocumentTemplate.contents,
+        "header": databaseDocumentTemplate.header,
+        "footer": databaseDocumentTemplate.footer
+      });
     }
 
     /**

@@ -1201,6 +1201,16 @@
     findContractDocumentTemplateByTypeAndContractId(type, contractId) {
       return this.ContractDocumentTemplate.findOne({ where: { type : type, contractId: contractId } });
     }
+      
+    /**
+     * List contract document templates by contractId
+     * 
+     * @param {int} contractId contract id
+     * @return {Promise} promise for contract document templates
+     */
+    listContractDocumentTemplateByContractId(contractId) {
+      return this.ContractDocumentTemplate.findAll({ where: { contractId: contractId } });
+    }
     
     // ItemGroupDocumentTemplate
       
