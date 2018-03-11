@@ -1147,6 +1147,21 @@
     }
     
     // DocumentTemplate
+
+    /**
+     * Creates new document template
+     * 
+     * @param {String} contents contents HTML
+     * @param {String} header header HTML
+     * @param {String} footer footer HTML
+     */
+    createDocumentTemplate(contents, header, footer) {
+      return this.DocumentTemplate.create({
+        contents: contents,
+        header: header,
+        footer: footer
+      });
+    }
     
     /**
      * Finds a document template by id
@@ -1181,6 +1196,20 @@
     
     // ContractDocumentTemplate
       
+    /**
+     * Creates new contract document template
+     * 
+     * @param {int} contractId contract id
+     * @param {int} documentTemplateId document template id
+     */
+    createContractDocumentTemplate(type, contractId, documentTemplateId) {
+      return this.ContractDocumentTemplate.create({
+        type: type,
+        contractId: contractId,
+        documentTemplateId: documentTemplateId
+      });
+    }
+
     /**
      * Finds a contract document template by externalId
      * 

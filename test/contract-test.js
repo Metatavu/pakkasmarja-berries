@@ -20,6 +20,7 @@
   const contractExcelMultiple = require(`${__dirname}/data/contract-xlsx-multiple.json`);
   const contractDocumentTemplateDatas = require(`${__dirname}/data/contract-document-templates.json`);
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
+  const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
 
   test("Test listing contracts - xlsx", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
@@ -389,6 +390,27 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, contractDocumentTemplateUpdateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
+      });
+  });
+  
+  test("Test create contract document template", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .post("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send(contractDocumentTemplateCreateData)
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        
+        const expected = contractDocumentTemplateCreateData;
+        Object.keys(expected).forEach((expectKey) => {
+          const expectValue = expected[expectKey];
+          const actualValue = response.body[expectKey];
+          t.equal(actualValue, expectValue, `[${expectKey}] is ${actualValue}`);
+        });
       });
   });
 

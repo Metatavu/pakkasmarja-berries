@@ -202,6 +202,34 @@
       }
       
     }
+    
+    /**
+     * @inheritdoc
+     */
+    async createContractDocumentTemplate(req, res) {
+      const contractId = req.params.contractId;
+      if (!contractId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const databaseContract = await this.models.findContractByExternalId(contractId);
+      if (!databaseContract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? ContractDocumentTemplate.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      const databaseDocumentTemplate = await this.models.createDocumentTemplate(payload.contents, payload.header, payload.footer);
+      const databaseContractDocumentTemplate = await this.models.createContractDocumentTemplate(payload.type, databaseContract.id, databaseDocumentTemplate.id);
+
+      res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, databaseDocumentTemplate));
+    }
 
     /**
      * @inheritdoc
