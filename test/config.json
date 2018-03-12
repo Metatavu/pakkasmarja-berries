@@ -1,43 +1,5 @@
 {
-  "server-group": "group-1",
-  "app-version": "1.2.7",
-  "session-secret": "session-secret",
   "mode": "TEST",
-  "tasks": {
-    "tableName": "tasks",
-    "queues": {
-      "contractDocumentStatus": {
-        "concurrent": 1,
-        "afterProcessDelay": 5000,
-        "maxTimeout": 20000
-      },
-      "contractDocumentStatusBatch": {
-        "concurrent": 1,
-        "afterProcessDelay": 5000,
-        "maxTimeout": 20000
-      },
-      "sapContactUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapDeliveryPlaceUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapItemGroupUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapContractUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      }
-    }
-  },
   "keycloak": {
     "admin": {
       "realm": "pm",
@@ -64,9 +26,6 @@
       "confidential-port": 0
     }
   },
-  "amqp": {
-    "url": "amqp://localhost"
-  }, 
   "client": {
     "server": {
       "host": "localhost",

@@ -15,6 +15,7 @@
   const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
   const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
   const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
+  const OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES = "ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES";
   
   /**
    * Implementation for Operation REST service
@@ -60,6 +61,9 @@
         case OPERATION_SAP_ITEM_GROUP_SYNC:        
         case OPERATION_SAP_CONTRACT_SYNC:
           operationReport = await this.readSapImportFileTask(type);
+          break;
+        case OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES:
+          operationReport = await this.createItemGroupDefaultDocumentTemplates();
           break;
         default:
           this.sendBadRequest(res, `Invalid type ${type}`);
@@ -212,6 +216,33 @@
           this.tasks.enqueueSapContractUpdate(operationReport.id, contract, i);
         }
       });
+
+      return operationReport;
+    }
+
+    /** 
+     * Creates yearly default document templates for an item group
+     * 
+     * @return {Promise} promise for an operation report
+    */
+    async createItemGroupDefaultDocumentTemplates() {
+      const itemGroups = await this.models.listItemGroups();
+      const operationReport = await this.models.createOperationReport("ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES");
+      const type = `${(new Date()).getFullYear()}`;
+      const operationReportItems = Promise.all(itemGroups.map(async (itemGroup) => {
+        try {
+          const hasDocumentTemplate = !!(await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, itemGroup.id)); 
+          const message = hasDocumentTemplate ? `Item group ${itemGroup.name} already had template ${type}` : `Added document template ${type} for item group ${itemGroup.name}`;
+          if (!hasDocumentTemplate) {
+            const documentTemplate = await this.models.createDocumentTemplate("Insert Contents", null, null);
+            const itemGroupDocumentTemplate = await this.models.createItemGroupDocumentTemplate(type, itemGroup.id, documentTemplate.id); 
+          }
+
+          return await this.models.createOperationReportItem(operationReport.id, message, true, true);
+        } catch (e) {
+          return await this.models.createOperationReportItem(operationReport.id, `Failed item group template synchronization with following message ${e}`, true, false);
+        }
+      }));
 
       return operationReport;
     }
