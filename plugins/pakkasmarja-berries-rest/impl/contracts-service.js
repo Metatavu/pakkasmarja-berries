@@ -273,18 +273,19 @@
      */
     async listContractDocumentTemplates(req, res) {
       const contractId = req.params.contractId;
+      const type = req.query.type;
       if (!contractId) {
         this.sendNotFound(res);
         return;
       }
-      
+
       const contract = await this.models.findContractByExternalId(contractId);
       if (!contract) {
         this.sendNotFound(res);
         return;
       }
 
-      const databaseContractDocumentTemplates = await this.models.listContractDocumentTemplateByContractId(contract.id);
+      const databaseContractDocumentTemplates = this.listDatabaseContractDocumentTemplates(contract.id, type);
       const contractDocumentTemplates = await Promise.all(databaseContractDocumentTemplates.map((databaseContractDocumentTemplate) => {
         return this.models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId)
           .then((databaseDocumentTemplate) => {
@@ -601,6 +602,28 @@
       const filename =`${slugify(documentName)}.pdf`;
       
       return { documentName:documentName, filename: filename, dataStream: await this.pdf.renderPdf(html, header, footer, baseUrl) };      
+    }
+
+    /**
+     * Lists contract document templates.
+     * 
+     * @param {int} contractId contract id
+     * @param {String} type template type. Optional, ignored if null
+     * @returns {Object[]} array of Sequelize contract document templates
+     */
+    listDatabaseContractDocumentTemplates(contractId, type) {
+      if (type) {
+        return this.models.findContractDocumentTemplateByTypeAndContractId(type, contractId)
+          .then((contractDocumentTemplate) => {
+            if (contractDocumentTemplate) {
+              return [contractDocumentTemplate];
+            } else {
+              return [];
+            }
+          }); 
+      } else {
+        return this.models.listContractDocumentTemplateByContractId(contractId);
+      }
     }
   }
 
