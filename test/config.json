@@ -1,5 +1,6 @@
 {
   "mode": "TEST",
+  "session-secret": "sekriet",
   "keycloak": {
     "admin": {
       "realm": "pm",
