@@ -166,10 +166,44 @@ Now the Wordpress should be running in https://somewhere.example.com:444.
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE DATABASE pakkasmarja DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'FLUSH PRIVILEGES'
     docker exec -e MYSQL_PWD=mypass mysql mysql -e 'CREATE USER pakkasmarja IDENTIFIED BY "pmpass"'
+
+    curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    npm install -g grunt
+    npm install -g cordova
+    sudo apt-get install ruby-sass
     
     cd /tmp
-    https://github.com/Metatavu/pakkasmarja-berries.git
-    cd pakkasmarja-berries
+    git clone https://github.com/Metatavu/pakkasmarja-berries.git
+    git clone https://github.com/Metatavu/pakkasmarja-berries-app.git
+    cd /tmp/pakkasmarja-berries-app/src/api-client/
+    npm install
+    cd /tmp/pakkasmarja-berries-app
+    mkdir -p www/js
+    rm hooks/after_prepare/cordova-icon.sh
+    npm install
+    cat config.xml|sed s/pakkasmarja-berries\.metatavu\.io/${SERVER_NAME}:${APP_PORT}/ > config.xml
+    echo "
+    {
+     \"server\": {
+        \"host\": \"${SERVER_NAME}\",
+        \"port\": ${APP_PORT},
+        \"secure\": true
+     },
+     \"generic\": {
+        \"defaultSrc\": \"'self' cdvphotolibrary: http: https: data: gap: ws: wss: https://ssl.gstatic.com *.metatavu.io 'unsafe-inline'\",
+        \"styleSrc\": \"'self' http: https: *.metatavu.io localhost:8000 'unsafe-inline'\",
+        \"mediaSrc\": \"*\"
+     }
+    }" > config.json
+
+    cordova platform add browser
+    cordova plugin add cordova-plugin-photo-library --force
+    cordova build browser
+    cp -R platforms/browser/www /tmp/pakkasmarja-berries/webapp
+    cd /tmp/pakkasmarja-berries
+    npm install
+    grunt    
     docker build -t metatavu/pakkasmarja-berries .
 
     docker run -p ${APP_PORT}10:3000 -d --name pakkasmarja-berries --link mysql:mysql --link rabbitmq:rabbitmq \
