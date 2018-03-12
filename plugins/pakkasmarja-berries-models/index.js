@@ -1242,7 +1242,21 @@
     }
     
     // ItemGroupDocumentTemplate
-      
+    
+    /**
+     * Creates new item group document template
+     * 
+     * @param {int} itemGroupId item group id
+     * @param {int} documentTemplateId document template id
+     */
+    createItemGroupDocumentTemplate(type, itemGroupId, documentTemplateId) {
+      return this.ItemGroupDocumentTemplate.create({
+        type: type,
+        itemGroupId: itemGroupId,
+        documentTemplateId: documentTemplateId
+      });
+    }
+
     /**
      * Finds an item group document template by type and itemGroupId id
      * 
