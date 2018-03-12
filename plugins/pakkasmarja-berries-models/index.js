@@ -1199,6 +1199,7 @@
     /**
      * Creates new contract document template
      * 
+     * @param {String} type type
      * @param {int} contractId contract id
      * @param {int} documentTemplateId document template id
      */
@@ -1246,6 +1247,7 @@
     /**
      * Creates new item group document template
      * 
+     * @param {String} type type
      * @param {int} itemGroupId item group id
      * @param {int} documentTemplateId document template id
      */

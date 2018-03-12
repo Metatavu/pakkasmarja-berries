@@ -378,6 +378,35 @@
       });
   });
   
+  test("Test list contract document templates - by type", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=master")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDocumentTemplateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
+      });
+  });
+  
+  test("Test list contract document templates - by type - not found", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=notfound")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 0);
+      });
+  });
+  
   test("Test update contract document template", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
