@@ -73,6 +73,21 @@
       });
   });
 
+  test("Test list contracts - accept with parameters", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json;charset=utf8")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
   test("Test list contracts - all", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
