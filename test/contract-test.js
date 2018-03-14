@@ -4,6 +4,7 @@
 (() => {
   "use strict";
 
+  const cheerio = require('cheerio');
   const test = require("blue-tape");
   const request = require("supertest");
   const requestUtils = require(`${__dirname}/request-utils`);
@@ -267,7 +268,63 @@
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
-
+  
+  test("Test contract html", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "text/html")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        const $ = cheerio.load(response.text);
+        t.equal("Example berry purchase contract", $('h1').text(), "Contains header");
+        t.ok($('p').text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
+      });
+  });
+  
+  test("Test contract pdf - item group", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=HTML")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "text/html")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        const $ = cheerio.load(response.text);
+        t.ok($('p').text().indexOf("Test Corp. (company in future) and Example Co. (company in future).") > -1, "Contains contents");
+      });
+  });
+  
+  test("Test contract pdf - without token", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
+      .set("Accept", "text/html")
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
+  test("Test contract pdf - invalid token", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
+      .set("Authorization", "Bearer FAKE")
+      .set("Accept", "text/html")
+      .expect(403)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
   test("Test sync contracts", async (t) => {
     const accessToken = await auth.getTokenDefault();
     
@@ -503,5 +560,5 @@
         });
       });
   });
-
+  
 })();
