@@ -176,14 +176,28 @@
         this.sendNotFound(res);
         return;
       }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
       
       switch (format) {
         case "HTML":
-          this.sendNotImplemented(res);
+          this.getContractDocumentHtml(baseUrl, contract, type)
+            .then((document) => {
+              if (!document) {
+                this.sendNotFound(res);
+              } else {
+                res.setHeader("Content-type", "text/html");
+                res.send(document.content);
+              }
+            })
+            .catch((err) => {
+              this.logger.error(`PDF Rendering failed on ${err}`);
+              this.sendInternalServerError(res, err);
+            });
           return;
         break;
         case "PDF":
-          this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type)
+          this.getContractDocumentPdf(baseUrl, contract, type)
             .then((document) => {
               if (!document) {
                 this.sendNotFound(res);
@@ -571,7 +585,14 @@
       ];
     }
     
-    async getContractDocumentPdf(baseUrl, contract, type) {
+    /**
+     * Renders contract document as HTML
+     * 
+     * @param {String} baseUrl baseUrl
+     * @param {Contract} contract contract
+     * @param {String} type document type 
+     */
+    async getContractDocumentHtml(baseUrl, contract, type) {
       const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
       const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
       if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
@@ -596,19 +617,41 @@
         companyName: companyName
       };
       
-      const html = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
-      if (!html) {
+      const content = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
+      if (!content) {
         return null;
       }
       
       const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
       const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
-      
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const documentName = `${moment().format("YYYY")} - ${itemGroup.name}, ${companyName}`;
-      const filename =`${slugify(documentName)}.pdf`;
-      
-      return { documentName:documentName, filename: filename, dataStream: await this.pdf.renderPdf(html, header, footer, baseUrl) };      
+      const documentSlug = `${slugify(documentName)}.html`;
+
+      return { 
+        documentName: documentName, 
+        fileName: `${documentSlug}.html`, 
+        content: content, 
+        header: header, 
+        footer: footer
+      };    
+    }
+    
+    /**
+     * Renders contract document as HTML
+     * 
+     * @param {String} baseUrl baseUrl
+     * @param {Contract} contract contract
+     * @param {String} type document type 
+     */
+    async getContractDocumentPdf(baseUrl, contract, type) {
+      const contractDocumentHtml = await this.getContractDocumentHtml(baseUrl, contract, type);
+
+      return { 
+        documentName: contractDocumentHtml.documentName, 
+        fileName: `${contractDocumentHtml.documentSlug}.pdf`, 
+        dataStream: await this.pdf.renderPdf(contractDocumentHtml.content, contractDocumentHtml.header, contractDocumentHtml.footer, baseUrl) 
+      };    
     }
 
     /**
