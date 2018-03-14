@@ -65,7 +65,7 @@
       }
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
-      const accept = req.header("accept") || "application/json";
+      const accept = this.getBareContentType(req.header("accept")) || "application/json";
       if (expectedTypes.indexOf(accept) === -1) {
         this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
         return;
@@ -393,7 +393,7 @@
       const databaseContracts = listAll ? await this.models.listContracts() : await this.models.listContractsByUserId(userId);
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
-      const accept = req.header("accept") || "application/json";
+      const accept = this.getBareContentType(req.header("accept")) || "application/json";
       if (expectedTypes.indexOf(accept) === -1) {
         this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
         return;
@@ -631,6 +631,17 @@
       } else {
         return this.models.listContractDocumentTemplateByContractId(contractId);
       }
+    }
+
+    /**
+     * Returns content type without parameters
+     */
+    getBareContentType(contentType) {
+      if (!contentType) {
+        return null;
+      }
+
+      return contentType.split(";")[0].trim();
     }
   }
 
