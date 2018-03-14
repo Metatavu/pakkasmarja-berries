@@ -384,7 +384,7 @@
      */
     async listContracts(req, res) {
       const listAll = req.query.listAll === "true";
-      if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
+      if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
         this.sendForbidden(res, "You have no permission to list all contracts");
         return;
       }

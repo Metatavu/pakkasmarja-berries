@@ -112,7 +112,7 @@
     sendBadRequest(res, message) {
       res.status(400).send(BadRequest.constructFromObject({
         "code": 400,
-        "message": message || "Bad Request"
+        "message": message || "Bad Request"
       }));
     }
    
@@ -125,7 +125,7 @@
     sendForbidden(res, message) {
       res.status(403).send(Forbidden.constructFromObject({
         "code": 403,
-        "message": message || "Forbidden"
+        "message": message || "Forbidden"
       }));
     }
     
@@ -138,7 +138,7 @@
     sendInternalServerError(res, message) {
       res.status(500).send(InternalServerError.constructFromObject({
         "code": 500,
-        "message": message || "Bad Request"
+        "message": message || "Bad Request"
       }));
     }
     
@@ -151,7 +151,7 @@
     sendNotImplemented(res, message) {
       res.status(501).send(NotImplemented.constructFromObject({
         "code": 501,
-        "message": message || "Not implemented yet"
+        "message": message || "Not implemented yet"
       }));
     }
    

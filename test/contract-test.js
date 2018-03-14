@@ -89,7 +89,7 @@
       });
   });
 
-  test("Test listing all contracts - forbidden", async (t) => {
+  test("Test listing all contracts - forbidden", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
     return request("http://localhost:3002")
