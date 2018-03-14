@@ -1135,6 +1135,18 @@
     listContracts(firstResult, maxResults) {
       return this.Contract.findAll({ where: { }, offset: firstResult, limit: maxResults });
     }
+
+    /**
+     * Lists contracts by userId
+     * 
+     * @param {String} userId user id
+     * @param {int} firstResult first result
+     * @param {int} maxResults max results
+     * @return {Promise} promise for contracts
+     */
+    listContractsByUserId(userId, firstResult, maxResults) {
+      return this.Contract.findAll({ where: { userId: userId }, offset: firstResult, limit: maxResults });
+    }
     
     /**
      * Deletes an contract
