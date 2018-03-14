@@ -470,7 +470,7 @@
      * @param {String} sapId sapId
      */
     resolveSapItemGroupCategory(sapId) {
-      const itemGroupCategories = config.get("sap:itemGroupCategories") || {};
+      const itemGroupCategories = config.get("sap:itemGroupCategories") || {};
       const categories = Object.keys(itemGroupCategories);
 
       for (let i = 0; i < categories.length; i++) {

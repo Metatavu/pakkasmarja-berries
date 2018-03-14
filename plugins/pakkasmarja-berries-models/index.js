@@ -1143,18 +1143,16 @@
      */
     listContracts(userId, itemGroupCategory, firstResult, maxResults) {
       const where = {};
-      const options = {};
 
       if (userId) {
         where.userId = userId;
       }
 
       if (itemGroupCategory) {
-        const categorySQL = this.sequelize.dialect.QueryGenerator.selectQuery('ItemGroups', {
-          attributes: ['id'],
+        const categorySQL = this.sequelize.dialect.QueryGenerator.selectQuery("ItemGroups", {
+          attributes: ["id"],
           where: { category: itemGroupCategory }
-        })
-        .slice(0, -1);
+        }).slice(0, -1);
 
         where.itemGroupId = { [this.Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
       }
@@ -1162,8 +1160,7 @@
       return this.Contract.findAll({ 
         where: where, 
         offset: firstResult, 
-        limit: maxResults,
-        logging: console.log
+        limit: maxResults
       });
     }
     
