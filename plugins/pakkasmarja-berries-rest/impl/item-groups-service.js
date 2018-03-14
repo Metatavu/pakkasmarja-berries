@@ -180,8 +180,9 @@
      */
     translateDatabaseItemGroup(itemGroup) {
       return ItemGroup.constructFromObject({
-        'id': itemGroup.externalId,
-        'name': itemGroup.name
+        "id": itemGroup.externalId,
+        "name": itemGroup.name,
+        "category": itemGroup.category
       });
     }
 

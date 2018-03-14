@@ -354,12 +354,20 @@
         const sapItemGroup = data.itemGroup;
         const sapId = sapItemGroup.ItemGroupCode;
         const name = sapItemGroup.ItemGroupName;
+        const category = this.resolveSapItemGroupCategory(sapId);
+        if (!category) {
+          callback({
+            message: `Failed to resolve SAP item group ${sapId} category`,
+            operationReportItemId: data.operationReportItemId
+          });
+          return;
+        }
 
         const itemGroup = await this.models.findItemGroupBySapId(sapId);
         if (itemGroup) {
-          this.models.updateItemGroup(itemGroup.id, name);
+          this.models.updateItemGroup(itemGroup.id, name, category);
         } else {
-          this.models.createItemGroup(sapId, name);
+          this.models.createItemGroup(sapId, name, category);
         }
 
         callback(null, {
@@ -454,6 +462,26 @@
           operationReportItemId: data.operationReportItemId
         });
       }
+    }
+
+    /**
+     * Resolves item group category for given SAP id
+     * 
+     * @param {String} sapId sapId
+     */
+    resolveSapItemGroupCategory(sapId) {
+      const itemGroupCategories = config.get("sap:itemGroupCategories") || {};
+      const categories = Object.keys(itemGroupCategories);
+
+      for (let i = 0; i < categories.length; i++) {
+        const category = categories[i];
+        const sapIds = itemGroupCategories[category];
+        if (sapIds.indexOf(sapId) !== -1) {
+          return category;
+        }
+      }
+
+      return null;
     }
 
   }

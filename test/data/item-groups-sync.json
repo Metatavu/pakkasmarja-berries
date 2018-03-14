@@ -1,11 +1,14 @@
 [
   {
-    "name": "Test Group 1"
+    "name": "1 Frozen Test Group",
+    "category": "FROZEN"
   },
   {
-    "name": "Test Group 2"
+    "name": "2 Fresh Test Group",
+    "category": "FRESH"
   },
   {
-    "name": "Test Group 3"
+    "name": "3 Frozen Test Group",
+    "category": "FROZEN"
   }
 ]

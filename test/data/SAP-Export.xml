@@ -2,15 +2,15 @@
   <ItemGroups>
     <ItemGroup>
       <ItemGroupCode>123</ItemGroupCode>
-      <ItemGroupName>Test Group 1</ItemGroupName>
+      <ItemGroupName>1 Frozen Test Group</ItemGroupName>
     </ItemGroup>
     <ItemGroup>
       <ItemGroupCode>234</ItemGroupCode>
-      <ItemGroupName>Test Group 2</ItemGroupName>
+      <ItemGroupName>2 Fresh Test Group</ItemGroupName>
     </ItemGroup>
     <ItemGroup>
       <ItemGroupCode>456</ItemGroupCode>
-      <ItemGroupName>Test Group 3</ItemGroupName>
+      <ItemGroupName>3 Frozen Test Group</ItemGroupName>
     </ItemGroup>
   </ItemGroups>
   <DeliveryPlaces>
