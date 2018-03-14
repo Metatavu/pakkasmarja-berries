@@ -22,7 +22,25 @@
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
 
-  test("Test listing contracts - xlsx", async (t) => {
+  test("Test listing contracts - xlsx all", async (t) => {
+    await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .expect(200)
+      .parse(requestUtils.createBinaryParser())
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        const xlsxJson = xlsx.parseXlsx(response.body);
+        t.equal(response.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        t.deepEqual(xlsxJson, contractExcelMultiple);
+      });
+  });
+
+  test("Test listing contracts - xlsx single", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
@@ -36,11 +54,11 @@
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         const xlsxJson = xlsx.parseXlsx(response.body);
         t.equal(response.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        t.deepEqual(xlsxJson, contractExcelMultiple);
+        t.deepEqual(contractExcelSingle, xlsxJson);
       });
   });
 
-  test("Test listing contracts", async (t) => {
+  test("Test list contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
     return request("http://localhost:3002")
@@ -49,9 +67,37 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test list contracts - all", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
         t.equal(response.body.length, 2);
         t.deepEqual(response.body[0], contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
         t.deepEqual(response.body[1], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test listing all contracts - forbidden", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(403)
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -216,8 +262,8 @@
     await operations.createOperationAndWait(accessToken, "SAP_CONTRACT_SYNC");
     
     return request("http://localhost:3002")
-      .get("/rest/v1/contracts")
-      .set("Authorization", `Bearer ${accessToken}`)
+      .get("/rest/v1/contracts?listAll=true")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -233,7 +279,7 @@
           Object.keys(expectedContract).forEach((expectKey) => {
             const expectValue = expectedContract[expectKey];
             const actualValue = response.body[contractIndex][expectKey];
-            t.equal(actualValue, expectValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
+            t.equal(expectValue, actualValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
           });
         });
       });

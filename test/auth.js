@@ -23,7 +23,6 @@
      * @param {password} password
      * @return {Promise} promise for results
      */
-    /* jshint ignore:start */
     async getToken(username, password) {
       const url = `${config.get('keycloak:app:auth-server-url')}/realms/${config.get('keycloak:app:realm')}/protocol/openid-connect/token`;
       return new Promise((resolve, reject) => {
@@ -41,8 +40,16 @@
         });
       });
     }
-    /* jshint ignore:end */
-    
+
+    /**
+     * Gets access token from user with permission to list all contracts 
+     * 
+     * @return {Promise} promise for results
+     */
+    getTokenListAllContracts() {
+      return this.getToken("list-all-contracts", "test");
+    }
+
     /**
      * Gets access token from keycloak with default username and password
      * 
