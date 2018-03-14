@@ -1,10 +1,12 @@
 {
   "89723408-0f51-11e8-baa0-dfe7c7eae257": {
     "id": "89723408-0f51-11e8-baa0-dfe7c7eae257",
-    "name": "Test Group 1"
+    "name": "Test Group 1",
+    "category": "FROZEN"
   },
   "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20": {
     "id": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
-    "name": "Test Group 2"
+    "name": "Test Group 2",
+    "category": "FRESH"
   }
 }

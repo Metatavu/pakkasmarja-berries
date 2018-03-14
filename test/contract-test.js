@@ -104,7 +104,37 @@
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
+  
+  test("Test list contracts - item group category - all", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true&itemGroupCategory=FRESH")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
+  test("Test list contracts - item group category - user", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?itemGroupCategory=FROZEN")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
   test("Test listing all contracts - forbidden", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 

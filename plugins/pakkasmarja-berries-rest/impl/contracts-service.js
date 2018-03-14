@@ -398,13 +398,15 @@
      */
     async listContracts(req, res) {
       const listAll = req.query.listAll === "true";
+      const itemGroupCategory = req.query.itemGroupCategory;
+
       if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
         this.sendForbidden(res, "You have no permission to list all contracts");
         return;
       }
 
-      const userId = this.getLoggedUserId(req);
-      const databaseContracts = listAll ? await this.models.listContracts() : await this.models.listContractsByUserId(userId);
+      const userId = listAll ? null : this.getLoggedUserId(req);
+      const databaseContracts = await this.models.listContracts(userId, itemGroupCategory);
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
       const accept = this.getBareContentType(req.header("accept")) || "application/json";
