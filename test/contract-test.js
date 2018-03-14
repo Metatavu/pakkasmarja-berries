@@ -4,7 +4,7 @@
 (() => {
   "use strict";
 
-  const cheerio = require('cheerio');
+  const cheerio = require("cheerio");
   const test = require("blue-tape");
   const request = require("supertest");
   const requestUtils = require(`${__dirname}/request-utils`);
@@ -280,8 +280,8 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         const $ = cheerio.load(response.text);
-        t.equal("Example berry purchase contract", $('h1').text(), "Contains header");
-        t.ok($('p').text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
+        t.equal("Example berry purchase contract", $("h1").text(), "Contains header");
+        t.ok($("p").text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
       });
   });
   
@@ -296,7 +296,7 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         const $ = cheerio.load(response.text);
-        t.ok($('p').text().indexOf("Test Corp. (company in future) and Example Co. (company in future).") > -1, "Contains contents");
+        t.ok($("p").text().indexOf("Test Corp. (company in future) and Example Co. (company in future).") > -1, "Contains contents");
       });
   });
   
@@ -307,7 +307,7 @@
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
       .set("Accept", "text/html")
       .expect(403)
-      .then(async response => {
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -320,7 +320,7 @@
       .set("Authorization", "Bearer FAKE")
       .set("Accept", "text/html")
       .expect(403)
-      .then(async response => {
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
