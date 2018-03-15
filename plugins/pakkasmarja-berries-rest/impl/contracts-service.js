@@ -125,6 +125,7 @@
       const itemGroupId = itemGroup.id;
       const contractQuantity = updateContract.contractQuantity;
       const deliveredQuantity = updateContract.deliveredQuantity;
+      const proposedQuantity = updateContract.proposedQuantity;
       const startDate = updateContract.startDate;
       const endDate = updateContract.endDate;
       const signDate = updateContract.signDate;
@@ -136,7 +137,8 @@
         deliveryPlaceId, 
         itemGroupId, 
         contractQuantity, 
-        deliveredQuantity, 
+        deliveredQuantity,
+        proposedQuantity,
         startDate, 
         endDate, 
         signDate, 
@@ -484,6 +486,7 @@
         "deliveryPlaceId": deliveryPlace.externalId,
         "contractQuantity": contract.contractQuantity,
         "deliveredQuantity": contract.deliveredQuantity,
+        "proposedQuantity": contract.proposedQuantity,
         "startDate": contract.startDate,
         "endDate": contract.endDate,
         "signDate": contract.signDate,

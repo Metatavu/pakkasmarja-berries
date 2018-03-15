@@ -6,6 +6,7 @@
     "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
     "contractQuantity": 123456,
     "deliveredQuantity": 902,
+    "proposedQuantity": 123456,
     "startDate": "2021-01-01T00:00:00.000Z",
     "endDate": "2021-12-31T00:00:00.000Z",
     "signDate": "2020-12-14T00:00:00.000Z",

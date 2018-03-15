@@ -14,13 +14,15 @@
   const contactDataSync = require(`${__dirname}/data/contacts-sync.json`);
   
   test("Test listing contacts", async (t) => {
+    await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+    
     return request("http://localhost:3002")
       .get("/rest/v1/contacts")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
-        t.equal(response.body.length, 3);
+        t.equal(response.body.length, 4);
         const actualResponse = response.body;
 
         actualResponse.sort((a, b) => {
