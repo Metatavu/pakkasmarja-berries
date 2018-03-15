@@ -213,6 +213,7 @@
         sapId: { type: Sequelize.STRING(191), allowNull: false },
         contractQuantity: { type: Sequelize.BIGINT },
         deliveredQuantity: { type: Sequelize.BIGINT },
+        proposedQuantity: { type: Sequelize.BIGINT },
         startDate: Sequelize.DATE,
         endDate: Sequelize.DATE,
         signDate: Sequelize.DATE,
@@ -1038,6 +1039,7 @@
      * @param {String} sapId 
      * @param {int} contractQuantity
      * @param {int} deliveredQuantity 
+     * @param {int} proposedQuantity
      * @param {Date} startDate 
      * @param {Date} endDate 
      * @param {Date} signDate 
@@ -1047,7 +1049,7 @@
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.create({
         userId: userId,
         deliveryPlaceId: deliveryPlaceId,
@@ -1055,6 +1057,7 @@
         sapId: sapId,
         contractQuantity: contractQuantity,
         deliveredQuantity: deliveredQuantity,
+        proposedQuantity: proposedQuantity,
         startDate: startDate,
         endDate: endDate,
         signDate: signDate,
@@ -1081,12 +1084,13 @@
      * 
      * @returns {Promise} promise for update
      */
-    updateContract(id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    updateContract(id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.update({
         deliveryPlaceId: deliveryPlaceId, 
         itemGroupId: itemGroupId,
         contractQuantity: contractQuantity,
         deliveredQuantity: deliveredQuantity,
+        proposedQuantity: proposedQuantity,
         startDate: startDate,
         endDate: endDate,
         signDate: signDate,
