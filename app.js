@@ -23,6 +23,8 @@
       parseValues: true,
       transform: (obj) => {
         obj.key = obj.key.replace(/base[uU]rl/g, "baseUrl");
+        obj.key = obj.key.replace(/client[iI]d/g, "clientId");
+        obj.key = obj.key.replace(/client[sS]ecret/g, "clientSecret");
         obj.key = obj.key.replace(/([^_])_([^_])/g, "$1-$2");
         return obj;
       }
