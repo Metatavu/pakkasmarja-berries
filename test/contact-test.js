@@ -20,7 +20,7 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
-        t.equal(response.body.length, 3);
+        t.equal(response.body.length, 4);
         const actualResponse = response.body;
 
         actualResponse.sort((a, b) => {
