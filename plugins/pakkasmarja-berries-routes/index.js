@@ -40,8 +40,8 @@
     }
 
     getSignCallback(req, res) {
-      res.render('signcallback', {
-        
+      res.render("signcallback", {
+
       });
     }
     
