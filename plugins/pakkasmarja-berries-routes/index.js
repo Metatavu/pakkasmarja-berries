@@ -38,6 +38,12 @@
     getVersion(req, res) {
       res.send(config.get('app-version'));
     }
+
+    getSignCallback(req, res) {
+      res.render("signcallback", {
+
+      });
+    }
     
     getImagesWordpress(req, res) {
       const contentUrl = config.get('wordpress:content-url');
@@ -285,6 +291,7 @@
       
       app.get("/", this.getWebApp.bind(this));
       app.get("/version", this.getVersion.bind(this));
+      app.get("/signcallback", this.getSignCallback.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.post("/system/shutdown", this.postSystemShutdown.bind(this));
       

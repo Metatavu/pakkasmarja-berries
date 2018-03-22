@@ -442,6 +442,8 @@
       
       const contractId = req.params.id;
       const type = req.params.type;
+      const ssn = req.query.ssn;
+      const authService = req.query.authService;
       
       if (!contractId || !type) {
         this.sendNotFound(res);
@@ -478,9 +480,13 @@
 
       const vismaSignDocumentId = await this.signature.createDocument(document.documentName);
       const contractDocument = await this.models.createContractDocument(type, contract.id, vismaSignDocumentId);
-      const redirectUrl = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
+      const invitation = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
+      const appUrl = `${req.protocol}://${req.get("host")}`;      
+      const returnUrl = `${appUrl}/signcallback?type=contract-document&contractId=${contractId}&type=${type}`;
+      const fulfillResult = await this.signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
+
       this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
-      res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
+      res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: fulfillResult.location }));
     }
     
     /**

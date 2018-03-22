@@ -8,6 +8,7 @@
   const fs = require('fs');
   const config = require('nconf');
   const VismaSignClient = require('visma-sign-client');
+  const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
 
   VismaSignClient.ApiClient.instance.clientId = config.get('visma-sign:clientId');
   VismaSignClient.ApiClient.instance.clientSecret = config.get('visma-sign:clientSecret');
@@ -27,6 +28,7 @@
       this.documentsApi = new VismaSignClient.DocumentsApi();
       this.filesApi = new VismaSignClient.FilesApi();
       this.invitationsApi = new VismaSignClient.InvitationsApi();
+      this.authenticationsApi = new VismaSignClient.AuthenticationsApi();
     }
 
     /**
@@ -35,8 +37,8 @@
      * @param {String} documentId document id
      * @param {String} filename file name
      * @param {Buffer} pdfFile Buffer that contains pdf file data
-     * @returns {Promise} Return promise that resolves into redirect url
-     */
+     * @returns {Promise} Return promise that resolves into invitation
+     */        
     async requestSignature(documentId, filename, pdfFile) {
       await this.addFile(documentId, pdfFile, filename);
       return await this.createInvitation(documentId);
@@ -100,9 +102,26 @@
      */
     createInvitation(documentId) {
       return this.invitationsApi.createDocumentInvitation([{}], documentId).then((data) => {
-        const invitation = data[0];
-        return `https://www.onnistuu.fi/fi/invitation/${invitation.uuid}/${invitation.passphrase}/`;
+        return data[0];
       });
+    }
+  
+    /**
+     * Fulfills an invitation
+     * 
+     * @param {String} invitationId invitation id 
+     * @param {String} returnUrl redirect url
+     * @param {String} identifier ssn of person signing
+     * @param {String} authService auth service id
+     */
+    fullfillInvitation(invitationId, returnUrl, identifier, authService) {
+      const body = InvitationFullfillment.constructFromObject({
+        "returnUrl": returnUrl,
+        "identifier": identifier,
+        "authService": authService
+      });
+
+      return this.invitationsApi.fullfillInvitation(body, invitationId);
     }
     
     /**
@@ -113,6 +132,13 @@
      */
     getDocumentStatus(documentId) {
       return this.documentsApi.getDocumentStatus(documentId);
+    }
+
+    /**
+     * Returns authentication methods
+     */
+    getAuthenticationMethods() {
+      return this.authenticationsApi.getAuthenticationMethods();
     }
     
   }
