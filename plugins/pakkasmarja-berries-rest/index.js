@@ -10,6 +10,7 @@
   const DeliveryPlacesServiceImpl = require(`${__dirname}/impl/delivery-places-service`);
   const OperationReportsServiceImpl = require(`${__dirname}/impl/operation-reports-service`);
   const OperationsServiceImpl = require(`${__dirname}/impl/operations-service`);
+  const SignAuthenticationServicesServiceImpl = require(`${__dirname}/impl/sign-authentication-services-service`);
   
   /**
    * Rest services
@@ -34,6 +35,7 @@
       this.deliveryPlacesService = new DeliveryPlacesServiceImpl(logger, models);
       this.operationReportsService = new OperationReportsServiceImpl(logger, models);
       this.operationsService = new OperationsServiceImpl(logger, models, tasks);
+      this.signAuthenticationService = new SignAuthenticationServicesServiceImpl(logger, signature);
     }
     
     /**
@@ -48,6 +50,7 @@
       this.deliveryPlacesService.register(app, keycloak);
       this.operationReportsService.register(app, keycloak);
       this.operationsService.register(app, keycloak);
+      this.signAuthenticationService.register(app, keycloak);
     }
     
   }
