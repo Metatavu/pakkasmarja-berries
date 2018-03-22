@@ -249,7 +249,7 @@ Now the Wordpress should be running in https://somewhere.example.com:port.
     rm hooks/after_prepare/cordova-icon.sh
     npm install    
     cat config.xml|sed s/pakkasmarja-berries\.metatavu\.io/${APP_SERVER_NAME}:${APP_PORT}/>config.xml
-    cat config.xml|sed s/pakkasmarja-berries\.metatavu\.io/${APP_SERVER_NAME}:${APP_PORT}/>config.xml
+    cat config.xml|sed s/auth\.metatavu\.io/${KEYCLOAK_SERVER_NAME}:${KEYCLOAK_PORT}/>config.xml
     echo "
     {
      \"server\": {
