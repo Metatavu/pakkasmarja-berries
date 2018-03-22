@@ -1,0 +1,23 @@
+$red: #e01e36;
+$white: #fff;
+
+.fa {
+  color: $red;
+  font-size: 120px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 0;
+  background-color: $red;
+  font-size: 20px;
+  padding: 20px 40px;
+  color: $white;
+
+  &:focus,
+  &:hover,
+  &:active {
+    outline: none;
+    color: $white;
+  }
+}
