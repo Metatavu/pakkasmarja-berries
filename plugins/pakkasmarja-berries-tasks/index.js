@@ -196,7 +196,7 @@
           if (documentStatus === "signed") {
             documentSigned = true;
             this.models.updateContractDocumentSigned(data.contractDocumentId, true);
-            this.models.updateContractStatus(contractDocument.contractId, 'APPROVED');
+            this.models.updateContractStatus(contractDocument.contractId, "APPROVED");
           }
         } else {
           documentSigned = true;
