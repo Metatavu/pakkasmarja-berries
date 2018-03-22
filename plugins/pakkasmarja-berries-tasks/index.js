@@ -184,6 +184,12 @@
       let documentSigned = false;
       try {
         const contractDocument = await this.models.findContractDocumentById(data.contractDocumentId);
+        if (!contractDocument) {
+          // Contract document has been removed, resolve task
+          callback(null);
+          return;
+        }
+
         if (!contractDocument.signed) {
           const response = await this.signature.getDocumentStatus(contractDocument.vismaSignDocumentId);
           const documentStatus = response ? response.status : null;
@@ -195,7 +201,7 @@
           documentSigned = true;
         }
       } catch(err) {
-        this.logger.error("Error finding document status with", err);
+        this.logger.error(`Error finding document status with ${err}`);
       } finally {
         if (!documentSigned) {
           this.enqueueContractDocumentStatusTask(data.contractDocumentId);

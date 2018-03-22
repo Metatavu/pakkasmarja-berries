@@ -438,6 +438,7 @@
      * @inheritdoc
      */
     async createContractDocumentSignRequest(req, res) {
+      // TODO: Contract check status!
       
       const contractId = req.params.id;
       const type = req.params.type;
@@ -456,17 +457,29 @@
       const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type);
       if (!document) {
         this.sendNotFound(res);
-      } else {
-        const parts = await toArray(document.dataStream);
-        const buffers = parts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part));
-        const fileBuffer = Buffer.concat(buffers);
-        
-        const vismaSignDocumentId = await this.signature.createDocument(document.documentName);
-        const redirectUrl = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
-        const contractDocument = await this.models.createContractDocument(type, contract.id, vismaSignDocumentId);
-        this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
-        res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
+        return;
+      } 
+      
+      const parts = await toArray(document.dataStream);
+      const buffers = parts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part));
+      const fileBuffer = Buffer.concat(buffers);
+      const existingContractDocument = await this.models.findContractDocumentByContractAndType(contract.id, type);
+
+      if (existingContractDocument != null) {
+        if (existingContractDocument.signed) {
+          this.sendBadRequest(res, "Contract document is already signed");
+          return;
+        } else {
+          const cancelResponse = await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
+          await this.models.deleteContractDocument(existingContractDocument.id);
+        }
       }
+
+      const vismaSignDocumentId = await this.signature.createDocument(document.documentName);
+      const contractDocument = await this.models.createContractDocument(type, contract.id, vismaSignDocumentId);
+      const redirectUrl = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
+      this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
+      res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: redirectUrl}));
     }
     
     /**
