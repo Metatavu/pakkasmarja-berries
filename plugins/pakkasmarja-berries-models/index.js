@@ -1344,8 +1344,7 @@
     /**
      * Finds contract document by id
      * 
-     * @param {String} type type
-     * @param {int} contractId contract id
+     * @param {int} id contract id
      * @returns {Promise} Promise for ContractDocument
      */
     findContractDocumentById(id) {
