@@ -471,6 +471,7 @@
           return;
         } else {
           await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
+          await this.signature.deleteDocument(existingContractDocument.vismaSignDocumentId);
           await this.models.deleteContractDocument(existingContractDocument.id);
         }
       }
