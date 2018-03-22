@@ -1068,6 +1068,24 @@
     }
 
     /**
+     * Updates a contract status 
+     * 
+     * @param {int} id 
+     * @param {String} status 
+     * 
+     * @returns {Promise} promise for update
+     */
+    updateContractStatus(id, status) {
+      return this.Contract.update({
+        status: status
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
      * Updates a contract 
      * 
      * @param {int} id 
