@@ -184,7 +184,7 @@
       let documentSigned = false;
       try {
         const contractDocument = await this.models.findContractDocumentById(data.contractDocumentId);
-        if (!contractDocument) {
+        if (!contractDocument) {
           // Contract document has been removed, resolve task
           callback(null);
           return;

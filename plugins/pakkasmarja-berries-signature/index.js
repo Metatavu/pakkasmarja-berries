@@ -61,7 +61,7 @@
      * @param {String} documentId id of the document which file is to be added
      * @returns {Promise} Promise for cancel response
      */
-    cancelDocument(documentId) {
+    cancelDocument(documentId) {
       return this.documentsApi.cancelDocument(documentId);
     }
     

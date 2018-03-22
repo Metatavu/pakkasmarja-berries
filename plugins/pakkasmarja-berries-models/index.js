@@ -1360,7 +1360,8 @@
      * @returns {Promise} Promise for ContractDocument
      */
     findContractDocumentByContractAndType(contractId, type) {
-      return this.ContractDocument.findOne({ where: {
+      return this.ContractDocument.findOne({ 
+        where: {
           type: type,
           contractId: contractId
         }

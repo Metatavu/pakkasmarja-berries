@@ -470,7 +470,7 @@
           this.sendBadRequest(res, "Contract document is already signed");
           return;
         } else {
-          const cancelResponse = await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
+          await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
           await this.models.deleteContractDocument(existingContractDocument.id);
         }
       }
