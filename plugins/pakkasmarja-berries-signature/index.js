@@ -54,6 +54,26 @@
         return location.substring(location.lastIndexOf('/') + 1);
       });
     }
+
+    /**
+     * Cancel document thru Visma Sign API
+     * 
+     * @param {String} documentId id of the document which file is to be cancel
+     * @returns {Promise} Promise for cancel response
+     */
+    cancelDocument(documentId) {
+      return this.documentsApi.cancelDocument(documentId);
+    }
+
+    /**
+     * Delete document thru Visma Sign API
+     * 
+     * @param {String} documentId id of the document which file is to be deleted
+     * @returns {Promise} Promise for cancel response
+     */
+    deleteDocument(documentId) {
+      return this.documentsApi.deleteDocument(documentId);
+    }
     
     /**
      * Adds file to the document

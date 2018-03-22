@@ -1344,11 +1344,27 @@
     /**
      * Finds contract document by id
      * 
-     * @param {int} id id
+     * @param {int} id contract id
      * @returns {Promise} Promise for ContractDocument
      */
     findContractDocumentById(id) {
       return this.ContractDocument.findOne({ where: { id : id } });
+    }
+    
+    /**
+     * Finds contract document by contract id and type
+     * 
+     * @param {int} contractId contract id
+     * @param {String} type type
+     * @returns {Promise} Promise for ContractDocument
+     */
+    findContractDocumentByContractAndType(contractId, type) {
+      return this.ContractDocument.findOne({ 
+        where: {
+          type: type,
+          contractId: contractId
+        }
+      });
     }
     
     /**
@@ -1376,6 +1392,15 @@
           id: id
         }
       });
+    }
+
+    /**
+     * Deletes contract document
+     * 
+     * @param {int} id contract document id 
+     */
+    deleteContractDocument(id) {
+      return this.ContractDocument.destroy({ where: { id : id } });
     }
     
     // OperationReport
