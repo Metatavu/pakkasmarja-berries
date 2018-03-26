@@ -161,7 +161,7 @@
       const itemGroupId = req.params.itemGroupId;
       const sortBy = req.query.sortBy;
       const sortDir = req.query.sortDir;
-      const firstResult = parseInt(req.query.firstResult) || 0;
+      const firstResult = parseInt(req.query.firstResult) || 0;
       const maxResults = parseInt(req.query.maxResults) || 5;
 
       if (!itemGroupId) {
@@ -175,8 +175,8 @@
         return;
       }
 
-      const orderBy = sortBy === 'YEAR' ? 'year' : null;
-      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
+      const orderBy = sortBy === "YEAR" ? "year" : null;
+      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
 
       res.status(200).send(prices.map((price) => {
         return this.translateItemGroupPrice(price, databaseItemGroup);

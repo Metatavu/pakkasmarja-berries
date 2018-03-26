@@ -987,6 +987,16 @@
     }
      
     /**
+     * Finds an item group price by externalId
+     * 
+     * @param {String} externalId item group external id
+     * @return {Promise} promise for delivery place
+     */
+    findItemGroupPriceByExternalId(externalId) {
+      return this.ItemGroupPrice.findOne({ where: { externalId : externalId } });
+    }
+     
+    /**
      * Lists item group prices.
      * 
      * All parameters are optional and ignored if not given
@@ -994,11 +1004,11 @@
      * @param {int} itemGroupId item group id
      * @param {int} firstResult first result
      * @param {int} maxResults max results
-     * @param {String} orderBy order by column (defaults to createdAt)
-     * @param {String} orderDir order direction (defaults to DESC)
+     * @param {String} orderBy order by column (defaults to createdAt)
+     * @param {String} orderDir order direction (defaults to DESC)
      * @return {Promise} promise for item group
      */
-    listItemGroupPrices(itemGroupId, firstResult, maxResults, orderBy, orderDir) {
+    listItemGroupPrices(itemGroupId, firstResult, maxResults, orderBy, orderDir) {
       const where = {};
 
       if (itemGroupId) {
@@ -1011,26 +1021,6 @@
         limit: maxResults,
         order: [[ orderBy || "createdAt", orderDir || "DESC" ] ]
       });
-    }
-     
-    /**
-     * Finds an item group price by id
-     * 
-     * @param {int} id item group id
-     * @return {Promise} promise for delivery place
-     */
-    findItemGroupPriceById(id) {
-      return this.ItemGroupPrice.findOne({ where: { id : id } });
-    }
-     
-    /**
-     * Finds an item group price by externalId
-     * 
-     * @param {String} externalId item group external id
-     * @return {Promise} promise for delivery place
-     */
-    findItemGroupPriceByExternalId(externalId) {
-      return this.ItemGroupPrice.findOne({ where: { externalId : externalId } });
     }
 
     /**

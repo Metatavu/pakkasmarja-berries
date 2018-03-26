@@ -670,7 +670,7 @@
       });
   });
 
-  test("Test listing item group prices - incorrect item group", async (t) => {
+  test("Test listing item group prices - incorrect item group", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
@@ -683,7 +683,7 @@
       });
   });
 
-  test("Test listing item group prices - invalid item group", async (t) => {
+  test("Test listing item group prices - invalid item group", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
