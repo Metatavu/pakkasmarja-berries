@@ -186,6 +186,33 @@
     /**
      * @inheritdoc
      */
+    async createItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      if (!itemGroupId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? Price.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      const databasePrice = await this.models.createItemGroupPrice(databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
+
+      res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
     async updateItemGroupDocumentTemplate(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;
