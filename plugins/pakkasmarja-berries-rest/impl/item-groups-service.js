@@ -213,6 +213,48 @@
     /**
      * @inheritdoc
      */
+    async updateItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? Price.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      await this.models.updateItemGroupPrice(databasePrice.id, databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
+
+      const updatedDatabasePrice = await this.models.findItemGroupPriceById(databasePrice.id);
+
+      res.status(200).send(this.translateItemGroupPrice(updatedDatabasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
     async updateItemGroupDocumentTemplate(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;

@@ -15,7 +15,8 @@
   const itemGroupDocumentTemplateUpdateDatas = require(`${__dirname}/data/item-group-document-templates-update.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
   const itemGroupPriceCreateData = require(`${__dirname}/data/item-group-price-create.json`);
-  
+  const itemGroupPricesUpdateData = require(`${__dirname}/data/item-group-prices-update.json`);
+
   test("Test listing item groups", async (t) => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
@@ -468,6 +469,21 @@
           const actualValue = response.body[expectKey];
           t.equal(actualValue, expectValue, `[${expectKey}] is ${actualValue}`);
         });
+      });
+  });
+  
+  test("Test update item group price", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .put("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send(itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"])
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.deepEqual(response.body, itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"]);
       });
   });
 
