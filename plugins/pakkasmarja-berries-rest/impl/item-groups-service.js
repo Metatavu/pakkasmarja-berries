@@ -8,6 +8,7 @@
   const AbstractItemGroupsService = require(`${__dirname}/../service/item-groups-service`);
   const ItemGroup = require(`${__dirname}/../model/item-group`);
   const ItemGroupDocumentTemplate = require(`${__dirname}/../model/item-group-document-template`);
+  const Price = require(`${__dirname}/../model/price`);
   
   /**
    * Implementation for ItemGroups REST service
@@ -124,6 +125,136 @@
     /**
      * @inheritdoc
      */
+    async findItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async listItemGroupPrices(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const sortBy = req.query.sortBy;
+      const sortDir = req.query.sortDir;
+      const firstResult = parseInt(req.query.firstResult) || 0;
+      const maxResults = parseInt(req.query.maxResults) || 5;
+
+      if (!itemGroupId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const orderBy = sortBy === "YEAR" ? "year" : null;
+      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
+
+      res.status(200).send(prices.map((price) => {
+        return this.translateItemGroupPrice(price, databaseItemGroup);
+      }));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async createItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      if (!itemGroupId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? Price.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      const databasePrice = await this.models.createItemGroupPrice(databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
+
+      res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async updateItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const payload = _.isObject(req.body) ? Price.constructFromObject(req.body) : null;
+      if (!payload) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      await this.models.updateItemGroupPrice(databasePrice.id, databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
+
+      const updatedDatabasePrice = await this.models.findItemGroupPriceById(databasePrice.id);
+
+      res.status(200).send(this.translateItemGroupPrice(updatedDatabasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
     async updateItemGroupDocumentTemplate(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;
@@ -201,6 +332,23 @@
         "contents": databaseDocumentTemplate.contents,
         "header": databaseDocumentTemplate.header,
         "footer": databaseDocumentTemplate.footer
+      });
+    }
+
+    /**
+     * Translates Database ItemGroupPrice into REST entity
+     * 
+     * @param {ItemGroupPrice} databasePrice Sequelize item group price
+     * @param {ItemGroup} itemGroup Sequelize item group
+     */
+    translateItemGroupPrice(databasePrice, itemGroup) {
+      return Price.constructFromObject({
+        "id": databasePrice.externalId,
+        "group": databasePrice.groupName,
+        "unit": databasePrice.unit,
+        "price": databasePrice.price,
+        "year": databasePrice.year,
+        "itemGroupId": itemGroup.externalId
       });
     }
   }

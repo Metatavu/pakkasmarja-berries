@@ -78,6 +78,17 @@
     }
 
    /**
+    * List contract prices
+    * Lists contract prices
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    listContractPrices(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Lists contracts
     * Lists contracts
     *
@@ -122,6 +133,7 @@
       app.get(`/rest/v1${this.toPath('/contracts/{contractId}/documentTemplates/{contractDocumentTemplateId}')}`, [ keycloak.protect() ], this.catchAsync(this.findContractDocumentTemplate.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts/{contractId}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.listContractDocumentTemplates.bind(this)));
+      app.get(`/rest/v1${this.toPath('/contracts/{contractId}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.listContractPrices.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
       app.put(`/rest/v1${this.toPath('/contracts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContract.bind(this)));
       app.put(`/rest/v1${this.toPath('/contracts/{contractId}/documentTemplates/{contractDocumentTemplateId}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContractDocumentTemplate.bind(this)));

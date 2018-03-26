@@ -1,0 +1,30 @@
+{
+  "79d937fc-3103-11e8-a1f7-5f974dead07c": {
+    "id": "79d937fc-3103-11e8-a1f7-5f974dead07c",
+    "group": "Group 2",
+    "year": 2017,
+    "unit": "$ / kg",
+    "price": "2.10"
+  },
+  "7f1761a8-3103-11e8-b2e0-1b2fa8a35f72": {
+    "id": "7f1761a8-3103-11e8-b2e0-1b2fa8a35f72",
+    "group": "Group 2",
+    "year": 2018,
+    "unit": "$ / kg",
+    "price": "1.00"
+  },
+  "2cef70dc-3103-11e8-bc28-9b65ff9275bf": {
+    "id": "2cef70dc-3103-11e8-bc28-9b65ff9275bf",
+    "group": "Group 1",
+    "year": 2017,
+    "unit": "€ / l",
+    "price": "4.10"
+  },
+  "30685c88-3103-11e8-91df-87fa68b14005": {
+    "id": "30685c88-3103-11e8-91df-87fa68b14005",
+    "group": "Group 1",
+    "year": 2018,
+    "unit": "€ / l",
+    "price": "8.00"
+  }
+}

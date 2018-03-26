@@ -22,7 +22,8 @@
   const contractDocumentTemplateDatas = require(`${__dirname}/data/contract-document-templates.json`);
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
-
+  const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
+  
   test("Test listing contracts - xlsx all", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
@@ -590,5 +591,124 @@
         });
       });
   });
-  
+
+  test("Test listing item group prices", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 2);
+        t.deepEqual(response.body[0], itemGroupPriceDatas["2cef70dc-3103-11e8-bc28-9b65ff9275bf"]);
+        t.deepEqual(response.body[1], itemGroupPriceDatas["30685c88-3103-11e8-91df-87fa68b14005"]);
+      });
+  });
+
+  test("Test listing item group prices - sort year desc", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=DESC")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 2);
+        t.deepEqual(response.body[0], itemGroupPriceDatas["30685c88-3103-11e8-91df-87fa68b14005"]);
+        t.deepEqual(response.body[1], itemGroupPriceDatas["2cef70dc-3103-11e8-bc28-9b65ff9275bf"]);
+      });
+  });
+
+  test("Test listing item group prices - sort year asc", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 2);
+        t.deepEqual(response.body[0], itemGroupPriceDatas["2cef70dc-3103-11e8-bc28-9b65ff9275bf"]);
+        t.deepEqual(response.body[1], itemGroupPriceDatas["30685c88-3103-11e8-91df-87fa68b14005"]);
+      });
+  });
+
+  test("Test listing item group prices - limit", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&maxResults=1")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], itemGroupPriceDatas["2cef70dc-3103-11e8-bc28-9b65ff9275bf"]);
+      });
+  });
+
+  test("Test listing item group prices - offset", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&firstResult=1")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], itemGroupPriceDatas["30685c88-3103-11e8-91df-87fa68b14005"]);
+      });
+  });
+
+  test("Test listing item group prices - incorrect item group", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/12345678-0fba-11e8-9ac4-a700da67a976/prices")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test listing item group prices - invalid item group", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/invalid/prices")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test listing item group prices - without token", async () => {
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
+      .set("Accept", "application/json")
+      .expect(403);
+  });
+
+  test("Test listing item group prices - invalid token", async () => {
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
+      .set("Authorization", "Bearer FAKE")
+      .set("Accept", "application/json")
+      .expect(403);
+  });
+
 })();
