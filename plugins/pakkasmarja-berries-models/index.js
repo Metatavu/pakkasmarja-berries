@@ -187,6 +187,16 @@
         }]
       });
 
+      await this.defineModel("ItemGroupPrice", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        groupName: { type: Sequelize.STRING(191), allowNull: false },
+        unit: { type: Sequelize.STRING(191), allowNull: false },
+        price: { type: Sequelize.STRING(191), allowNull: false },
+        year: { type: Sequelize.INTEGER, allowNull: false },
+        itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } }
+      });
+
       await this.defineModel("DeliveryPlace", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
@@ -942,6 +952,101 @@
      */
     deleteItemGroup(id) {
       return this.ItemGroup.destroy({ where: { id : id } });
+    }
+
+    // ItemGroupPrice
+    
+    /**
+     * new item group price
+     * 
+     * @param {int} itemGroupId item group id
+     * @param {String} groupName group
+     * @param {String} unit unit
+     * @param {String} price price
+     * @param {Integer} year year
+     * @return {Promise} promise for created item group price
+     */
+    createItemGroupPrice(itemGroupId, groupName, unit, price, year) {
+      return this.ItemGroupPrice.create({
+        itemGroupId: itemGroupId,
+        groupName: groupName,
+        unit: unit,
+        price: price,
+        year: year
+      });
+    }
+     
+    /**
+     * Finds a item group price by id
+     * 
+     * @param {int} id item group id
+     * @return {Promise} promise for item group
+     */
+    findItemGroupPriceById(id) {
+      return this.ItemGroupPrice.findOne({ where: { id : id } });
+    }
+     
+    /**
+     * Lists item group prices.
+     * 
+     * All parameters are optional and ignored if not given
+     * 
+     * @param {int} itemGroupId item group id
+     * @param {int} firstResult first result
+     * @param {int} maxResults max results
+     * @param {String} orderBy order by column (defaults to createdAt)
+     * @param {String} orderDir order direction (defaults to DESC)
+     * @return {Promise} promise for item group
+     */
+    listItemGroupPrices(itemGroupId, firstResult, maxResults, orderBy, orderDir) {
+      const where = {};
+
+      if (itemGroupId) {
+        where.itemGroupId = itemGroupId;
+      }
+
+      return this.ItemGroupPrice.findAll({ 
+        where: where,
+        offset: firstResult, 
+        limit: maxResults,
+        order: [[ orderBy || "createdAt", orderDir || "DESC" ] ]
+      });
+    }
+     
+    /**
+     * Updates an item group price by id
+     * 
+     * @param {int} id item group id
+     * @return {Promise} promise for delivery place
+     */
+    findItemGroupPriceById(id) {
+      return this.ItemGroupPrice.findOne({ where: { id : id } });
+    }
+     
+
+    /**
+     * Update item group price
+     * 
+     * @param {int} id item group id
+     * @param {int} itemGroupId item group id
+     * @param {String} groupName group
+     * @param {String} unit unit
+     * @param {String} price price
+     * @param {Integer} year year
+     * @return {Promise} promise for created item group price
+     */
+    updateItemGroupPrice(id, itemGroupId, groupName, unit, price, year) {
+      return this.ItemGroupPrice.update({
+        itemGroupId: itemGroupId,
+        groupName: groupName,
+        unit: unit,
+        price: price,
+        year: year
+      }, {
+        where: {
+          id: id
+        }
+      });
     }
     
     // DeliveryPlaces
