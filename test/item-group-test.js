@@ -14,7 +14,7 @@
   const itemGroupDocumentTemplateDatas = require(`${__dirname}/data/item-group-document-templates.json`);
   const itemGroupDocumentTemplateUpdateDatas = require(`${__dirname}/data/item-group-document-templates-update.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
-  
+
   test("Test listing item groups", async (t) => {
     await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
     
@@ -368,4 +368,85 @@
       .expect(403);
   });
   
+  test("Test find item group price", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.deepEqual(response.body, itemGroupPriceDatas["79d937fc-3103-11e8-a1f7-5f974dead07c"]);
+      });
+  });
+
+  test("Test find item group price - incorrect id", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test find item group price - invalid id", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+   
+  test("Test finding item group price - incorrect item group", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+   
+  test("Test finding item group price - invalid item group", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
+  test("Test finding item group price - without token", async () => {
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
+      .set("Accept", "application/json")
+      .expect(403);
+  });
+  
+  test("Test finding item group price - invalid token", async () => {
+    return request("http://localhost:3002")
+      .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", "Bearer FAKE")
+      .set("Accept", "application/json")
+      .expect(403);
+  });
+
 })();

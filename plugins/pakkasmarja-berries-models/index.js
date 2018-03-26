@@ -1014,7 +1014,7 @@
     }
      
     /**
-     * Updates an item group price by id
+     * Finds an item group price by id
      * 
      * @param {int} id item group id
      * @return {Promise} promise for delivery place
@@ -1023,6 +1023,15 @@
       return this.ItemGroupPrice.findOne({ where: { id : id } });
     }
      
+    /**
+     * Finds an item group price by externalId
+     * 
+     * @param {String} externalId item group external id
+     * @return {Promise} promise for delivery place
+     */
+    findItemGroupPriceByExternalId(externalId) {
+      return this.ItemGroupPrice.findOne({ where: { externalId : externalId } });
+    }
 
     /**
      * Update item group price

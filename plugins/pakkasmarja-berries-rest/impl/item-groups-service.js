@@ -125,6 +125,38 @@
     /**
      * @inheritdoc
      */
+    async findItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
     async listItemGroupPrices(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const sortBy = req.query.sortBy;
