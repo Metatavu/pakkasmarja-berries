@@ -12,6 +12,7 @@
   const Contract = require(`${__dirname}/../model/contract`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
   const ContractDocumentTemplate = require(`${__dirname}/../model/contract-document-template`);
+  const Price = require(`${__dirname}/../model/price`);
   const toArray = require("stream-to-array");
   const slugify = require("slugify");
   const moment = require("moment");
@@ -362,6 +363,41 @@
       
       res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, updatedDocumentTemplate));
     }
+    
+    /**
+     * @inheritdoc
+     */
+    async listContractPrices(req, res) {
+      const contractId = req.params.contractId;
+      const sortBy = req.query.sortBy;
+      const sortDir = req.query.sortDir;
+      const firstResult = parseInt(req.query.firstResult) || 0;
+      const maxResults = parseInt(req.query.maxResults) || 5;
+
+      if (!contractId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseContract = await this.models.findContractByExternalId(contractId);
+      if (!databaseContract) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupById(databaseContract.itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendInternalServerError(res, "Database item group not found");
+        return;
+      }
+
+      const orderBy = sortBy === 'YEAR' ? 'year' : null;
+      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
+
+      res.status(200).send(prices.map((price) => {
+        return this.translateItemGroupPrice(price, databaseItemGroup);
+      }));
+    }
 
     /**
      * Renders a document template component into HTML text
@@ -532,6 +568,23 @@
         "contents": databaseDocumentTemplate.contents,
         "header": databaseDocumentTemplate.header,
         "footer": databaseDocumentTemplate.footer
+      });
+    }
+
+    /**
+     * Translates Database ItemGroupPrice into REST entity
+     * 
+     * @param {ItemGroupPrice} databasePrice Sequelize item group price
+     * @param {ItemGroup} itemGroup Sequelize item group
+     */
+    translateItemGroupPrice(databasePrice, itemGroup) {
+      return Price.constructFromObject({
+        "id": databasePrice.externalId,
+        "group": databasePrice.groupName,
+        "unit": databasePrice.unit,
+        "price": databasePrice.price,
+        "year": databasePrice.year,
+        "itemGroupId": itemGroup.externalId
       });
     }
 
