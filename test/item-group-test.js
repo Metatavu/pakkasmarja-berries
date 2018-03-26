@@ -333,7 +333,7 @@
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
-      .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
+      .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
       .expect(404)
@@ -346,7 +346,7 @@
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
-      .get("/rest/v1/itemGroups/invalid/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
+      .get("/rest/v1/itemGroups/invalid/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
       .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
       .set("Accept", "application/json")
       .expect(404)
