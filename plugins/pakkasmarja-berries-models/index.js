@@ -230,7 +230,10 @@
         signDate: Sequelize.DATE,
         termDate: Sequelize.DATE,
         status: { type: Sequelize.STRING(191), allowNull: false },
-        remarks: Sequelize.TEXT
+        remarks: Sequelize.TEXT,
+        deliveryPlaceComment: Sequelize.TEXT,
+        quantityComment: Sequelize.TEXT,
+        rejectComment: Sequelize.TEXT
       }, {
         indexes: [{
           name: "UN_CONTRACT_EXTERNAL_ID",
@@ -1155,11 +1158,16 @@
      * @param {Date} signDate 
      * @param {Date} termDate 
      * @param {String} status 
-     * @param {String} remarks 
+     * @param {String} remarks
+     * @param {String} deliveryPlaceComment
+     * @param {String} quantityComment
+     * @param {String} rejectComment
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
+      startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
+
       return this.Contract.create({
         userId: userId,
         year: year,
@@ -1174,7 +1182,10 @@
         signDate: signDate,
         termDate: termDate,
         status: status,
-        remarks: remarks
+        remarks: remarks,
+        deliveryPlaceComment: deliveryPlaceComment,
+        quantityComment: quantityComment,
+        rejectComment: rejectComment
       });
     }
 
@@ -1210,11 +1221,16 @@
      * @param {Date} signDate 
      * @param {Date} termDate 
      * @param {String} status 
-     * @param {String} remarks 
+     * @param {String} remarks
+     * @param {String} deliveryPlaceComment
+     * @param {String} quantityComment
+     * @param {String} rejectComment 
      * 
      * @returns {Promise} promise for update
      */
-    updateContract(id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    updateContract(id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+      startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
+
       return this.Contract.update({
         year: year,
         deliveryPlaceId: deliveryPlaceId, 
@@ -1227,7 +1243,10 @@
         signDate: signDate,
         termDate: termDate,
         status: status,
-        remarks: remarks
+        remarks: remarks,
+        deliveryPlaceComment: deliveryPlaceComment,
+        quantityComment: quantityComment,
+        rejectComment: rejectComment
       }, {
         where: {
           id: id

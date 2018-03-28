@@ -36,6 +36,9 @@
 
 
 
+
+
+
   };
 
   /**
@@ -58,6 +61,9 @@
       if (data.hasOwnProperty('deliveryPlaceId')) {
         obj['deliveryPlaceId'] = ApiClient.convertToType(data['deliveryPlaceId'], 'String');
       }
+      if (data.hasOwnProperty('deliveryPlaceComment')) {
+        obj['deliveryPlaceComment'] = ApiClient.convertToType(data['deliveryPlaceComment'], 'String');
+      }
       if (data.hasOwnProperty('itemGroupId')) {
         obj['itemGroupId'] = ApiClient.convertToType(data['itemGroupId'], 'String');
       }
@@ -73,6 +79,9 @@
       if (data.hasOwnProperty('proposedQuantity')) {
         obj['proposedQuantity'] = ApiClient.convertToType(data['proposedQuantity'], 'Number');
       }
+      if (data.hasOwnProperty('quantityComment')) {
+        obj['quantityComment'] = ApiClient.convertToType(data['quantityComment'], 'String');
+      }
       if (data.hasOwnProperty('startDate')) {
         obj['startDate'] = ApiClient.convertToType(data['startDate'], 'Date');
       }
@@ -84,6 +93,9 @@
       }
       if (data.hasOwnProperty('termDate')) {
         obj['termDate'] = ApiClient.convertToType(data['termDate'], 'Date');
+      }
+      if (data.hasOwnProperty('rejectComment')) {
+        obj['rejectComment'] = ApiClient.convertToType(data['rejectComment'], 'String');
       }
       if (data.hasOwnProperty('status')) {
         obj['status'] = ApiClient.convertToType(data['status'], 'String');
@@ -108,6 +120,10 @@
    */
   exports.prototype['deliveryPlaceId'] = undefined;
   /**
+   * @member {String} deliveryPlaceComment
+   */
+  exports.prototype['deliveryPlaceComment'] = undefined;
+  /**
    * @member {String} itemGroupId
    */
   exports.prototype['itemGroupId'] = undefined;
@@ -128,6 +144,10 @@
    */
   exports.prototype['proposedQuantity'] = undefined;
   /**
+   * @member {String} quantityComment
+   */
+  exports.prototype['quantityComment'] = undefined;
+  /**
    * @member {Date} startDate
    */
   exports.prototype['startDate'] = undefined;
@@ -143,6 +163,10 @@
    * @member {Date} termDate
    */
   exports.prototype['termDate'] = undefined;
+  /**
+   * @member {String} rejectComment
+   */
+  exports.prototype['rejectComment'] = undefined;
   /**
    * @member {module:model/Contract.StatusEnum} status
    */
@@ -178,7 +202,12 @@
      * value: "TERMINATED"
      * @const
      */
-    "TERMINATED": "TERMINATED"  };
+    "TERMINATED": "TERMINATED",
+    /**
+     * value: "REJECTED"
+     * @const
+     */
+    "REJECTED": "REJECTED"  };
 
 
   return exports;

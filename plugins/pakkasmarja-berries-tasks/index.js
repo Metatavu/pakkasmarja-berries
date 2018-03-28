@@ -448,10 +448,15 @@
         const status = "DRAFT";
         const remarks = null;
         let proposedQuantity = contractQuantity;
+        let deliveryPlaceComment = null;
+        let quantityComment = null;
+        let rejectComment = null;
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
-          await this.models.createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
+            startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+
           callback(null, {
             message: `Created new contract from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
@@ -459,9 +464,15 @@
         } else {
           if (contract.proposedQuantity !== null) {
             proposedQuantity = contract.proposedQuantity;
-          }          
+          }         
+          
+          deliveryPlaceComment = contract.deliveryPlaceComment;
+          quantityComment = contract.quantityComment;
+          rejectComment = contract.rejectComment;
+  
+          await this.models.updateContract(contract.id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+            startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
-          await this.models.updateContract(contract.id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
