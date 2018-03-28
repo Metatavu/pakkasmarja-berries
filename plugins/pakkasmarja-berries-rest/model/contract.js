@@ -35,6 +35,7 @@
 
 
 
+
   };
 
   /**
@@ -59,6 +60,9 @@
       }
       if (data.hasOwnProperty('itemGroupId')) {
         obj['itemGroupId'] = ApiClient.convertToType(data['itemGroupId'], 'String');
+      }
+      if (data.hasOwnProperty('year')) {
+        obj['year'] = ApiClient.convertToType(data['year'], 'Number');
       }
       if (data.hasOwnProperty('contractQuantity')) {
         obj['contractQuantity'] = ApiClient.convertToType(data['contractQuantity'], 'Number');
@@ -107,6 +111,10 @@
    * @member {String} itemGroupId
    */
   exports.prototype['itemGroupId'] = undefined;
+  /**
+   * @member {Number} year
+   */
+  exports.prototype['year'] = undefined;
   /**
    * @member {Number} contractQuantity
    */

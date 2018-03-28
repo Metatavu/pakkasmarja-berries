@@ -12,6 +12,7 @@
     "signDate": "2020-12-14T00:00:00.000Z",
     "termDate": "2021-01-02T00:00:00.000Z",
     "status": "TERMINATED",
-    "remarks": "Updated for testing"
+    "remarks": "Updated for testing",
+    "year": 2019
   }
 }

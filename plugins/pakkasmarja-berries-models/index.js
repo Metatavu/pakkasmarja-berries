@@ -224,6 +224,7 @@
         contractQuantity: { type: Sequelize.BIGINT },
         deliveredQuantity: { type: Sequelize.BIGINT },
         proposedQuantity: { type: Sequelize.BIGINT },
+        year: { type: Sequelize.INTEGER, allowNull: false },
         startDate: Sequelize.DATE,
         endDate: Sequelize.DATE,
         signDate: Sequelize.DATE,
@@ -1142,6 +1143,7 @@
      * Create new contract
      * 
      * @param {String} userId 
+     * @param {int} year year
      * @param {int} deliveryPlaceId
      * @param {int} itemGroupId 
      * @param {String} sapId 
@@ -1157,9 +1159,10 @@
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.create({
         userId: userId,
+        year: year,
         deliveryPlaceId: deliveryPlaceId,
         itemGroupId: itemGroupId,
         sapId: sapId,
@@ -1197,6 +1200,7 @@
      * Updates a contract 
      * 
      * @param {int} id 
+     * @param {int} year
      * @param {int} deliveryPlaceId
      * @param {int} itemGroupId 
      * @param {int} contractQuantity
@@ -1210,8 +1214,9 @@
      * 
      * @returns {Promise} promise for update
      */
-    updateContract(id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
+    updateContract(id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks) {
       return this.Contract.update({
+        year: year,
         deliveryPlaceId: deliveryPlaceId, 
         itemGroupId: itemGroupId,
         contractQuantity: contractQuantity,
@@ -1267,15 +1272,72 @@
      *  
      * @param {String} userId user id
      * @param {String} itemGroupCategory item group category
+     * @param {String} itemGroupId item group id
+     * @param {String} year year
+     * @param {String} status status
      * @param {int} firstResult first result
      * @param {int} maxResults max results
      * @return {Promise} promise for contracts
      */
-    listContracts(userId, itemGroupCategory, firstResult, maxResults) {
+    listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults) {
+      const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
+
+      return this.Contract.findAll({ 
+        where: where, 
+        offset: firstResult, 
+        limit: maxResults
+      });
+    }
+
+    /**
+     * Counts contracts. 
+     * 
+     * All parameters are optional and ignored if not given
+     *  
+     * @param {String} userId user id
+     * @param {String} itemGroupCategory item group category
+     * @param {String} itemGroupId item group id
+     * @param {String} year year
+     * @param {String} status status
+     * @return {Promise} promise for contracts
+     */
+    countContracts(userId, itemGroupCategory, itemGroupId, year, status) {
+      const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
+
+      return this.Contract.count({ 
+        where: where
+      });
+    }
+
+    /**
+     * Creates a where clause for listing / counting contracts. 
+     * 
+     * All parameters are optional and ignored if not given
+     *  
+     * @param {String} userId user id
+     * @param {String} itemGroupCategory item group category
+     * @param {String} itemGroupId item group id
+     * @param {String} year year
+     * @param {String} status status
+     * @return {Object} where clause
+     */
+    createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status) {
       const where = {};
 
       if (userId) {
         where.userId = userId;
+      }
+
+      if (itemGroupId) {
+        where.itemGroupId = itemGroupId;
+      }
+
+      if (year) {
+        where.year = year;
+      }
+
+      if (status) {
+        where.status = status;
       }
 
       if (itemGroupCategory) {
@@ -1287,11 +1349,7 @@
         where.itemGroupId = { [this.Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
       }
 
-      return this.Contract.findAll({ 
-        where: where, 
-        offset: firstResult, 
-        limit: maxResults
-      });
+      return where;
     }
     
     /**

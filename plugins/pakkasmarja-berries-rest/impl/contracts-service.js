@@ -135,8 +135,10 @@
       const termDate = updateContract.termDate;
       const status = updateContract.status;
       const remarks = updateContract.remarks;
-      
-      await this.models.updateContract(databaseContract.id, 
+      const year = updateContract.year;
+
+      await this.models.updateContract(databaseContract.id,
+        year,
         deliveryPlaceId, 
         itemGroupId, 
         contractQuantity, 
@@ -154,7 +156,7 @@
         this.sendInternalServerError(res, "Failed to update contract");
         return; 
       }
-      
+
       res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
     }
     
@@ -507,14 +509,19 @@
     async listContracts(req, res) {
       const listAll = req.query.listAll === "true";
       const itemGroupCategory = req.query.itemGroupCategory;
-
+      const itemGroupExternalId = req.query.itemGroupId;
+      const year = req.query.year;
+      const status = req.query.status;
+      
       if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
         this.sendForbidden(res, "You have no permission to list all contracts");
         return;
       }
 
+      const databaseItemGrouplId = itemGroupExternalId ? (await this.models.findItemGroupByExternalId(itemGroupExternalId)) : null;
+      const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
       const userId = listAll ? null : this.getLoggedUserId(req);
-      const databaseContracts = await this.models.listContracts(userId, itemGroupCategory);
+      const databaseContracts = await this.models.listContracts(userId, itemGroupCategory, itemGroupId, year, status);
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
       const accept = this.getBareContentType(req.header("accept")) || "application/json";
@@ -533,6 +540,8 @@
           res.status(200).send(xlsxData.buffer);
           break;
         default:
+          const count = await this.models.countContracts(userId, itemGroupCategory, itemGroupId, year, status);
+          res.header("Total-Count", count);
           res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
             return this.translateDatabaseContract(databaseContract);
           })));
@@ -618,7 +627,8 @@
         "signDate": contract.signDate,
         "termDate": contract.termDate,
         "status": contract.status,
-        "remarks": contract.remarks
+        "remarks": contract.remarks,
+        "year": contract.year
       });
       
     }
