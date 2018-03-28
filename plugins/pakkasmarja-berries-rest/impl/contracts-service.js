@@ -437,7 +437,7 @@
       }));
 
       partialFiles.forEach((partialFile, index) => {
-        const partialName = path.basename(partialFile, '.mustache');
+        const partialName = path.basename(partialFile, ".mustache");
         result[partialName] = partials[index];
       });
 
@@ -483,7 +483,7 @@
       });
 
       partials.forEach((partial) => {
-        template = template.replace(new RegExp("[\{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[\}]{2,3}", "gi"), `{{ > ${partial} }}`);
+        template = template.replace(new RegExp("[{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[}]{2,3}", "gi"), `{{ > ${partial} }}`);
       });
 
       return template;
