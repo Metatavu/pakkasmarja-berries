@@ -403,7 +403,7 @@
         const sapItemGroupId = sapContractLine.ItemGroupCode;
         const sapDeliveryPlaceId = sapContractLine.PlaceCode;
         const sapUserId = sapContractLine.CardCode;
-        const year = sapContract.Year;
+        const year = parseInt(sapContract.Year);
         const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
         
         const deliveryPlace = await this.models.findDeliveryPlaceBySapId(sapDeliveryPlaceId);
@@ -451,7 +451,7 @@
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
-          await this.models.createContract(userId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Created new contract from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
@@ -461,7 +461,7 @@
             proposedQuantity = contract.proposedQuantity;
           }          
 
-          await this.models.updateContract(contract.id, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
+          await this.models.updateContract(contract.id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks);
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId

@@ -12,7 +12,8 @@
     "signDate": "2019-12-14T00:00:00.000Z",
     "termDate": "2020-01-02T00:00:00.000Z",
     "status": "APPROVED",
-    "remarks": "Ready for testing"
+    "remarks": "Ready for testing",
+    "year": 2018
   },
   "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
     "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
@@ -27,6 +28,7 @@
     "signDate": "2019-11-03T00:00:00.000Z",
     "termDate": "2020-01-06T00:00:00.000Z",
     "status": "DRAFT",
-    "remarks": null
+    "remarks": null,
+    "year": 2018
   }
 }
