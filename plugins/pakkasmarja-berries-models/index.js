@@ -1280,6 +1280,48 @@
      * @return {Promise} promise for contracts
      */
     listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults) {
+      const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
+
+      return this.Contract.findAll({ 
+        where: where, 
+        offset: firstResult, 
+        limit: maxResults
+      });
+    }
+
+    /**
+     * Counts contracts. 
+     * 
+     * All parameters are optional and ignored if not given
+     *  
+     * @param {String} userId user id
+     * @param {String} itemGroupCategory item group category
+     * @param {String} itemGroupId item group id
+     * @param {String} year year
+     * @param {String} status status
+     * @return {Promise} promise for contracts
+     */
+    countContracts(userId, itemGroupCategory, itemGroupId, year, status) {
+      const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
+
+      return this.Contract.count({ 
+        where: where
+      });
+    }
+
+    /**
+     * Creates a where clause for listing / counting contracts. 
+     * 
+     * All parameters are optional and ignored if not given
+     *  
+     * @param {String} userId user id
+     * @param {String} itemGroupCategory item group category
+     * @param {String} itemGroupId item group id
+     * @param {String} year year
+     * @param {String} status status
+     * @return {Object} where clause
+     */
+    createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status) {
       const where = {};
 
       if (userId) {
@@ -1307,11 +1349,7 @@
         where.itemGroupId = { [this.Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
       }
 
-      return this.Contract.findAll({ 
-        where: where, 
-        offset: firstResult, 
-        limit: maxResults
-      });
+      return where;
     }
     
     /**

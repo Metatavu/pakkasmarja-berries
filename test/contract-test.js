@@ -23,7 +23,7 @@
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
-  
+
   test("Test listing contracts - xlsx all", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
@@ -714,4 +714,49 @@
       .expect(403);
   });
   
+  test("Test list contracts - status", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true&status=DRAFT")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test list contracts - year", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true&year=2018")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test list contracts - itemGroupId", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .get("/rest/v1/contracts?listAll=true&itemGroupId=98be1d32-0f51-11e8-bb59-3b8b6bbe9a20")
+      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        t.equal(response.body.length, 1);
+        t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
 })();
