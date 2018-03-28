@@ -13,7 +13,10 @@
     "termDate": "2020-01-02T00:00:00.000Z",
     "status": "APPROVED",
     "remarks": "Ready for testing",
-    "year": 2017
+    "year": 2017,
+    "deliveryPlaceComment": null,
+    "quantityComment": null,
+    "rejectComment": null
   },
   "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
     "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
@@ -29,6 +32,9 @@
     "termDate": "2020-01-06T00:00:00.000Z",
     "status": "DRAFT",
     "remarks": null,
-    "year": 2018
+    "year": 2018,
+    "deliveryPlaceComment": null,
+    "quantityComment": null,
+    "rejectComment": null
   }
 }

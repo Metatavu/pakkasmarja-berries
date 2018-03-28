@@ -13,6 +13,9 @@
     "termDate": "2021-01-02T00:00:00.000Z",
     "status": "TERMINATED",
     "remarks": "Updated for testing",
-    "year": 2019
+    "year": 2019,
+    "deliveryPlaceComment": "Delivery comment",
+    "quantityComment": "Quantity comment",
+    "rejectComment": "Reject comment"
   }
 }

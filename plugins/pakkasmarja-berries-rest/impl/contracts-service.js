@@ -136,6 +136,9 @@
       const status = updateContract.status;
       const remarks = updateContract.remarks;
       const year = updateContract.year;
+      const deliveryPlaceComment = updateContract.deliveryPlaceComment;
+      const quantityComment = updateContract.quantityComment;
+      const rejectComment = updateContract.rejectComment;
 
       await this.models.updateContract(databaseContract.id,
         year,
@@ -149,7 +152,10 @@
         signDate, 
         termDate, 
         status, 
-        remarks);
+        remarks, 
+        deliveryPlaceComment, 
+        quantityComment, 
+        rejectComment);
 
       const updatedDatabaseContract = await this.models.findContractById(databaseContract.id);
       if (!updatedDatabaseContract) {
@@ -628,7 +634,10 @@
         "termDate": contract.termDate,
         "status": contract.status,
         "remarks": contract.remarks,
-        "year": contract.year
+        "year": contract.year,
+        "deliveryPlaceComment": contract.deliveryPlaceComment,
+        "quantityComment": contract.quantityComment,
+        "rejectComment": contract.rejectComment
       });
       
     }
