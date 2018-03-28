@@ -4,6 +4,8 @@
 (() => {
   "use strict";
 
+  const fs = require("fs");
+  const path = require("path");
   const _ = require("lodash");
   const Promise = require("bluebird");
   const Mustache = require("mustache");
@@ -392,7 +394,7 @@
       }
 
       const orderBy = sortBy === "YEAR" ? "year" : null;
-      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
+      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, null, firstResult, maxResults, orderBy, sortDir);
 
       res.status(200).send(prices.map((price) => {
         return this.translateItemGroupPrice(price, databaseItemGroup);
@@ -408,15 +410,83 @@
      * @param {Object} mustacheData data passed to Mustache renderer
      * @return {String} rendered HTML
      */
-    renderDocumentTemplateComponent(baseUrl, mustacheTemplate, pugTemplateName, mustacheData) {
+    async renderDocumentTemplateComponent(baseUrl, mustacheTemplate, pugTemplateName, mustacheData) {
       if (!mustacheTemplate) {
         return null;
       }
-      
+
+      const mustachePartials = await this.loadMustachePartials();
+      const preprosessedMustacheTemplate = await this.preprosessMustacheTemplate(mustacheTemplate);
+
+      const bodyContent = Mustache.render(preprosessedMustacheTemplate, 
+        mustacheData,
+        mustachePartials
+      );
+
       return this.renderPugTemplate(pugTemplateName, {
-        bodyContent: Mustache.render(mustacheTemplate, mustacheData),
+        bodyContent: bodyContent,
         baseUrl: baseUrl
       });
+    }
+
+    async loadMustachePartials() {
+      const result = {};
+      const partialFiles = await this.getMustachePartialFiles();
+      const partials = await Promise.all(partialFiles.map((partialFile) => {
+        return this.loadMustachePartial(partialFile);
+      }));
+
+      partialFiles.forEach((partialFile, index) => {
+        const partialName = path.basename(partialFile, '.mustache');
+        result[partialName] = partials[index];
+      });
+
+      return result;
+    }
+
+    loadMustachePartial(file) {
+      return new Promise((resolve, reject) => {
+        fs.readFile(file, (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data.toString());
+          }
+        });  
+      });  
+    }
+
+    getMustachePartialFiles() {
+      const folder = `${__dirname}/../../../mustache/`;
+
+      return new Promise((resolve, reject) => {
+        fs.readdir(folder, (err, files) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(files.map((file) => {
+              return `${folder}/${file}`;
+            }));
+          }
+        });
+      });
+    }
+
+    /**
+     * Preprosesses mustache template.
+     * 
+     * @param {String} template mustache template 
+     */
+    async preprosessMustacheTemplate(template) {
+      const partials = (await this.getMustachePartialFiles()).map((partialFile) => {
+        return path.basename(partialFile, ".mustache");
+      });
+
+      partials.forEach((partial) => {
+        template = template.replace(new RegExp("[\{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[\}]{2,3}", "gi"), `{{ > ${partial} }}`);
+      });
+
+      return template;
     }
     
     /**
@@ -689,19 +759,22 @@
         return null;
       }
       
+      const year = (new Date()).getFullYear();
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+      const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, null, null, null, null);
       
       const templateData = {
-        companyName: companyName
+        companyName: companyName,
+        prices: prices
       };
       
-      const content = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
+      const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
       if (!content) {
         return null;
       }
       
-      const header = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
-      const footer = this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
+      const header = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
+      const footer = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const documentName = `${moment().format("YYYY")} - ${itemGroup.name}, ${companyName}`;
       const documentSlug = `${slugify(documentName)}.html`;

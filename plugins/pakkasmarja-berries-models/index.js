@@ -1008,11 +1008,15 @@
      * @param {String} orderDir order direction (defaults to DESC)
      * @return {Promise} promise for item group
      */
-    listItemGroupPrices(itemGroupId, firstResult, maxResults, orderBy, orderDir) {
+    listItemGroupPrices(itemGroupId, year, firstResult, maxResults, orderBy, orderDir) {
       const where = {};
 
       if (itemGroupId) {
         where.itemGroupId = itemGroupId;
+      }
+
+      if (year) {
+        where.year = year;
       }
 
       return this.ItemGroupPrice.findAll({ 

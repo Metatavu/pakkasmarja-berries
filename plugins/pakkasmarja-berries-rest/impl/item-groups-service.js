@@ -176,7 +176,7 @@
       }
 
       const orderBy = sortBy === "YEAR" ? "year" : null;
-      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, firstResult, maxResults, orderBy, sortDir);
+      const prices = await this.models.listItemGroupPrices(databaseItemGroup.id, null, firstResult, maxResults, orderBy, sortDir);
 
       res.status(200).send(prices.map((price) => {
         return this.translateItemGroupPrice(price, databaseItemGroup);

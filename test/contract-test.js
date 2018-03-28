@@ -240,7 +240,7 @@
   });
   
   test("Test contract pdf", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
@@ -248,11 +248,12 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
-        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         await pdf.extractPdfDataFromBuffer(response.body)
           .then((pdfData) => {
             t.ok(pdfData.rawTextContent.indexOf("1 (1)") > -1, "Contains header page number");
             t.ok(pdfData.rawTextContent.indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
+            t.ok(pdfData.rawTextContent.indexOf("Group 18.00 € / l") > -1, "Contains replaced price");
             t.ok(pdfData.rawTextContent.indexOf("https://www.example.com") > -1, "contains footer");
           });
       });
@@ -301,7 +302,7 @@
   });
   
   test("Test contract html", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
@@ -309,10 +310,12 @@
       .set("Accept", "text/html")
       .expect(200)
       .then(async response => {
-        await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         const $ = cheerio.load(response.text);
         t.equal("Example berry purchase contract", $("h1").text(), "Contains header");
         t.ok($("p").text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
+        t.ok($("td").text().indexOf("Group") > -1, "Contains replaced price");
+        t.ok($("td").text().indexOf("18.00 € / l") > -1, "Contains replaced price");
       });
   });
   
@@ -710,5 +713,5 @@
       .set("Accept", "application/json")
       .expect(403);
   });
-
+  
 })();
