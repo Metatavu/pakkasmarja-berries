@@ -456,7 +456,7 @@
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
-          await this.models.createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
+          await this.models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
             startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
           callback(null, {
@@ -472,7 +472,7 @@
           quantityComment = contract.quantityComment;
           rejectComment = contract.rejectComment;
   
-          await this.models.updateContract(contract.id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+          await this.models.updateContract(contract.id, year, deliveryPlaceId, contract.proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
             startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
           callback(null, {

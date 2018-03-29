@@ -39,6 +39,7 @@
 
 
 
+
   };
 
   /**
@@ -60,6 +61,9 @@
       }
       if (data.hasOwnProperty('deliveryPlaceId')) {
         obj['deliveryPlaceId'] = ApiClient.convertToType(data['deliveryPlaceId'], 'String');
+      }
+      if (data.hasOwnProperty('proposedDeliveryPlaceId')) {
+        obj['proposedDeliveryPlaceId'] = ApiClient.convertToType(data['proposedDeliveryPlaceId'], 'String');
       }
       if (data.hasOwnProperty('deliveryPlaceComment')) {
         obj['deliveryPlaceComment'] = ApiClient.convertToType(data['deliveryPlaceComment'], 'String');
@@ -119,6 +123,10 @@
    * @member {String} deliveryPlaceId
    */
   exports.prototype['deliveryPlaceId'] = undefined;
+  /**
+   * @member {String} proposedDeliveryPlaceId
+   */
+  exports.prototype['proposedDeliveryPlaceId'] = undefined;
   /**
    * @member {String} deliveryPlaceComment
    */
