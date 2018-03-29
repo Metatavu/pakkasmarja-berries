@@ -522,7 +522,7 @@
       const year = req.query.year;
       const status = req.query.status;
       const firstResult = parseInt(req.query.firstResult) || 0;
-      const maxResults = parseInt(req.query.maxResults) || 5;
+      const maxResults = parseInt(req.query.maxResults) || 5;
       
       if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
         this.sendForbidden(res, "You have no permission to list all contracts");
