@@ -313,6 +313,7 @@
       return ItemGroup.constructFromObject({
         "id": itemGroup.externalId,
         "name": itemGroup.name,
+        "displayName": itemGroup.displayName,
         "category": itemGroup.category
       });
     }

@@ -25,6 +25,7 @@
 
 
 
+
   };
 
   /**
@@ -44,6 +45,9 @@
       if (data.hasOwnProperty('name')) {
         obj['name'] = ApiClient.convertToType(data['name'], 'String');
       }
+      if (data.hasOwnProperty('displayName')) {
+        obj['displayName'] = ApiClient.convertToType(data['displayName'], 'String');
+      }
       if (data.hasOwnProperty('category')) {
         obj['category'] = ApiClient.convertToType(data['category'], 'String');
       }
@@ -59,6 +63,10 @@
    * @member {String} name
    */
   exports.prototype['name'] = undefined;
+  /**
+   * @member {String} displayName
+   */
+  exports.prototype['displayName'] = undefined;
   /**
    * @member {String} category
    */
