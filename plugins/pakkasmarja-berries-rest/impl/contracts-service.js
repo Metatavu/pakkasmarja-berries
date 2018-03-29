@@ -518,6 +518,8 @@
       const itemGroupExternalId = req.query.itemGroupId;
       const year = req.query.year;
       const status = req.query.status;
+      const firstResult = parseInt(req.query.firstResult);
+      const maxResults = parseInt(req.query.maxResults);
       
       if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
         this.sendForbidden(res, "You have no permission to list all contracts");
@@ -527,7 +529,7 @@
       const databaseItemGrouplId = itemGroupExternalId ? (await this.models.findItemGroupByExternalId(itemGroupExternalId)) : null;
       const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
       const userId = listAll ? null : this.getLoggedUserId(req);
-      const databaseContracts = await this.models.listContracts(userId, itemGroupCategory, itemGroupId, year, status);
+      const databaseContracts = await this.models.listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults);
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
       const accept = this.getBareContentType(req.header("accept")) || "application/json";
