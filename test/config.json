@@ -65,6 +65,11 @@
     "itemGroupCategories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
+    },
+    "itemGroupDisplayNames": {
+      "123": "Frozen Test Group 1",
+      "234": "Fresh Test Group 1",
+      "456": "Frozen Test Group 2"
     }
   }
 }

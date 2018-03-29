@@ -361,6 +361,8 @@
         const sapItemGroup = data.itemGroup;
         const sapId = sapItemGroup.ItemGroupCode;
         const name = sapItemGroup.ItemGroupName;
+        const displayName = this.resolveSapItemGroupDisplayName(sapId);
+
         const category = this.resolveSapItemGroupCategory(sapId);
         if (!category) {
           callback({
@@ -372,9 +374,9 @@
 
         const itemGroup = await this.models.findItemGroupBySapId(sapId);
         if (itemGroup) {
-          this.models.updateItemGroup(itemGroup.id, name, category);
+          this.models.updateItemGroup(itemGroup.id, name, displayName, category);
         } else {
-          this.models.createItemGroup(sapId, name, category);
+          this.models.createItemGroup(sapId, name, displayName, category);
         }
 
         callback(null, {
@@ -505,6 +507,17 @@
       }
 
       return null;
+    }
+
+    /**
+     * Resolves display name for given SAP id
+     * 
+     * @param {String} sapId sapId
+     * @return {String} display name or null if not found
+     */
+    resolveSapItemGroupDisplayName(sapId) {
+      const displayNames = config.get("sap:itemGroupDisplayNames") || {};
+      return displayNames[sapId];
     }
 
   }

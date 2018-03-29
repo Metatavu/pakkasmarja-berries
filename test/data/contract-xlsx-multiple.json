@@ -14,7 +14,7 @@
     [
       "tusap1",
       null,
-      "Test Group 1",
+      "123456/Test Group 1",
       50000,
       "Test Place 1",
       "Ready for testing",
@@ -24,7 +24,7 @@
     [
       "tusap2",
       "Test Corp.",
-      "Test Group 2",
+      "234567/Test Group 2",
       75200,
       "Test Place 2",
       null,

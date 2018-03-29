@@ -1,14 +1,17 @@
 [
   {
-    "name": "1 Frozen Test Group",
+    "name": "123000/Frozen Tes",
+    "displayName": "Frozen Test Group 1",
     "category": "FROZEN"
   },
   {
-    "name": "2 Fresh Test Group",
+    "name": "234000/Fresh Tes",
+    "displayName": "Fresh Test Group 1",
     "category": "FRESH"
   },
   {
-    "name": "3 Frozen Test Group",
+    "name": "345000/Frozen Te",
+    "displayName": "Frozen Test Group 2",
     "category": "FROZEN"
   }
 ]
