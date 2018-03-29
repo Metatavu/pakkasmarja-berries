@@ -117,6 +117,7 @@
       }
 
       const deliveryPlace = await this.models.findDeliveryPlaceByExternalId(updateContract.deliveryPlaceId);
+      const proposedDeliveryPlace = await this.models.findDeliveryPlaceByExternalId(updateContract.proposedDeliveryPlaceId || updateContract.deliveryPlaceId);
       const itemGroup = await this.models.findItemGroupByExternalId(updateContract.itemGroupId);
 
       if (!itemGroup) {
@@ -125,6 +126,7 @@
       }
       
       const deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
+      const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
       const itemGroupId = itemGroup.id;
       const contractQuantity = updateContract.contractQuantity;
       const deliveredQuantity = updateContract.deliveredQuantity;
@@ -142,7 +144,8 @@
 
       await this.models.updateContract(databaseContract.id,
         year,
-        deliveryPlaceId, 
+        deliveryPlaceId,
+        proposedDeliveryPlaceId,
         itemGroupId, 
         contractQuantity, 
         deliveredQuantity,
@@ -619,12 +622,14 @@
     async translateDatabaseContract(contract) {
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
+      const proposedDeliveryPlace = await this.models.findDeliveryPlaceById(contract.proposedDeliveryPlaceId);
 
       return Contract.constructFromObject({
         "id": contract.externalId,
         "contactId": contract.userId,
         "itemGroupId": itemGroup.externalId,
         "deliveryPlaceId": deliveryPlace.externalId,
+        "proposedDeliveryPlaceId": proposedDeliveryPlace.externalId,
         "contractQuantity": contract.contractQuantity,
         "deliveredQuantity": contract.deliveredQuantity,
         "proposedQuantity": contract.proposedQuantity,

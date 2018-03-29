@@ -3,6 +3,7 @@
     "id": "1d45568e-0fba-11e8-9ac4-a700da67a976",
     "itemGroupId": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
     "deliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
+    "proposedDeliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
     "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
     "contractQuantity": 123456,
     "deliveredQuantity": 902,

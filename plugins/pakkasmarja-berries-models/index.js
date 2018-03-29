@@ -221,6 +221,7 @@
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
+        proposedDeliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
         contractQuantity: { type: Sequelize.BIGINT },
         deliveredQuantity: { type: Sequelize.BIGINT },
@@ -1150,33 +1151,35 @@
     /**
      * Create new contract
      * 
-     * @param {String} userId 
+     * @param {String} userId contract's user id
      * @param {int} year year
-     * @param {int} deliveryPlaceId
-     * @param {int} itemGroupId 
-     * @param {String} sapId 
-     * @param {int} contractQuantity
-     * @param {int} deliveredQuantity 
-     * @param {int} proposedQuantity
-     * @param {Date} startDate 
-     * @param {Date} endDate 
-     * @param {Date} signDate 
-     * @param {Date} termDate 
-     * @param {String} status 
-     * @param {String} remarks
-     * @param {String} deliveryPlaceComment
-     * @param {String} quantityComment
-     * @param {String} rejectComment
+     * @param {int} deliveryPlaceId delivery place id
+     * @param {int} proposedDeliveryPlaceId proposed delivery place id
+     * @param {int} itemGroupId item group id
+     * @param {String} sapId sap id
+     * @param {int} contractQuantity contract quantity
+     * @param {int} deliveredQuantity delivered quantity
+     * @param {int} proposedQuantity proposed quantity
+     * @param {Date} startDate start date
+     * @param {Date} endDate end date 
+     * @param {Date} signDate sign date
+     * @param {Date} termDate term date
+     * @param {String} status status
+     * @param {String} remarks remarks
+     * @param {String} deliveryPlaceComment delivery place comment
+     * @param {String} quantityComment quantity comment
+     * @param {String} rejectComment reject  comment
      * 
      * @returns {Promise} promise for new contract
      */
-    createContract(userId, year, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
+    createContract(userId, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
       startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
 
       return this.Contract.create({
         userId: userId,
         year: year,
         deliveryPlaceId: deliveryPlaceId,
+        proposedDeliveryPlaceId: proposedDeliveryPlaceId,
         itemGroupId: itemGroupId,
         sapId: sapId,
         contractQuantity: contractQuantity,
@@ -1215,30 +1218,35 @@
     /**
      * Updates a contract 
      * 
-     * @param {int} id 
-     * @param {int} year
-     * @param {int} deliveryPlaceId
-     * @param {int} itemGroupId 
-     * @param {int} contractQuantity
-     * @param {int} deliveredQuantity 
-     * @param {Date} startDate 
-     * @param {Date} endDate 
-     * @param {Date} signDate 
-     * @param {Date} termDate 
-     * @param {String} status 
-     * @param {String} remarks
-     * @param {String} deliveryPlaceComment
-     * @param {String} quantityComment
-     * @param {String} rejectComment 
+     * @param {int} id contract id
+     * @param {String} userId contract's user id
+     * @param {int} year year
+     * @param {int} deliveryPlaceId delivery place id
+     * @param {int} proposedDeliveryPlaceId proposed delivery place id
+     * @param {int} itemGroupId item group id
+     * @param {String} sapId sap id
+     * @param {int} contractQuantity contract quantity
+     * @param {int} deliveredQuantity delivered quantity
+     * @param {int} proposedQuantity proposed quantity
+     * @param {Date} startDate start date
+     * @param {Date} endDate end date 
+     * @param {Date} signDate sign date
+     * @param {Date} termDate term date
+     * @param {String} status status
+     * @param {String} remarks remarks
+     * @param {String} deliveryPlaceComment delivery place comment
+     * @param {String} quantityComment quantity comment
+     * @param {String} rejectComment reject  comment
      * 
      * @returns {Promise} promise for update
      */
-    updateContract(id, year, deliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+    updateContract(id, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
       startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
 
       return this.Contract.update({
         year: year,
-        deliveryPlaceId: deliveryPlaceId, 
+        deliveryPlaceId: deliveryPlaceId,
+        proposedDeliveryPlaceId: proposedDeliveryPlaceId,
         itemGroupId: itemGroupId,
         contractQuantity: contractQuantity,
         deliveredQuantity: deliveredQuantity,
