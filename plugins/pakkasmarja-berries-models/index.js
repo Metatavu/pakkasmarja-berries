@@ -5,6 +5,7 @@
   
   const _ = require("lodash");
   const Promise = require("bluebird");
+  const Umzug = require("umzug");
   
   class Models {
     
@@ -172,7 +173,7 @@
       await this.defineModel("ItemGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
-        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false },
         category: { type: Sequelize.STRING(191), allowNull: false },
         displayName: { type: Sequelize.STRING(191), allowNull: true }
@@ -201,7 +202,7 @@
       await this.defineModel("DeliveryPlace", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
-        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
@@ -319,7 +320,30 @@
         success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
-    
+
+    /**
+     * Runs all pending database migrations 
+     * 
+     * @return {Promise} Promise for migrations 
+     */
+    migrationsUp () {   
+      const umzug = new Umzug({
+        storage: 'sequelize',
+        storageOptions: {
+          sequelize: this.sequelize
+        },
+        migrations: {
+          params: [
+            this.sequelize.getQueryInterface(),
+            this.Sequelize
+          ],
+          path: `${__dirname}/migrations/`
+        }
+      });
+
+      return umzug.up();
+    }
+
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
         charset: "utf8mb4",
@@ -328,7 +352,7 @@
         }
       }));
       
-      return this[name].sync();
+      return Promise.resolve();
     }
     
     // User settings
@@ -1769,10 +1793,12 @@
     const shadySequelize = imports["shady-sequelize"];
     const logger = imports["logger"];
     const models = new Models(logger, shadySequelize);
-    
-    models.defineModels().then(() => {
-      register(null, {
-        "pakkasmarja-berries-models": models
+
+    models.migrationsUp().then(() => {
+      models.defineModels().then(() => {
+        register(null, {
+          "pakkasmarja-berries-models": models
+        });
       });
     });
     

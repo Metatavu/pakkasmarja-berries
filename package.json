@@ -52,6 +52,7 @@
     "slugify": "^1.2.9",
     "stream-to-array": "^2.3.0",
     "tmp": "0.0.33",
+    "umzug": "^2.1.0",
     "uuid4": "1.0.0",
     "visma-sign-client": "0.0.7",
     "wkhtmltopdf": "^0.3.4",
