@@ -262,7 +262,7 @@
       this.defineModel("ItemGroupDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
-        type: { type: Sequelize.STRING(100), allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
@@ -280,7 +280,7 @@
       this.defineModel("ContractDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
-        type: { type: Sequelize.STRING(100), allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DocumentTemplate, key: "id" } }
       }, {
@@ -297,7 +297,7 @@
 
       this.defineModel("ContractDocument", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        type: { type: Sequelize.STRING(100), allowNull: false },
+        type: { type: Sequelize.STRING(191), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
         vismaSignDocumentId: { type: Sequelize.STRING(191), allowNull: false },
         signed: { type: Sequelize.BOOLEAN, allowNull: false }
