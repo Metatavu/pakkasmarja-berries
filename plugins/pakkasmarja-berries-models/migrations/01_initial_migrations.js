@@ -97,7 +97,7 @@
 
       await query.createTable("ContractDocuments", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        type: { type: Sequelize.STRING(191), allowNull: false },
+        type: { type: Sequelize.STRING(100), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "Contracts", key: "id" } },
         vismaSignDocumentId: { type: Sequelize.STRING(191), allowNull: false },
         signed: { type: Sequelize.BOOLEAN, allowNull: false },
@@ -114,7 +114,7 @@
       await query.createTable("ContractDocumentTemplates", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID },
-        type: { type: Sequelize.STRING(191), allowNull: false },
+        type: { type: Sequelize.STRING(100), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "Contracts", key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DocumentTemplates", key: "id" } },
         createdAt: { type: Sequelize.DATE, allowNull: false },
@@ -136,7 +136,7 @@
       await query.createTable("ItemGroupDocumentTemplates", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID },
-        type: { type: Sequelize.STRING(191), allowNull: false },
+        type: { type: Sequelize.STRING(100), allowNull: false },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
         documentTemplateId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DocumentTemplates", key: "id" } },
         createdAt: { type: Sequelize.DATE, allowNull: false },
