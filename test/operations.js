@@ -58,9 +58,9 @@
           this.checkOperationReport(accessToken, operationReportId)
             .then((result) => {
               const operationReport = result.body;
+              console.log(result.body);
 
               if (operationReport.failedCount !== 0) {
-                console.error(result.body);
                 reject(result.body);
               } else if (operationReport.pendingCount === 0) {
                 clearInterval(intervalId);
