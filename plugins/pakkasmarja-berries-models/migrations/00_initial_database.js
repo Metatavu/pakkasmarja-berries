@@ -1,8 +1,6 @@
 (() => {
   "use strict";
 
-  const Promise = require("bluebird");
-
   module.exports = {
 
     up: async (query, Sequelize) => {
