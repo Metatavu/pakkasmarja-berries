@@ -12,7 +12,7 @@
   const operationReportItemDatas = require(`${__dirname}/data/operation-report-items.json`);
   
   test("Test listing operation reports", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports")
@@ -29,7 +29,7 @@
   });
 
   test("Test listing operation reports - sort created asc", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports?sortBy=CREATED&sortDir=ASC")
@@ -46,7 +46,7 @@
   });
 
   test("Test listing operation reports - firstResult", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports?firstResult=1")
@@ -62,7 +62,7 @@
   });
 
   test("Test listing operation reports - maxResults", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports?maxResults=1")
@@ -93,7 +93,7 @@
   });
   
   test("Test find operation report", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
@@ -139,7 +139,7 @@
   });
 
   test("Test listing operation report items", async (t) => {
-    await database.executeFiles(`${__dirname}/data`, ["operation-reports-setup.sql"]);
+    await database.executeFiles(`${__dirname}/data`, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
     return request("http://localhost:3002")
       .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e/items")
