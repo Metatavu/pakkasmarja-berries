@@ -331,7 +331,7 @@
      */
     migrationsUp () {   
       const umzug = new Umzug({
-        storage: 'sequelize',
+        storage: "sequelize",
         storageOptions: {
           sequelize: this.sequelize
         },

@@ -147,12 +147,8 @@
         unique: true,
         fields: ["userId", "itemId"]
       });
-    },
-
-    down: (query, Sequelize) => {
-      return Promise.resolve();
     }
 
-  }
+  };
 
 })();

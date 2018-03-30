@@ -186,12 +186,8 @@
         createdAt: { type: Sequelize.DATE, allowNull: false },
         updatedAt: { type: Sequelize.DATE, allowNull: false }
       });
-    },
-
-    down: (query, Sequelize) => {
-      return Promise.resolve();
     }
 
-  }
+  };
 
 })();
