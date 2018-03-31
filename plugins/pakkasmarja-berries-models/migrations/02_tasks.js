@@ -13,8 +13,8 @@
         "sapContractUpdate"
       ];
 
-      const creates = queues.map(() => {
-        return query.createTable("ItemGroups", {
+      const creates = queues.map((queue) => {
+        return query.createTable(`tasks_${queue}`, {
           id: { type: Sequelize.STRING(191), unique: true, allowNull: false },
           lock: { type: Sequelize.TEXT },
           task: { type: Sequelize.TEXT },
