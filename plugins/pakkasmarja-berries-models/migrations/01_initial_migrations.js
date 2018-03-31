@@ -157,7 +157,7 @@
 
       await query.createTable("ItemGroupPrices", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID },
+        externalId: { type: Sequelize.UUID, unique: true },
         groupName: { type: Sequelize.STRING(191), allowNull: false },
         unit: { type: Sequelize.STRING(191), allowNull: false },
         price: { type: Sequelize.STRING(191), allowNull: false },
@@ -169,7 +169,7 @@
       
       await query.createTable("OperationReports", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID },
+        externalId: { type: Sequelize.UUID, unique: true },
         type: { type: Sequelize.STRING(191), allowNull: false },
         createdAt: { type: Sequelize.DATE, allowNull: false },
         updatedAt: { type: Sequelize.DATE, allowNull: false }

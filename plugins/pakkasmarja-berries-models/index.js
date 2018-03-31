@@ -194,7 +194,7 @@
 
       this.defineModel("ItemGroupPrice", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, unique: true, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         groupName: { type: Sequelize.STRING(191), allowNull: false },
         unit: { type: Sequelize.STRING(191), allowNull: false },
         price: { type: Sequelize.STRING(191), allowNull: false },
@@ -311,7 +311,7 @@
       
       this.defineModel("OperationReport", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, unique: true, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false }
       });
       
