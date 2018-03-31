@@ -11,7 +11,7 @@
     return new Promise((resolve) => {
       query.describeTable("Sessions")
         .then((result) => {
-          resolve(!!result)
+          resolve(!!result);
         })
         .catch(() => {
           resolve(false);
