@@ -52,7 +52,8 @@
         host: config.get("mysql:host") || "localhost",
         port: config.get("mysql:port") || 3306,
         username: config.get("mysql:username"),
-        password: config.get("mysql:password")
+        password: config.get("mysql:password"),
+        charset: "utf8mb4"
       }));
 
       this[`${name}Queue`].on("task_finish", (taskId, result) => {

@@ -5,6 +5,7 @@
   
   const _ = require("lodash");
   const Promise = require("bluebird");
+  const Umzug = require("umzug");
   
   class Models {
     
@@ -14,15 +15,18 @@
       this.Sequelize = shadySequelize.Sequelize;
     }
     
-    async defineModels() {
+    /**
+     * Defines database models
+     */
+    defineModels() {
       const Sequelize = this.Sequelize;
       
-      await this.defineModel("Session", {
+      this.defineModel("Session", {
         id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
       });
       
-      await this.defineModel("ConnectSession", {
+      this.defineModel("ConnectSession", {
         sid: {
           type: Sequelize.STRING(191),
           primaryKey: true
@@ -32,7 +36,7 @@
         data: Sequelize.TEXT
       });
       
-      await this.defineModel("UserSettings", {
+      this.defineModel("UserSettings", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         settingKey: { type: Sequelize.STRING(191), allowNull: false },
@@ -45,7 +49,7 @@
         }]
       });
       
-      await this.defineModel("Thread", {
+      this.defineModel("Thread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191) },
         type: { type: Sequelize.STRING(191), allowNull: false },
@@ -70,7 +74,7 @@
         }
       });
       
-      await this.defineModel("ThreadUserGroupRole", {
+      this.defineModel("ThreadUserGroupRole", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
         userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
@@ -83,14 +87,14 @@
         }]
       });
       
-      await this.defineModel("Message", {
+      this.defineModel("Message", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         contents: { type: Sequelize.TEXT, allowNull: false }
       });
       
-      await this.defineModel("QuestionGroup", {
+      this.defineModel("QuestionGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191), allowNull: false },
@@ -114,7 +118,7 @@
         }
       });
       
-      await this.defineModel("QuestionGroupUserGroupRole", {
+      this.defineModel("QuestionGroupUserGroupRole", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: "id" } },
         userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
@@ -127,7 +131,7 @@
         }]
       });
       
-      await this.defineModel("QuestionGroupUserThread", {
+      this.defineModel("QuestionGroupUserThread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.QuestionGroup, key: "id" } },
         threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
@@ -140,7 +144,7 @@
         }]
       });
       
-      await this.defineModel("NewsArticle", {
+      this.defineModel("NewsArticle", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
         contents: { type: "LONGTEXT", allowNull: false },
@@ -148,7 +152,7 @@
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
       });
       
-      await this.defineModel("MessageAttachment", {
+      this.defineModel("MessageAttachment", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Message, key: "id" } },
         contents: { type: "LONGBLOB", allowNull: false },
@@ -157,7 +161,7 @@
         size: { type: Sequelize.BIGINT }
       });
       
-      await this.defineModel("ItemRead", {
+      this.defineModel("ItemRead", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
         itemId: { type: Sequelize.STRING(191), allowNull: false }
@@ -169,10 +173,10 @@
         }]
       });
       
-      await this.defineModel("ItemGroup", {
+      this.defineModel("ItemGroup", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
-        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false },
         category: { type: Sequelize.STRING(191), allowNull: false },
         displayName: { type: Sequelize.STRING(191), allowNull: true }
@@ -188,9 +192,9 @@
         }]
       });
 
-      await this.defineModel("ItemGroupPrice", {
+      this.defineModel("ItemGroupPrice", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, unique: true, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         groupName: { type: Sequelize.STRING(191), allowNull: false },
         unit: { type: Sequelize.STRING(191), allowNull: false },
         price: { type: Sequelize.STRING(191), allowNull: false },
@@ -198,10 +202,10 @@
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } }
       });
 
-      await this.defineModel("DeliveryPlace", {
+      this.defineModel("DeliveryPlace", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         sapId: { type: Sequelize.STRING(191), allowNull: false },
-        externalId: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false }
       }, {
         indexes: [{
@@ -215,7 +219,7 @@
         }]
       });
       
-      await this.defineModel("Contract", {
+      this.defineModel("Contract", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
@@ -248,14 +252,14 @@
         }]
       });
       
-      await this.defineModel("DocumentTemplate", {
+      this.defineModel("DocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         contents: { type: "LONGTEXT", allowNull: false },
         header: { type: "LONGTEXT", allowNull: true },
         footer: { type: "LONGTEXT", allowNull: true }
       });
 
-      await this.defineModel("ItemGroupDocumentTemplate", {
+      this.defineModel("ItemGroupDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false },
@@ -273,7 +277,7 @@
         }]
       });
       
-      await this.defineModel("ContractDocumentTemplate", {
+      this.defineModel("ContractDocumentTemplate", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false },
@@ -291,7 +295,7 @@
         }]
       });
 
-      await this.defineModel("ContractDocument", {
+      this.defineModel("ContractDocument", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
         contractId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Contract, key: "id" } },
@@ -305,13 +309,13 @@
         }]
       });
       
-      await this.defineModel("OperationReport", {
+      this.defineModel("OperationReport", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-        externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+        externalId: { type: Sequelize.UUID, unique: true, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         type: { type: Sequelize.STRING(191), allowNull: false }
       });
       
-      await this.defineModel("OperationReportItem", {
+      this.defineModel("OperationReportItem", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         message: { type: "LONGBLOB", allowNull: true },
         operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.OperationReport, key: "id" } },
@@ -319,7 +323,37 @@
         success: { type: Sequelize.BOOLEAN, allowNull: false }
       });
     }
-    
+
+    /**
+     * Runs all pending database migrations 
+     * 
+     * @return {Promise} Promise for migrations 
+     */
+    migrationsUp () {   
+      const umzug = new Umzug({
+        storage: "sequelize",
+        storageOptions: {
+          sequelize: this.sequelize
+        },
+        migrations: {
+          params: [
+            this.sequelize.getQueryInterface(),
+            this.Sequelize
+          ],
+          path: `${__dirname}/migrations/`
+        }
+      });
+
+      return umzug.up();
+    }
+
+    /**
+     * Defines new database model.
+     * 
+     * @param {String} name model name
+     * @param {Object} attributes model attributes
+     * @param {Object} options model options
+     */
     defineModel(name, attributes, options) {
       this[name] = this.sequelize.define(name, attributes, Object.assign(options || {}, {
         charset: "utf8mb4",
@@ -327,8 +361,6 @@
           collate: "utf8mb4_unicode_ci"
         }
       }));
-      
-      return this[name].sync();
     }
     
     // User settings
@@ -1769,8 +1801,14 @@
     const shadySequelize = imports["shady-sequelize"];
     const logger = imports["logger"];
     const models = new Models(logger, shadySequelize);
-    
-    models.defineModels().then(() => {
+
+    models.migrationsUp().then((migrations) => {
+      migrations.forEach((migration) => {
+        logger.info(`Migration ${migration.file} executed successfully`);
+      });
+
+      models.defineModels();
+
       register(null, {
         "pakkasmarja-berries-models": models
       });
