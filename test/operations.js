@@ -59,7 +59,10 @@
             .then((result) => {
               const operationReport = result.body;
               if (operationReport.failedCount !== 0) {
-                reject(result.body);
+                this.getOperationItems(accessToken, operationReportId)
+                  .then((itemsResult) => {
+                    reject(JSON.stringify(itemsResult.body));
+                  });
               } else if (operationReport.pendingCount === 0) {
                 clearInterval(intervalId);
                 clearTimeout(timeoutId);
@@ -86,6 +89,20 @@
     checkOperationReport(accessToken, operationReportId) {
       return request("http://localhost:3002")
         .get(`/rest/v1/operationReports/${operationReportId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Accept", "application/json")
+        .expect(200);
+    }
+
+    /**
+     * Lists operation items by operation report id
+     * 
+     * @param {String} accessToken access token 
+     * @param {int} operationReportId operation report id
+     */
+    getOperationItems(accessToken, operationReportId) {
+      return request("http://localhost:3002")
+        .get(`/rest/v1/operationReports/${operationReportId}/items`)
         .set("Authorization", `Bearer ${accessToken}`)
         .set("Accept", "application/json")
         .expect(200);

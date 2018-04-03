@@ -402,7 +402,7 @@
           if (c1.year === c2.year) {
             return c1.contractQuantity - c2.contractQuantity;
           } else {
-            return c1.year === c2.year;
+            return c2.year - c1.year;
           }
         });
 
