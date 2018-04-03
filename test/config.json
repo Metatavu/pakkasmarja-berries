@@ -62,11 +62,11 @@
   },
   "sap": {
     "import-file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export.xml",
-    "itemGroupCategories": {
+    "item-group-categories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
     },
-    "itemGroupDisplayNames": {
+    "item-group-display-names": {
       "123": "Frozen Test Group 1",
       "234": "Fresh Test Group 1",
       "456": "Frozen Test Group 2"
