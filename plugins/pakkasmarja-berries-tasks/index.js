@@ -146,14 +146,18 @@
     /**
      * Enqueues SAP contract update task
      * 
-     * @param {Object} contract SAP contract object 
+     * @param {String} operationReportId operationReportId
+     * @param {Object} contract SAP contract object
+     * @param {int} lineIndex contract line index
+     * @param {String} status contract status
      */
-    async enqueueSapContractUpdate(operationReportId, contract, lineIndex) {
+    async enqueueSapContractUpdate(operationReportId, contract, lineIndex, status) {
       const operationReportItem = await this.models.createOperationReportItem(operationReportId, null, false, false);
 
       this.sapContractUpdateQueue.push({
         contract: contract,
         lineIndex: lineIndex,
+        status: status,
         operationReportItemId: operationReportItem.id
       });
     }
@@ -403,6 +407,7 @@
       try {
         const sapContract = data.contract;
         const sapContractLine = sapContract.ContractLines.ContractLine[data.lineIndex];
+        const status = data.status;
         const sapItemGroupId = sapContractLine.ItemGroupCode;
         const sapDeliveryPlaceId = sapContractLine.PlaceCode;
         const sapUserId = sapContractLine.CardCode;
@@ -448,7 +453,6 @@
         const endDate = null;
         const signDate = null;
         const termDate = null;
-        const status = "DRAFT";
         const remarks = null;
         let proposedQuantity = contractQuantity;
         let deliveryPlaceComment = null;

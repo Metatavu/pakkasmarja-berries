@@ -88,28 +88,43 @@
      */
     async readSapImportFileTask(type) {
       try {
-        const data = await this.parseXmlFile(config.get("sap:import-file"));
-        if (!data) {
-          this.logger.error("Failed to read SAP import file");
+        const importFiles = config.get("sap:import-files");
+        const datas = await Promise.all(this.parseXmlFiles(importFiles.map((importFile) => {
+          return importFile.file;
+        })));
+
+        if (!datas) {
+          this.logger.error("Failed to read SAP import files");
           return;
         }
 
-        const sap = data.SAP;
-        if (!sap) {
+        const sapDatas = datas.map((data, index) => {
+          return {
+            data: data.SAP,
+            status: importFiles[index].status
+          };
+        });
+        
+        if (!sapDatas) {
           this.logger.error("Could not find SAP root entry");
           return;
         }
 
+        const activeSapData = sapDatas.filter((sapData) => {
+          return sapData.status === "APPROVED";
+        }).pop();
+
         switch (type) {
           case OPERATION_SAP_CONTACT_SYNC:
-            return this.readSapImportBusinessPartners(sap);
+            return this.readSapImportBusinessPartners(activeSapData.data);
           case OPERATION_SAP_DELIVERY_PLACE_SYNC:
-            return this.readSapImportDeliveryPlaces(sap);
+            return this.readSapImportDeliveryPlaces(activeSapData.data);
           case OPERATION_SAP_ITEM_GROUP_SYNC:
-            return this.readSapImportItemGroups(sap);
+            return this.readSapImportItemGroups(activeSapData.data);
           case OPERATION_SAP_CONTRACT_SYNC:
-            return this.readSapImportContracts(sap);
+            return this.readSapImportContracts(sapDatas);
         }
+
       } catch (e) {
         this.logger.error(`Failed to parse SAP import file ${e}`);
       }
@@ -195,25 +210,25 @@
     /**
      * Reads contracts from SAP and fills related task queue with data from file
      * 
-     * @param {Object} sap SAP data object 
+     * @param {Object[]} sapDatas Array of SAP data objects
      */
-    async readSapImportContracts(sap) {
-      if (!sap.Contracts) {
-        this.logger.error("Failed to read SAP contracts");
-        return;
-      }
-
-      const contracts = sap.Contracts.Contracts;
-      if (!contracts) {
-        this.logger.error("Failed to read SAP contracts list");
-        return;
-      }
-
+    async readSapImportContracts(sapDatas) {
       const operationReport = await this.models.createOperationReport("SAP_CONTRACT_SYNC");
-
-      contracts.forEach((contract) => {
-        for (let i = 0; i < contract.ContractLines.ContractLine.length; i++) {
-          this.tasks.enqueueSapContractUpdate(operationReport.id, contract, i);
+      sapDatas.forEach((sapData) => {
+        const sap = sapData.data;
+        const status = sapData.status;
+        if (sap.Contracts) {
+          const contracts = sap.Contracts.Contracts;
+          if (!contracts) {
+            this.logger.error("Failed to read SAP contracts list");
+            return;
+          }
+    
+          contracts.forEach((contract) => {
+            for (let i = 0; i < contract.ContractLines.ContractLine.length; i++) {
+              this.tasks.enqueueSapContractUpdate(operationReport.id, contract, i, status);
+            }
+          });
         }
       });
 
@@ -284,6 +299,18 @@
             resolve(result);
           }
         });
+      });
+    }
+    
+    /**
+     * Parses XML files into array of objects
+     * 
+     * @param {String} file path to file
+     * @returns {Promise} promise for parsed objects
+     */
+    parseXmlFiles(files) {
+      return files.map((file) => {
+        return this.parseXmlFile(file);
       });
     }
     

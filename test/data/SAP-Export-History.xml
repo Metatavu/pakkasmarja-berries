@@ -81,11 +81,11 @@
   </BusinessPartners>
   <Contracts>
     <Contracts>
-      <ContractId>123</ContractId>
-      <ContractNumber>123</ContractNumber>
+      <ContractId>3333</ContractId>
+      <ContractNumber>3333</ContractNumber>
       <CardCode>tusap1</CardCode>
       <CardName></CardName>
-      <Year>2020</Year>
+      <Year>2017</Year>
       <PlaceCode>01</PlaceCode>
       <PlaceName>Test</PlaceName>
       <ContractLines>
@@ -106,26 +106,26 @@
       </ContractLines>
     </Contracts>
     <Contracts>
-      <ContractId>234</ContractId>
-      <ContractNumber>234</ContractNumber>
+      <ContractId>4444</ContractId>
+      <ContractNumber>4444</ContractNumber>
       <CardCode>tusap2</CardCode>
-      <CardName>Test Corp.</CardName>
-      <Year>2021</Year>
+      <CardName></CardName>
+      <Year>2016</Year>
       <PlaceCode>01</PlaceCode>
       <PlaceName>Test</PlaceName>
       <ContractLines>
         <ContractLine>
           <CardCode>tusap2</CardCode>
           <ItemGroupCode>123</ItemGroupCode>
-          <ContractQuantity>300000</ContractQuantity>
-          <DeliveredQuantity>7000</DeliveredQuantity>
+          <ContractQuantity>10000</ContractQuantity>
+          <DeliveredQuantity>5000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
         <ContractLine>
           <CardCode>tusap2</CardCode>
-          <ItemGroupCode>456</ItemGroupCode>
-          <ContractQuantity>400000</ContractQuantity>
-          <DeliveredQuantity>8000</DeliveredQuantity>
+          <ItemGroupCode>234</ItemGroupCode>
+          <ContractQuantity>20000</ContractQuantity>
+          <DeliveredQuantity>6000</DeliveredQuantity>
           <PlaceCode>01</PlaceCode>
         </ContractLine>
       </ContractLines>
