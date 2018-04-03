@@ -102,7 +102,7 @@
           return {
             data: data.SAP,
             status: importFiles[index].status
-          }
+          };
         });
         
         if (!sapDatas) {
@@ -110,8 +110,8 @@
           return;
         }
 
-        const activeSapData = sapDatas.filter((sapData, index) => {
-          return sapData.status === 'APPROVED';
+        const activeSapData = sapDatas.filter((sapData) => {
+          return sapData.status === "APPROVED";
         }).pop();
 
         switch (type) {
