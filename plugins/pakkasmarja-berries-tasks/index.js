@@ -500,7 +500,7 @@
      * @param {String} sapId sapId
      */
     resolveSapItemGroupCategory(sapId) {
-      const itemGroupCategories = config.get("sap:itemGroupCategories") || {};
+      const itemGroupCategories = config.get("sap:item-group-categories") || {};
       const categories = Object.keys(itemGroupCategories);
 
       for (let i = 0; i < categories.length; i++) {
@@ -521,7 +521,7 @@
      * @return {String} display name or null if not found
      */
     resolveSapItemGroupDisplayName(sapId) {
-      const displayNames = config.get("sap:itemGroupDisplayNames") || {};
+      const displayNames = config.get("sap:item-group-display-names") || {};
       return displayNames[sapId];
     }
 
