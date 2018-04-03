@@ -61,7 +61,13 @@
     "command": "/home/travis/build/Metatavu/pakkasmarja-berries/wkhtmltox/bin/wkhtmltopdf"
   },
   "sap": {
-    "import-file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export.xml",
+    "import-files": [{
+      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export-Active.xml",
+      "status": "APPROVED"
+    }, {
+      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export-History.xml",
+      "status": "TERMINATED"
+    }],
     "itemGroupCategories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
@@ -73,3 +79,4 @@
     }
   }
 }
+

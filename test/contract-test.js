@@ -24,7 +24,7 @@
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
-  
+
   test("Test creating contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
     
@@ -379,7 +379,7 @@
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
-  
+
   test("Test sync contracts", async (t) => {
     const accessToken = await auth.getTokenDefault();
     
@@ -389,7 +389,7 @@
     await operations.createOperationAndWait(accessToken, "SAP_CONTRACT_SYNC");
     
     return request("http://localhost:3002")
-      .get("/rest/v1/contracts?listAll=true")
+      .get("/rest/v1/contracts?listAll=true&maxResults=10")
       .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
       .set("Accept", "application/json")
       .expect(200)
@@ -399,7 +399,11 @@
         
         const actualContracts = response.body;
         actualContracts.sort((c1, c2) => {
-          return c1.contractQuantity - c2.contractQuantity;
+          if (c1.year === c2.year) {
+            return c1.contractQuantity - c2.contractQuantity;
+          } else {
+            return c1.year === c2.year;
+          }
         });
 
         contractDatasSync.forEach((expectedContract, contractIndex) => {
