@@ -49,6 +49,56 @@
       this.xlsx = xlsx;
       this.signature = signature;
       this.tasks = tasks;
+    }   
+
+    /**
+     * @inheritdoc
+     */
+    async createContract(req, res) {
+      const contract = _.isObject(req.body) ? Contract.constructFromObject(req.body) : null;
+      if (!contract) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+
+      if (!contract.contactId) {
+        this.sendBadRequest(res, "contactId is required");
+        return;
+      }
+
+      const deliveryPlace = await this.models.findDeliveryPlaceByExternalId(contract.deliveryPlaceId);
+      const proposedDeliveryPlace = await this.models.findDeliveryPlaceByExternalId(contract.proposedDeliveryPlaceId || contract.deliveryPlaceId);
+      const itemGroup = await this.models.findItemGroupByExternalId(contract.itemGroupId);
+
+      if (!itemGroup) {
+        this.sendBadRequest(res, "Invalid itemGroupId");
+        return;
+      }
+
+      const userId = contract.contactId;
+      const deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
+      const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
+      const itemGroupId = itemGroup.id;
+      const sapId = contract.sapId || null;
+      const contractQuantity = contract.contractQuantity;
+      const deliveredQuantity = contract.deliveredQuantity;
+      const proposedQuantity = contract.proposedQuantity;
+      const startDate = contract.startDate;
+      const endDate = contract.endDate;
+      const signDate = contract.signDate;
+      const termDate = contract.termDate;
+      const status = contract.status;
+      const remarks = contract.remarks;
+      const year = contract.year;
+      const deliveryPlaceComment = contract.deliveryPlaceComment;
+      const quantityComment = contract.quantityComment;
+      const rejectComment = contract.rejectComment;
+
+      const databaseContract = await this.models.createContract(userId, year, deliveryPlaceId, proposedDeliveryPlaceId, 
+        itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, 
+        termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+        
+      res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
     
     /**

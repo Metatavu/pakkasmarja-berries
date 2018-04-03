@@ -226,7 +226,7 @@
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.ItemGroup, key: "id" } },
         deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
         proposedDeliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.DeliveryPlace, key: "id" } },
-        sapId: { type: Sequelize.STRING(191), allowNull: false },
+        sapId: { type: Sequelize.STRING(191), allowNull: true },
         contractQuantity: { type: Sequelize.BIGINT },
         deliveredQuantity: { type: Sequelize.BIGINT },
         proposedQuantity: { type: Sequelize.BIGINT },

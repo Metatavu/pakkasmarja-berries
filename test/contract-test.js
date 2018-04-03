@@ -16,6 +16,7 @@
   const xlsx = require(`${__dirname}/xlsx`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
+  const contractDataCreate = require(`${__dirname}/data/contracts-create.json`);
   const contractDatasUpdate = require(`${__dirname}/data/contracts-update.json`);
   const contractExcelSingle = require(`${__dirname}/data/contract-xlsx-single.json`);
   const contractExcelMultiple = require(`${__dirname}/data/contract-xlsx-multiple.json`);
@@ -23,6 +24,26 @@
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
+  
+  test("Test creating contracts", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .post("/rest/v1/contracts")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send(contractDataCreate)
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        
+        Object.keys(contractDataCreate).forEach((expectKey) => {
+          const expectValue = contractDataCreate[expectKey];
+          const actualValue = response.body[expectKey];
+          t.equal(expectValue, actualValue, `[${expectKey}] is ${actualValue}`);
+        });
+      });
+  });
 
   test("Test listing contracts - xlsx all", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
@@ -758,5 +779,5 @@
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
-
+  
 })();

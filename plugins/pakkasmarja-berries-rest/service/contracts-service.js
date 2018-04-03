@@ -12,6 +12,17 @@
   class AbstractContractsService extends AbstractService {
 
    /**
+    * Create contract
+    * Create new contract
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    createContract(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Requests contract document electronic signing
     * Requests contract document electronic signing
     *
@@ -127,6 +138,7 @@
     * @param app express object
     **/
     register(app, keycloak) {
+      app.post(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.createContract.bind(this)));
       app.post(`/rest/v1${this.toPath('/contracts/{id}/documents/{type}/signRequests')}`, [ keycloak.protect() ], this.catchAsync(this.createContractDocumentSignRequest.bind(this)));
       app.post(`/rest/v1${this.toPath('/contracts/{contractId}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.createContractDocumentTemplate.bind(this)));
       app.get(`/rest/v1${this.toPath('/contracts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
