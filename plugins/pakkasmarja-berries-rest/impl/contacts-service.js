@@ -124,7 +124,7 @@
       }
 
       const loggedUserId = this.getLoggedUserId(req);
-        if (user.id !== loggedUserId) {
+      if (user.id !== loggedUserId) {
         this.sendForbidden(res, "Cannot update other users credentials");
       }
 
