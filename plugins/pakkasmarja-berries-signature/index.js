@@ -3,13 +3,13 @@
 (() => {
   'use strict';
   
-  const Promise = require('bluebird');
-  const path = require('path');
-  const fs = require('fs');
-  const config = require('nconf');
-  const VismaSignClient = require('visma-sign-client');
+  const Promise = require("bluebird");
+  const path = require("path");
+  const fs = require("fs");
+  const config = require("nconf");
+  const VismaSignClient = require("visma-sign-client");
   const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
-  const moment = require('moment');
+  const moment = require("moment");
 
   VismaSignClient.ApiClient.instance.clientId = config.get('visma-sign:clientId');
   VismaSignClient.ApiClient.instance.clientSecret = config.get('visma-sign:clientSecret');
