@@ -2,13 +2,11 @@
 /* global __dirname, Promise */
 (() => {
   'use strict';
-  
-  const Promise = require('bluebird');
-  const path = require('path');
-  const fs = require('fs');
-  const config = require('nconf');
-  const VismaSignClient = require('visma-sign-client');
+
+  const config = require("nconf");
+  const VismaSignClient = require("visma-sign-client");
   const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
+  const moment = require("moment");
 
   VismaSignClient.ApiClient.instance.clientId = config.get('visma-sign:clientId');
   VismaSignClient.ApiClient.instance.clientSecret = config.get('visma-sign:clientSecret');
@@ -51,7 +49,7 @@
      * @returns {Promise} Promise that resolves to the created document
      */
     createDocument(name) {
-      return this.documentsApi.createDocument({"document":{"name": name}}).then((data) => {
+      return this.documentsApi.createDocument({"document":{"name": `${name}_${moment().format("YYYYMMDDHHmmss")}`}}).then((data) => {
         const location = data.location;
         return location.substring(location.lastIndexOf('/') + 1);
       });
