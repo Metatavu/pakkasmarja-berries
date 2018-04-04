@@ -210,21 +210,17 @@
   });
   
   test("Test update contact password change", async (t) => {
-    return t.shouldReject(auth.getToken("test1-testrealm1", "fake-password"))
-      .then(async () => {
-        return request("http://localhost:3002")
-          .put("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6/credentials")
-          .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
-          .send({ "password": "fake-password" })
-          .set("Accept", "application/json")
-          .expect(204)
-          .then(() => {
-            return t.shouldReject(auth.getToken("test1-testrealm1", "test"))
-              .then(async () => {
-                t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
-                return users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
-              }); 
-          });
+    t.notOk(await auth.getToken("test1-testrealm1", "fake-password"), "fake password should not return token");
+    return request("http://localhost:3002")
+      .put("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6/credentials")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .send({ "password": "fake-password" })
+      .set("Accept", "application/json")
+      .expect(204)
+      .then(async() => {
+        t.notOk(await auth.getToken("test1-testrealm1", "test"), "Initial password should not return token after reset");
+        t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
+        return users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
       });
   });
   
