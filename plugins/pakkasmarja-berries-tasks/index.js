@@ -70,19 +70,6 @@
     }
 
     /**
-     * Creates document thru Visma Sign API
-     * 
-     * @param {String} name name
-     * @returns {Promise} Promise that resolves to the created document
-     */
-    createDocument(name) {
-      return this.documentsApi.createDocument({"document":{"name": name}}).then((data) => {
-        const location = data.location;
-        return location.substring(location.lastIndexOf("/") + 1);
-      });
-    }
-
-    /**
      * Adds task to contractDocumentStatusQueue
      * 
      * @param {int} contractDocumentId id
