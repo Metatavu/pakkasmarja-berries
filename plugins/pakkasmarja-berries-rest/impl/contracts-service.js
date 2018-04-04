@@ -87,6 +87,8 @@
       const endDate = contract.endDate;
       const signDate = contract.signDate;
       const termDate = contract.termDate;
+      const areaDetails = updateContract.areaDetails;
+      const deliverAll = updateContract.deliverAll;
       const status = contract.status;
       const remarks = contract.remarks;
       const year = contract.year;
@@ -94,9 +96,26 @@
       const quantityComment = contract.quantityComment;
       const rejectComment = contract.rejectComment;
 
-      const databaseContract = await this.models.createContract(userId, year, deliveryPlaceId, proposedDeliveryPlaceId, 
-        itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, 
-        termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+      const databaseContract = await this.models.createContract(userId, 
+        year,
+        deliveryPlaceId, 
+        proposedDeliveryPlaceId, 
+        itemGroupId, 
+        sapId, 
+        contractQuantity, 
+        deliveredQuantity, 
+        proposedQuantity, 
+        startDate, 
+        endDate, 
+        signDate, 
+        termDate, 
+        status, 
+        areaDetails,
+        deliverAll,
+        remarks, 
+        deliveryPlaceComment, 
+        quantityComment, 
+        rejectComment);
         
       res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
@@ -186,6 +205,8 @@
       const signDate = updateContract.signDate;
       const termDate = updateContract.termDate;
       const status = updateContract.status;
+      const areaDetails = updateContract.areaDetails;
+      const deliverAll = updateContract.deliverAll;
       const remarks = updateContract.remarks;
       const year = updateContract.year;
       const deliveryPlaceComment = updateContract.deliveryPlaceComment;
@@ -205,6 +226,8 @@
         signDate, 
         termDate, 
         status, 
+        areaDetails,
+        deliverAll,
         remarks, 
         deliveryPlaceComment, 
         quantityComment, 
@@ -690,6 +713,8 @@
         "signDate": contract.signDate,
         "termDate": contract.termDate,
         "status": contract.status,
+        "areaDetails": contract.areaDetails,
+        "deliverAll": contract.deliverAll,
         "remarks": contract.remarks,
         "year": contract.year,
         "deliveryPlaceComment": contract.deliveryPlaceComment,

@@ -17,6 +17,8 @@
     "year": 2019,
     "deliveryPlaceComment": "Delivery comment",
     "quantityComment": "Quantity comment",
-    "rejectComment": "Reject comment"
+    "rejectComment": "Reject comment",
+    "areaDetails": "{\"updateDetails\": []}",
+    "deliverAll": true
   }
 }

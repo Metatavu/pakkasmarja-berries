@@ -15,5 +15,7 @@
   "year": 2019,
   "deliveryPlaceComment": "Delivery comment test",
   "quantityComment": "Quantity comment test",
-  "rejectComment": "Reject comment test"
-}
+  "rejectComment": "Reject comment test",
+  "areaDetails": "{\"details\": []}",
+  "deliverAll": false
+ }

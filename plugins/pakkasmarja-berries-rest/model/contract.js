@@ -40,6 +40,8 @@
 
 
 
+
+
   };
 
   /**
@@ -100,6 +102,12 @@
       }
       if (data.hasOwnProperty('rejectComment')) {
         obj['rejectComment'] = ApiClient.convertToType(data['rejectComment'], 'String');
+      }
+      if (data.hasOwnProperty('areaDetails')) {
+        obj['areaDetails'] = ApiClient.convertToType(data['areaDetails'], 'String');
+      }
+      if (data.hasOwnProperty('deliverAll')) {
+        obj['deliverAll'] = ApiClient.convertToType(data['deliverAll'], 'Boolean');
       }
       if (data.hasOwnProperty('status')) {
         obj['status'] = ApiClient.convertToType(data['status'], 'String');
@@ -175,6 +183,14 @@
    * @member {String} rejectComment
    */
   exports.prototype['rejectComment'] = undefined;
+  /**
+   * @member {String} areaDetails
+   */
+  exports.prototype['areaDetails'] = undefined;
+  /**
+   * @member {Boolean} deliverAll
+   */
+  exports.prototype['deliverAll'] = undefined;
   /**
    * @member {module:model/Contract.StatusEnum} status
    */
