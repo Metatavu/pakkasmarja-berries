@@ -17,7 +17,9 @@
     "year": 2017,
     "deliveryPlaceComment": null,
     "quantityComment": null,
-    "rejectComment": null
+    "rejectComment": null,
+    "areaDetails": "[123]",
+    "deliverAll": true
   },
   "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
     "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
@@ -37,6 +39,8 @@
     "year": 2018,
     "deliveryPlaceComment": null,
     "quantityComment": null,
-    "rejectComment": null
+    "rejectComment": null,
+    "areaDetails": null,
+    "deliverAll": false
   }
 }

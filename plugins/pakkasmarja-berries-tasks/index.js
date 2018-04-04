@@ -445,11 +445,13 @@
         let deliveryPlaceComment = null;
         let quantityComment = null;
         let rejectComment = null;
+        let areaDetails = null;
+        let deliverAll = false;
 
         const contract = await this.models.findContractBySapId(sapId);
         if (!contract) {
           await this.models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
-            startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+            startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
           callback(null, {
             message: `Created new contract from SAP ${sapId}`,
@@ -463,9 +465,11 @@
           deliveryPlaceComment = contract.deliveryPlaceComment;
           quantityComment = contract.quantityComment;
           rejectComment = contract.rejectComment;
-  
+          areaDetails = contract.areaDetails;
+          deliverAll = contract.deliverAll;
+    
           await this.models.updateContract(contract.id, year, deliveryPlaceId, contract.proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
-            startDate, endDate, signDate, termDate, status, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+            startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
