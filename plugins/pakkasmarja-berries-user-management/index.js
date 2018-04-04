@@ -146,6 +146,21 @@
     }
     
     /**
+     * Updates user password into Keycloak
+     * 
+     * @param {string} userId User id of keycloak user
+     * @param {string} password New password for the user
+     * @param {boolean} temporary if passoword is temporary or not
+     * @return {Promise} promise that resolves on success and rejects on failure
+     */
+    resetUserPassword(userId, password, temporary) {
+      return this.getClient().then((client) => {
+        const keycloakRealm = config.get("keycloak:admin:realm");
+        return client.users.resetPassword(keycloakRealm, userId, { temporary: temporary , value: password });
+      });
+    }
+    
+    /**
      * Lists users from Keycloak. 
      * 
      * @param {Object} options options (optional)

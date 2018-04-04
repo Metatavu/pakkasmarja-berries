@@ -7,6 +7,7 @@
   const _ = require('lodash');
   const AbstractContactsService = require(`${__dirname}/../service/contacts-service`);
   const Contact = require(`${__dirname}/../model/contact`);
+  const Credentials = require(`${__dirname}/../model/credentials`);
   const Address = require(`${__dirname}/../model/address`);
 
   /**
@@ -99,7 +100,42 @@
           return;
         });
     }
-    /* jshint ignore:end */
+    
+    /**
+     * @inheritdoc
+     */
+    async updateContactCredentials(req, res) {
+      const userId = req.params.id;
+      if (!userId) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const updateCredentials = _.isObject(req.body) ? Credentials.constructFromObject(req.body) : null;
+      if (!updateCredentials || !updateCredentials.password) {
+        this.sendBadRequest(res, "Failed to parse body");
+        return;
+      }
+      
+      const user = await this.userManagement.findUser(userId);
+      if (!user) {
+        this.sendNotFound(res);
+        return;
+      }
+      
+      const loggedUserId = this.getLoggedUserId(req);
+      if (user.id !== loggedUserId) {
+        this.sendForbidden(res, "Cannot update other users credentials");
+      }
+      
+      this.userManagement.resetUserPassword(loggedUserId, updateCredentials.password, false)
+        .then(() => {
+          res.status(204).send();
+        })
+        .catch((err) => {
+          this.sendInternalServerError(res, err);
+        });
+    }
     
     /**
      * Translates Keycloak user into Contact

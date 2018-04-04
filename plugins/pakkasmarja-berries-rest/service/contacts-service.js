@@ -45,6 +45,17 @@
     }
 
    /**
+    * Update contact credentials
+    * Updates single contact credentials
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    updateContactCredentials(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Registers REST routes
     *
     * @param app express object
@@ -53,6 +64,7 @@
       app.get(`/rest/v1${this.toPath('/contacts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findContact.bind(this)));
       app.get(`/rest/v1${this.toPath('/contacts')}`, [ keycloak.protect() ], this.catchAsync(this.listContacts.bind(this)));
       app.put(`/rest/v1${this.toPath('/contacts/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContact.bind(this)));
+      app.put(`/rest/v1${this.toPath('/contacts/{id}/credentials')}`, [ keycloak.protect() ], this.catchAsync(this.updateContactCredentials.bind(this)));
     }
   };
 
