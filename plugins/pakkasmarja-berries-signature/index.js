@@ -2,10 +2,7 @@
 /* global __dirname, Promise */
 (() => {
   'use strict';
-  
-  const Promise = require("bluebird");
-  const path = require("path");
-  const fs = require("fs");
+
   const config = require("nconf");
   const VismaSignClient = require("visma-sign-client");
   const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
