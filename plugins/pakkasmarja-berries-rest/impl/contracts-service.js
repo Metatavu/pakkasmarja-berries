@@ -87,8 +87,8 @@
       const endDate = contract.endDate;
       const signDate = contract.signDate;
       const termDate = contract.termDate;
-      const areaDetails = updateContract.areaDetails;
-      const deliverAll = updateContract.deliverAll;
+      const areaDetails = contract.areaDetails;
+      const deliverAll = contract.deliverAll;
       const status = contract.status;
       const remarks = contract.remarks;
       const year = contract.year;
