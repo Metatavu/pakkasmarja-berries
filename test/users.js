@@ -33,6 +33,24 @@
           t.deepEqual(response.body, user);
         });
     }
+    
+    /**
+     * Resets users password
+     * 
+     * @param {String} userId
+     * @param {String} userName
+     * @param {String} oldPassword  
+     * @param {String} newPassword
+     * @return {Promise} promise
+     */
+    async resetUserPassword(userId, userName, oldPassword, newPassword) {
+      return request("http://localhost:3002")
+        .put(`/rest/v1/contacts/${userId}/credentials`)
+        .set("Authorization", `Bearer ${await auth.getToken(userName, oldPassword)}`)
+        .send({ "password": newPassword })
+        .set("Accept", "application/json")
+        .expect(204);
+    }
 
     /**
      * Resets users back to original state
