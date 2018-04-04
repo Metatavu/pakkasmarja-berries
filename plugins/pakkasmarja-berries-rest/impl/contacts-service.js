@@ -110,24 +110,24 @@
         this.sendNotFound(res);
         return;
       }
-      
+
       const updateCredentials = _.isObject(req.body) ? Credentials.constructFromObject(req.body) : null;
       if (!updateCredentials || !updateCredentials.password) {
         this.sendBadRequest(res, "Failed to parse body");
         return;
       }
-      
+
       const user = await this.userManagement.findUser(userId);
       if (!user) {
         this.sendNotFound(res);
         return;
       }
-      
+
       const loggedUserId = this.getLoggedUserId(req);
-      if (user.id !== loggedUserId) {
+        if (user.id !== loggedUserId) {
         this.sendForbidden(res, "Cannot update other users credentials");
       }
-      
+
       this.userManagement.resetUserPassword(loggedUserId, updateCredentials.password, false)
         .then(() => {
           res.status(204).send();

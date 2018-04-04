@@ -218,7 +218,7 @@
           .send({ "password": "fake-password" })
           .set("Accept", "application/json")
           .expect(204)
-          .then(response => {
+          .then(() => {
             return t.shouldReject(auth.getToken("test1-testrealm1", "test"))
               .then(async () => {
                 t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
