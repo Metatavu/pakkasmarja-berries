@@ -25,7 +25,7 @@
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
 
-  test("Test contract sign", async (t) => {
+  test("Test contract sign", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
 
     return request("http://localhost:3002")
@@ -36,7 +36,7 @@
         "redirectUrl": "http://fake.exmaple.com/redirect"
       })
       .expect(200)
-      .then(async response => {
+      .then(async () => {
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });

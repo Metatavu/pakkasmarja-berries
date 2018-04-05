@@ -369,7 +369,7 @@
           await this.enqueueSapItemGroupUpdate(data.operationReportItemId, data.itemGroup);
           
           callback(null, {
-            message: `Required prerequisite contract item group was not found, retrying`,
+            message: "Required prerequisite contract item group was not found, retrying",
             operationReportItemId: data.operationReportItemId
           });
 
@@ -523,7 +523,7 @@
      * @param {String} sapId sapId
      * @return {String} prerequisite contract item group id for given SAP id
      */
-    async resolveSapPrerequisiteContractItemGroupId(sapId) {
+    async resolveSapPrerequisiteContractItemGroupId(sapId) {
       const itemGroupPrerequisites = config.get("sap:item-group-prerequisites") || {};
       const prerequisitesSapId = itemGroupPrerequisites[sapId];
       if (!prerequisitesSapId) {

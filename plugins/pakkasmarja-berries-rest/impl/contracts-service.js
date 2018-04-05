@@ -666,7 +666,7 @@
 
       if (itemGroup.prerequisiteContractItemGroupId) {
         const prerequisiteContracts = await this.models.listContracts(userId, null, itemGroup.prerequisiteContractItemGroupId, contract.year, "APPROVED", 0, 1);
-        if (!prerequisiteContracts || prerequisiteContracts.length < 1) {
+        if (!prerequisiteContracts || prerequisiteContracts.length < 1) {
           this.sendBadRequest(res, "Missing prerequisite contracts");
           return;
         }
@@ -740,7 +740,7 @@
         "signDate": contract.signDate,
         "termDate": contract.termDate,
         "status": contract.status,
-        "areaDetails": areaDetails || [],
+        "areaDetails": areaDetails || [],
         "deliverAll": contract.deliverAll,
         "remarks": contract.remarks,
         "year": contract.year,
