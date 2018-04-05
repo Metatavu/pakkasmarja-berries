@@ -194,15 +194,12 @@
       });
     }
     
-    listGroups(realm) {
-      return new Promise((resolve, reject) => {
-        this.getClient()
-          .then((client) => {
-            client.groups.find(realm)
-              .then(resolve)
-              .catch(reject);
-          })
-          .catch(reject);
+    /**
+     * Lists Groups from the Keycloak
+     */
+    listGroups() {
+      return this.getClient().then((client) => {
+        return client.groups.find(config.get("keycloak:admin:realm"));
       });
     }
     
