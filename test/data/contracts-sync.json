@@ -14,7 +14,7 @@
     "rejectComment": null,
     "status": "APPROVED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -32,7 +32,7 @@
     "rejectComment": null,
     "status": "APPROVED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -50,7 +50,7 @@
     "rejectComment": null,
     "status": "APPROVED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -68,7 +68,7 @@
     "rejectComment": null,
     "status": "APPROVED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -86,7 +86,7 @@
     "rejectComment": null,
     "status": "TERMINATED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -104,7 +104,7 @@
     "rejectComment": null,
     "status": "TERMINATED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -122,7 +122,7 @@
     "rejectComment": null,
     "status": "TERMINATED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   },
   {
@@ -140,7 +140,7 @@
     "rejectComment": null,
     "status": "TERMINATED",
     "remarks": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   }
 ]

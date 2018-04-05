@@ -40,7 +40,7 @@
         Object.keys(contractDataCreate).forEach((expectKey) => {
           const expectValue = contractDataCreate[expectKey];
           const actualValue = response.body[expectKey];
-          t.equal(expectValue, actualValue, `[${expectKey}] is ${actualValue}`);
+          t.deepEqual(expectValue, actualValue, `[${expectKey}] is ${actualValue}`);
         });
       });
   });
@@ -410,7 +410,7 @@
           Object.keys(expectedContract).forEach((expectKey) => {
             const expectValue = expectedContract[expectKey];
             const actualValue = response.body[contractIndex][expectKey];
-            t.equal(expectValue, actualValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
+            t.deepEqual(expectValue, actualValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
           });
         });
       });

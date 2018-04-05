@@ -18,7 +18,9 @@
     "deliveryPlaceComment": "Delivery comment",
     "quantityComment": "Quantity comment",
     "rejectComment": "Reject comment",
-    "areaDetails": "{\"updateDetails\": []}",
+    "areaDetails": [{
+      "name": "Updated Test", "size": 234, "species": "something updated", "profitEstimation": 2345
+    }],
     "deliverAll": true
   }
 }

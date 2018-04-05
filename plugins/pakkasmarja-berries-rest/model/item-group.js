@@ -26,6 +26,7 @@
 
 
 
+
   };
 
   /**
@@ -51,6 +52,9 @@
       if (data.hasOwnProperty('category')) {
         obj['category'] = ApiClient.convertToType(data['category'], 'String');
       }
+      if (data.hasOwnProperty('prerequisiteContractItemGroupId')) {
+        obj['prerequisiteContractItemGroupId'] = ApiClient.convertToType(data['prerequisiteContractItemGroupId'], 'String');
+      }
     }
     return obj;
   }
@@ -71,6 +75,11 @@
    * @member {String} category
    */
   exports.prototype['category'] = undefined;
+  /**
+   * Require contract in specified item group before siging a contract
+   * @member {String} prerequisiteContractItemGroupId
+   */
+  exports.prototype['prerequisiteContractItemGroupId'] = undefined;
 
 
 

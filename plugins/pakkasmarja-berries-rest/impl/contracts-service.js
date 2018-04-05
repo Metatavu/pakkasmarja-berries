@@ -12,6 +12,7 @@
   const pug = require("pug");
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
+  const AreaDetail = require(`${__dirname}/../model/area-detail`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
   const ContractDocumentTemplate = require(`${__dirname}/../model/contract-document-template`);
   const Price = require(`${__dirname}/../model/price`);
@@ -110,7 +111,7 @@
         signDate, 
         termDate, 
         status, 
-        areaDetails,
+        areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
         remarks, 
         deliveryPlaceComment, 
@@ -226,7 +227,7 @@
         signDate, 
         termDate, 
         status, 
-        areaDetails,
+        areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
         remarks, 
         deliveryPlaceComment, 
@@ -698,6 +699,9 @@
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
       const proposedDeliveryPlace = await this.models.findDeliveryPlaceById(contract.proposedDeliveryPlaceId);
+      const areaDetails = contract.areaDetails ? JSON.parse(contract.areaDetails).map((areaDetail) => {
+        return AreaDetail.constructFromObject(areaDetail);
+      }) : [];  
 
       return Contract.constructFromObject({
         "id": contract.externalId,
@@ -713,7 +717,7 @@
         "signDate": contract.signDate,
         "termDate": contract.termDate,
         "status": contract.status,
-        "areaDetails": contract.areaDetails,
+        "areaDetails": areaDetails || [],
         "deliverAll": contract.deliverAll,
         "remarks": contract.remarks,
         "year": contract.year,
