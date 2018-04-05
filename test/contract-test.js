@@ -25,6 +25,42 @@
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
 
+  test("Test contract sign", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .post("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master/signRequests")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send({
+        "redirectUrl": "http://fake.exmaple.com/redirect"
+      })
+      .expect(200)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test contract sign - missing prerequisite", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql", "item-groups-prerequisite-setup.sql"]);
+
+    return request("http://localhost:3002")
+      .post("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group/signRequests")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .send({
+        "redirectUrl": "http://fake.exmaple.com/redirect"
+      })
+      .expect(400)
+      .then(async response => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.deepEqual(response.body, {
+          "code": 400,
+          "message": "Missing prerequisite contracts" 
+        });
+      });
+  });
+
   test("Test creating contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
     

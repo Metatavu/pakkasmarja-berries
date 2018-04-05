@@ -179,7 +179,8 @@
         externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false },
         category: { type: Sequelize.STRING(191), allowNull: false },
-        displayName: { type: Sequelize.STRING(191), allowNull: true }
+        displayName: { type: Sequelize.STRING(191), allowNull: true },
+        prerequisiteContractItemGroupId: { type: Sequelize.BIGINT, allowNull: true, references: { model: this.ItemGroup, key: "id" } }
       }, {
         indexes: [{
           name: "UN_ITEMGROUP_SAP_ID",

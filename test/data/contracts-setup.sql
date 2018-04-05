@@ -1,4 +1,4 @@
-INSERT INTO 
+INSERT INTO
     Contracts (externalId, year, sapId, userId, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, startDate, endDate, signDate, termDate, status, remarks, areaDetails, deliverAll, createdAt, updatedAt)
 VALUES 
   ('1d45568e-0fba-11e8-9ac4-a700da67a976', 2017, 'sapid-1', '6f1cd486-107e-404c-a73f-50cc1fdabdd6', (SELECT id FROM DeliveryPlaces WHERE externalId = 'bad02318-1a44-11e8-87a4-c7808d590a07'), (SELECT id FROM DeliveryPlaces WHERE externalId = 'bad02318-1a44-11e8-87a4-c7808d590a07'), (SELECT id FROM ItemGroups WHERE externalId = '89723408-0f51-11e8-baa0-dfe7c7eae257'), 50000, 0, 50000, DATE('2020-01-01'), DATE('2020-12-31'), DATE('2019-12-14'), DATE('2020-01-02'), 'APPROVED', 'Ready for testing', '[{"name": "Test", "size": 123, "species": "something", "profitEstimation": 1234}]', TRUE, NOW(), NOW()),
