@@ -526,7 +526,7 @@
      */
     resolveSapMinimumProfitEstimation(sapId) {
       const itemGroupMinimumProfitEstimations = config.get("sap:item-group-minimum-profit-estimation") || {};
-      return itemGroupMinimumProfitEstimations[sapId] || 0;
+      return itemGroupMinimumProfitEstimations[sapId] || 0;
     }
 
     /**
