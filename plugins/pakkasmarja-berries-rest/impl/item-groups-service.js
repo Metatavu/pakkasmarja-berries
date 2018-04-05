@@ -317,6 +317,7 @@
         "name": itemGroup.name,
         "displayName": itemGroup.displayName,
         "category": itemGroup.category,
+        "minimumProfitEstimation": itemGroup.minimumProfitEstimation,
         "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
       });
     }

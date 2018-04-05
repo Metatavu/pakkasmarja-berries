@@ -4,6 +4,7 @@
     "name": "123456/Test Group 1",
     "displayName": "Test Group 1",
     "category": "FROZEN",
+    "minimumProfitEstimation": 100,
     "prerequisiteContractItemGroupId": null
   },
   "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20": {
@@ -11,6 +12,7 @@
     "name": "234567/Test Group 2",
     "displayName": null,
     "category": "FRESH",
+    "minimumProfitEstimation": 0,
     "prerequisiteContractItemGroupId": "89723408-0f51-11e8-baa0-dfe7c7eae257"
   }
 }

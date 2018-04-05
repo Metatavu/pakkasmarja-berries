@@ -180,6 +180,7 @@
         name: { type: Sequelize.STRING(191), allowNull: false },
         category: { type: Sequelize.STRING(191), allowNull: false },
         displayName: { type: Sequelize.STRING(191), allowNull: true },
+        minimumProfitEstimation: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 },
         prerequisiteContractItemGroupId: { type: Sequelize.BIGINT, allowNull: true, references: { model: this.ItemGroup, key: "id" } }
       }, {
         indexes: [{
@@ -916,15 +917,17 @@
      * @param {String} name name
      * @param {String} displayName display name
      * @param {String} category category
+     * @param {Double} minimumProfitEstimation minimum profit estimation
      * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
      * @return {Promise} promise for created item group
      */
-    createItemGroup(sapId, name, displayName, category, prerequisiteContractItemGroupId) {
+    createItemGroup(sapId, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId) {
      return this.ItemGroup.create({
         sapId: sapId,
         name: name,
         displayName: displayName,
         category: category,
+        minimumProfitEstimation: minimumProfitEstimation,
         prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
       });
     }
@@ -936,14 +939,16 @@
      * @param {String} name name
      * @param {String} displayName displayName
      * @param {String} category category
+     * @param {Double} minimumProfitEstimation minimum profit estimation
      * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
      * @return {Promise} promise for updated item group
      */
-    updateItemGroup(id, name, displayName, category, prerequisiteContractItemGroupId) {
+    updateItemGroup(id, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId) {
       return this.ItemGroup.update({
         name: name,
         displayName: displayName,
         category: category,
+        minimumProfitEstimation: minimumProfitEstimation,
         prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
       }, {
         where: {

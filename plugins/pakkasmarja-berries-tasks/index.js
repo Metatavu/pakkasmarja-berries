@@ -376,11 +376,13 @@
           return;
         }
 
+        const minimumProfitEstimation = this.resolveSapMinimumProfitEstimation(sapId);
+
         const itemGroup = await this.models.findItemGroupBySapId(sapId);
         if (itemGroup) {
-          this.models.updateItemGroup(itemGroup.id, name, displayName, category, prerequisiteContractItemGroupId);
+          this.models.updateItemGroup(itemGroup.id, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
         } else {
-          this.models.createItemGroup(sapId, name, displayName, category, prerequisiteContractItemGroupId);
+          this.models.createItemGroup(sapId, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
         }
 
         callback(null, {
@@ -515,6 +517,16 @@
       }
 
       return null;
+    }
+
+    /**
+     * Resolves item group minimum profit estimation for given SAP id
+     * 
+     * @param {String} sapId sapId
+     */
+    resolveSapMinimumProfitEstimation(sapId) {
+      const itemGroupMinimumProfitEstimations = config.get("sap:item-group-minimum-profit-estimation") || {};
+      return itemGroupMinimumProfitEstimations[sapId] || 0;
     }
 
     /**
