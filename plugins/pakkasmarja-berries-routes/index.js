@@ -136,6 +136,17 @@
       res.header('Content-Type', 'application/json');
       res.send(config.get('keycloak:app'));
     }
+
+    getAppConfig(req, res) {
+      fs.readFile(`${__dirname}/../../app-config.json`, (err, file) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          res.header('Content-Type', 'application/json');
+          res.send(file);
+        }
+      });
+    }
     
     postJoin(req, res) {
       const keycloakServerUrl = config.get("keycloak:app:auth-server-url");
@@ -302,6 +313,7 @@
       // Keycloak
       
       app.get('/keycloak.json', this.getKeycloak.bind(this));
+      app.get('/app-config.json', this.getAppConfig.bind(this));
       app.post('/join', this.postJoin.bind(this));
       
       // REST
