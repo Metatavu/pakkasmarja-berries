@@ -2,19 +2,19 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
   
-  const _ = require('lodash');
-  const fs = require('fs');
-  const path = require('path');
-  const moment = require('moment');
-  const uuid = require('uuid4');
-  const config = require('nconf');
-  const request = require('request');
-  const stream = require('stream');
-  const multer = require('multer');
-  const upload = multer({ dest: '/tmp/uploads/' });
-  const auth = require('basic-auth');
+  const _ = require("lodash");
+  const fs = require("fs");
+  const path = require("path");
+  const moment = require("moment");
+  const uuid = require("uuid4");
+  const config = require("nconf");
+  const request = require("request");
+  const stream = require("stream");
+  const multer = require("multer");
+  const upload = multer({ dest: "/tmp/uploads/" });
+  const auth = require("basic-auth");
   
   class Routes {
     
@@ -28,7 +28,7 @@
     }
     
     getWebApp(req, res) {
-      res.sendFile(path.join(__dirname, '..', '..', 'webapp', 'index.html'));
+      res.sendFile(path.join(__dirname, "..", "..", "webapp", "index.html"));
     }
     
     getSystemPing(req, res) {
@@ -36,7 +36,7 @@
     }
 
     getVersion(req, res) {
-      res.send(config.get('app-version'));
+      res.send(config.get("app-version"));
     }
 
     getSignCallback(req, res) {
@@ -46,10 +46,10 @@
     }
     
     getImagesWordpress(req, res) {
-      const contentUrl = config.get('wordpress:content-url');
-      const forwardHeaderNames = ['if-none-match', 'cache-control'];
+      const contentUrl = config.get("wordpress:content-url");
+      const forwardHeaderNames = ["if-none-match", "cache-control"];
       const requestHeaders = {};
-      const path = req.path.startsWith('/images/wordpress/') ? req.path.substring(18) : req.path;
+      const path = req.path.startsWith("/images/wordpress/") ? req.path.substring(18) : req.path;
       
       if (req.headers) {
         _.each(req.headers, (value, key) => {
@@ -74,8 +74,8 @@
           if (!messageAttachment || (parseInt(messageAttachment.messageId) !== parseInt(messageId))) {
             res.status(404).send();
           } else {
-            res.set('Content-Type', messageAttachment.contentType);  
-            res.set('Length', messageAttachment.size);
+            res.set("Content-Type", messageAttachment.contentType);  
+            res.set("Length", messageAttachment.size);
             res.status(200).send(messageAttachment.contents);
           }
         });
@@ -96,7 +96,7 @@
           const contentType = file.mimetype;
           const size = file.size;
 
-          this.models.createMessage(threadId, userId, 'pending...')
+          this.models.createMessage(threadId, userId, "pending...")
             .then((message) => {
               this.models.createMessageAttachment(message.id, data, contentType, fileName, size)
                 .then((messageAttachment) => {
@@ -133,8 +133,8 @@
     }
     
     getKeycloak(req, res) {
-      res.header('Content-Type', 'application/json');
-      res.send(config.get('keycloak:app'));
+      res.header("Content-Type", "application/json");
+      res.send(config.get("keycloak:app"));
     }
 
     getAppConfig(req, res) {
@@ -142,7 +142,7 @@
         if (err) {
           res.status(500).send(err);
         } else {
-          res.header('Content-Type', 'application/json');
+          res.header("Content-Type", "application/json");
           res.send(file);
         }
       });
@@ -154,8 +154,8 @@
       const keycloakUrl = `${keycloakServerUrl}/realms/${keycloakRealm}/protocol/openid-connect/userinfo`;
       
       request.get(keycloakUrl, {
-        'auth': {
-          'bearer': req.body.token
+        "auth": {
+          "bearer": req.body.token
         }
       }, (authErr, response, body) => {
         if (authErr) {
@@ -175,7 +175,7 @@
                   this.syncUserQuestionGroupThreads(userId)
                     .then(() => {})
                     .catch((err) => {
-                      this.logger.error('Error synchonizing user group threads', err);
+                      this.logger.error("Error synchonizing user group threads", err);
                     });
                 })
                 .catch((sessionErr) => {
@@ -195,7 +195,7 @@
     }
     
     getRestV1UserGroups(req, res) {
-      this.userManagement.listGroups(config.get('keycloak:realm'))
+      this.userManagement.listGroups(config.get("keycloak:realm"))
         .then((userGroups) => {
            res.send(userGroups);
         })
@@ -206,7 +206,7 @@
     }
     
     postWebhooksManagement(req, res) {
-      this.webhooks.handle('management', req);
+      this.webhooks.handle("management", req);
       res.send("ok");
     }
     
@@ -219,9 +219,9 @@
         }  
       }
       
-      res.header('WWW-Authenticate', 'Basic realm="REST"')
+      res.header("WWW-Authenticate", "Basic realm=\"REST\"")
         .status(401)
-        .send('Access denied');
+        .send("Access denied");
     }
     
     requireLogged(req, res, next) {
@@ -244,7 +244,7 @@
     requirePermissionToPostThread(req, res, next) {
       const userId = req.userId;
       const threadId = req.body.threadId;
-      const keycloakRealm = config.get('keycloak:realm');
+      const keycloakRealm = config.get("keycloak:realm");
       
       this.userManagement.checkPermissionToPostThread(keycloakRealm, userId, threadId)
         .then((permission) => {
@@ -262,7 +262,7 @@
     requirePermissionToReadMessage(req, res, next) {
       const userId = req.userId;
       const messageId = req.params.messageId;
-      const keycloakRealm = config.get('keycloak:realm');
+      const keycloakRealm = config.get("keycloak:realm");
       
       this.userManagement.checkPermissionToReadMessage(keycloakRealm, userId, messageId)
         .then((permission) => {
@@ -285,8 +285,8 @@
     * @param {http.ServerResponse} res server response object
     **/
     postSystemShutdown(req, res) {
-      if (config.get('mode') !== 'TEST') {
-        res.status(403).send("I'm sorry Dave, I'm afraid I can't do that");
+      if (config.get("mode") !== "TEST") {
+        res.status(403).send("I\"m sorry Dave, I\"m afraid I can\"t do that");
         return;
       }
       
@@ -308,35 +308,35 @@
       
       app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
       app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
-      app.post("/images/upload/message", [ upload.single('image'), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
+      app.post("/images/upload/message", [ upload.single("image"), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
       
       // Keycloak
       
-      app.get('/keycloak.json', this.getKeycloak.bind(this));
-      app.get('/app-config.json', this.getAppConfig.bind(this));
-      app.post('/join', this.postJoin.bind(this));
+      app.get("/keycloak.json", this.getKeycloak.bind(this));
+      app.get("/app-config.json", this.getAppConfig.bind(this));
+      app.post("/join", this.postJoin.bind(this));
       
       // REST
       
-      app.get('/rest/v1/usergroups', [ this.restAuth.bind(this) ], this.getRestV1UserGroups.bind(this));
+      app.get("/rest/v1/usergroups", [ this.restAuth.bind(this) ], this.getRestV1UserGroups.bind(this));
       
       // Webhooks
       
-      app.post('/webhooks/management', this.postWebhooksManagement.bind(this));
+      app.post("/webhooks/management", this.postWebhooksManagement.bind(this));
     }
     
     getBaseUrl() {
-      const host = config.get('client:server:host');
-      const secure = config.get('client:server:secure');
-      const port = config.get('client:server:port');
-      const protocol = secure ? 'https' : 'http';
+      const host = config.get("client:server:host");
+      const secure = config.get("client:server:secure");
+      const port = config.get("client:server:port");
+      const protocol = secure ? "https" : "http";
       return `${protocol}://${host}:${port}`;
     }
     
     syncUserQuestionGroupThreads(userId) {
-      return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId)
+      return this.userManagement.listUserGroupIds(config.get("keycloak:realm"), userId)
         .then((userGroupIds) => {
-          return this.models.listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, 'user')
+          return this.models.listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, "user")
             .then((questionGroups) => {
               const userGroupThreadUpsertPromises = [];
               for (let i = 0; i < questionGroups.length; i++) {
@@ -350,16 +350,16 @@
   };
 
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
-    const models = imports['pakkasmarja-berries-models'];
-    const userManagement = imports['pakkasmarja-berries-user-management'];
-    const webhooks = imports['pakkasmarja-berries-webhooks'];
-    const clusterMessages = imports['pakkasmarja-berries-cluster-messages'];
-    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
+    const logger = imports["logger"];
+    const models = imports["pakkasmarja-berries-models"];
+    const userManagement = imports["pakkasmarja-berries-user-management"];
+    const webhooks = imports["pakkasmarja-berries-webhooks"];
+    const clusterMessages = imports["pakkasmarja-berries-cluster-messages"];
+    const pushNotifications = imports["pakkasmarja-berries-push-notifications"];
     
     const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages, pushNotifications);
     register(null, {
-      'pakkasmarja-berries-routes': routes
+      "pakkasmarja-berries-routes": routes
     });
   };
 
