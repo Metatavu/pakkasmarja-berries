@@ -192,7 +192,7 @@
     }
     
     getRestV1UserGroups(req, res) {
-      this.userManagement.listGroups(config.get("keycloak:realm"))
+      this.userManagement.listGroups()
         .then((userGroups) => {
            res.send(userGroups);
         })
