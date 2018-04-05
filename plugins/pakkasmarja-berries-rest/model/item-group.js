@@ -27,6 +27,7 @@
 
 
 
+
   };
 
   /**
@@ -52,6 +53,9 @@
       if (data.hasOwnProperty('category')) {
         obj['category'] = ApiClient.convertToType(data['category'], 'String');
       }
+      if (data.hasOwnProperty('minimumProfitEstimation')) {
+        obj['minimumProfitEstimation'] = ApiClient.convertToType(data['minimumProfitEstimation'], 'Number');
+      }
       if (data.hasOwnProperty('prerequisiteContractItemGroupId')) {
         obj['prerequisiteContractItemGroupId'] = ApiClient.convertToType(data['prerequisiteContractItemGroupId'], 'String');
       }
@@ -75,6 +79,10 @@
    * @member {String} category
    */
   exports.prototype['category'] = undefined;
+  /**
+   * @member {Number} minimumProfitEstimation
+   */
+  exports.prototype['minimumProfitEstimation'] = undefined;
   /**
    * Require contract in specified item group before siging a contract
    * @member {String} prerequisiteContractItemGroupId

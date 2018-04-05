@@ -76,6 +76,9 @@
       "123": "Frozen Test Group 1",
       "234": "Fresh Test Group 1",
       "456": "Frozen Test Group 2"
+    },
+    "item-group-minimum-profit-estimation": {
+      "234": 500
     }
   }
 }
