@@ -659,7 +659,7 @@
       const userId = contract.userId;
       
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
-      if (!contract) {
+      if (!itemGroup) {
         this.sendNotFound(res);
         return;
       }
