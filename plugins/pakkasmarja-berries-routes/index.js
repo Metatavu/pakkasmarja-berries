@@ -7,11 +7,8 @@
   const _ = require("lodash");
   const fs = require("fs");
   const path = require("path");
-  const moment = require("moment");
-  const uuid = require("uuid4");
   const config = require("nconf");
   const request = require("request");
-  const stream = require("stream");
   const multer = require("multer");
   const upload = multer({ dest: "/tmp/uploads/" });
   const auth = require("basic-auth");
@@ -71,7 +68,7 @@
       
       this.models.findMessageAttachments(messageAttachmentId)
         .then((messageAttachment) => {
-          if (!messageAttachment || (parseInt(messageAttachment.messageId) !== parseInt(messageId))) {
+          if (!messageAttachment || (parseInt(messageAttachment.messageId) !== parseInt(messageId))) {
             res.status(404).send();
           } else {
             res.set("Content-Type", messageAttachment.contentType);  
@@ -225,11 +222,11 @@
     }
     
     requireLogged(req, res, next) {
-      const sessionId = req.body.sessionId || req.query.sessionId;
+      const sessionId = req.body.sessionId || req.query.sessionId;
       
       this.models.findSession(sessionId)
         .then((session) => {
-          if (!session || !session.userId) {
+          if (!session || !session.userId) {
             res.status(403).send("Forbidden");
           } else {
             req.userId = session.userId;
@@ -255,7 +252,7 @@
           }
         })
         .catch(() => {
-          this.logger.error(`Failed to resolve whether ${userId} has permission to post into thread ${threadId}`);
+          this.logger.error(`Failed to resolve whether ${userId} has permission to post into thread ${threadId}`);
         });
     }
     
@@ -306,9 +303,9 @@
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.post("/system/shutdown", this.postSystemShutdown.bind(this));
       
-      app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
-      app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
-      app.post("/images/upload/message", [ upload.single("image"), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
+      app.get("/images/wordpress/*", [ this.requireLogged.bind(this) ], this.getImagesWordpress.bind(this));
+      app.get("/images/messages/:messageId/:messageAttachmentId", [ this.requireLogged.bind(this), this.requirePermissionToReadMessage.bind(this) ], this.getImagesMessages.bind(this));
+      app.post("/images/upload/message", [ upload.single("image"), this.requireLogged.bind(this), this.requirePermissionToPostThread.bind(this) ], this.postImageUploadMessage.bind(this));
       
       // Keycloak
       
