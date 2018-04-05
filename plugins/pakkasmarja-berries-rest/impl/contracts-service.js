@@ -890,10 +890,11 @@
       const year = (new Date()).getFullYear();
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
       const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, null, null, null, null);
-      
+
       const templateData = {
         companyName: companyName,
-        prices: prices
+        prices: prices,
+        areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : []
       };
       
       const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
