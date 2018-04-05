@@ -364,11 +364,23 @@
           return;
         }
 
+        const prerequisiteContractItemGroupId = await this.resolveSapPrerequisiteContractItemGroupId(sapId);
+        if (prerequisiteContractItemGroupId === false) {
+          await this.enqueueSapItemGroupUpdate(data.operationReportItemId, data.itemGroup);
+          
+          callback(null, {
+            message: `Required prerequisite contract item group was not found, retrying`,
+            operationReportItemId: data.operationReportItemId
+          });
+
+          return;
+        }
+
         const itemGroup = await this.models.findItemGroupBySapId(sapId);
         if (itemGroup) {
-          this.models.updateItemGroup(itemGroup.id, name, displayName, category);
+          this.models.updateItemGroup(itemGroup.id, name, displayName, category, prerequisiteContractItemGroupId);
         } else {
-          this.models.createItemGroup(sapId, name, displayName, category);
+          this.models.createItemGroup(sapId, name, displayName, category, prerequisiteContractItemGroupId);
         }
 
         callback(null, {
@@ -503,6 +515,27 @@
       }
 
       return null;
+    }
+
+    /**
+     * Resolves prerequisite contract item group id for given SAP id or null if not specified
+     * 
+     * @param {String} sapId sapId
+     * @return {String} prerequisite contract item group id for given SAP id
+     */
+    async resolveSapPrerequisiteContractItemGroupId(sapId) {
+      const itemGroupPrerequisites = config.get("sap:item-group-prerequisites") || {};
+      const prerequisitesSapId = itemGroupPrerequisites[sapId];
+      if (!prerequisitesSapId) {
+        return null;
+      }
+
+      const itemGroup = await this.models.findItemGroupBySapId(prerequisitesSapId);
+      if (itemGroup) {
+        return itemGroup.id;
+      }
+
+      return false;
     }
 
     /**

@@ -916,14 +916,39 @@
      * @param {String} name name
      * @param {String} displayName display name
      * @param {String} category category
+     * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
      * @return {Promise} promise for created item group
      */
-    createItemGroup(sapId, name, displayName, category) {
+    createItemGroup(sapId, name, displayName, category, prerequisiteContractItemGroupId) {
      return this.ItemGroup.create({
         sapId: sapId,
         name: name,
         displayName: displayName,
-        category: category
+        category: category,
+        prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
+      });
+    }
+    
+    /**
+     * Updates item group
+     * 
+     * @param {int} id item group id
+     * @param {String} name name
+     * @param {String} displayName displayName
+     * @param {String} category category
+     * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
+     * @return {Promise} promise for updated item group
+     */
+    updateItemGroup(id, name, displayName, category, prerequisiteContractItemGroupId) {
+      return this.ItemGroup.update({
+        name: name,
+        displayName: displayName,
+        category: category,
+        prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
@@ -966,27 +991,6 @@
      */
     listItemGroups(firstResult, maxResults) {
       return this.ItemGroup.findAll({ where: { }, offset: firstResult, limit: maxResults });
-    }
-    
-    /**
-     * Updates item group
-     * 
-     * @param {int} id item group id
-     * @param {String} name name
-     * @param {String} displayName displayName
-     * @param {String} category category
-     * @return {Promise} promise for updated item group
-     */
-    updateItemGroup(id, name, displayName, category) {
-      return this.ItemGroup.update({
-        name: name,
-        displayName: displayName,
-        category: category
-      }, {
-        where: {
-          id: id
-        }
-      });
     }
     
     /**
