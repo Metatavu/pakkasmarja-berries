@@ -18,7 +18,9 @@
     "deliveryPlaceComment": null,
     "quantityComment": null,
     "rejectComment": null,
-    "areaDetails": "[123]",
+    "areaDetails": [{
+      "name": "Test", "size": 123, "species": "something", "profitEstimation": 1234
+    }],
     "deliverAll": true
   },
   "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
@@ -40,7 +42,7 @@
     "deliveryPlaceComment": null,
     "quantityComment": null,
     "rejectComment": null,
-    "areaDetails": null,
+    "areaDetails": [],
     "deliverAll": false
   }
 }

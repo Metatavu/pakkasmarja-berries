@@ -16,6 +16,8 @@
   "deliveryPlaceComment": "Delivery comment test",
   "quantityComment": "Quantity comment test",
   "rejectComment": "Reject comment test",
-  "areaDetails": "{\"details\": []}",
+  "areaDetails": [{
+    "name": "Create Test", "size": 2, "species": "something created", "profitEstimation": 5
+  }],
   "deliverAll": false
  }

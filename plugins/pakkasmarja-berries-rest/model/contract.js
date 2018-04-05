@@ -4,6 +4,7 @@
 }(this, function(ApiClient) {
   'use strict';
   const _ = require('lodash');
+  const AreaDetail = require(`${__dirname}/${_.kebabCase('AreaDetail')}`);
 
 
 
@@ -104,7 +105,7 @@
         obj['rejectComment'] = ApiClient.convertToType(data['rejectComment'], 'String');
       }
       if (data.hasOwnProperty('areaDetails')) {
-        obj['areaDetails'] = ApiClient.convertToType(data['areaDetails'], 'String');
+        obj['areaDetails'] = ApiClient.convertToType(data['areaDetails'], [AreaDetail]);
       }
       if (data.hasOwnProperty('deliverAll')) {
         obj['deliverAll'] = ApiClient.convertToType(data['deliverAll'], 'Boolean');
@@ -184,7 +185,7 @@
    */
   exports.prototype['rejectComment'] = undefined;
   /**
-   * @member {String} areaDetails
+   * @member {Array.<module:model/AreaDetail>} areaDetails
    */
   exports.prototype['areaDetails'] = undefined;
   /**

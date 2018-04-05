@@ -42,7 +42,7 @@
         return;
       }
       
-      res.status(200).send(this.translateDatabaseItemGroup(databaseItemGroup));
+      res.status(200).send(await this.translateDatabaseItemGroup(databaseItemGroup));
     }
     /* jshint ignore:end */
     
@@ -51,9 +51,9 @@
      */
     async listItemGroups(req, res) {
       const databaseItemGroups = await this.models.listItemGroups();
-      const itemGroups = databaseItemGroups.map((databaseItemGroup) => {
+      const itemGroups = await Promise.all(databaseItemGroups.map((databaseItemGroup) => {
         return this.translateDatabaseItemGroup(databaseItemGroup);
-      });
+      }));
       
       res.status(200).send(itemGroups);
     }
@@ -309,12 +309,15 @@
      * @param {Object} itemGroup Sequelize item group model
      * @return {ItemGroup} REST entity
      */
-    translateDatabaseItemGroup(itemGroup) {
+    async translateDatabaseItemGroup(itemGroup) {
+      const prerequisiteContractItemGroup = itemGroup.prerequisiteContractItemGroupId ? await this.models.findItemGroupById(itemGroup.prerequisiteContractItemGroupId) : null;
+
       return ItemGroup.constructFromObject({
         "id": itemGroup.externalId,
         "name": itemGroup.name,
         "displayName": itemGroup.displayName,
-        "category": itemGroup.category
+        "category": itemGroup.category,
+        "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
       });
     }
 

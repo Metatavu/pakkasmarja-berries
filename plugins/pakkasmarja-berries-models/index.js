@@ -179,7 +179,8 @@
         externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
         name: { type: Sequelize.STRING(191), allowNull: false },
         category: { type: Sequelize.STRING(191), allowNull: false },
-        displayName: { type: Sequelize.STRING(191), allowNull: true }
+        displayName: { type: Sequelize.STRING(191), allowNull: true },
+        prerequisiteContractItemGroupId: { type: Sequelize.BIGINT, allowNull: true, references: { model: this.ItemGroup, key: "id" } }
       }, {
         indexes: [{
           name: "UN_ITEMGROUP_SAP_ID",
@@ -915,14 +916,39 @@
      * @param {String} name name
      * @param {String} displayName display name
      * @param {String} category category
+     * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
      * @return {Promise} promise for created item group
      */
-    createItemGroup(sapId, name, displayName, category) {
+    createItemGroup(sapId, name, displayName, category, prerequisiteContractItemGroupId) {
      return this.ItemGroup.create({
         sapId: sapId,
         name: name,
         displayName: displayName,
-        category: category
+        category: category,
+        prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
+      });
+    }
+    
+    /**
+     * Updates item group
+     * 
+     * @param {int} id item group id
+     * @param {String} name name
+     * @param {String} displayName displayName
+     * @param {String} category category
+     * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
+     * @return {Promise} promise for updated item group
+     */
+    updateItemGroup(id, name, displayName, category, prerequisiteContractItemGroupId) {
+      return this.ItemGroup.update({
+        name: name,
+        displayName: displayName,
+        category: category,
+        prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
+      }, {
+        where: {
+          id: id
+        }
       });
     }
     
@@ -965,27 +991,6 @@
      */
     listItemGroups(firstResult, maxResults) {
       return this.ItemGroup.findAll({ where: { }, offset: firstResult, limit: maxResults });
-    }
-    
-    /**
-     * Updates item group
-     * 
-     * @param {int} id item group id
-     * @param {String} name name
-     * @param {String} displayName displayName
-     * @param {String} category category
-     * @return {Promise} promise for updated item group
-     */
-    updateItemGroup(id, name, displayName, category) {
-      return this.ItemGroup.update({
-        name: name,
-        displayName: displayName,
-        category: category
-      }, {
-        where: {
-          id: id
-        }
-      });
     }
     
     /**

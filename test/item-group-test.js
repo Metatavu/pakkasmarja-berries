@@ -18,7 +18,7 @@
   const itemGroupPricesUpdateData = require(`${__dirname}/data/item-group-prices-update.json`);
 
   test("Test listing item groups", async (t) => {
-    await database.executeFile(`${__dirname}/data`, "item-groups-setup.sql");
+    await database.executeFiles(`${__dirname}/data`, [ "item-groups-setup.sql", "item-groups-prerequisite-setup.sql" ]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups")
@@ -486,5 +486,5 @@
         t.deepEqual(response.body, itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"]);
       });
   });
-
+  
 })();

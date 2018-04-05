@@ -12,6 +12,7 @@
   const pug = require("pug");
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
+  const AreaDetail = require(`${__dirname}/../model/area-detail`);
   const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
   const ContractDocumentTemplate = require(`${__dirname}/../model/contract-document-template`);
   const Price = require(`${__dirname}/../model/price`);
@@ -110,7 +111,7 @@
         signDate, 
         termDate, 
         status, 
-        areaDetails,
+        areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
         remarks, 
         deliveryPlaceComment, 
@@ -226,7 +227,7 @@
         signDate, 
         termDate, 
         status, 
-        areaDetails,
+        areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
         remarks, 
         deliveryPlaceComment, 
@@ -654,17 +655,40 @@
         this.sendNotFound(res);
         return;
       }
+
+      const userId = contract.userId;
+      
+      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+      if (!itemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (itemGroup.prerequisiteContractItemGroupId) {
+        const prerequisiteContracts = await this.models.listContracts(userId, null, itemGroup.prerequisiteContractItemGroupId, contract.year, "APPROVED", 0, 1);
+        if (!prerequisiteContracts || prerequisiteContracts.length < 1) {
+          this.sendBadRequest(res, "Missing prerequisite contracts");
+          return;
+        }
+      }
       
       const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type);
       if (!document) {
         this.sendNotFound(res);
         return;
-      } 
+      }
       
       const parts = await toArray(document.dataStream);
       const buffers = parts.map(part => Buffer.isBuffer(part) ? part : Buffer.from(part));
       const fileBuffer = Buffer.concat(buffers);
       const existingContractDocument = await this.models.findContractDocumentByContractAndType(contract.id, type);
+
+      if (config.get("mode") === "TEST") {
+        // TODO: It's currently not possible to test sign service because
+        // VismaSign does not provide  test account
+        res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: "about:testmode" }));
+        return;
+      }
 
       if (existingContractDocument != null) {
         if (existingContractDocument.signed) {
@@ -683,7 +707,7 @@
       const appUrl = `${req.protocol}://${req.get("host")}`;      
       const returnUrl = `${appUrl}/signcallback?type=contract-document&contractId=${contractId}&type=${type}`;
       const fulfillResult = await this.signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
-
+      
       this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
       res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: fulfillResult.location }));
     }
@@ -698,6 +722,9 @@
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       const deliveryPlace = await this.models.findDeliveryPlaceById(contract.deliveryPlaceId);
       const proposedDeliveryPlace = await this.models.findDeliveryPlaceById(contract.proposedDeliveryPlaceId);
+      const areaDetails = contract.areaDetails ? JSON.parse(contract.areaDetails).map((areaDetail) => {
+        return AreaDetail.constructFromObject(areaDetail);
+      }) : [];  
 
       return Contract.constructFromObject({
         "id": contract.externalId,
@@ -713,7 +740,7 @@
         "signDate": contract.signDate,
         "termDate": contract.termDate,
         "status": contract.status,
-        "areaDetails": contract.areaDetails,
+        "areaDetails": areaDetails || [],
         "deliverAll": contract.deliverAll,
         "remarks": contract.remarks,
         "year": contract.year,
