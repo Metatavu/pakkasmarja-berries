@@ -1,0 +1,22 @@
+{{#areaDetails.0}}
+<table class="area-details">
+  <thead>
+    <tr>
+      <th>Viljeltävä marja-laji (esim.1a)</th>
+      <th>Lohko</th>
+      <th>Pinta-ala (ha)</th>
+      <th>Tuottoarvio (kg)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#areaDetails}}
+    <tr>
+      <td>{{species}}</td>
+      <td>{{name}}</td>
+      <td>{{size}}</td>
+      <td>{{profitEstimation}}</td>
+    </tr>
+    {{/areaDetails}}
+  </tbody>
+</table>
+{{/areaDetails.0}}
