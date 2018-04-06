@@ -146,6 +146,7 @@
     translateKeycloakUser(user) {
       return Contact.constructFromObject({
         'id': user.id,
+        "sapId": this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID),
         'firstName': user.firstName,
         'lastName': user.lastName,
         'companyName': this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME),
@@ -174,6 +175,7 @@
         'email': contact.email
       });
       
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME, contact.companyName);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME, contact.companyName);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_BIC, contact.BIC);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_IBAN, contact.IBAN);
