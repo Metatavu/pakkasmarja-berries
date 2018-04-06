@@ -933,7 +933,7 @@
      */
     async getContractDocumentPdf(baseUrl, contract, type) {
       const contractDocument = await this.models.findContractDocumentByContractAndType(contract.id, type);
-      if (contractDocument && contractDocument.vismaSignDocumentId) {
+      if (contractDocument && contractDocument.vismaSignDocumentId) {
         const documentFile = await this.signature.getDocumentFile(contractDocument.vismaSignDocumentId);
         if (documentFile) {
           const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
