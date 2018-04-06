@@ -15,6 +15,7 @@
     "status": "TERMINATED",
     "remarks": "Updated for testing",
     "year": 2019,
+    "sapId": "sapid-4",
     "deliveryPlaceComment": "Delivery comment",
     "quantityComment": "Quantity comment",
     "rejectComment": "Reject comment",

@@ -13,6 +13,7 @@
   "status": "DRAFT",
   "remarks": "Created for testing",
   "year": 2019,
+  "sapId": "sapid-3",
   "deliveryPlaceComment": "Delivery comment test",
   "quantityComment": "Quantity comment test",
   "rejectComment": "Reject comment test",

@@ -11,7 +11,8 @@
     "IBAN": null,
     "taxCode": null,
     "vatLiable": null,
-    "audit": null
+    "audit": null,
+    "sapId": "tusap1"
   },
   "677e99fd-b854-479f-afa6-74f295052770": {
     "id": "677e99fd-b854-479f-afa6-74f295052770",
@@ -33,6 +34,7 @@
     "IBAN": "FI2112345600000786",
     "taxCode": "FI12345678",
     "vatLiable": null,
-    "audit": "YES"
+    "audit": "YES",
+    "sapId": "tusap2"
   }
 }

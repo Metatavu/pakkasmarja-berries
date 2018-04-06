@@ -19,7 +19,8 @@
     "IBAN": "FI2222222222222222",
     "taxCode": "DM22233344",
     "vatLiable": "EU",
-    "audit": "2030"
+    "audit": "2030",
+    "sapId": "tusap1"
   },
   "677e99fd-b854-479f-afa6-74f295052770": {
     "id": "677e99fd-b854-479f-afa6-74f295052770",
@@ -41,7 +42,8 @@
     "IBAN": "FI2112345600000786",
     "taxCode": "FI12345678",
     "vatLiable": "YES",
-    "audit": "2020"
+    "audit": "2020",
+    "sapId": "tusap2"
   }
 }
 

@@ -1270,6 +1270,7 @@
      * @param {String} userId contract's user id
      * @param {int} year year
      * @param {int} deliveryPlaceId delivery place id
+     * @param {String} sapId SAP id
      * @param {int} proposedDeliveryPlaceId proposed delivery place id
      * @param {int} itemGroupId item group id
      * @param {String} sapId sap id
@@ -1290,7 +1291,7 @@
      * 
      * @returns {Promise} promise for update
      */
-    updateContract(id, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+    updateContract(id, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
       startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
 
       return this.Contract.update({
@@ -1298,6 +1299,7 @@
         deliveryPlaceId: deliveryPlaceId,
         proposedDeliveryPlaceId: proposedDeliveryPlaceId,
         itemGroupId: itemGroupId,
+        sapId: sapId,
         contractQuantity: contractQuantity,
         deliveredQuantity: deliveredQuantity,
         proposedQuantity: proposedQuantity,

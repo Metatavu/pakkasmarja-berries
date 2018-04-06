@@ -198,6 +198,7 @@
       const deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
       const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
       const itemGroupId = itemGroup.id;
+      const sapId = updateContract.sapId;
       const contractQuantity = updateContract.contractQuantity;
       const deliveredQuantity = updateContract.deliveredQuantity;
       const proposedQuantity = updateContract.proposedQuantity;
@@ -218,7 +219,8 @@
         year,
         deliveryPlaceId,
         proposedDeliveryPlaceId,
-        itemGroupId, 
+        itemGroupId,
+        sapId,
         contractQuantity, 
         deliveredQuantity,
         proposedQuantity,
@@ -728,6 +730,7 @@
 
       return Contract.constructFromObject({
         "id": contract.externalId,
+        "sapId": contract.sapId,
         "contactId": contract.userId,
         "itemGroupId": itemGroup.externalId,
         "deliveryPlaceId": deliveryPlace.externalId,
