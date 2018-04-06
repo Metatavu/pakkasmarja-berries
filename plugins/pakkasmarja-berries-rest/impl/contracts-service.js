@@ -895,12 +895,14 @@
       
       const year = (new Date()).getFullYear();
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
-      const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, null, null, null, null);
-
+      const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
+      const deliveryPlace = contract.deliveryPlaceId ? await this.models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
+      
       const templateData = {
         companyName: companyName,
         contract: contract,
         prices: prices,
+        deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
         areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : []
       };
       
