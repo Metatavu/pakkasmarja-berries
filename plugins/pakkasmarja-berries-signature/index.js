@@ -121,6 +121,16 @@
 
       return this.invitationsApi.fullfillInvitation(body, invitationId);
     }
+
+    /**
+     * Returns document file for a document id
+     * 
+     * @param {String} documentId document id
+     * @returns {Blob} file as a blob 
+     */
+    getDocumentFile(documentId) {
+      return this.filesApi.getDocumentFile(documentId, 0);
+    }
     
     /**
      * Gets document status

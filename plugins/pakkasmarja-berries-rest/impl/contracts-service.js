@@ -294,10 +294,13 @@
               if (!document) {
                 this.sendNotFound(res);
               } else {
-                const pdfStream = document.dataStream;
                 res.setHeader("Content-type", "application/pdf");
                 res.setHeader("Content-disposition", `attachment; filename=${document.filename}`);
-                pdfStream.pipe(res);
+                if (document.dataStream) {
+                  document.dataStream.pipe(res);
+                } else {
+                  res.send(document.data);
+                }
               }
             })
             .catch((err) => {
@@ -909,8 +912,8 @@
       const header = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
       const footer = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
-      const documentName = `${moment().format("YYYY")} - ${itemGroup.name}, ${companyName}`;
-      const documentSlug = `${slugify(documentName)}.html`;
+      const documentName = this.getDocumentName(itemGroup, companyName);
+      const documentSlug = this.getDocumentSlug(documentName);
 
       return { 
         documentName: documentName, 
@@ -929,6 +932,23 @@
      * @param {String} type document type 
      */
     async getContractDocumentPdf(baseUrl, contract, type) {
+      const contractDocument = await this.models.findContractDocumentByContractAndType(contract.id, type);
+      if (contractDocument && contractDocument.vismaSignDocumentId) {
+        const documentFile = await this.signature.getDocumentFile(contractDocument.vismaSignDocumentId);
+        if (documentFile) {
+          const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+          const companyName = await this.getContractCompanyName(contract);
+          const documentName = this.getDocumentName(itemGroup, companyName);
+          const documentSlug = this.getDocumentSlug(documentName);
+
+          return { 
+            documentName: documentName, 
+            fileName: `${documentSlug}.pdf`, 
+            data: documentFile
+          };  
+        }
+      }
+
       const contractDocumentHtml = await this.getContractDocumentHtml(baseUrl, contract, type);
 
       return { 
@@ -969,6 +989,39 @@
       }
 
       return contentType.split(";")[0].trim();
+    }
+
+    /**
+     * Returns company name for a contract
+     * 
+     * @param {Contract} contract contract 
+     */
+    async getContractCompanyName(contract) {
+      const user = await this.userManagement.findUser(contract.userId);
+      if (!user) {
+        return null;
+      }
+
+      return this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+    }
+
+    /**
+     * Returns contract document's name for a item group and company
+     * 
+     * @param {ItemGroup} itemGroup item group 
+     * @param {String} companyName company name 
+     */
+    getDocumentName(itemGroup, companyName) {
+      return `${moment().format("YYYY")} - ${itemGroup.name}, ${companyName}`;
+    }
+
+    /**
+     * Slugifys document name 
+     * 
+     * @param {*} documentName 
+     */
+    getDocumentSlug(documentName) {
+      return slugify(documentName);
     }
   }
 
