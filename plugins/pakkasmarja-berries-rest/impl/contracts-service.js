@@ -896,6 +896,7 @@
 
       const templateData = {
         companyName: companyName,
+        contract: contract,
         prices: prices,
         areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : []
       };
