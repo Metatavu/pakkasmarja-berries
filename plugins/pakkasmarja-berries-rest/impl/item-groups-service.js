@@ -255,7 +255,7 @@
     /**
      * @inheritdoc
      */
-     async deleteItemGroupPrice(req, res) {
+    async deleteItemGroupPrice(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const priceId = req.params.priceId;
 
