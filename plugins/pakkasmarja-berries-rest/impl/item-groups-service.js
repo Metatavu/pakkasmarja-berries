@@ -205,6 +205,16 @@
         return;
       }
 
+      const requiredFields = ["group", "unit", "price", "year"];
+
+      for (let i = 0; i < requiredFields.length; i++) {
+        const requiredField = requiredFields[i];
+        if (!payload[requiredField]) {
+          this.sendBadRequest(res, `Group ${requiredField} is required`);
+          return;
+        }
+      }
+
       const databasePrice = await this.models.createItemGroupPrice(databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
 
       res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
