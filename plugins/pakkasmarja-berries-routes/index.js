@@ -241,7 +241,7 @@
     requirePermissionToPostThread(req, res, next) {
       const userId = req.userId;
       const threadId = req.body.threadId;
-      const keycloakRealm = config.get("keycloak:realm");
+      const keycloakRealm = config.get("keycloak:admin:realm");
       
       this.userManagement.checkPermissionToPostThread(keycloakRealm, userId, threadId)
         .then((permission) => {
@@ -259,7 +259,7 @@
     requirePermissionToReadMessage(req, res, next) {
       const userId = req.userId;
       const messageId = req.params.messageId;
-      const keycloakRealm = config.get("keycloak:realm");
+      const keycloakRealm = config.get("keycloak:admin:realm");
       
       this.userManagement.checkPermissionToReadMessage(keycloakRealm, userId, messageId)
         .then((permission) => {
@@ -331,7 +331,7 @@
     }
     
     syncUserQuestionGroupThreads(userId) {
-      return this.userManagement.listUserGroupIds(config.get("keycloak:realm"), userId)
+      return this.userManagement.listUserGroupIds(config.get("keycloak:admin:realm"), userId)
         .then((userGroupIds) => {
           return this.models.listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, "user")
             .then((questionGroups) => {
