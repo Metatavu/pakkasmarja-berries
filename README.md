@@ -80,7 +80,7 @@ Select option "1: No redirect - Make no further changes to the webserver configu
         root /var/www/html;
 
         location / {
-          return 301 https://\$server_name\$request_uri;
+          return 301 https://\$host:443\$\{request_uri\};
         }
       }
     
