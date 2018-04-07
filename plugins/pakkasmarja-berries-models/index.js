@@ -7,7 +7,7 @@
   const _ = require("lodash");
   const Promise = require("bluebird");
   const Umzug = require("umzug");
-  const config = require('nconf');
+  const config = require("nconf");
   
   class Models {
     
@@ -376,7 +376,7 @@
       const lockFile = config.get("migrations:lock-file");
 
       return new Promise((resolve, reject) => {
-        fs.open(lockFile, 'wx', (err, fd) => {
+        fs.open(lockFile, "wx", (err) => {
           if (err) {
             if (err.code === "EEXIST") {
               resolve(false);
