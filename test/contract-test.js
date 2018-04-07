@@ -312,6 +312,7 @@
             t.ok(pdfData.rawTextContent.indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
             t.ok(pdfData.rawTextContent.indexOf("Group 18.00 € / l") > -1, "Contains replaced price");
             t.ok(pdfData.rawTextContent.indexOf("https://www.example.com") > -1, "contains footer");
+            t.ok(pdfData.rawTextContent.indexOf("Test Place 1") > -1, "contains replaced delivery place");
           });
       });
   });
@@ -373,6 +374,7 @@
         t.ok($("p").text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
         t.ok($("td").text().indexOf("Group") > -1, "Contains replaced price");
         t.ok($("td").text().indexOf("18.00 € / l") > -1, "Contains replaced price");
+        t.ok($("p").text().indexOf("Test Place 1") > -1, "Contains replaced delivery place");
       });
   });
   
