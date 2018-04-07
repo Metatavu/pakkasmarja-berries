@@ -1105,6 +1105,16 @@
         }
       });
     }
+
+    /**
+     * Deletes an item group price
+     * 
+     * @param {int} id item group price id
+     * @return {Promise} promise that resolves on successful removal
+     */
+    deleteItemGroupPrice(id) {
+      return this.ItemGroupPrice.destroy({ where: { id : id } });
+    }    
     
     // DeliveryPlaces
     

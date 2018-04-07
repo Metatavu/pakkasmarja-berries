@@ -471,7 +471,7 @@
         });
       });
   });
-  
+
   test("Test update item group price", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
 
@@ -486,5 +486,95 @@
         t.deepEqual(response.body, itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"]);
       });
   });
+
+  test("Test delete item group price", async (t) => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    const token = await auth.getTokenDefault();
+
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(204)
+      .then(() => {
+        return request("http://localhost:3002")
+          .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
+          .set("Authorization", `Bearer ${token}`)
+          .set("Accept", "application/json")
+          .expect(200)
+          .then(async response => {
+            t.equal(response.body.length, 1);
+            t.deepEqual(response.body[0], itemGroupPriceDatas["7f1761a8-3103-11e8-b2e0-1b2fa8a35f72"]);
+            return database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+          });
+      });
+  });
+
+  test("Test delete item group price - incorrect id", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-a1f7-5f974dead07c")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+
+  test("Test delete item group price - invalid id", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+   
+  test("Test delete item group price - incorrect item group", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+   
+  test("Test delete item group price - invalid item group", async () => {
+    await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
+    
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then(async () => {
+        await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      });
+  });
+  
+  test("Test delete item group price - without token", async () => {
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
+      .set("Accept", "application/json")
+      .expect(403);
+  });
+  
+  test("Test delete item group price - invalid token", async () => {
+    return request("http://localhost:3002")
+      .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
+      .set("Authorization", "Bearer FAKE")
+      .set("Accept", "application/json")
+      .expect(403);
+  });  
   
 })();

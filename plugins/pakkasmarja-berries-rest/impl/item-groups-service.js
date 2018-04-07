@@ -205,6 +205,16 @@
         return;
       }
 
+      const requiredFields = ["group", "unit", "price", "year"];
+
+      for (let i = 0; i < requiredFields.length; i++) {
+        const requiredField = requiredFields[i];
+        if (!payload[requiredField]) {
+          this.sendBadRequest(res, `Group ${requiredField} is required`);
+          return;
+        }
+      }
+
       const databasePrice = await this.models.createItemGroupPrice(databaseItemGroup.id, payload.group, payload.unit, payload.price, payload.year);
 
       res.status(200).send(this.translateItemGroupPrice(databasePrice, databaseItemGroup));
@@ -250,6 +260,40 @@
       const updatedDatabasePrice = await this.models.findItemGroupPriceById(databasePrice.id);
 
       res.status(200).send(this.translateItemGroupPrice(updatedDatabasePrice, databaseItemGroup));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    async deleteItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      await this.models.deleteItemGroupPrice(databasePrice.id);
+
+      res.status(204).send();
     }
 
     /**

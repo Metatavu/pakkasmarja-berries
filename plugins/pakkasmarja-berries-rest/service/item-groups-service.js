@@ -23,6 +23,17 @@
     }
 
    /**
+    * Delete item group price
+    * Deletes an item group price
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    deleteItemGroupPrice(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Find item group
     * Finds item group by id
     *
@@ -117,6 +128,7 @@
     **/
     register(app, keycloak) {
       app.post(`/rest/v1${this.toPath('/itemGroups/{itemGroupId}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.createItemGroupPrice.bind(this)));
+      app.delete(`/rest/v1${this.toPath('/itemGroups/{itemGroupId}/prices/{priceId}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteItemGroupPrice.bind(this)));
       app.get(`/rest/v1${this.toPath('/itemGroups/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findItemGroup.bind(this)));
       app.get(`/rest/v1${this.toPath('/itemGroups/{itemGroupId}/documentTemplates/{id}')}`, [ keycloak.protect() ], this.catchAsync(this.findItemGroupDocumentTemplate.bind(this)));
       app.get(`/rest/v1${this.toPath('/itemGroups/{itemGroupId}/prices/{priceId}')}`, [ keycloak.protect() ], this.catchAsync(this.findItemGroupPrice.bind(this)));
