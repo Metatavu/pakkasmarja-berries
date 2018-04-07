@@ -215,7 +215,7 @@
     }
     
     notifyClusterConversationThreadAdded(thread) {
-      this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
+      this.userManagement.getThreadUserIds(config.get('keycloak:admin:realm'), thread.id)
         .then((userIds) => {
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:conversation-thread-added", {
@@ -230,7 +230,7 @@
     }
     
     notifyClusterQuestionGroupAdded(questionGroup) {
-      this.userManagement.getQuestionGroupUserIds(config.get('keycloak:realm'), questionGroup.id)
+      this.userManagement.getQuestionGroupUserIds(config.get('keycloak:admin:realm'), questionGroup.id)
         .then((userIds) => {
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:question-group-added", {

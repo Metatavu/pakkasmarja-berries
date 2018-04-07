@@ -119,7 +119,7 @@
           this._resolveMessage()
             .then((message) => {
               if (message) {
-                this.userManagement.findUser(config.get('keycloak:realm'), message.userId)
+                this.userManagement.findUser(config.get('keycloak:admin:realm'), message.userId)
                   .then((user) => {
                     this.user(user);
                     resolve(this._user);
@@ -175,7 +175,7 @@
             .then((thread) => {
               this._resolveUser()
                 .then((user) => {
-                  this.role(this.userManagement.getThreadUserRole(config.get('keycloak:realm'), thread.id, user.id));
+                  this.role(this.userManagement.getThreadUserRole(config.get('keycloak:admin:realm'), thread.id, user.id));
                   resolve(this._role);
                 });
             })
@@ -191,7 +191,7 @@
         } else {
           this._resolveUser()
             .then((user) => {
-              this.userManagement.listUserGroupIds(config.get('keycloak:realm'), user.id)
+              this.userManagement.listUserGroupIds(config.get('keycloak:admin:realm'), user.id)
                 .then((userGroupIds) => {
                   this.userGroupIds(userGroupIds);
                   resolve(this._userGroupIds);
@@ -210,7 +210,7 @@
         } else {
           this._resolveThread()
             .then((thread) => {
-              this.userManagement.getThreadUserIds(config.get('keycloak:realm'), thread.id)
+              this.userManagement.getThreadUserIds(config.get('keycloak:admin:realm'), thread.id)
                 .then((threadUserIds) => {
                   this._threadUserIds = threadUserIds;
                   resolve(this._threadUserIds);
@@ -362,7 +362,7 @@
               if (session.userId === userId) {
                 this.getUserGroupIds(userId)
                   .then((userGroupIds) => {
-                    this.userManagement.getQuestionGroupUserRole(config.get('keycloak:realm'), questionGroup.id, userId)
+                    this.userManagement.getQuestionGroupUserRole(config.get('keycloak:admin:realm'), questionGroup.id, userId)
                       .then((role) => {
                         client.sendMessage({
                           "type": "question-groups-added",
@@ -434,7 +434,7 @@
     }
     
     getUserGroupIds(userId) {
-      return this.userManagement.listUserGroupIds(config.get('keycloak:realm'), userId);
+      return this.userManagement.listUserGroupIds(config.get('keycloak:admin:realm'), userId);
     }
     
     register(shadyMessages, webSockets) {
