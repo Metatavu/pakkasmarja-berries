@@ -42,7 +42,7 @@
           const threadId = message.threadId;
           const contents = message.contents;
           
-          this.userManagement.checkPermissionToPostThread(config.get('keycloak:admin:realm'), userId, threadId)
+          this.userManagement.checkPermissionToPostThread(config.get("keycloak:admin:realm"), userId, threadId)
             .then((permission) => {
               if (!permission) {
                 this.logger.warn(`User ${userId} attempted to post message into ${threadId}`);
@@ -72,7 +72,7 @@
           const messageBuilder = this.clusterMessages.createMessageAddedBuilder();
           messageBuilder.thread(thread).message(message).send()
             .then(() => {
-              this.userManagement.getThreadUserIds(config.get('keycloak:admin:realm'), thread.id)
+              this.userManagement.getThreadUserIds(config.get("keycloak:admin:realm"), thread.id)
                 .then((userIds) => {
                   this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti', `Uusi viesti keskustelussa ${thread.title}`, 'conversation-push-notifications');
                   this.models.upsertItemRead(`thread-${thread.id}`, userId)
@@ -103,7 +103,7 @@
                       
                       this.models.getQuestionGroupManagerUserGroupIds(questionGroupId)
                         .then((questionGroupUserGroupIds) => {
-                          this.userManagement.listGroupsMemberIds(config.get('keycloak:admin:realm'), questionGroupUserGroupIds)
+                          this.userManagement.listGroupsMemberIds(config.get("keycloak:admin:realm"), questionGroupUserGroupIds)
                           .then((questionGroupUserIds) => {
                             const userIds = _.uniq(threadUserIds.concat(questionGroupUserIds));
                             this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti kysymysryhmässä', questionGroup.title, 'question-push-notifications');
@@ -301,9 +301,9 @@
                   if (created) {
                     this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
                       .then((managerUserGroupIds) => {
-                        this.userManagement.findUser(config.get('keycloak:admin:realm'), userId)
+                        this.userManagement.findUser(config.get("keycloak:admin:realm"), userId)
                           .then((user) => {
-                            this.userManagement.listGroupsMemberIds(config.get('keycloak:admin:realm'), managerUserGroupIds)
+                            this.userManagement.listGroupsMemberIds(config.get("keycloak:admin:realm"), managerUserGroupIds)
                               .then((userIds) => {
                                 userIds.forEach((userId) => {
                                   this.shadyMessages.trigger("client:question-group-thread-added", {
@@ -334,7 +334,7 @@
     
     onGetQuestionGroupThreads(message, client) {
       const questionGroupId = message['question-group-id'];
-      const keycloakRealm = config.get('keycloak:admin:realm');
+      const keycloakRealm = config.get("keycloak:admin:realm");
               
       this.getUserId(client)
         .then((userId) => {
@@ -408,7 +408,7 @@
       const threadId = message['thread-id'];
       const firstResult = message['first-result'];
       const maxResults = message['max-results'];
-      const keycloakRealm = config.get('keycloak:admin:realm');
+      const keycloakRealm = config.get("keycloak:admin:realm");
       
       this.getUserId(client)
         .then((userId) => {
@@ -458,7 +458,7 @@
           
       this.getUserId(client)
         .then((userId) => {
-          return this.userManagement.checkPermissionToDeleteMessages(config.get('keycloak:admin:realm'), userId, messageId)
+          return this.userManagement.checkPermissionToDeleteMessages(config.get("keycloak:admin:realm"), userId, messageId)
             .then((permission) => {
               if (!permission) {
                 this.logger.warn(`User ${userId} attempted to delete message ${messageId}`);
@@ -659,7 +659,7 @@
     
     getThreadRoleMap(thread, userIds) {
       const userRolePromises = _.map(userIds, (userId) => {
-        return this.userManagement.getThreadUserRole(config.get('keycloak:admin:realm'), thread.id, userId);
+        return this.userManagement.getThreadUserRole(config.get("keycloak:admin:realm"), thread.id, userId);
       });
       
       return Promise.all(userRolePromises)
@@ -700,7 +700,7 @@
     getUserGroupIds(client, userId) {
       return new Promise((resolve, reject) => {
         if (userId) {
-          this.userManagement.listUserGroupIds(config.get('keycloak:admin:realm'), userId)
+          this.userManagement.listUserGroupIds(config.get("keycloak:admin:realm"), userId)
             .then((userGroupIds) => {
               resolve(userGroupIds);
             })
@@ -708,7 +708,7 @@
         } else {
           this.getUserId(client)
             .then((userId) => {
-              this.userManagement.listUserGroupIds(config.get('keycloak:admin:realm'), userId)
+              this.userManagement.listUserGroupIds(config.get("keycloak:admin:realm"), userId)
                 .then((userGroupIds) => {
                   resolve(userGroupIds);
                 })
