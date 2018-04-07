@@ -18,7 +18,7 @@
     sendPushNotification(to, title, body, sound) {
       const mode = config.get("mode");
       if (mode !== "PRODUCTION") {
-        this.logger(`Skipping push notification because server is running in ${mode} mode`);
+        this.logger.warn(`Skipping push notification because server is running in ${mode} mode`);
         return;
       }
 
