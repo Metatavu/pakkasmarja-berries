@@ -255,6 +255,40 @@
     /**
      * @inheritdoc
      */
+     async deleteItemGroupPrice(req, res) {
+      const itemGroupId = req.params.itemGroupId;
+      const priceId = req.params.priceId;
+
+      if (!itemGroupId || !priceId) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databaseItemGroup = await this.models.findItemGroupByExternalId(itemGroupId);
+      if (!databaseItemGroup) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      const databasePrice = await this.models.findItemGroupPriceByExternalId(priceId);
+      if (!databasePrice) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      if (databasePrice.itemGroupId !== databaseItemGroup.id) {
+        this.sendNotFound(res);
+        return;
+      }
+
+      await this.models.deleteItemGroupPrice(databasePrice.id);
+
+      res.status(204).send();
+    }
+
+    /**
+     * @inheritdoc
+     */
     async updateItemGroupDocumentTemplate(req, res) {
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;
