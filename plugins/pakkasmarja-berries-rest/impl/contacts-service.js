@@ -5,6 +5,7 @@
   'use strict';
 
   const _ = require('lodash');
+  const ApplicationRoles = require(`${__dirname}/../application-roles`);
   const AbstractContactsService = require(`${__dirname}/../service/contacts-service`);
   const Contact = require(`${__dirname}/../model/contact`);
   const Credentials = require(`${__dirname}/../model/credentials`);
@@ -33,11 +34,16 @@
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async findContact(req, res) {
       const userId = req.params.id;
       if (!userId) {
         this.sendNotFound(res);
+        return;
+      }
+
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTACTS)) {
+        this.sendForbidden(res, "You have no permission to find this contact");
         return;
       }
 
@@ -49,13 +55,16 @@
 
       res.status(200).send(this.translateKeycloakUser(user));
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async listContacts(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTACTS)) {
+        this.sendForbidden(res, "You have no permission to list contacts");
+        return;
+      }
+
       const users = await this.userManagement.listUsers();
       const contacts = users.map((user) => {
         return this.translateKeycloakUser(user);
@@ -63,16 +72,20 @@
       
       res.status(200).send(contacts);
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
      */
-    /* jshint ignore:start */
     async updateContact(req, res) {
       const userId = req.params.id;
       if (!userId) {
         this.sendNotFound(res);
+        return;
+      }
+
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTACTS)) {
+        this.sendForbidden(res, "You have no permission to update this contact");
         return;
       }
       
@@ -111,6 +124,12 @@
         return;
       }
 
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTACTS)) {
+        this.sendForbidden(res, "You have no permission to update this contact");
+        return;
+      }
+
       const updateCredentials = _.isObject(req.body) ? Credentials.constructFromObject(req.body) : null;
       if (!updateCredentials || !updateCredentials.password) {
         this.sendBadRequest(res, "Failed to parse body");
@@ -121,11 +140,6 @@
       if (!user) {
         this.sendNotFound(res);
         return;
-      }
-
-      const loggedUserId = this.getLoggedUserId(req);
-      if (user.id !== loggedUserId) {
-        this.sendForbidden(res, "Cannot update other users credentials");
       }
 
       this.userManagement.resetUserPassword(loggedUserId, updateCredentials.password, false)
