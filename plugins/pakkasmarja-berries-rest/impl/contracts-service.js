@@ -10,6 +10,7 @@
   const Promise = require("bluebird");
   const Mustache = require("mustache");
   const pug = require("pug");
+  const ApplicationRoles = require(`${__dirname}/../application-roles`);
   const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
   const Contract = require(`${__dirname}/../model/contract`);
   const AreaDetail = require(`${__dirname}/../model/area-detail`);
@@ -56,6 +57,11 @@
      * @inheritdoc
      */
     async createContract(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CONTRACT)) {
+        this.sendForbidden(res, "You have no permission to create contracts");
+        return;
+      }
+
       const contract = _.isObject(req.body) ? Contract.constructFromObject(req.body) : null;
       if (!contract) {
         this.sendBadRequest(res, "Failed to parse body");
@@ -137,6 +143,12 @@
         return;
       }
 
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== databaseContract.userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTRACTS)) {
+        this.sendForbidden(res, "You have no permission to find this contract");
+        return;
+      }
+
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
       const accept = this.getBareContentType(req.header("accept")) || "application/json";
       if (expectedTypes.indexOf(accept) === -1) {
@@ -172,6 +184,12 @@
       const databaseContract = await this.models.findContractByExternalId(contractId);
       if (!databaseContract) {
         this.sendNotFound(res);
+        return;
+      }
+
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== databaseContract.userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTRACTS)) {
+        this.sendForbidden(res, "You have no permission to update this contract");
         return;
       }
 
@@ -269,6 +287,12 @@
         return;
       }
 
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== contract.userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTRACTS)) {
+        this.sendForbidden(res, "You have no permission to find this contract");
+        return;
+      }
+
       const baseUrl = `${req.protocol}://${req.get("host")}`;
       
       switch (format) {
@@ -316,6 +340,11 @@
      * @inheritdoc
      */
     async createContractDocumentTemplate(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CONTRACT_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You have no permission to create contract document templates");
+        return;
+      }
+      
       const contractId = req.params.contractId;
       if (!contractId) {
         this.sendNotFound(res);
@@ -344,6 +373,11 @@
      * @inheritdoc
      */
     async findContractDocumentTemplate(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You have no permission to list contract document templates");
+        return;
+      }
+     
       const contractId = req.params.contractId;
       const contractDocumentTemplateId = req.params.contractDocumentTemplateId;
       if (!contractId || !contractDocumentTemplateId) {
@@ -381,6 +415,11 @@
      * @inheritdoc
      */
     async listContractDocumentTemplates(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You have no permission to list contract document templates");
+        return;
+      }
+     
       const contractId = req.params.contractId;
       const type = req.query.type;
       if (!contractId) {
@@ -409,6 +448,11 @@
      * @inheritdoc
      */
     async updateContractDocumentTemplate(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.UPDATE_CONTRACT_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You have no permission to update contract document templates");
+        return;
+      }
+
       const contractId = req.params.contractId;
       const contractDocumentTemplateId = req.params.contractDocumentTemplateId;
       if (!contractId || !contractDocumentTemplateId) {
@@ -477,6 +521,12 @@
         return;
       }
 
+      const loggedUserId = this.getLoggedUserId(req);
+      if (loggedUserId !== databaseContract.userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTRACTS)) {
+        this.sendForbidden(res, "You have no permission to list this contracts prices");
+        return;
+      }
+
       const databaseItemGroup = await this.models.findItemGroupById(databaseContract.itemGroupId);
       if (!databaseItemGroup) {
         this.sendInternalServerError(res, "Database item group not found");
@@ -490,106 +540,6 @@
         return this.translateItemGroupPrice(price, databaseItemGroup);
       }));
     }
-
-    /**
-     * Renders a document template component into HTML text
-     * 
-     * @param {String} baseurl base url
-     * @param {String} mustacheTemplate mustache template
-     * @param {String} pugTemplateName pug template name
-     * @param {Object} mustacheData data passed to Mustache renderer
-     * @return {String} rendered HTML
-     */
-    async renderDocumentTemplateComponent(baseUrl, mustacheTemplate, pugTemplateName, mustacheData) {
-      if (!mustacheTemplate) {
-        return null;
-      }
-
-      const mustachePartials = await this.loadMustachePartials();
-      const preprosessedMustacheTemplate = await this.preprosessMustacheTemplate(mustacheTemplate);
-
-      const bodyContent = Mustache.render(preprosessedMustacheTemplate, 
-        mustacheData,
-        mustachePartials
-      );
-
-      return this.renderPugTemplate(pugTemplateName, {
-        bodyContent: bodyContent,
-        baseUrl: baseUrl
-      });
-    }
-
-    async loadMustachePartials() {
-      const result = {};
-      const partialFiles = await this.getMustachePartialFiles();
-      const partials = await Promise.all(partialFiles.map((partialFile) => {
-        return this.loadMustachePartial(partialFile);
-      }));
-
-      partialFiles.forEach((partialFile, index) => {
-        const partialName = path.basename(partialFile, ".mustache");
-        result[partialName] = partials[index];
-      });
-
-      return result;
-    }
-
-    loadMustachePartial(file) {
-      return new Promise((resolve, reject) => {
-        fs.readFile(file, (err, data) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(data.toString());
-          }
-        });  
-      });  
-    }
-
-    getMustachePartialFiles() {
-      const folder = `${__dirname}/../../../mustache/`;
-
-      return new Promise((resolve, reject) => {
-        fs.readdir(folder, (err, files) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(files.map((file) => {
-              return `${folder}/${file}`;
-            }));
-          }
-        });
-      });
-    }
-
-    /**
-     * Preprosesses mustache template.
-     * 
-     * @param {String} template mustache template 
-     */
-    async preprosessMustacheTemplate(template) {
-      const partials = (await this.getMustachePartialFiles()).map((partialFile) => {
-        return path.basename(partialFile, ".mustache");
-      });
-
-      partials.forEach((partial) => {
-        template = template.replace(new RegExp("[{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[}]{2,3}", "gi"), `{{ > ${partial} }}`);
-      });
-
-      return template;
-    }
-    
-    /**
-     * Renders a pug template
-     * 
-     * @param {String} template template name
-     * @param {Object} model model
-     * @return {String} rendered HTML
-     */
-    renderPugTemplate(template, model) {
-      const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
-      return compiledPug(model);
-    }
     
     /**
      * @inheritdoc
@@ -602,9 +552,9 @@
       const status = req.query.status;
       const firstResult = parseInt(req.query.firstResult) || 0;
       const maxResults = parseInt(req.query.maxResults) || 5;
-      
-      if (listAll && !this.hasRealmRole(req, "list-all-contracts")) {
-        this.sendForbidden(res, "You have no permission to list all contracts");
+
+      if (listAll && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTRACTS)) {
+        this.sendForbidden(res, "You have no permission to list this contracts prices");
         return;
       }
 
@@ -612,6 +562,11 @@
       const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
       const userId = listAll ? null : this.getLoggedUserId(req);
       const databaseContracts = await this.models.listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults);
+
+      if (!userId && !listAll) {
+        this.sendInternalServerError(res, "listAll not set but userId resolved to null");
+        return;
+      }
 
       const expectedTypes = ["application/json", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
       const accept = this.getBareContentType(req.header("accept")) || "application/json";
@@ -643,8 +598,6 @@
      * @inheritdoc
      */
     async createContractDocumentSignRequest(req, res) {
-      // TODO: Contract check status!
-      
       const contractId = req.params.id;
       const type = req.params.type;
       const ssn = req.query.ssn;
@@ -662,7 +615,28 @@
       }
 
       const userId = contract.userId;
+      const loggedUserId = this.getLoggedUserId(req);
+
+      if (userId !== loggedUserId) {
+        this.sendForbidden(res, "You cannot sign this contract");
+        return;
+      }
       
+      if (!contract.deliveryPlaceId || contract.deliveryPlaceId !== contract.proposedDeliveryPlaceId) {
+        this.sendBadRequest(res, "This contract is not ready for signing");
+        return;
+      }
+      
+      if (!contract.contractQuantity || contract.contractQuantity !== contract.proposedQuantity) {
+        this.sendBadRequest(res, "This contract is not ready for signing");
+        return;
+      }
+
+      if (contract.status !== 'DRAFT') {
+        this.sendBadRequest(res, "This contract is not ready for signing");
+        return;
+      }
+
       const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
       if (!itemGroup) {
         this.sendNotFound(res);
@@ -1025,6 +999,107 @@
     getDocumentSlug(documentName) {
       return slugify(documentName);
     }
+
+    /**
+     * Renders a document template component into HTML text
+     * 
+     * @param {String} baseurl base url
+     * @param {String} mustacheTemplate mustache template
+     * @param {String} pugTemplateName pug template name
+     * @param {Object} mustacheData data passed to Mustache renderer
+     * @return {String} rendered HTML
+     */
+    async renderDocumentTemplateComponent(baseUrl, mustacheTemplate, pugTemplateName, mustacheData) {
+      if (!mustacheTemplate) {
+        return null;
+      }
+
+      const mustachePartials = await this.loadMustachePartials();
+      const preprosessedMustacheTemplate = await this.preprosessMustacheTemplate(mustacheTemplate);
+
+      const bodyContent = Mustache.render(preprosessedMustacheTemplate, 
+        mustacheData,
+        mustachePartials
+      );
+
+      return this.renderPugTemplate(pugTemplateName, {
+        bodyContent: bodyContent,
+        baseUrl: baseUrl
+      });
+    }
+
+    async loadMustachePartials() {
+      const result = {};
+      const partialFiles = await this.getMustachePartialFiles();
+      const partials = await Promise.all(partialFiles.map((partialFile) => {
+        return this.loadMustachePartial(partialFile);
+      }));
+
+      partialFiles.forEach((partialFile, index) => {
+        const partialName = path.basename(partialFile, ".mustache");
+        result[partialName] = partials[index];
+      });
+
+      return result;
+    }
+
+    loadMustachePartial(file) {
+      return new Promise((resolve, reject) => {
+        fs.readFile(file, (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data.toString());
+          }
+        });  
+      });  
+    }
+
+    getMustachePartialFiles() {
+      const folder = `${__dirname}/../../../mustache/`;
+
+      return new Promise((resolve, reject) => {
+        fs.readdir(folder, (err, files) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(files.map((file) => {
+              return `${folder}/${file}`;
+            }));
+          }
+        });
+      });
+    }
+
+    /**
+     * Preprosesses mustache template.
+     * 
+     * @param {String} template mustache template 
+     */
+    async preprosessMustacheTemplate(template) {
+      const partials = (await this.getMustachePartialFiles()).map((partialFile) => {
+        return path.basename(partialFile, ".mustache");
+      });
+
+      partials.forEach((partial) => {
+        template = template.replace(new RegExp("[{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[}]{2,3}", "gi"), `{{ > ${partial} }}`);
+      });
+
+      return template;
+    }
+    
+    /**
+     * Renders a pug template
+     * 
+     * @param {String} template template name
+     * @param {Object} model model
+     * @return {String} rendered HTML
+     */
+    renderPugTemplate(template, model) {
+      const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
+      return compiledPug(model);
+    }
+
   }
 
   module.exports = ContractsServiceImpl;
