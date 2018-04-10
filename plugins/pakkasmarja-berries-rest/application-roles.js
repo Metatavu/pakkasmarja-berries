@@ -99,6 +99,21 @@
     static get DELETE_ITEM_GROUP_PRICES() {
       return "delete-item-group-prices";
     }
+
+    /**
+     * Role that allows users to list operation reports
+     */
+    static get LIST_OPERATION_REPORTS() {
+      return "list-operation-reports";
+    }
+
+    /**
+     * Role that allows users to create operations
+     */
+    static get CREATE_OPERATIONS() {
+      return "create-operations";
+    }
+    
    
   }
 

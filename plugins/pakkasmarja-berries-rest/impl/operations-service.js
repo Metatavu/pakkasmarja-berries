@@ -10,6 +10,7 @@
   const fs = require("fs");
   const AbstractOperationsService = require(`${__dirname}/../service/operations-service`);
   const Operation = require(`${__dirname}/../model/operation`);
+  const ApplicationRoles = require(`${__dirname}/../application-roles`);
 
   const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
   const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
@@ -41,6 +42,11 @@
      * @inheritDoc 
      */
     async createOperation(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.CREATE_OPERATIONS)) {
+        this.sendForbidden(res, "You do not have permission to create operations");
+        return;
+      }
+      
       const operation = _.isObject(req.body) ? Operation.constructFromObject(req.body) : null;
       if (!operation) {
         this.sendBadRequest(res, "Failed to parse body");
