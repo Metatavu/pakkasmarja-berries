@@ -64,6 +64,41 @@
     static get UPDATE_CONTRACT_DOCUMENT_TEMPLATES ()  {
       return "update-contract-document-templates";
     }
+
+    /**
+     * Role that allows users to list item group document templates
+     */
+    static get LIST_ITEM_GROUP_DOCUMENT_TEMPLATES() {
+      return "list-item-group-document-templates";
+    }
+
+    /**
+     * Role that allows users to update item group document templates
+     */
+    static get UPDATE_ITEM_GROUP_DOCUMENT_TEMPLATES() {
+      return "update-item-group-document-templates";
+    }
+
+    /**
+     * Role that allows users to create item group prices
+     */
+    static get CREATE_ITEM_GROUP_PRICES() {
+      return "create-item-group-prices";
+    }
+
+    /**
+     * Role that allows users to update item group prices
+     */
+    static get UPDATE_ITEM_GROUP_PRICES() {
+      return "update-item-group-prices";
+    }
+
+    /**
+     * Role that allows users to update item group prices
+     */
+    static get DELETE_ITEM_GROUP_PRICES() {
+      return "delete-item-group-prices";
+    }
    
   }
 
