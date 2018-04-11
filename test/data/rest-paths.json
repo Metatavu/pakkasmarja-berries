@@ -1,0 +1,162 @@
+[
+  {
+    "operationId": "findContact",
+    "path": "/contacts/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "listContacts",
+    "path": "/contacts",
+    "method": "get"
+  },
+  {
+    "operationId": "updateContact",
+    "path": "/contacts/{id}",
+    "method": "put"
+  },
+  {
+    "operationId": "updateContactCredentials",
+    "path": "/contacts/{id}/credentials",
+    "method": "put"
+  },
+  {
+    "operationId": "createContract",
+    "path": "/contracts",
+    "method": "post"
+  },
+  {
+    "operationId": "createContractDocumentSignRequest",
+    "path": "/contracts/{id}/documents/{type}/signRequests",
+    "method": "post"
+  },
+  {
+    "operationId": "createContractDocumentTemplate",
+    "path": "/contracts/{contractId}/documentTemplates",
+    "method": "post"
+  },
+  {
+    "operationId": "findContract",
+    "path": "/contracts/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "findContractDocumentTemplate",
+    "path": "/contracts/{contractId}/documentTemplates/{contractDocumentTemplateId}",
+    "method": "get"
+  },
+  {
+    "operationId": "getContractDocument",
+    "path": "/contracts/{id}/documents/{type}",
+    "method": "get"
+  },
+  {
+    "operationId": "listContractDocumentTemplates",
+    "path": "/contracts/{contractId}/documentTemplates",
+    "method": "get"
+  },
+  {
+    "operationId": "listContractPrices",
+    "path": "/contracts/{contractId}/prices",
+    "method": "get"
+  },
+  {
+    "operationId": "listContracts",
+    "path": "/contracts",
+    "method": "get"
+  },
+  {
+    "operationId": "updateContract",
+    "path": "/contracts/{id}",
+    "method": "put"
+  },
+  {
+    "operationId": "updateContractDocumentTemplate",
+    "path": "/contracts/{contractId}/documentTemplates/{contractDocumentTemplateId}",
+    "method": "put"
+  },
+  {
+    "operationId": "findDeliveryPlace",
+    "path": "/deliveryPlaces/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "listDeliveryPlaces",
+    "path": "/deliveryPlaces",
+    "method": "get"
+  },
+  {
+    "operationId": "createItemGroupPrice",
+    "path": "/itemGroups/{itemGroupId}/prices",
+    "method": "post"
+  },
+  {
+    "operationId": "deleteItemGroupPrice",
+    "path": "/itemGroups/{itemGroupId}/prices/{priceId}",
+    "method": "delete"
+  },
+  {
+    "operationId": "findItemGroup",
+    "path": "/itemGroups/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "findItemGroupDocumentTemplate",
+    "path": "/itemGroups/{itemGroupId}/documentTemplates/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "findItemGroupPrice",
+    "path": "/itemGroups/{itemGroupId}/prices/{priceId}",
+    "method": "get"
+  },
+  {
+    "operationId": "listItemGroupDocumentTemplates",
+    "path": "/itemGroups/{itemGroupId}/documentTemplates",
+    "method": "get"
+  },
+  {
+    "operationId": "listItemGroupPrices",
+    "path": "/itemGroups/{itemGroupId}/prices",
+    "method": "get"
+  },
+  {
+    "operationId": "listItemGroups",
+    "path": "/itemGroups",
+    "method": "get"
+  },
+  {
+    "operationId": "updateItemGroupDocumentTemplate",
+    "path": "/itemGroups/{itemGroupId}/documentTemplates/{id}",
+    "method": "put"
+  },
+  {
+    "operationId": "updateItemGroupPrice",
+    "path": "/itemGroups/{itemGroupId}/prices/{priceId}",
+    "method": "put"
+  },
+  {
+    "operationId": "findOperationReport",
+    "path": "/operationReports/{id}",
+    "method": "get"
+  },
+  {
+    "operationId": "listOperationReportItems",
+    "path": "/operationReports/{id}/items",
+    "method": "get"
+  },
+  {
+    "operationId": "listOperationReports",
+    "path": "/operationReports",
+    "method": "get"
+  },
+  {
+    "operationId": "createOperation",
+    "path": "/operations",
+    "method": "post"
+  },
+  {
+    "operationId": "listSignAuthenticationServices",
+    "path": "/signAuthenticationServices",
+    "method": "get"
+  }
+]
