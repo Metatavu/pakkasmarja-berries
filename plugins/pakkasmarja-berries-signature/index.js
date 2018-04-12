@@ -1,7 +1,7 @@
 /* jshint esversion: 6 */
 /* global __dirname, Promise */
 (() => {
-  'use strict';
+  "use strict";
 
   const config = require("nconf");
   const VismaSignClient = require("visma-sign-client");

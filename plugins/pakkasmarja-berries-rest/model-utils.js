@@ -3,7 +3,7 @@
 /* jshint ignore:start */
 
 (() => {
-  'use strict';
+  "use strict";
 
   /**
    * Utility class for generated model classes

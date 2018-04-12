@@ -2,13 +2,14 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const _ = require('lodash');
   const AbstractItemGroupsService = require(`${__dirname}/../service/item-groups-service`);
   const ItemGroup = require(`${__dirname}/../model/item-group`);
   const ItemGroupDocumentTemplate = require(`${__dirname}/../model/item-group-document-template`);
   const Price = require(`${__dirname}/../model/price`);
+  const ApplicationRoles = require(`${__dirname}/../application-roles`);
   
   /**
    * Implementation for ItemGroups REST service
@@ -28,7 +29,6 @@
       this.models = models;
     }
     
-    /* jshint ignore:start */
     async findItemGroup(req, res) {
       const itemGroupId = req.params.id;
       if (!itemGroupId) {
@@ -44,7 +44,6 @@
       
       res.status(200).send(await this.translateDatabaseItemGroup(databaseItemGroup));
     }
-    /* jshint ignore:end */
     
     /**
      * @inheritdoc
@@ -62,6 +61,11 @@
      * @inheritdoc
      */
     async findItemGroupDocumentTemplate(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You  do not have permission to find item group document templates");
+        return;
+      }
+
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;
       if (!itemGroupId || !id) {
@@ -99,6 +103,11 @@
      * @inheritdoc
      */
     async listItemGroupDocumentTemplates(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You  do not have permission to list item group document templates");
+        return;
+      }
+
       const itemGroupId = req.params.itemGroupId;
       if (!itemGroupId) {
         this.sendNotFound(res);
@@ -187,6 +196,11 @@
      * @inheritdoc
      */
     async createItemGroupPrice(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.CREATE_ITEM_GROUP_PRICES)) {
+        this.sendForbidden(res, "You  do not have permission to create item group prices");
+        return;
+      }
+      
       const itemGroupId = req.params.itemGroupId;
       if (!itemGroupId) {
         this.sendNotFound(res);
@@ -224,6 +238,11 @@
      * @inheritdoc
      */
     async updateItemGroupPrice(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.UPDATE_ITEM_GROUP_PRICES)) {
+        this.sendForbidden(res, "You  do not have permission to update item group prices");
+        return;
+      }
+      
       const itemGroupId = req.params.itemGroupId;
       const priceId = req.params.priceId;
 
@@ -266,6 +285,11 @@
      * @inheritdoc
      */
     async deleteItemGroupPrice(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.DELETE_ITEM_GROUP_PRICES)) {
+        this.sendForbidden(res, "You  do not have permission to delete item group prices");
+        return;
+      }
+      
       const itemGroupId = req.params.itemGroupId;
       const priceId = req.params.priceId;
 
@@ -300,6 +324,11 @@
      * @inheritdoc
      */
     async updateItemGroupDocumentTemplate(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.UPDATE_ITEM_GROUP_DOCUMENT_TEMPLATES)) {
+        this.sendForbidden(res, "You do not have permission to update item group document templates");
+        return;
+      }
+      
       const itemGroupId = req.params.itemGroupId;
       const id = req.params.id;
       if (!itemGroupId || !id) {

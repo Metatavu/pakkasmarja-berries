@@ -1,6 +1,6 @@
 /* jshint esversion: 6 */
 (() => {
-  'use strict';
+  "use strict";
   
   const _ = require('lodash');
   

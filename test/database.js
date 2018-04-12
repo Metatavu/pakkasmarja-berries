@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const Promise = require('bluebird');
   const mysql = require('mysql2/promise');

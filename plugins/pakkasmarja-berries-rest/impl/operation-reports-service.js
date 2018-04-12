@@ -7,6 +7,7 @@
   const AbstractOperationReportsService = require(`${__dirname}/../service/operation-reports-service`);
   const OperationReport = require(`${__dirname}/../model/operation-report`);
   const OperationReportItem = require(`${__dirname}/../model/operation-report-item`);
+  const ApplicationRoles = require(`${__dirname}/../application-roles`);
 
   /**
    * Implementation for OperationReports REST service
@@ -30,6 +31,11 @@
      * @inheritDoc
      **/
     async listOperationReports(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_OPERATION_REPORTS)) {
+        this.sendForbidden(res, "You do not have permission to list operation reports");
+        return;
+      }
+      
       const type = req.query.type;
       const sortBy = req.query.sortBy;
       const orderDir = req.query.sortDir;
@@ -62,6 +68,11 @@
      * @inheritDoc
      **/
     async findOperationReport(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_OPERATION_REPORTS)) {
+        this.sendForbidden(res, "You do not have permission to view operation reports");
+        return;
+      }
+      
       const operatioReportId = req.params.id;
       if (!operatioReportId) {
         this.sendNotFound(res);
@@ -81,6 +92,11 @@
      * @inheritDoc
      **/
     async listOperationReportItems(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.LIST_OPERATION_REPORTS)) {
+        this.sendForbidden(res, "You do not have permission to list operation reports");
+        return;
+      }
+      
       const operatioReportId = req.params.id;
       if (!operatioReportId) {
         this.sendNotFound(res);

@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (function() {
-  'use strict';
+  "use strict";
   
   const util = require('util');
   const commandLineArgs = require('command-line-args');

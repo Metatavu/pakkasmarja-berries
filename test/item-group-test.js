@@ -16,13 +16,14 @@
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
   const itemGroupPriceCreateData = require(`${__dirname}/data/item-group-price-create.json`);
   const itemGroupPricesUpdateData = require(`${__dirname}/data/item-group-prices-update.json`);
+  const ApplicationRoles = require(`${__dirname}/../plugins/pakkasmarja-berries-rest/application-roles.js`);
 
   test("Test listing item groups", async (t) => {
     await database.executeFiles(`${__dirname}/data`, [ "item-groups-setup.sql", "item-groups-prerequisite-setup.sql" ]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -64,7 +65,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -103,7 +104,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async response => {
@@ -116,7 +117,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async response => {
@@ -125,9 +126,9 @@
   });
 
   test("Test sync item groups", async (t) => {
-    const accessToken = await auth.getTokenDefault();
+    const accessToken = await auth.getTokenUser1();
     
-    await operations.createOperationAndWait(accessToken, "SAP_ITEM_GROUP_SYNC");
+    await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_ITEM_GROUP_SYNC");
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups")
@@ -160,10 +161,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, itemGroupDocumentTemplateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
       });
@@ -174,10 +176,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -187,10 +190,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/invalid/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -200,10 +204,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -213,10 +218,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -226,10 +232,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], itemGroupDocumentTemplateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
@@ -241,22 +248,23 @@
     
     return request("http://localhost:3002")
       .put("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.UPDATE_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
       .set("Accept", "application/json")
       .send(itemGroupDocumentTemplateUpdateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"])
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles(ApplicationRoles.UPDATE_ITEM_GROUP_DOCUMENT_TEMPLATES);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, itemGroupDocumentTemplateUpdateDatas["2fe6ad72-2227-11e8-a5fd-efc457362c53"]);
       });
   });
-  
+
   test("Test listing item group prices", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -272,7 +280,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices?sortBy=YEAR&sortDir=DESC")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -288,7 +296,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -304,7 +312,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC&maxResults=1")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -319,7 +327,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC&firstResult=1")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -334,7 +342,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -347,7 +355,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/invalid/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -375,7 +383,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -389,7 +397,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -402,7 +410,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -415,7 +423,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -428,7 +436,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -450,17 +458,18 @@
       .set("Accept", "application/json")
       .expect(403);
   });
-  
+
   test("Test create item group price", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
     
     return request("http://localhost:3002")
       .post("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.CREATE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .send(itemGroupPriceCreateData)
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles(ApplicationRoles.CREATE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
 
         const expected = itemGroupPriceCreateData;
@@ -477,11 +486,12 @@
 
     return request("http://localhost:3002")
       .put("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.UPDATE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .send(itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"])
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles(ApplicationRoles.UPDATE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, itemGroupPricesUpdateData["79d937fc-3103-11e8-a1f7-5f974dead07c"]);
       });
@@ -489,14 +499,15 @@
 
   test("Test delete item group price", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-    const token = await auth.getTokenDefault();
+    const token = await auth.getTokenUser1();
 
     return request("http://localhost:3002")
       .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .expect(204)
-      .then(() => {
+      .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.DELETE_ITEM_GROUP_PRICES);
         return request("http://localhost:3002")
           .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
           .set("Authorization", `Bearer ${token}`)
@@ -515,10 +526,11 @@
     
     return request("http://localhost:3002")
       .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-a1f7-5f974dead07c")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.DELETE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -528,10 +540,11 @@
     
     return request("http://localhost:3002")
       .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.DELETE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -541,10 +554,11 @@
     
     return request("http://localhost:3002")
       .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.DELETE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -554,10 +568,11 @@
     
     return request("http://localhost:3002")
       .delete("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles(ApplicationRoles.DELETE_ITEM_GROUP_PRICES);
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });

@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const Promise = require('bluebird');
   const PDFParser = require("pdf2json");

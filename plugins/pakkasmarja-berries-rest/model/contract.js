@@ -2,7 +2,7 @@
 (function(root, factory) {
   module.exports = factory(require('../model-utils'));
 }(this, function(ApiClient) {
-  'use strict';
+  "use strict";
   const _ = require('lodash');
   const AreaDetail = require(`${__dirname}/${_.kebabCase('AreaDetail')}`);
 

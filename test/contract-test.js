@@ -24,13 +24,14 @@
   const contractDocumentTemplateUpdateDatas = require(`${__dirname}/data/contract-document-templates-update.json`);
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
+  const ApplicationRoles = require(`${__dirname}/../plugins/pakkasmarja-berries-rest/application-roles.js`);
 
   test("Test contract sign", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
 
     return request("http://localhost:3002")
-      .post("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master/signRequests")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .post("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group/signRequests")
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
       .send({
         "redirectUrl": "http://fake.exmaple.com/redirect"
@@ -46,7 +47,7 @@
 
     return request("http://localhost:3002")
       .post("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group/signRequests")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
       .send({
         "redirectUrl": "http://fake.exmaple.com/redirect"
@@ -66,11 +67,12 @@
     
     return request("http://localhost:3002")
       .post("/rest/v1/contracts")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.CREATE_CONTRACT])}`)
       .set("Accept", "application/json")
       .send(contractDataCreate)
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         
         Object.keys(contractDataCreate).forEach((expectKey) => {
@@ -87,11 +89,12 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(200)
       .parse(requestUtils.createBinaryParser())
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         const xlsxJson = xlsx.parseXlsx(response.body);
         t.equal(response.type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -105,7 +108,7 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(200)
       .parse(requestUtils.createBinaryParser())
@@ -122,7 +125,7 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -137,7 +140,7 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json;charset=utf8")
       .expect(200)
       .then(async response => {
@@ -152,10 +155,11 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         t.equal(response.body.length, 2);
         t.deepEqual(response.body[0], contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
         t.deepEqual(response.body[1], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
@@ -168,10 +172,11 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true&itemGroupCategory=FRESH")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
@@ -183,7 +188,7 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?itemGroupCategory=FROZEN")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -198,7 +203,7 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(403)
       .then(async () => {
@@ -236,7 +241,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -275,10 +280,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -288,10 +294,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -301,7 +308,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -322,7 +329,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=PDF")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -364,7 +371,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "text/html")
       .expect(200)
       .then(async response => {
@@ -383,7 +390,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=HTML")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "text/html")
       .expect(200)
       .then(async response => {
@@ -419,19 +426,20 @@
   });
 
   test("Test sync contracts", async (t) => {
-    const accessToken = await auth.getTokenDefault();
+    const adminAccessToken = await auth.getAdminToken();  
     
-    await operations.createOperationAndWait(accessToken, "SAP_CONTACT_SYNC");
-    await operations.createOperationAndWait(accessToken, "SAP_DELIVERY_PLACE_SYNC");
-    await operations.createOperationAndWait(accessToken, "SAP_ITEM_GROUP_SYNC");
-    await operations.createOperationAndWait(accessToken, "SAP_CONTRACT_SYNC");
+    await operations.createOperationAndWait(adminAccessToken, "SAP_CONTACT_SYNC");
+    await operations.createOperationAndWait(adminAccessToken, "SAP_DELIVERY_PLACE_SYNC");
+    await operations.createOperationAndWait(adminAccessToken, "SAP_ITEM_GROUP_SYNC");
+    await operations.createOperationAndWait(adminAccessToken, "SAP_CONTRACT_SYNC");
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true&maxResults=10")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"]);
         
@@ -460,7 +468,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .expect(200)
       .parse(requestUtils.createBinaryParser())
@@ -477,7 +485,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/xml")
       .expect(400)
       .then(async () => {
@@ -501,26 +509,27 @@
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
-      .put("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .put("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce")
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
-      .send(contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"])
+      .send(contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"])
       .expect(200)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-        t.deepEqual(response.body, contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
+        t.deepEqual(response.body, contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
       });
   });
-
+  
   test("Test find contract document template", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, contractDocumentTemplateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
       });
@@ -531,10 +540,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/89723408-0f51-11e8-baa0-dfe7c7eae257/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -544,10 +554,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/invalid/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -557,10 +568,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -570,10 +582,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       });
   });
@@ -583,10 +596,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDocumentTemplateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
@@ -598,10 +612,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=master")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDocumentTemplateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
@@ -613,10 +628,11 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=notfound")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.equal(response.body.length, 0);
       });
@@ -627,11 +643,12 @@
     
     return request("http://localhost:3002")
       .put("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.UPDATE_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .send(contractDocumentTemplateUpdateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"])
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.UPDATE_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, contractDocumentTemplateUpdateDatas["2ba4ace6-2227-11e8-8cd7-ef6b34e82618"]);
       });
@@ -642,11 +659,12 @@
     
     return request("http://localhost:3002")
       .post("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.CREATE_CONTRACT_DOCUMENT_TEMPLATES])}`)
       .set("Accept", "application/json")
       .send(contractDocumentTemplateCreateData)
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT_DOCUMENT_TEMPLATES]);
         await database.executeFiles(`${__dirname}/data`, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         
         const expected = contractDocumentTemplateCreateData;
@@ -663,7 +681,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -679,7 +697,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=DESC")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -695,7 +713,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -711,7 +729,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&maxResults=1")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -726,7 +744,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&firstResult=1")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -741,7 +759,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/12345678-0fba-11e8-9ac4-a700da67a976/prices")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -754,7 +772,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/contracts/invalid/prices")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -782,10 +800,11 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true&status=DRAFT")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
@@ -797,10 +816,11 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true&year=2018")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
@@ -812,10 +832,11 @@
 
     return request("http://localhost:3002")
       .get("/rest/v1/contracts?listAll=true&itemGroupId=98be1d32-0f51-11e8-bb59-3b8b6bbe9a20")
-      .set("Authorization", `Bearer ${await auth.getTokenListAllContracts()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
         t.equal(response.body.length, 1);
         t.deepEqual(response.body[0], contractDatas["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
