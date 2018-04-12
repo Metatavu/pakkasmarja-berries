@@ -17,13 +17,13 @@
     const method = restPath.method;
     const testSettings = securityAsserts[operationId];
 
-    if (!testSettings) {
-      return;
-    }
+    test(`Test security is tested on ${operationId}`, async (t) => {
+      t.ok(!!testSettings, `Operation ${operationId} should have tests`);
+    });
 
     testSettings.forEach((testSetting) => {
 
-      const path = '/rest/v1' + pathTemplate.replace(/\{(.*?)\}/g, (match, param) => { 
+      const path = "/rest/v1" + pathTemplate.replace(/\{(.*?)\}/g, (match, param) => { 
         return testSetting.params[param];
       });
 
@@ -41,16 +41,16 @@
         let result = request("http://localhost:3002");
 
         switch (method) {
-          case 'post':
+          case "post":
             result = result.post(path).send({});
           break;
-          case 'get':
+          case "get":
             result = result.get(path);
           break;
-          case 'put':
+          case "put":
             result = result.put(path).send({});
           break;
-          case 'delete':
+          case "delete":
             result = result.delete(path);
           break;
         }
@@ -75,5 +75,5 @@
     });
 
   });
-  
+
 })();
