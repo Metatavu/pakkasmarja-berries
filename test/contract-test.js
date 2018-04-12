@@ -510,17 +510,17 @@
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
     
     return request("http://localhost:3002")
-      .put("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
-      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
+      .put("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce")
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
-      .send(contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"])
+      .send(contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"])
       .expect(200)
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-        t.deepEqual(response.body, contractDatasUpdate["1d45568e-0fba-11e8-9ac4-a700da67a976"]);
+        t.deepEqual(response.body, contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
       });
   });
-
+  
   test("Test find contract document template", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
     

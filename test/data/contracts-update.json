@@ -1,21 +1,21 @@
 {
-  "1d45568e-0fba-11e8-9ac4-a700da67a976": {
-    "id": "1d45568e-0fba-11e8-9ac4-a700da67a976",
+  "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
+    "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
     "itemGroupId": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
     "deliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
     "proposedDeliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
-    "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
-    "contractQuantity": 123456,
-    "deliveredQuantity": 902,
+    "contactId": "677e99fd-b854-479f-afa6-74f295052770",
+    "contractQuantity": 75200,
+    "deliveredQuantity": 500,
     "proposedQuantity": 123456,
-    "startDate": "2021-01-01T00:00:00.000Z",
-    "endDate": "2021-12-31T00:00:00.000Z",
-    "signDate": "2020-12-14T00:00:00.000Z",
-    "termDate": "2021-01-02T00:00:00.000Z",
-    "status": "TERMINATED",
-    "remarks": "Updated for testing",
-    "year": 2019,
-    "sapId": "sapid-4",
+    "startDate": "2020-01-05T00:00:00.000Z",
+    "endDate": "2020-05-01T00:00:00.000Z",
+    "signDate": "2019-11-03T00:00:00.000Z",
+    "termDate": "2020-01-06T00:00:00.000Z",
+    "status": "ON_HOLD",
+    "remarks": null,
+    "year": 2018,
+    "sapId": "sapid-2",
     "deliveryPlaceComment": "Delivery comment",
     "quantityComment": "Quantity comment",
     "rejectComment": "Reject comment",
@@ -25,3 +25,4 @@
     "deliverAll": true
   }
 }
+

@@ -190,12 +190,12 @@
       const canUpdateOthers = this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTRACTS);
       const loggedUserId = this.getLoggedUserId(req);
       if (loggedUserId !== databaseContract.userId && !canUpdateOthers) {
-        this.sendForbidden(res, "You have no permission to update this contract");
+        this.sendForbidden(res, "You do not have permission to update this contract");
         return;
       }
 
       if (!canUpdateOthers && databaseContract.status !== 'DRAFT') {
-        this.sendForbidden(res, "You have no permission to update this contract");
+        this.sendForbidden(res, "You have no permission to update this contract" + databaseContract.status);
         return;
       }
 
