@@ -194,7 +194,7 @@
         return;
       }
 
-      if (!canUpdateOthers && databaseContract.status !== 'DRAFT') {
+      if (!canUpdateOthers && databaseContract.status !== "DRAFT") {
         this.sendForbidden(res, "You have no permission to update this contract" + databaseContract.status);
         return;
       }
@@ -259,7 +259,7 @@
 
         if (updateContract.status === "REJECTED") {
           status = "REJECTED";
-        } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
+        } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
           if (deliveredQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId) {
             status = "DRAFT";
           } else {

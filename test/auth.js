@@ -5,8 +5,6 @@
   "use strict";
 
   const Promise = require("bluebird");
-  const mysql = require("mysql2/promise");
-  const fs = require("fs");
   const config = require("nconf");
   const request = require("request");
   const KeycloakAdminClient = require("keycloak-admin-client");

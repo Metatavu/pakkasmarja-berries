@@ -84,7 +84,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
       });
   });
@@ -95,7 +95,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
       });
   });
