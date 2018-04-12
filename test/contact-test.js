@@ -5,23 +5,26 @@
   "use strict";
 
   const test = require("blue-tape");
-  const request = require("supertest");
   const auth = require(`${__dirname}/auth`);
+  const request = require("supertest");
   const database = require(`${__dirname}/database`);
   const users = require(`${__dirname}/users`);
   const operations = require(`${__dirname}/operations`);
   const contactDatas = require(`${__dirname}/data/contacts.json`);
   const contactDataSync = require(`${__dirname}/data/contacts-sync.json`);
+  const ApplicationRoles = require(`${__dirname}/../plugins/pakkasmarja-berries-rest/application-roles.js`);
   
   test("Test listing contacts", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     
     return request("http://localhost:3002")
       .get("/rest/v1/contacts")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
       .expect(200)
-      .then(response => {
+      .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+
         t.equal(response.body.length, 4);
         const actualResponse = response.body;
 
@@ -48,11 +51,11 @@
       .set("Accept", "application/json")
       .expect(403);
   });
-  
+
   test("Test find contact", async (t) => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
@@ -75,20 +78,26 @@
       .expect(403);
   });
   
-  test("Test find contact not found", async () => {
+  test("Test find contact - not found", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/a0b445c6-0f05-11e8-8e96-5ffcb5929488")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
-      .expect(404);
+      .expect(404)
+      .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+      });
   });
   
-  test("Test find contact invalid id", async () => {
+  test("Test find contact - invalid id", async () => {
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
-      .expect(404);
+      .expect(404)
+      .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+      });
   });
   
   test("Test update contact", async (t) => {
@@ -111,7 +120,7 @@
    
     return request("http://localhost:3002")
       .put(`/rest/v1/contacts/${updateData.id}`)
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
       .send(updateData)
       .set("Accept", "application/json")
       .expect(200)
@@ -172,27 +181,31 @@
       .expect(403);
   });
   
-  test("Test update contact not found", async () => {
+  test("Test update contact - not found", async () => {
     return request("http://localhost:3002")
       .put(`/rest/v1/contacts/5ddca0e8-0f2f-11e8-aaee-fbf8db060bc5`)
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
-      .send(contactDatas["677e99fd-b854-479f-afa6-74f295052770"])
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
-      .expect(404);
+      .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+      });
   });
   
-  test("Test update contact malformed", async (t) => {
+  test("Test update contact - malformed", async (t) => {
     return request("http://localhost:3002")
       .put(`/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770`)
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser2([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .send("malformed data")
       .set("Accept", "application/json")
-      .expect(400);
+      .expect(400)
+      .then(async response => {
+        await auth.removeUser2Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+      });
   });
 
   test("Test sync contact", async (t) => {
-    const accessToken = await auth.getTokenDefault();
-    await operations.createOperationAndWait(accessToken, "SAP_CONTACT_SYNC");
+    const accessToken = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
+    await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_CONTACT_SYNC");
     
     return request("http://localhost:3002")
       .get("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6")
@@ -201,6 +214,7 @@
       .expect(200)
       .then(async response => {
         await Promise.all([
+          auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]),
           users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
           database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
         ]);
@@ -213,14 +227,14 @@
     t.notOk(await auth.getToken("test1-testrealm1", "fake-password"), "fake password should not return token");
     return request("http://localhost:3002")
       .put("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6/credentials")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .send({ "password": "fake-password" })
       .set("Accept", "application/json")
       .expect(204)
       .then(async() => {
         t.notOk(await auth.getToken("test1-testrealm1", "test"), "Initial password should not return token after reset");
         t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
-        return users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
+        await users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
       });
   });
   

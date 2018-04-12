@@ -17,7 +17,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/deliveryPlaces")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -59,7 +59,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/deliveryPlaces/bad02318-1a44-11e8-87a4-c7808d590a07")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(200)
       .then(async response => {
@@ -98,7 +98,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/deliveryPlaces/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -111,7 +111,7 @@
     
     return request("http://localhost:3002")
       .get("/rest/v1/deliveryPlaces/not-uuid")
-      .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+      .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
       .set("Accept", "application/json")
       .expect(404)
       .then(async () => {
@@ -120,9 +120,9 @@
   });
 
   test("Test sync delivery places", async (t) => {
-    const accessToken = await auth.getTokenDefault();
+    const accessToken = await auth.getTokenUser1();
     
-    await operations.createOperationAndWait(accessToken, "SAP_DELIVERY_PLACE_SYNC");
+    await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_DELIVERY_PLACE_SYNC");
     
     return request("http://localhost:3002")
       .get("/rest/v1/deliveryPlaces")

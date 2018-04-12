@@ -40,7 +40,7 @@
         this.sendNotFound(res);
         return;
       }
-
+      
       const loggedUserId = this.getLoggedUserId(req);
       if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTACTS)) {
         this.sendForbidden(res, "You have no permission to find this contact");

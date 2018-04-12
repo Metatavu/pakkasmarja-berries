@@ -25,7 +25,7 @@
     
       return request("http://localhost:3002")
         .put(`/rest/v1/contacts/${user.id}`)
-        .set("Authorization", `Bearer ${await auth.getTokenDefault()}`)
+        .set("Authorization", `Bearer ${await auth.getAdminToken()}`)
         .send(user)
         .set("Accept", "application/json")
         .expect(200)

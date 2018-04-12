@@ -180,15 +180,21 @@
         this.sendNotFound(res);
         return;
       }
-      
+
       const databaseContract = await this.models.findContractByExternalId(contractId);
       if (!databaseContract) {
         this.sendNotFound(res);
         return;
       }
 
+      const canUpdateOthers = this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTRACTS);
       const loggedUserId = this.getLoggedUserId(req);
-      if (loggedUserId !== databaseContract.userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTRACTS)) {
+      if (loggedUserId !== databaseContract.userId && !canUpdateOthers) {
+        this.sendForbidden(res, "You have no permission to update this contract");
+        return;
+      }
+
+      if (!canUpdateOthers && databaseContract.status !== 'DRAFT') {
         this.sendForbidden(res, "You have no permission to update this contract");
         return;
       }
@@ -213,25 +219,57 @@
         return;
       }
       
-      const deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
+      // May not be edited by users without UPDATE_OTHER_CONTRACTS -permission
+      let year = updateContract.year;
+      let deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
+      let itemGroupId = itemGroup.id;
+      let sapId = updateContract.sapId;
+      let contractQuantity = updateContract.contractQuantity;
+      let deliveredQuantity = updateContract.deliveredQuantity;
+      let startDate = updateContract.startDate;
+      let endDate = updateContract.endDate;
+      let signDate = updateContract.signDate;
+      let termDate = updateContract.termDate;
+      let remarks = updateContract.remarks;
+ 
+      // May be edited by users that own the contract
       const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
-      const itemGroupId = itemGroup.id;
-      const sapId = updateContract.sapId;
-      const contractQuantity = updateContract.contractQuantity;
-      const deliveredQuantity = updateContract.deliveredQuantity;
       const proposedQuantity = updateContract.proposedQuantity;
-      const startDate = updateContract.startDate;
-      const endDate = updateContract.endDate;
-      const signDate = updateContract.signDate;
-      const termDate = updateContract.termDate;
-      const status = updateContract.status;
       const areaDetails = updateContract.areaDetails;
       const deliverAll = updateContract.deliverAll;
-      const remarks = updateContract.remarks;
-      const year = updateContract.year;
       const deliveryPlaceComment = updateContract.deliveryPlaceComment;
       const quantityComment = updateContract.quantityComment;
       const rejectComment = updateContract.rejectComment;
+
+      // Derived if the user does not have UPDATE_OTHER_CONTRACTS -permission
+      let status = updateContract.status;
+
+      if (!canUpdateOthers) {
+        year = databaseContract.year;
+        deliveryPlaceId = databaseContract.deliveryPlaceId;
+        itemGroupId = databaseContract.itemGroupId;
+        sapId = databaseContract.sapId;
+        contractQuantity = databaseContract.contractQuantity;
+        deliveredQuantity = databaseContract.deliveredQuantity;
+        startDate = databaseContract.startDate;
+        endDate = databaseContract.endDate;
+        signDate = databaseContract.signDate;
+        termDate = databaseContract.termDate;
+        remarks = databaseContract.remarks;
+
+        if (updateContract.status === "REJECTED") {
+          status = "REJECTED";
+        } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
+          if (deliveredQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId) {
+            status = "DRAFT";
+          } else {
+            status = "ON_HOLD";
+          }
+        } else {
+          this.sendForbidden(res, "You have no permission to update contract status");
+          return;
+        }
+      }
 
       await this.models.updateContract(databaseContract.id,
         year,
@@ -632,8 +670,8 @@
         return;
       }
 
-      if (contract.status !== 'DRAFT') {
-        this.sendBadRequest(res, "This contract is not ready for signing");
+      if (contract.status !== "DRAFT") {
+        this.sendBadRequest(res, `This contract is not ready for signing (status ${contract.status})`);
         return;
       }
 

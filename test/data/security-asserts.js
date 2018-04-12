@@ -152,6 +152,64 @@
       "with-user": "test1-testrealm1",
       "message": "User should not be allowed to update other users contracts",
       "expectStatus": 403
+    }, {
+      "database": {
+        "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-status-setup.sql"],
+        "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
+      },
+      "params": {
+        "id": "930aa9e6-3e4a-11e8-8bde-3f4cb4e757aa"
+      },
+      "with-user": "test2-testrealm1",
+      "message": "User should not be allowed to update approved contracts",
+      "expectStatus": 403
+    }, {
+      "database": {
+        "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-status-setup.sql"],
+        "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
+      },
+      "params": {
+        "id": "bdc59a1a-3e4a-11e8-b7c1-53a5303c293f"
+      },
+      "with-user": "test2-testrealm1",
+      "message": "User should not be allowed to update on hold contracts",
+      "expectStatus": 403
+    }, {
+      "database": {
+        "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-status-setup.sql"],
+        "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
+      },
+      "params": {
+        "id": "be6c35dc-3e4a-11e8-9324-b3c1891fa540"
+      },
+      "with-user": "test2-testrealm1",
+      "message": "User should not be allowed to update terminated contracts",
+      "expectStatus": 403
+    }, {
+      "database": {
+        "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-status-setup.sql"],
+        "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
+      },
+      "params": {
+        "id": "beb1ad74-3e4a-11e8-9c26-cb16081692a9"
+      },
+      "with-user": "test2-testrealm1",
+      "message": "User should not be allowed to update rejected contracts",
+      "expectStatus": 403
+    }, {
+      "database": {
+        "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-status-setup.sql"],
+        "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
+      },
+      "params": {
+        "id": "be2240b2-3e4a-11e8-82e8-075a90c2b0bf"
+      },
+      "body": {
+        "status": "APPROVED"
+      },
+      "with-user": "test2-testrealm1",
+      "message": "User should not be allowed to update contract to approved status",
+      "expectStatus": 403
     }],
     "updateContractDocumentTemplate": [{
       "database": {
