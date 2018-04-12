@@ -205,7 +205,9 @@
         "id": "be2240b2-3e4a-11e8-82e8-075a90c2b0bf"
       },
       "body": {
-        "status": "APPROVED"
+        "status": "APPROVED",
+        "itemGroupId": "89723408-0f51-11e8-baa0-dfe7c7eae257",
+        "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07"
       },
       "with-user": "test2-testrealm1",
       "message": "User should not be allowed to update contract to approved status",

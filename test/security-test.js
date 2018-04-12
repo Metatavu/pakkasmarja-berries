@@ -59,6 +59,10 @@
           result = result.query(testSetting.query);
         }
 
+        if (testSetting.body) {
+          result = result.send(testSetting.body);
+        }
+
         return result
           .set("Authorization", `Bearer ${token}`)
           .set("Accept", "application/json")
