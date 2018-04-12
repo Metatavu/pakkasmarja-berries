@@ -134,7 +134,7 @@
       .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser1Roles(ApplicationRoles.LIST_OPERATION_REPORTS);
       });
   });
@@ -144,7 +144,7 @@
       .get("/rest/v1/operationreports/not-uuid")
       .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
       .set("Accept", "application/json")
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser1Roles(ApplicationRoles.LIST_OPERATION_REPORTS);
       });
   });
