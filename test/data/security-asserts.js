@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   module.exports = {
    "findContact": [{

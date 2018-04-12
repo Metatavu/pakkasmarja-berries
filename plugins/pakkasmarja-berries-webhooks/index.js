@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
   
   class PakkasmarjaBerriesWebhooks {
     

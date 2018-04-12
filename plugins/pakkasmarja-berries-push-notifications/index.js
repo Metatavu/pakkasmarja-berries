@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const config = require('nconf');
   const FCM = require('fcm-push');

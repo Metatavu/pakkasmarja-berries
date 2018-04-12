@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
   
   const util = require('util'); 
   const moment = require('moment');

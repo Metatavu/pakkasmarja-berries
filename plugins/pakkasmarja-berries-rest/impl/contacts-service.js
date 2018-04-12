@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const _ = require('lodash');
   const ApplicationRoles = require(`${__dirname}/../application-roles`);
