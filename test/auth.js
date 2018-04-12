@@ -4,11 +4,11 @@
 (() => {
   "use strict";
 
-  const Promise = require('bluebird');
-  const mysql = require('mysql2/promise');
-  const fs = require('fs');
-  const config = require('nconf');
-  const request = require('request');
+  const Promise = require("bluebird");
+  const mysql = require("mysql2/promise");
+  const fs = require("fs");
+  const config = require("nconf");
+  const request = require("request");
   const KeycloakAdminClient = require("keycloak-admin-client");
   const keyclockSetup = require(`${__dirname}/../scripts/kc-setup-for-tests.json`);
 
@@ -27,12 +27,12 @@
      * @return {Promise} promise for results
      */
     async getClientToken(username, password, clientId) {
-      const realm = config.get('keycloak:app:realm');
-      const url = `${config.get('keycloak:app:auth-server-url')}/realms/${realm}/protocol/openid-connect/token`;
+      const realm = config.get("keycloak:app:realm");
+      const url = `${config.get("keycloak:app:auth-server-url")}/realms/${realm}/protocol/openid-connect/token`;
       return new Promise((resolve, reject) => {
         request.post({ url: url, form: {
           client_id: clientId,
-          grant_type: 'password',
+          grant_type: "password",
           username: username,
           password: password
         }}, (err, httpResponse, body) => {
@@ -53,7 +53,7 @@
      * @return {Promise} promise for results
      */
     getToken(username, password) {
-      return this.getClientToken(username, password, config.get('keycloak:app:resource'));
+      return this.getClientToken(username, password, config.get("keycloak:app:resource"));
     }
     
     /**
@@ -75,7 +75,7 @@
      * @return {Promise} promise for results
      */
     async getTokenUser1(roles) {
-      if (roles) {
+      if (roles) {
         const adminToken = await this.getAdminCliToken();
         const userId = this.getUser1Id();
         await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
@@ -102,7 +102,7 @@
      * @return {Promise} promise for results
      */
     async getTokenUser2(roles) {
-      if (roles) {
+      if (roles) {
         const adminToken = await this.getAdminCliToken();
         const userId = this.getUser2Id();
         await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
@@ -146,7 +146,7 @@
      */
     getRealmSetup() {
       return keyclockSetup.filter((realmSetup) => {
-        return realmSetup.id === 'pm';
+        return realmSetup.id === "pm";
       })[0];
     }
 
@@ -174,7 +174,7 @@
      * @returns {Promise} promise for added roles 
      */
     async addRealmRolesToUser(adminToken, userId, roles) {
-      const realm = config.get('keycloak:app:realm');
+      const realm = config.get("keycloak:app:realm");
       const client = await KeycloakAdminClient(config.get("keycloak:admin"));
 
       return client.realms.maps.map(realm, userId, roles.map((role) => {
@@ -191,7 +191,7 @@
      * @returns {Promise} promise for removed roles 
      */
     async removeRealmRolesToUser(adminToken, userId, roles) {
-      const realm = config.get('keycloak:app:realm');
+      const realm = config.get("keycloak:app:realm");
       const client = await KeycloakAdminClient(config.get("keycloak:admin"));
 
       return client.realms.maps.unmap(realm, userId, roles.map((role) => {
@@ -205,7 +205,7 @@
      * @returns {Promise} promise for added roles 
      */
     async createRoles() {
-      const realm = config.get('keycloak:app:realm');
+      const realm = config.get("keycloak:app:realm");
       const roles = ["list-all-contacts","update-other-contacts","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations"];
       const client = await KeycloakAdminClient(config.get("keycloak:admin"));
 

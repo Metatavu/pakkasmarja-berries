@@ -186,19 +186,19 @@
       .put(`/rest/v1/contacts/5ddca0e8-0f2f-11e8-aaee-fbf8db060bc5`)
       .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .set("Accept", "application/json")
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
       });
   });
   
-  test("Test update contact - malformed", async (t) => {
+  test("Test update contact - malformed", async () => {
     return request("http://localhost:3002")
       .put(`/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770`)
       .set("Authorization", `Bearer ${await auth.getTokenUser2([ApplicationRoles.LIST_ALL_CONTACTS])}`)
       .send("malformed data")
       .set("Accept", "application/json")
       .expect(400)
-      .then(async response => {
+      .then(async () => {
         await auth.removeUser2Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
       });
   });

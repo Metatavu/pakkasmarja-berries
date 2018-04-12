@@ -5,7 +5,7 @@
   "use strict";
 
   module.exports = {
-   "findContact": [{
+    "findContact": [{
       "params": {
         "id": "677e99fd-b854-479f-afa6-74f295052770"
       },
@@ -89,7 +89,7 @@
       "message": "User without proper role should not be allowed to find other user's contract document templates",
       "expectStatus": 403
     }],
-    "getContractDocument": [{
+    "getContractDocument": [{
       "database": {
         "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"],
         "teardown": ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
@@ -98,14 +98,14 @@
         "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
         "type": "group" 
       },
-      "query": {
+      "query": {
         "format": "HTML"
       },
       "with-user": "test1-testrealm1",
       "message": "User without proper role should not be allowed to find other user's contract document",
       "expectStatus": 403
     }],
-    "listContractDocumentTemplates": [{
+    "listContractDocumentTemplates": [{
       "database": {
         "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"],
         "teardown": ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
@@ -134,7 +134,7 @@
         "setup": ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"],
         "teardown": ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]
       },
-      "query": {
+      "query": {
         "listAll": "true"
       },
       "with-user": "test1-testrealm1",

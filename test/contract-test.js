@@ -426,7 +426,6 @@
   });
 
   test("Test sync contracts", async (t) => {
-    const accessToken = await auth.getTokenUser1();
     const adminAccessToken = await auth.getAdminToken();  
     
     await operations.createOperationAndWait(adminAccessToken, "SAP_CONTACT_SYNC");
