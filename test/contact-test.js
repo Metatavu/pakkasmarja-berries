@@ -129,6 +129,9 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
+        console.log("outbox", mail.getOutbox());
+        console.log("contactUpdateMails", contactUpdateMails);
+
         t.deepEqual(mail.getOutbox(), contactUpdateMails);
         t.deepEqual(response.body, updateData);
         return users.resetUser(updateData.id, t);
