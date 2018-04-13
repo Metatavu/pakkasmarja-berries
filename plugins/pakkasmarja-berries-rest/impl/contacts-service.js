@@ -10,6 +10,7 @@
   const Contact = require(`${__dirname}/../model/contact`);
   const Credentials = require(`${__dirname}/../model/credentials`);
   const Address = require(`${__dirname}/../model/address`);
+  const config = require("nconf");
 
   /**
    * Implementation for Contacts REST service
@@ -22,13 +23,15 @@
      * @param {Object} logger logger
      * @param {Object} models models
      * @param {Object} userManagement userManagement
+     * @param {Object} mailer mailer instance
      */
-    constructor (logger, models, userManagement) {
+    constructor (logger, models, userManagement, mailer) {
       super();
       
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
+      this.mailer = mailer;
     }
     
     /**
@@ -106,6 +109,7 @@
           return this.userManagement.findUser(userId);
         })
         .then((updatedUser) => {
+          this.triggerChangeNotification(user, updatedUser);
           res.status(200).send(this.translateKeycloakUser(updatedUser));
         })
         .catch((err) => {
@@ -149,6 +153,64 @@
         .catch((err) => {
           this.sendInternalServerError(res, err);
         });
+    }
+
+    /**
+     * Compares old and new user objects and notifies specified email 
+     * if there are any significant changes 
+     * 
+     * @param {Object} oldUser old user object 
+     * @param {Object} newUser new user object
+     */
+    triggerChangeNotification(oldUser, newUser) {
+      const changes = [];
+
+      const trackedAttributes = [
+        this.userManagement.ATTRIBUTE_COMPANY_NAME, 
+        this.userManagement.ATTRIBUTE_BIC, 
+        this.userManagement.ATTRIBUTE_IBAN, 
+        this.userManagement.ATTRIBUTE_TAX_CODE, 
+        this.userManagement.ATTRIBUTE_VAT_LIABLE, 
+        this.userManagement.ATTRIBUTE_AUDIT,
+        this.userManagement.ATTRIBUTE_POSTAL_CODE_1,
+        this.userManagement.ATTRIBUTE_POSTAL_CODE_2,
+        this.userManagement.ATTRIBUTE_STREET_1,
+        this.userManagement.ATTRIBUTE_STREET_2,
+        this.userManagement.ATTRIBUTE_PHONE_1,
+        this.userManagement.ATTRIBUTE_PHONE_2
+      ];
+
+      const trackedProperties = [
+        { "name": "firstName", "title": "Etunimi" },
+        { "name": "lastName", "title": "Sukunimi" },
+        { "name": "email", "title": "Sähköposti" }
+      ];
+
+      trackedProperties.forEach((trackedProperty) => {
+        const oldValue = oldUser[trackedProperty.name];
+        const newValue = newUser[trackedProperty.name];
+
+        if (oldValue !== newValue) {
+          changes.push(`${trackedProperty.title}: ${oldValue} -> ${newValue}`);
+        }
+      });
+
+      trackedAttributes.forEach((trackedAttribute) => {
+        const oldValue = this.userManagement.getSingleAttribute(oldUser, trackedAttribute) || '';
+        const newValue = this.userManagement.getSingleAttribute(newUser, trackedAttribute) || '';
+
+        if (oldValue !== newValue) {
+          changes.push(`${trackedAttribute}: ${oldValue} -> ${newValue}`);
+        }
+      });
+
+      if (changes.length) {
+        const userDisplayName = this.userManagement.getUserDisplayName(newUser);
+        const subject = `${userDisplayName} päivitti tietojaan`;
+        const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const sender = `${config.get('mail:sender')}@${config.get('mail:domain')}`;
+        this.mailer.send(sender, config.get("contacts:notifications:email"), subject, contents);
+      }
     }
     
     /**
@@ -205,7 +267,7 @@
       
       return user;
     }
-    
+     
     /**
      * Resolves Keycloak user's phone numbers
      * 
