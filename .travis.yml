@@ -20,7 +20,7 @@ before_script:
   - ./scripts/start-keycloak.sh
   - npm run instrument
   - npm run run-cover &
-  - sleep 20
+  - sleep 30
 script:
   - npm run test
 after_success:
