@@ -1,1 +1,7 @@
-[ { "from": "noreply@example.com", "subject": "Updated first name Updated last name Updated company name päivitti tietojaan', text: 'Updated first name Updated last name Updated company name päivitti seuraavat tiedot:\n\nEtunimi: Test 2 -> Updated first name\nSukunimi: User 2 -> Updated last name\nSähköposti: test2@testrealm1.com -> updatedemail@testrealm1.com\nyritys:  -> Updated company name\nBIC:  -> DABAIE3D\nIBAN:  -> FI1112345600000786\nverotunniste:  -> FI23456789\narvonlisäverovelvollisuus:  -> EU\nauditointi:  -> No\nPostinro:  -> 98765\nPostiosoite:  -> Updated street\nPuhelin 1:  -> +123 567 8901\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------" } ]
+[
+  {
+    "from": "noreply@example.com",
+    "subject": "Updated first name Updated last name Updated company name päivitti tietojaan",
+    "text": "Updated first name Updated last name Updated company name päivitti seuraavat tiedot:\n\nEtunimi: Test 2 -> Updated first name\nSukunimi: User 2 -> Updated last name\nSähköposti: test2@testrealm1.com -> updatedemail@testrealm1.com\nyritys:  -> Updated company name\nBIC:  -> DABAIE3D\nIBAN:  -> FI1112345600000786\nverotunniste:  -> FI23456789\narvonlisäverovelvollisuus:  -> EU\nauditointi:  -> No\nPostinro:  -> 98765\nPostiosoite:  -> Updated street\nPuhelin 1:  -> +123 567 8901\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
+  }
+]
