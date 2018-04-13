@@ -26,7 +26,7 @@
       }
 
       return fs.readdirSync(outbox).map((file) => {
-        return JSON.parse(fs.readFileSync(`${outbox}/${file}`));
+        return JSON.parse(fs.readFileSync(`${outbox}/${file}`, "utf8"));
       });
     }
 
