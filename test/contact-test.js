@@ -8,12 +8,14 @@
   const auth = require(`${__dirname}/auth`);
   const request = require("supertest");
   const database = require(`${__dirname}/database`);
+  const mail = require(`${__dirname}/mail`);
   const users = require(`${__dirname}/users`);
   const operations = require(`${__dirname}/operations`);
   const contactDatas = require(`${__dirname}/data/contacts.json`);
   const contactDataSync = require(`${__dirname}/data/contacts-sync.json`);
+  const contactUpdateMails = require(`${__dirname}/data/contact-update-mails.json`);
   const ApplicationRoles = require(`${__dirname}/../plugins/pakkasmarja-berries-rest/application-roles.js`);
-  
+
   test("Test listing contacts", async (t) => {
     await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
     
@@ -101,6 +103,8 @@
   });
   
   test("Test update contact", async (t) => {
+    mail.clearOutbox();
+
     const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
       "firstName": "Updated first name",
       "lastName": "Updated last name",
@@ -125,6 +129,7 @@
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
+        t.deepEqual(mail.getOutbox(), contactUpdateMails);
         t.deepEqual(response.body, updateData);
         return users.resetUser(updateData.id, t);
       });
