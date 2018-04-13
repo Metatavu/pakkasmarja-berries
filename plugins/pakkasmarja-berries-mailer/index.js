@@ -5,7 +5,7 @@
   "use strict";
   
   const fs = require("fs");
-  const uuid = require('uuid4');
+  const uuid = require("uuid4");
   const config = require("nconf");
   const Mailgun = require("mailgun-js");
   
@@ -23,7 +23,7 @@
      * @param String subject email subject
      * @param String contents email contects as plain text 
      */
-    send(sender, to, subject, contents) {
+    send(sender, to, subject, contents) {
       const options = {
         from: sender,
         to: to,
@@ -31,18 +31,18 @@
         text: contents
       };
 
-      if (config.get("mode") !== "TEST") {
+      if (config.get("mode") !== "TEST") {
         return this.mailgun.messages().send(options);
       } else {
         const mockFolder = config.get("mail:mockFolder");
         const outbox = `${mockFolder}/outbox`;
 
-        const outboxFolders = outbox.split('/');
+        const outboxFolders = outbox.split("/");
         const parents = [];
 
         while (outboxFolders.length) {
           const folder = outboxFolders.shift();
-          const path = `${parents.join('/')}/${folder}`;
+          const path = `${parents.join("/")}/${folder}`;
 
           if (!fs.existsSync(path)) {
             fs.mkdirSync(path);
@@ -63,7 +63,7 @@
       }
     }
 
-  };
+  }
 
   module.exports = (options, imports, register) => {    
     const mailer = new Mailer();

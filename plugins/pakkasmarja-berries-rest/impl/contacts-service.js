@@ -51,7 +51,7 @@
       }
 
       const user = await this.userManagement.findUser(userId);
-      if (!user) {
+      if (!user) {
         this.sendNotFound(res);
         return;
       }
@@ -93,13 +93,13 @@
       }
       
       const updateContact = _.isObject(req.body) ? Contact.constructFromObject(req.body) : null;
-      if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
+      if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
         this.sendBadRequest(res, "Failed to parse body");
         return;
       }
       
       const user = await this.userManagement.findUser(userId);
-      if (!user) {
+      if (!user) {
         this.sendNotFound(res);
         return;
       }
@@ -135,13 +135,13 @@
       }
 
       const updateCredentials = _.isObject(req.body) ? Credentials.constructFromObject(req.body) : null;
-      if (!updateCredentials || !updateCredentials.password) {
+      if (!updateCredentials || !updateCredentials.password) {
         this.sendBadRequest(res, "Failed to parse body");
         return;
       }
 
       const user = await this.userManagement.findUser(userId);
-      if (!user) {
+      if (!user) {
         this.sendNotFound(res);
         return;
       }
@@ -190,16 +190,16 @@
         const oldValue = oldUser[trackedProperty.name];
         const newValue = newUser[trackedProperty.name];
 
-        if (oldValue !== newValue) {
+        if (oldValue !== newValue) {
           changes.push(`${trackedProperty.title}: ${oldValue} -> ${newValue}`);
         }
       });
 
       trackedAttributes.forEach((trackedAttribute) => {
-        const oldValue = this.userManagement.getSingleAttribute(oldUser, trackedAttribute) || '';
-        const newValue = this.userManagement.getSingleAttribute(newUser, trackedAttribute) || '';
+        const oldValue = this.userManagement.getSingleAttribute(oldUser, trackedAttribute) || "";
+        const newValue = this.userManagement.getSingleAttribute(newUser, trackedAttribute) || "";
 
-        if (oldValue !== newValue) {
+        if (oldValue !== newValue) {
           changes.push(`${trackedAttribute}: ${oldValue} -> ${newValue}`);
         }
       });
@@ -207,8 +207,8 @@
       if (changes.length) {
         const userDisplayName = this.userManagement.getUserDisplayName(newUser);
         const subject = `${userDisplayName} päivitti tietojaan`;
-        const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
-        const sender = `${config.get('mail:sender')}@${config.get('mail:domain')}`;
+        const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const sender = `${config.get("mail:sender")}@${config.get("mail:domain")}`;
         this.mailer.send(sender, config.get("contacts:notifications:email"), subject, contents);
       }
     }

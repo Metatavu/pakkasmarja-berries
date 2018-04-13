@@ -4,9 +4,8 @@
 (() => {
   "use strict";
 
-  const Promise = require('bluebird');
-  const fs = require('fs');
-  const config = require('nconf');
+  const fs = require("fs");
+  const config = require("nconf");
   config.file({file: `${__dirname}/../config.json`}).defaults(require(`${__dirname}/../default-config.json`));
   
   /**
