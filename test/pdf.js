@@ -9,7 +9,7 @@
   const fs = require('fs');
   const tmp = require('tmp');
   const config = require('nconf');
-  config.file({file: `${__dirname}/../config.json`});
+  config.file({file: `${__dirname}/../config.json`}).defaults(require(`${__dirname}/../default-config.json`));
   
   /**
    * Pdf utility class for tests

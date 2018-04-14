@@ -2,6 +2,11 @@
   "server-group": "group-1",
   "app-version": "1.2.7",
   "mode": "PRODUCTION",
+  "mail": {
+    "sender": "noreply",
+    "domain": "example.com",
+    "mockFolder": "/tmp/pakkasmail"
+  },
   "wkhtmltopdf": {
     "command": "/opt/wkhtmltox/bin/wkhtmltopdf"
   },

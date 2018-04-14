@@ -9,9 +9,8 @@
   const request = require("request");
   const KeycloakAdminClient = require("keycloak-admin-client");
   const keyclockSetup = require(`${__dirname}/../scripts/kc-setup-for-tests.json`);
+  config.file({file: `${__dirname}/../config.json`}).defaults(require(`${__dirname}/../default-config.json`));
 
-  config.file({file: `${__dirname}/../config.json`});
-  
   /**
    * Auth utility class for tests
    */

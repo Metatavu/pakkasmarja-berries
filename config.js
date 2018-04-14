@@ -39,5 +39,6 @@ module.exports = [
   "./plugins/pakkasmarja-berries-scheluders",
   "./plugins/pakkasmarja-berries-utils",
   "./plugins/pakkasmarja-berries-signature",
-  "./plugins/pakkasmarja-berries-tasks"
+  "./plugins/pakkasmarja-berries-tasks",
+  "./plugins/pakkasmarja-berries-mailer"
 ];

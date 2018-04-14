@@ -8,7 +8,7 @@
   const mysql = require('mysql2/promise');
   const fs = require('fs');
   const config = require('nconf');
-  config.file({file: `${__dirname}/../config.json`});
+  config.file({file: `${__dirname}/../config.json`}).defaults(require(`${__dirname}/../default-config.json`));
   
   /**
    * Database utility class for tests

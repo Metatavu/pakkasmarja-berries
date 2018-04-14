@@ -27,9 +27,10 @@
      * @param {Object} xlsx Excel rendering functionalities
      * @param {Object} signature signature functionalities
      * @param {Object} tasks task queue functionalities
+     * @param {Object} mailer mailer instance
      */
-    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks) {
-      this.contactsService = new ContactsServiceImpl(logger, models, userManagement);
+    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks, mailer) {
+      this.contactsService = new ContactsServiceImpl(logger, models, userManagement, mailer);
       this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf, xlsx, signature, tasks);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
       this.deliveryPlacesService = new DeliveryPlacesServiceImpl(logger, models);
@@ -56,7 +57,6 @@
   }
 
   module.exports = (options, imports, register) => {
-    /* jshint ignore:start */
     const logger = imports["logger"];
     const models = imports["pakkasmarja-berries-models"];
     const userManagement = imports["pakkasmarja-berries-user-management"];
@@ -64,9 +64,9 @@
     const xlsx = imports["pakkasmarja-berries-xlsx"];
     const signature = imports["pakkasmarja-berries-signature"];
     const tasks = imports["pakkasmarja-berries-tasks"];
-    /* jshint ignore:end */
+    const mailer = imports["pakkasmarja-berries-mailer"];
     
-    const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks);
+    const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks, mailer);
     register(null, {
       "pakkasmarja-berries-rest": restServices
     });
