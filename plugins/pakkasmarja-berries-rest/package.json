@@ -15,7 +15,8 @@
       "pakkasmarja-berries-xlsx",
       "pakkasmarja-berries-signature",
       "pakkasmarja-berries-tasks",
-      "pakkasmarja-berries-mailer"
+      "pakkasmarja-berries-mailer",
+      "pakkasmarja-berries-push-notifications"
     ]
   }
 }
