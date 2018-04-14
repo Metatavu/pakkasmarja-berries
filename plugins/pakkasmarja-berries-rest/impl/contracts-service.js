@@ -127,8 +127,8 @@
       
       this.sendContractChangePushNotification(
         userId,
-        `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
-        `Uusi sopimusluonnos marjasta: ${itemGroup.displayName || itemGroup.name} odottaa tarkastusta.`);
+        `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
+        `Uusi sopimusluonnos marjasta: ${itemGroup.displayName || itemGroup.name} odottaa tarkastusta.`);
       
       res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
@@ -306,8 +306,8 @@
 
       this.sendContractChangePushNotification(
         updatedDatabaseContract.userId,
-        `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
-        `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`);
+        `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
+        `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`);
 
       res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
     }
@@ -1185,8 +1185,8 @@
           if (!userSetting) {
             this.pushNotifications.sendPushNotification(userId, title, content, true);
           } else {
-            if (userSetting.settingValue !== 'disabled') {
-              this.pushNotifications.sendPushNotification(userId, title, content, userSetting.settingValue !== 'silent');
+            if (userSetting.settingValue !== "disabled") {
+              this.pushNotifications.sendPushNotification(userId, title, content, userSetting.settingValue !== "silent");
             }
           }
         });

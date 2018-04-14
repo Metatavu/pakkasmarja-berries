@@ -65,7 +65,7 @@
     const signature = imports["pakkasmarja-berries-signature"];
     const tasks = imports["pakkasmarja-berries-tasks"];
     const mailer = imports["pakkasmarja-berries-mailer"];
-    const pushNotifications = imports['pakkasmarja-berries-push-notifications'];
+    const pushNotifications = imports["pakkasmarja-berries-push-notifications"];
     
     const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks, mailer, pushNotifications);
     register(null, {
