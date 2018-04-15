@@ -26,6 +26,8 @@
   const contractDocumentTemplateCreateData = require(`${__dirname}/data/contract-document-templates-create.json`);
   const itemGroupPriceDatas = require(`${__dirname}/data/item-group-prices.json`);
   const ApplicationRoles = require(`${__dirname}/../plugins/pakkasmarja-berries-rest/application-roles.js`);
+  const contractUpdatePushNotifications = require(`${__dirname}/data/contract-update-push-notifications.json`);
+  const contractCreatePushNotifications = require(`${__dirname}/data/contract-create-push-notifications.json`);
 
   test("Test contract sign", async () => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
@@ -75,7 +77,7 @@
       .then(async response => {
         await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-        t.deepEqual(push.getOutbox(), {});
+        t.deepEqual(push.getOutbox(), contractCreatePushNotifications);
         
         Object.keys(contractDataCreate).forEach((expectKey) => {
           const expectValue = contractDataCreate[expectKey];
@@ -519,7 +521,7 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
-        t.deepEqual(push.getOutbox(), {});
+        t.deepEqual(push.getOutbox(), contractUpdatePushNotifications);
       });
   });
   

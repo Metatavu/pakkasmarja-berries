@@ -6,7 +6,6 @@
 
   const config = require("nconf");
   const FCM = require("fcm-push");
-  const Promise = require("bluebird");
   const fs = require("fs");
   const uuid = require("uuid4");
   
@@ -14,7 +13,7 @@
     
     constructor (logger) {
       this.logger = logger;
-      this.fcm = new FCM(config.get('firebase:server-key'));
+      this.fcm = new FCM(config.get("firebase:server-key"));
     }
     
     sendPushNotification(to, title, body, sound) {
@@ -38,7 +37,7 @@
             parents.push(folder);
           }
 
-          fs.writeFileSync(`${outbox}/${uuid()}`, JSON.stringify({to: to, title: title, body: body, sound: sound ? 'default' : 'silent' }));
+          fs.writeFileSync(`${outbox}/${uuid()}`, JSON.stringify({to: to, title: title, body: body, sound: sound ? "default" : "silent" }));
         } else {
           this.logger.warn(`Skipping push notification because server is running in ${mode} mode`);
         }
@@ -49,7 +48,7 @@
       const notificationSettings = {
         title: title,
         body: body,
-        sound: sound ? 'default' : 'silent'
+        sound: sound ? "default" : "silent"
       };
       
       const message = {
@@ -69,11 +68,11 @@
   }
 
   module.exports = (options, imports, register) => {
-    const logger = imports['logger'];
+    const logger = imports["logger"];
     
     const pushNotifications = new PushNotifications(logger);
     register(null, {
-      'pakkasmarja-berries-push-notifications': pushNotifications
+      "pakkasmarja-berries-push-notifications": pushNotifications
     });
   };
 
