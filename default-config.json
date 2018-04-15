@@ -7,6 +7,9 @@
     "domain": "example.com",
     "mockFolder": "/tmp/pakkasmail"
   },
+  "pushNotification": {
+    "mockFolder": "/tmp/pakkaspush"
+  },
   "wkhtmltopdf": {
     "command": "/opt/wkhtmltox/bin/wkhtmltopdf"
   },

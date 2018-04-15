@@ -4,9 +4,11 @@
 (() => {
   "use strict";
 
-  const config = require('nconf');
-  const FCM = require('fcm-push');
-  const Promise = require('bluebird');
+  const config = require("nconf");
+  const FCM = require("fcm-push");
+  const Promise = require("bluebird");
+  const fs = require("fs");
+  const uuid = require("uuid4");
   
   class PushNotifications {
     
@@ -18,7 +20,29 @@
     sendPushNotification(to, title, body, sound) {
       const mode = config.get("mode");
       if (mode !== "PRODUCTION") {
-        this.logger.warn(`Skipping push notification because server is running in ${mode} mode`);
+        if (mode === "TEST") {
+          const mockFolder = config.get("pushNotification:mockFolder");
+          const outbox = `${mockFolder}/outbox`;
+
+          const outboxFolders = outbox.split("/");
+          const parents = [];
+
+          while (outboxFolders.length) {
+            const folder = outboxFolders.shift();
+            const path = `${parents.join("/")}/${folder}`;
+
+            if (!fs.existsSync(path)) {
+              fs.mkdirSync(path);
+            }
+
+            parents.push(folder);
+          }
+
+          fs.writeFileSync(`${outbox}/${uuid()}`, JSON.stringify({to: to, title: title, body: body, sound: sound ? 'default' : 'silent' }));
+        } else {
+          this.logger.warn(`Skipping push notification because server is running in ${mode} mode`);
+        }
+        
         return;
       }
 

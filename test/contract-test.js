@@ -14,6 +14,7 @@
   const pdf = require(`${__dirname}/pdf`);
   const auth = require(`${__dirname}/auth`);
   const xlsx = require(`${__dirname}/xlsx`);
+  const push = require(`${__dirname}/push`);
   const contractDatas = require(`${__dirname}/data/contracts.json`);
   const contractDatasSync = require(`${__dirname}/data/contracts-sync.json`);
   const contractDataCreate = require(`${__dirname}/data/contracts-create.json`);
@@ -64,7 +65,7 @@
 
   test("Test creating contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-    
+    push.clearOutbox();
     return request("http://localhost:3002")
       .post("/rest/v1/contracts")
       .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.CREATE_CONTRACT])}`)
@@ -74,6 +75,7 @@
       .then(async response => {
         await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT]);
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+        t.deepEqual(push.getOutbox(), {});
         
         Object.keys(contractDataCreate).forEach((expectKey) => {
           const expectValue = contractDataCreate[expectKey];
@@ -507,7 +509,7 @@
   
   test("Test updating contracts", async (t) => {
     await database.executeFiles(`${__dirname}/data`, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-    
+    push.clearOutbox();
     return request("http://localhost:3002")
       .put("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce")
       .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -517,6 +519,7 @@
       .then(async response => {
         await database.executeFiles(`${__dirname}/data`, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         t.deepEqual(response.body, contractDatasUpdate["3950f496-0fba-11e8-9611-0b2da5ab56ce"]);
+        t.deepEqual(push.getOutbox(), {});
       });
   });
   
