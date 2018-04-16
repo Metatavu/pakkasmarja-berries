@@ -125,10 +125,13 @@
         quantityComment, 
         rejectComment);
       
-      this.sendContractChangePushNotification(
-        userId,
-        `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
-        `Uusi sopimusluonnos marjasta: ${itemGroup.displayName || itemGroup.name} odottaa tarkastusta.`);
+      
+      if (databaseContract.status === 'DRAFT') {
+        this.sendContractChangePushNotification(
+          userId,
+          `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
+          `Uusi sopimusluonnos marjasta: ${itemGroup.displayName || itemGroup.name} odottaa tarkastusta.`);
+      }
       
       res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
