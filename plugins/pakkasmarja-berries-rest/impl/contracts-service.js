@@ -126,7 +126,7 @@
         rejectComment);
       
       
-      if (databaseContract.status === 'DRAFT') {
+      if (databaseContract.status === "DRAFT") {
         this.sendContractChangePushNotification(
           userId,
           `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
