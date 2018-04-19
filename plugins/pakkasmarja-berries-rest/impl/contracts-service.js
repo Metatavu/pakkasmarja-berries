@@ -41,7 +41,7 @@
      * @param {Object} signature Digital signature functionalities
      * @param {Object} tasks task queue functionalities
      */
-    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks) {
+    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks, pushNotifications) {
       super();
       
       this.logger = logger;
@@ -51,6 +51,7 @@
       this.xlsx = xlsx;
       this.signature = signature;
       this.tasks = tasks;
+      this.pushNotifications = pushNotifications;
     }   
 
     /**
@@ -123,7 +124,15 @@
         deliveryPlaceComment, 
         quantityComment, 
         rejectComment);
-        
+      
+      
+      if (databaseContract.status === "DRAFT") {
+        this.sendContractChangePushNotification(
+          userId,
+          `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
+          `Uusi sopimusluonnos marjasta: ${itemGroup.displayName || itemGroup.name} odottaa tarkastusta.`);
+      }
+      
       res.status(200).send(await this.translateDatabaseContract(databaseContract));
     }
     
@@ -297,6 +306,11 @@
         this.sendInternalServerError(res, "Failed to update contract");
         return; 
       }
+
+      this.sendContractChangePushNotification(
+        updatedDatabaseContract.userId,
+        `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
+        `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`);
 
       res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
     }
@@ -1136,6 +1150,49 @@
     renderPugTemplate(template, model) {
       const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
       return compiledPug(model);
+    }
+
+    /**
+     * Gets display name for contract status
+     * 
+     * @param {String} status contract status saved in database
+     * @returns {String} display name for each contract status
+     */
+    getContractStatusDisplayName(status) {
+      switch (status) {
+        case "APPROVED":
+          return "hyväksytty";
+        case "ON_HOLD":
+          return "Pakkasmarjan tarkastettavana";
+        case "DRAFT":
+          return "ehdotus";
+        case "TERMINATED":
+          return "päättynyt";
+        case "REJECTED":
+          return "hylätty";
+        default:
+          return "muu";
+      }
+    }
+    
+    /**
+     * Sends push notification to user about contract status change
+     * 
+     * @param {String} userId userId
+     * @param {String} title push notification title
+     * @param {String} content push notification content
+     */
+    sendContractChangePushNotification(userId, title, content) {
+      this.models.findUserSettingsByUserIdAndKey(userId, "contract-push-notifications")
+        .then((userSetting) => {
+          if (!userSetting) {
+            this.pushNotifications.sendPushNotification(userId, title, content, true);
+          } else {
+            if (userSetting.settingValue !== "disabled") {
+              this.pushNotifications.sendPushNotification(userId, title, content, userSetting.settingValue !== "silent");
+            }
+          }
+        });
     }
 
   }

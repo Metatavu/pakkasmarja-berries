@@ -29,9 +29,9 @@
      * @param {Object} tasks task queue functionalities
      * @param {Object} mailer mailer instance
      */
-    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks, mailer) {
+    constructor (logger, models, userManagement, pdf, xlsx, signature, tasks, mailer, pushNotifications) {
       this.contactsService = new ContactsServiceImpl(logger, models, userManagement, mailer);
-      this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf, xlsx, signature, tasks);
+      this.contractsService = new ContractsServiceImpl(logger, models, userManagement, pdf, xlsx, signature, tasks, pushNotifications);
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
       this.deliveryPlacesService = new DeliveryPlacesServiceImpl(logger, models);
       this.operationReportsService = new OperationReportsServiceImpl(logger, models);
@@ -65,8 +65,9 @@
     const signature = imports["pakkasmarja-berries-signature"];
     const tasks = imports["pakkasmarja-berries-tasks"];
     const mailer = imports["pakkasmarja-berries-mailer"];
+    const pushNotifications = imports["pakkasmarja-berries-push-notifications"];
     
-    const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks, mailer);
+    const restServices = new RestServices(logger, models, userManagement, pdf, xlsx, signature, tasks, mailer, pushNotifications);
     register(null, {
       "pakkasmarja-berries-rest": restServices
     });
