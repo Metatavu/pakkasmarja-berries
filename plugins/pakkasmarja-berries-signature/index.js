@@ -53,9 +53,9 @@
         name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
       };
 
-      if (config.get('visma-sign:affiliateCode')) {
+      if (config.get("visma-sign:affiliateCode")) {
         documentData.affiliates = [{
-          code: config.get('visma-sign:affiliateCode')
+          code: config.get("visma-sign:affiliateCode")
         }];
       }
       
@@ -65,7 +65,7 @@
 
       return this.documentsApi.createDocument(document).then((data) => {
         const location = data.location;
-        return location.substring(location.lastIndexOf('/') + 1);
+        return location.substring(location.lastIndexOf("/") + 1);
       });
     }
 
