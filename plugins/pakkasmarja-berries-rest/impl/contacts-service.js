@@ -68,7 +68,11 @@
         return;
       }
 
-      const users = await this.userManagement.listUsers();
+      const search = req.query.search;
+      const users = await this.userManagement.listUsers({
+        search: search
+      });
+
       const contacts = users.map((user) => {
         return this.translateKeycloakUser(user);
       });

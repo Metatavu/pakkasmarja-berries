@@ -38,6 +38,21 @@
         t.deepEqual(contactDatas["677e99fd-b854-479f-afa6-74f295052770"], actualResponse[2]);
       });
   });
+
+  test("Test listing contacts - search", async (t) => {
+    await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+    
+    return request("http://localhost:3002")
+      .get("/rest/v1/contacts?search=test1@testrealm1.com")
+      .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then(async response => {
+        await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+        t.equal(response.body.length, 1);
+        t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], response.body[0]);
+      });
+  });
   
   test("Test listing contacts - without token", async () => {
     return request("http://localhost:3002")
