@@ -921,15 +921,23 @@
       
       const year = (new Date()).getFullYear();
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+      const taxCode = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE);
       const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
       const deliveryPlace = contract.deliveryPlaceId ? await this.models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
+      const businessCode = this.getBusinessCode(taxCode);
       
       const templateData = {
         companyName: companyName,
         contract: contract,
         prices: prices,
         deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
-        areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : []
+        areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : [],
+        contractStartDate: this.formatDate(contract.startDate),
+        contractEndDate: this.formatDate(contract.endDate),
+        contractSignDate: this.formatDate(contract.signDate),
+        contractTermDate: this.formatDate(contract.termDate),
+        businessCode: businessCode,
+        taxCode: taxCode
       };
       
       const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
@@ -951,7 +959,7 @@
         footer: footer
       };    
     }
-    
+
     /**
      * Renders contract document as HTML
      * 
@@ -1050,6 +1058,37 @@
      */
     getDocumentSlug(documentName) {
       return slugify(documentName);
+    }
+
+    /**
+     * Formats given date as finnish format
+     * 
+     * @param {Date} date 
+     * @returns {String} given date as finnish format
+     */
+    formatDate(date) {
+      if (!date) {
+        return "";
+      }
+
+      return moment(date).locale("fi").format("L");
+    }
+
+    /**
+     * Formats federal tax id as business code
+     * 
+     * @param {String} federalTaxId tax id
+     * @returns {String} business code
+     */
+    getBusinessCode(federalTaxId) {
+      if (federalTaxId && federalTaxId.toUpperCase().startsWith("FI")) {
+        let result = federalTaxId.substring(2);
+        if (result.length === 8) {
+          return `${result.substring(0, 7)}-${result.substring(7)}`;
+        }
+      }
+
+      return "";
     }
 
     /**

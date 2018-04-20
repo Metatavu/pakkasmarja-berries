@@ -9,7 +9,7 @@
     "addresses": [],
     "BIC": null,
     "IBAN": null,
-    "taxCode": null,
+    "taxCode": "FI11223344",
     "vatLiable": null,
     "audit": null,
     "sapId": "tusap1"
