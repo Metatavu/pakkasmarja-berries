@@ -320,10 +320,12 @@
         await pdf.extractPdfDataFromBuffer(response.body)
           .then((pdfData) => {
             t.ok(pdfData.rawTextContent.indexOf("1 (1)") > -1, "Contains header page number");
+            t.ok(pdfData.rawTextContent.indexOf("start 01.01.2020, end: 31.12.2020, sign: 14.12.2019, term 02.01.2020") > -1, "Contains dates");
             t.ok(pdfData.rawTextContent.indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
             t.ok(pdfData.rawTextContent.indexOf("Group 18.00 € / l") > -1, "Contains replaced price");
             t.ok(pdfData.rawTextContent.indexOf("https://www.example.com") > -1, "contains footer");
             t.ok(pdfData.rawTextContent.indexOf("Test Place 1") > -1, "contains replaced delivery place");
+            t.ok(pdfData.rawTextContent.indexOf("1122334-4 - FI11223344") > -1, "Contains codes");
           });
       });
   });
@@ -386,6 +388,8 @@
         t.ok($("td").text().indexOf("Group") > -1, "Contains replaced price");
         t.ok($("td").text().indexOf("18.00 € / l") > -1, "Contains replaced price");
         t.ok($("p").text().indexOf("Test Place 1") > -1, "Contains replaced delivery place");
+        t.ok($("p.dates").text().indexOf("start 01.01.2020, end: 31.12.2020, sign: 14.12.2019, term 02.01.2020") > -1, "Contains dates");
+        t.ok($("p.businessCodes").text().indexOf("1122334-4 - FI11223344") > -1, "Contains codes");
       });
   });
   
