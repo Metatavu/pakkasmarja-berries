@@ -49,9 +49,23 @@
      * @returns {Promise} Promise that resolves to the created document
      */
     createDocument(name) {
-      return this.documentsApi.createDocument({"document":{"name": `${name}_${moment().format("YYYYMMDDHHmmss")}`}}).then((data) => {
+      const documentData = {
+        name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
+      };
+
+      if (config.get("visma-sign:affiliateCode")) {
+        documentData.affiliates = [{
+          code: config.get("visma-sign:affiliateCode")
+        }];
+      }
+      
+      const document = VismaSignClient.Document.constructFromObject({
+        document: documentData
+      });
+
+      return this.documentsApi.createDocument(document).then((data) => {
         const location = data.location;
-        return location.substring(location.lastIndexOf('/') + 1);
+        return location.substring(location.lastIndexOf("/") + 1);
       });
     }
 
