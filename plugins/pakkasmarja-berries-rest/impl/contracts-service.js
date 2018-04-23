@@ -726,8 +726,18 @@
           this.sendBadRequest(res, "Contract document is already signed");
           return;
         } else {
-          await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
-          await this.signature.deleteDocument(existingContractDocument.vismaSignDocumentId);
+          try {
+            await this.signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
+          } catch (e) {
+            console.log(`Failed to cancel document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
+          }
+
+          try {
+            await this.signature.deleteDocument(existingContractDocument.vismaSignDocumentId);
+          } catch (e) {
+            console.log(`Failed to delete document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
+          }
+
           await this.models.deleteContractDocument(existingContractDocument.id);
         }
       }
@@ -969,7 +979,7 @@
      */
     async getContractDocumentPdf(baseUrl, contract, type) {
       const contractDocument = await this.models.findContractDocumentByContractAndType(contract.id, type);
-      if (contractDocument && contractDocument.vismaSignDocumentId) {
+      if (contractDocument && contractDocument.vismaSignDocumentId && contractDocument.signed) {
         const documentFile = await this.signature.getDocumentFile(contractDocument.vismaSignDocumentId);
         if (documentFile) {
           const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
