@@ -13,7 +13,8 @@
       "pakkasmarja-berries-user-management",
       "pakkasmarja-berries-webhooks",
       "pakkasmarja-berries-cluster-messages",
-      "pakkasmarja-berries-push-notifications"
+      "pakkasmarja-berries-push-notifications",
+      "pakkasmarja-berries-signature"
     ]
   }
 }

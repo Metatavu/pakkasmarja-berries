@@ -746,7 +746,7 @@
       const contractDocument = await this.models.createContractDocument(type, contract.id, vismaSignDocumentId);
       const invitation = await this.signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
       const appUrl = `${req.protocol}://${req.get("host")}`;      
-      const returnUrl = `${appUrl}/signcallback?type=contract-document&contractId=${contractId}&type=${type}`;
+      const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}`;
       const fulfillResult = await this.signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
       
       this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
