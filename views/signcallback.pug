@@ -11,18 +11,29 @@ html(lang='en')
     .container
       .row
         .col.mt-4.pt-4.text-center
-          i.fa.fa-thumbs-o-up 
+          if success
+            i.fa.fa-thumbs-o-up 
+          else
+            i.fa.fa-frown-o
       .row.mt-4
         .col.text-center
-          h3
-            |Kiitos
+          if success
+            h3
+              |Kiitos
+          else
+            h3
+              |Jokin meni vikaan.
+      .row.mt-4
+        .col.text-center
+          if success
+            p
+              |Sopimus on nyt allekirjoitettu. Jos sinulla on kysyttävää, ole hyvä ja ota yhteyttä Pakkasmarjaan.
+          else
+            p
+              |Jokin meni vikaan. Voit yrittää allekirjoittaa sopimuksen uudelleen. Jos ongelma ei katoa, ota yhteyttä Pakkasmarjaan.
       .row.mt-4
         .col.text-center
           p
-            |Sopimus on nyt allekirjoitettu. Jos sinulla on kysyttävää, ole hyvä ja ota yhteyttä Pakkasmarjaan. 
-      .row.mt-4
-        .col.text-center
-          p
-            a.btn(href="/")
+            a.btn(href="/#contracts")
               |palaa applikaatioon
       

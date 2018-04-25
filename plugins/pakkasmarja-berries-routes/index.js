@@ -15,13 +15,14 @@
   
   class Routes {
     
-    constructor (logger, models, userManagement, webhooks, clusterMessages, pushNotifications) {
+    constructor (logger, models, userManagement, webhooks, clusterMessages, pushNotifications, signature) {
       this.logger = logger;
       this.models = models;
       this.userManagement = userManagement;
       this.webhooks = webhooks;
       this.clusterMessages = clusterMessages;
       this.pushNotifications = pushNotifications;
+      this.signature = signature;
     }
     
     getWebApp(req, res) {
@@ -36,9 +37,21 @@
       res.send(config.get("app-version"));
     }
 
-    getSignCallback(req, res) {
-      res.render("signcallback", {
+    async getSignCallback(req, res) {
+      const vismaSignDocumentId = req.query.vismaSignId;
+      let success = false;
+      if (vismaSignDocumentId) {
+        try {
+          const documentStatus = await this.signature.getDocumentStatus(vismaSignDocumentId);
+          success = documentStatus && documentStatus.status === "signed";
+        } catch (e) {
+          success = false;
+          console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
+        }
+      }
 
+      res.render("signcallback", {
+        success: success
       });
     }
     
@@ -353,8 +366,9 @@
     const webhooks = imports["pakkasmarja-berries-webhooks"];
     const clusterMessages = imports["pakkasmarja-berries-cluster-messages"];
     const pushNotifications = imports["pakkasmarja-berries-push-notifications"];
+    const signature = imports["pakkasmarja-berries-signature"];
     
-    const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages, pushNotifications);
+    const routes = new Routes(logger, models, userManagement, webhooks, clusterMessages, pushNotifications, signature);
     register(null, {
       "pakkasmarja-berries-routes": routes
     });
