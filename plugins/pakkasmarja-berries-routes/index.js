@@ -43,7 +43,7 @@
       if (vismaSignDocumentId) {
         try {
           const documentStatus = await this.signature.getDocumentStatus(vismaSignDocumentId);
-          success = documentStatus.status === 'signed';
+          success = documentStatus.status === "signed";
         } catch (e) {
           success = false;
           console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
