@@ -319,7 +319,7 @@
       
       // Webhooks
       
-      app.post("/webhooks/management", this.postWebhooksManagement.bind(this));
+      app.post("/rest/v1/webhooks/management", this.postWebhooksManagement.bind(this));
     }
     
     getBaseUrl() {
