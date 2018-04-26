@@ -46,7 +46,7 @@
           success = documentStatus && documentStatus.status === "signed";
 
           if (success) {
-            const contractDocument = await this.models.findContractDocumentByVismaSignDocumentId();
+            const contractDocument = await this.models.findContractDocumentByVismaSignDocumentId(vismaSignDocumentId);
             if (contractDocument) {
               this.models.updateContractDocumentSigned(contractDocument.id, true);
               this.models.updateContractStatus(contractDocument.contractId, "APPROVED");
