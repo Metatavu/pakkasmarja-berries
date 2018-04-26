@@ -23,7 +23,7 @@
       },
       "contractDocumentStatusBatch": {
         "concurrent": 1,
-        "afterProcessDelay": 5000,
+        "afterProcessDelay": 600000,
         "maxTimeout": 20000
       },
       "sapContactUpdate": {

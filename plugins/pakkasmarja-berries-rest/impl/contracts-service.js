@@ -749,7 +749,6 @@
       const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}`;
       const fulfillResult = await this.signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
       
-      this.tasks.enqueueContractDocumentStatusTask(contractDocument.id);
       res.send(ContractDocumentSignRequest.constructFromObject({redirectUrl: fulfillResult.location }));
     }
     

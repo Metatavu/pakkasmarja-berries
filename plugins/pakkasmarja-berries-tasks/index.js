@@ -196,9 +196,6 @@
       } catch(err) {
         this.logger.error(`Error finding document status with ${err}`);
       } finally {
-        if (!documentSigned) {
-          this.enqueueContractDocumentStatusTask(data.contractDocumentId);
-        }
         callback(null);
       }
     }

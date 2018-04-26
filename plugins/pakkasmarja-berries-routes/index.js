@@ -44,6 +44,17 @@
         try {
           const documentStatus = await this.signature.getDocumentStatus(vismaSignDocumentId);
           success = documentStatus && documentStatus.status === "signed";
+
+          if (success) {
+            const contractDocument = await this.models.findContractDocumentByVismaSignDocumentId();
+            if (contractDocument) {
+              this.models.updateContractDocumentSigned(contractDocument.id, true);
+              this.models.updateContractStatus(contractDocument.contractId, "APPROVED");
+            } else {
+              console.error(`Could not find contract document for vismasignId ${vismaSignDocumentId}`, e);
+            }
+          }
+
         } catch (e) {
           success = false;
           console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
