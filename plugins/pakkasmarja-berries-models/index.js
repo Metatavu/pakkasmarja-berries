@@ -1733,6 +1733,20 @@
     }
     
     /**
+     * Finds contract document by visma document id
+     * 
+     * @param {String} vismaSignDocumentId vismaSignDocumentId
+     * @returns {Promise} Promise for ContractDocument
+     */
+    findContractDocumentByVismaSignDocumentId(vismaSignDocumentId) {
+      return this.ContractDocument.findOne({ 
+        where: {
+          vismaSignDocumentId: vismaSignDocumentId
+        }
+      });
+    }
+    
+    /**
      * Lists contracts documents by signed
      * 
      * @param {boolean} signed signed
