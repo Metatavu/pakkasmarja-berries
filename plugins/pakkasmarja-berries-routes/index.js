@@ -51,7 +51,7 @@
               this.models.updateContractDocumentSigned(contractDocument.id, true);
               this.models.updateContractStatus(contractDocument.contractId, "APPROVED");
             } else {
-              console.error(`Could not find contract document for vismasignId ${vismaSignDocumentId}`, e);
+              console.error(`Could not find contract document for vismasignId ${vismaSignDocumentId}`);
             }
           }
 
