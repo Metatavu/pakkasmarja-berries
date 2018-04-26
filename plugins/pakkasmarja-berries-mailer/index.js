@@ -12,7 +12,14 @@
   class Mailer {
     
     constructor () {
-      this.mailgun = config.get("mode") !== "TEST" ? Mailgun({apiKey: config.get("mail:api_key"), domain: config.get("mail:domain")}) : null;
+      this.mailgun = !this.inTestMode() ? Mailgun({apiKey: config.get("mail:api_key"), domain: config.get("mail:domain")}) : null;
+    }
+
+    /**
+     * Returns whether mail is running in test mode
+     */
+    inTestMode() {
+      return config.get("mode") === "TEST" || !config.get("mail:api_key") || !config.get("mail:domain");
     }
     
     /**
@@ -31,7 +38,7 @@
         text: contents
       };
 
-      if (config.get("mode") !== "TEST") {
+      if (!this.inTestMode()) {
         return this.mailgun.messages().send(options);
       } else {
         const mockFolder = config.get("mail:mockFolder");
