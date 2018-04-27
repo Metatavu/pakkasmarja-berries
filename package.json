@@ -1,7 +1,7 @@
 {
   "name": "pakkasmarja-berries",
   "description": "Shady Engine backend worker for Pakkasmarja Berries application",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
