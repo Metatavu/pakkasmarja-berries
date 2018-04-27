@@ -285,7 +285,7 @@
         deliveryPlaceId,
         proposedDeliveryPlaceId,
         itemGroupId,
-        sapId,
+        sapId || null,
         contractQuantity, 
         deliveredQuantity,
         proposedQuantity,
