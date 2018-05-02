@@ -4,6 +4,7 @@
 (() => {
   "use strict";
 
+  const moment = require("moment");
   const cheerio = require("cheerio");
   const test = require("blue-tape");
   const request = require("supertest");
@@ -319,6 +320,10 @@
         await database.executeFiles(`${__dirname}/data`, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
         await pdf.extractPdfDataFromBuffer(response.body)
           .then((pdfData) => {
+            t.ok(pdfData.rawTextContent.indexOf("Contract is draft") > -1, "Contains is draft text");
+            t.ok(pdfData.rawTextContent.indexOf("Test 1") > -1, "Contains first name");
+            t.ok(pdfData.rawTextContent.indexOf("User 1") > -1, "Contains last name");
+            t.ok(pdfData.rawTextContent.indexOf(moment().locale("fi").format("L")) > -1, "Contains today");
             t.ok(pdfData.rawTextContent.indexOf("1 (1)") > -1, "Contains header page number");
             t.ok(pdfData.rawTextContent.indexOf("start 01.01.2020, end: 31.12.2020, sign: 14.12.2019, term 02.01.2020") > -1, "Contains dates");
             t.ok(pdfData.rawTextContent.indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
@@ -390,6 +395,10 @@
         t.ok($("p").text().indexOf("Test Place 1") > -1, "Contains replaced delivery place");
         t.ok($("p.dates").text().indexOf("start 01.01.2020, end: 31.12.2020, sign: 14.12.2019, term 02.01.2020") > -1, "Contains dates");
         t.ok($("p.businessCodes").text().indexOf("1122334-4 - FI11223344") > -1, "Contains codes");
+        t.ok($("p.draft").text().indexOf("Contract is draft") > -1, "Contains is draft text");
+        t.ok($("p.first").text().indexOf("Test 1") > -1, "Contains first name");
+        t.ok($("p.last").text().indexOf("User 1") > -1, "Contains last name");
+        t.ok($("p.today").text().indexOf(moment().locale("fi").format("L")) > -1, "Contains today");
       });
   });
   
