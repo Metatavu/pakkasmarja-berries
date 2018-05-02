@@ -226,6 +226,17 @@
         const sapVatLiable = businessPartner.VatLiable.trim();
         const audit = businessPartner.Audit.trim();
         const vatLiable = this.translateSapVatLiable(sapVatLiable);
+
+        if (!email) {
+          this.logger.error(`Could not synchronize user with SAP id ${sapId} because email is null`);
+          
+          callback({
+            message: `Could not synchronize user with SAP id ${sapId} because email is null`,
+            operationReportItemId: data.operationReportItemId
+          });
+
+          return;
+        }
         
         let user = await this.userManagement.findUserByProperty(this.userManagement.ATTRIBUTE_SAP_ID, sapId);
         if (!user) {
