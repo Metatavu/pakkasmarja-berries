@@ -947,7 +947,7 @@
         contractEndDate: this.formatDate(contract.endDate),
         contractSignDate: this.formatDate(contract.signDate),
         contractTermDate: this.formatDate(contract.termDate),
-        isContractDraft: contract.status === 'DRAFT',
+        isContractDraft: contract.status === "DRAFT",
         today: this.formatDate(new Date()),
         businessCode: businessCode,
         taxCode: taxCode
