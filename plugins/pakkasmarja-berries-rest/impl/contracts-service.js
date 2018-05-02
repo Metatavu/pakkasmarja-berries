@@ -702,7 +702,7 @@
           return;
         }
       }
-      
+
       const document = await this.getContractDocumentPdf(`${req.protocol}://${req.get("host")}`, contract, type);
       if (!document) {
         this.sendNotFound(res);
@@ -915,19 +915,19 @@
       if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
         return null;
       }
-      
+
       const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
       
       const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
       if (!documentTemplate) {
         return null;
       }
-      
+
       const user = await this.userManagement.findUser(contract.userId);
       if (!user) {
         return null;
       }
-      
+
       const year = (new Date()).getFullYear();
       const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
       const taxCode = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE);
@@ -937,6 +937,8 @@
       
       const templateData = {
         companyName: companyName,
+        userFirstName: user.firstName, 
+        userLastName: user.lastName,
         contract: contract,
         prices: prices,
         deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
@@ -945,10 +947,12 @@
         contractEndDate: this.formatDate(contract.endDate),
         contractSignDate: this.formatDate(contract.signDate),
         contractTermDate: this.formatDate(contract.termDate),
+        isContractDraft: contract.status === "DRAFT",
+        today: this.formatDate(new Date()),
         businessCode: businessCode,
         taxCode: taxCode
       };
-      
+
       const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
       if (!content) {
         return null;
@@ -1000,7 +1004,7 @@
         documentName: contractDocumentHtml.documentName, 
         fileName: `${contractDocumentHtml.documentSlug}.pdf`, 
         dataStream: await this.pdf.renderPdf(contractDocumentHtml.content, contractDocumentHtml.header, contractDocumentHtml.footer, baseUrl) 
-      };    
+      };
     }
 
     /**
