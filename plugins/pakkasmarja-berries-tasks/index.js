@@ -240,11 +240,7 @@
           });
           return;
         }
-
-        if (email) {
-          user.email = email;
-        }
-
+        
         this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID, sapId);
         this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_1, phone1);
         this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_2, phone2);
