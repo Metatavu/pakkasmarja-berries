@@ -5,7 +5,9 @@
       <th>Viljeltävä marja-laji (esim.1a)</th>
       <th>Lohko</th>
       <th>Pinta-ala (ha)</th>
+      {{^itemGroup.minimumProfitEstimation}}
       <th>Tuottoarvio (kg)</th>
+      {{/itemGroup.minimumProfitEstimation}}
     </tr>
   </thead>
   <tbody>
@@ -14,7 +16,9 @@
       <td>{{species}}</td>
       <td>{{name}}</td>
       <td>{{size}}</td>
+      {{^itemGroup.minimumProfitEstimation}}
       <td>{{profitEstimation}}</td>
+      {{/itemGroup.minimumProfitEstimation}}
     </tr>
     {{/areaDetails}}
   </tbody>

@@ -934,12 +934,14 @@
       const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
       const deliveryPlace = contract.deliveryPlaceId ? await this.models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
       const businessCode = this.getBusinessCode(taxCode);
-      
+      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+
       const templateData = {
         companyName: companyName,
         userFirstName: user.firstName, 
         userLastName: user.lastName,
         contract: contract,
+        itemGroup: itemGroup,
         prices: prices,
         deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
         areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : [],
