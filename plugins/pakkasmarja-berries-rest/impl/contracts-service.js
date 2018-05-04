@@ -910,67 +910,72 @@
      * @param {String} type document type 
      */
     async getContractDocumentHtml(baseUrl, contract, type) {
-      const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
-      const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
-      if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
-        return null;
+      try {
+        const contractDocumentTemplate = await this.models.findContractDocumentTemplateByTypeAndContractId(type, contract.id);
+        const itemGroupDocumentTemplate = !contractDocumentTemplate ? await this.models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, contract.itemGroupId) : null;
+        if (!contractDocumentTemplate && !itemGroupDocumentTemplate) {
+          return null;
+        }
+
+        const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
+        
+        const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
+        if (!documentTemplate) {
+          return null;
+        }
+
+        const user = await this.userManagement.findUser(contract.userId);
+        if (!user) {
+          return null;
+        }
+
+        const year = (new Date()).getFullYear();
+        const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
+        const taxCode = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE);
+        const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
+        const deliveryPlace = contract.deliveryPlaceId ? await this.models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
+        const businessCode = this.getBusinessCode(taxCode);
+        const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+
+        const templateData = {
+          companyName: companyName,
+          userFirstName: user.firstName, 
+          userLastName: user.lastName,
+          contract: contract,
+          itemGroup: itemGroup,
+          prices: prices,
+          deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
+          areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : [],
+          contractStartDate: this.formatDate(contract.startDate),
+          contractEndDate: this.formatDate(contract.endDate),
+          contractSignDate: this.formatDate(contract.signDate),
+          contractTermDate: this.formatDate(contract.termDate),
+          isContractDraft: contract.status === "DRAFT",
+          today: this.formatDate(new Date()),
+          businessCode: businessCode,
+          taxCode: taxCode
+        };
+
+        const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
+        if (!content) {
+          return null;
+        }
+        
+        const header = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
+        const footer = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
+        const documentName = this.getDocumentName(itemGroup, companyName);
+        const documentSlug = this.getDocumentSlug(documentName);
+
+        return { 
+          documentName: documentName, 
+          fileName: `${documentSlug}.html`, 
+          content: content, 
+          header: header, 
+          footer: footer
+        };    
+      } catch (e) {
+        console.log("Failed to generate contract document html", e);
       }
-
-      const documentTemplateId = contractDocumentTemplate ? contractDocumentTemplate.documentTemplateId : itemGroupDocumentTemplate.documentTemplateId;
-      
-      const documentTemplate = await this.models.findDocumentTemplateById(documentTemplateId);
-      if (!documentTemplate) {
-        return null;
-      }
-
-      const user = await this.userManagement.findUser(contract.userId);
-      if (!user) {
-        return null;
-      }
-
-      const year = (new Date()).getFullYear();
-      const companyName = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_COMPANY_NAME);
-      const taxCode = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_TAX_CODE);
-      const prices = await this.models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
-      const deliveryPlace = contract.deliveryPlaceId ? await this.models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
-      const businessCode = this.getBusinessCode(taxCode);
-      
-      const templateData = {
-        companyName: companyName,
-        userFirstName: user.firstName, 
-        userLastName: user.lastName,
-        contract: contract,
-        prices: prices,
-        deliveryPlace: deliveryPlace ? deliveryPlace.name : null,
-        areaDetails: contract.areaDetails ? JSON.parse(contract.areaDetails) : [],
-        contractStartDate: this.formatDate(contract.startDate),
-        contractEndDate: this.formatDate(contract.endDate),
-        contractSignDate: this.formatDate(contract.signDate),
-        contractTermDate: this.formatDate(contract.termDate),
-        isContractDraft: contract.status === "DRAFT",
-        today: this.formatDate(new Date()),
-        businessCode: businessCode,
-        taxCode: taxCode
-      };
-
-      const content = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
-      if (!content) {
-        return null;
-      }
-      
-      const header = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
-      const footer = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
-      const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
-      const documentName = this.getDocumentName(itemGroup, companyName);
-      const documentSlug = this.getDocumentSlug(documentName);
-
-      return { 
-        documentName: documentName, 
-        fileName: `${documentSlug}.html`, 
-        content: content, 
-        header: header, 
-        footer: footer
-      };    
     }
 
     /**
