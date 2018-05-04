@@ -963,7 +963,6 @@
         
         const header = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
         const footer = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
-        const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
         const documentName = this.getDocumentName(itemGroup, companyName);
         const documentSlug = this.getDocumentSlug(documentName);
 
@@ -975,7 +974,7 @@
           footer: footer
         };    
       } catch (e) {
-        console.error("Failed to generate contract document html", e);
+        console.log("Failed to generate contract document html", e);
       }
     }
 
