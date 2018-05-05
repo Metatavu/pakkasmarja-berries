@@ -277,7 +277,7 @@
       const name = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName ;
       
       if (company && name) {
-        return `${name} ${company}`;
+        return this.isCompanyNameEqualToName(name, company) ? name : `${name} ${company}`;
       }
       
       if (company) {
@@ -289,6 +289,25 @@
       }
       
       return `<${user.email}>`;
+    }
+    
+    isCompanyNameEqualToName(name, company) {
+      if (!(company && name)) {
+        return false;
+      }
+
+      if (name.length !== company.length) {
+        return false;
+      }
+
+      const nameparts = name.split(" ");
+      for(let i = 0; i < nameparts.length;i++) {
+        if(company.indexOf(nameparts[i]) < 0) {
+          return false;
+        }
+      }
+      
+      return true;
     }
     
     getUserImage(user) {

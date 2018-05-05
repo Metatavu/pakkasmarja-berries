@@ -2,20 +2,20 @@
 <table class="area-details">
   <thead>
     <tr>
-      <th>Viljeltävä marja-laji (esim.1a)</th>
-      <th>Lohko</th>
+      <th>Lohko/Lohkot</th>
       <th>Pinta-ala (ha)</th>
+      <th>Lajike/Lajikkeet</th>
       {{^itemGroup.minimumProfitEstimation}}
-      <th>Tuottoarvio (kg)</th>
+      <th>Tuottoarvio (kg / ha)</th>
       {{/itemGroup.minimumProfitEstimation}}
     </tr>
   </thead>
   <tbody>
     {{#areaDetails}}
     <tr>
-      <td>{{species}}</td>
       <td>{{name}}</td>
       <td>{{size}}</td>
+      <td>{{species}}</td>
       {{^itemGroup.minimumProfitEstimation}}
       <td>{{profitEstimation}}</td>
       {{/itemGroup.minimumProfitEstimation}}
