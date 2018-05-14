@@ -56,13 +56,19 @@
         charset: "utf8mb4"
       }));
 
+      this[`${name}Queue`].on("task_progress", (taskId, completed, total) => {
+        console.log(`[taskqueue] Task with id ${taskId} progressing...`);
+      });
+
       this[`${name}Queue`].on("task_finish", (taskId, result) => {
+        console.log(`[taskqueue] Task with id ${taskId} finished`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
         }
       });
 
       this[`${name}Queue`].on("task_failed", (taskId, result) => {
+        console.log(`[taskqueue] Task with id ${taskId} failed`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
         }

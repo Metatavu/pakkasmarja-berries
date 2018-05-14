@@ -480,6 +480,7 @@
       if (!this._client || this._requireFreshClient) {
         this._client = KeycloakAdminClient(config.get("keycloak:admin"));
         this._requireFreshClient = false;
+        console.log("[Usermanagement] getting fresh keycloak client...");
       }
       
       return this._client;
