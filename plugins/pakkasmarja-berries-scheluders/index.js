@@ -14,6 +14,7 @@
     }
     
     syncManagementNewsArticles() {
+      console.log("[schedulers] Starting to sync news articles...");
       this.models.findAllNewsArticles()
         .then((articles) => {
           this.wordpress.listPosts(1, 99)
@@ -39,6 +40,7 @@
     }
 
     syncManagementChatThreads() {
+      console.log("[schedulers] Starting to sync chat threads...");
       this.models.findAllChatThreads()
         .then((chatThreads) => {
           this.wordpress.listChatThreads()
@@ -64,6 +66,7 @@
     }
     
     syncManagementQuestionGroups() {
+      console.log("[schedulers] Starting to sync question groups...");
       this.models.findAllQuestionGroups()
         .then((questionGroups) => {
           this.wordpress.listQuestionGroups()
