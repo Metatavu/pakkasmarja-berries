@@ -248,7 +248,7 @@
         client.sendMessage({
           "type": "question-groups-added",
           "data": {
-            'question-groups': questionGroups
+            "question-groups": questionGroups
           }
         });
       } catch (e) {
