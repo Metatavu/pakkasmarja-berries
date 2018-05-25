@@ -211,7 +211,7 @@
       const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id });
       const questionGroupRoleMaps = await this.models.getQuestionGroupsUserGroupRoleMaps(questionGroupIds);
       
-      const questionGroupsUserThreads = await listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
+      const questionGroupsUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
       const questionGroupItemReadPromises = [];
       const questionGroups = [];
       questionGroupsData.forEach((questionGroup, index) => {
