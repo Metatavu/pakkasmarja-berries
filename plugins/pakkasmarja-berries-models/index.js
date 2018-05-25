@@ -504,6 +504,10 @@
       return this.Thread.findOne({ where: { id : id } });
     }
     
+    findThreads(ids) {
+      return this.Thread.findAll({ where: { id : { $in: ids } }});
+    }
+    
     findThreadByOriginId(originId) {
       return this.Thread.findOne({ where: { originId : originId } });
     }
@@ -569,6 +573,19 @@
 
           _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
             result[questionGroupUserGroupRole.userGroupId] = questionGroupUserGroupRole.role;
+          });
+
+          return result;
+        });
+    }
+    
+    getQuestionGroupsUserGroupRoleMaps(questionGroupIds) {
+      return this.listQuestionGroupUserGroupRolesByQuestionGroupIds(questionGroupIds)
+        .then((questionGroupUserGroupRoles) => {
+          const result = {};
+
+          _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
+            result[questionGroupUserGroupRole.questionGroupId] = { [questionGroupUserGroupRole.userGroupId]: questionGroupUserGroupRole.role };
           });
 
           return result;
@@ -731,6 +748,14 @@
         });
     }
     
+    async listQuestionGroupsByUserGroupIds(userGroupIds) {
+      const questionGroupUserGroupRoles = await this.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: { $in: userGroupIds} } });
+      return this.QuestionGroup.findAll({ where: {
+        id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
+        archived: false
+      }});
+    }
+    
     listQuestionGroupsByUserGroupIdsAndRole(userGroupIds, role) {
       return this.QuestionGroupUserGroupRole.findAll({ where: {
           userGroupId: {$in: userGroupIds },
@@ -831,6 +856,10 @@
       return this.QuestionGroupUserThread.findAll({ where: { questionGroupId : questionGroupId } } );
     }
     
+    listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds) {
+      return this.QuestionGroupUserThread.findAll({ where: { questionGroupId : { $in: questionGroupIds } } } );
+    }
+    
     // News Articles
     
     createNewsArticle(originId, title, contents, imageUrl) {
@@ -908,6 +937,10 @@
       return this.ItemRead.findOne({ where: { userId: userId, itemId: itemId } });
     }
     
+    findItemReads(itemIds, userId) {
+      return this.ItemRead.findAll({ where: { userId: userId, itemId: { $in: itemIds } } });
+    }
+    
     updateItemRead(id, itemId, userId) {
       return this.ItemRead.update({
       }, {
@@ -944,6 +977,10 @@
     
     listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId) {
       return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId } });
+    }
+    
+    listQuestionGroupUserGroupRolesByQuestionGroupIds(questionGroupIds) {
+      return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : { $in: questionGroupIds } } });
     }
     
     listQuestionGroupUserGroupIds(questionGroupId) {
