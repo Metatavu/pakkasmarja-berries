@@ -257,127 +257,91 @@
       }
     }
     
-    onSelectQuestionGroupThread(message, client) {
-      const questionGroupId = message['question-group-id'];
-      this.getUserId(client)
-        .then((userId) => {
-          this.models.findQuestionGroup(questionGroupId)
-            .then((questionGroup) => {
-              this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroup.id, userId)
-                .then((data) => {
-                  const thread = data.thread;
-                  const created = thread.createdAt;
-                  client.sendMessage({
-                    "type": "question-thread-selected",
-                    "data": {
-                      'thread-id': thread.id
-                    }
-                  });
-                  
-                  if (created) {
-                    this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
-                      .then((managerUserGroupIds) => {
-                        this.userManagement.findUser(config.get("keycloak:admin:realm"), userId)
-                          .then((user) => {
-                            this.userManagement.listGroupsMemberIds(config.get("keycloak:admin:realm"), managerUserGroupIds)
-                              .then((userIds) => {
-                                userIds.forEach((userId) => {
-                                  this.shadyMessages.trigger("client:question-group-thread-added", {
-                                    'question-group-id': questionGroupId,
-                                    'thread': {
-                                      id: thread.id,
-                                      latestMessage: thread.latestMessage,
-                                      title: this.userManagement.getUserDisplayName(user),
-                                      type: thread.type,
-                                      imageUrl: this.userManagement.getUserImage(user)
-                                    },
-                                    'user-id': userId
-                                  });
-                                });
-                              })
-                              .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
-                          })
-                          .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));                        
-                      });
-                  }
-                })
-                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
-            })
-            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
-        })
-        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREAD'));
+    async onSelectQuestionGroupThread(message, client) {
+      try {
+        const questionGroupId = message['question-group-id'];
+        const userId = await this.getUserId(client);
+        const questionGroup = await this.models.findQuestionGroup(questionGroupId);
+        const data = await this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroup.id, userId);
+        const thread = data.thread;
+        const created = thread.createdAt;
+
+        if (created) {
+          const managerUserGroupIds = await this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
+          const user = await this.userManagement.findUser(config.get("keycloak:admin:realm"), userId);
+          const userIds = await this.userManagement.listGroupsMemberIds(config.get("keycloak:admin:realm"), managerUserGroupIds);
+          userIds.forEach((userId) => {
+            this.shadyMessages.trigger("client:question-group-thread-added", {
+              'question-group-id': questionGroupId,
+              'thread': {
+                id: thread.id,
+                latestMessage: thread.latestMessage,
+                title: this.userManagement.getUserDisplayName(user),
+                type: thread.type,
+                imageUrl: this.userManagement.getUserImage(user)
+              },
+              'user-id': userId
+            });
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        this.handleWebSocketError(client, "GET_QUESTION_GROUP_THREAD");
+      }
     }
     
-    onGetQuestionGroupThreads(message, client) {
-      const questionGroupId = message['question-group-id'];
-      const keycloakRealm = config.get("keycloak:admin:realm");
-              
-      this.getUserId(client)
-        .then((userId) => {
-          this.userManagement.checkPermissionToListQuestionGroupThreads(keycloakRealm, userId, questionGroupId)
-            .then((permission) => {
-              if (!permission) {
-                this.logger.warn(`User ${userId} attempted to list threads from question group ${questionGroupId}`);
-                return;
-              }
-              
-              this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId)
-                .then((questionGroupUserThreads) => {
-                  const userIds = _.map(questionGroupUserThreads, 'userId');
-                  const threadIds = _.map(questionGroupUserThreads, 'threadId');
-                  this.userManagement.getUserMap(keycloakRealm, _.uniq(userIds))
-                    .then((userMap) => {
-                      this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }))
-                        .then((itemReadMap) => {
-                          const threadPromises = _.map(threadIds, (threadId, index) => {
-                            return new Promise((resolve, reject) => {
-                              this.models.findThread(threadId)
-                                .then((thread) => {
-                                  const userId = userIds[index];
-                                  const user = userMap[userId];
-                                  const threadRead = itemReadMap[`thread-${thread.id}`];
+    async onGetQuestionGroupThreads(message, client) {
+      try {
+        const questionGroupId = message["question-group-id"];
+        const keycloakRealm = config.get("keycloak:admin:realm");
+        const userId = await this.getUserId(client);
+        const permission = await this.userManagement.checkPermissionToListQuestionGroupThreads(keycloakRealm, userId, questionGroupId);
+        if (!permission) {
+          this.logger.warn(`User ${userId} attempted to list threads from question group ${questionGroupId}`);
+          return;
+        }
+        const questionGroupUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId);
+        const userIds = _.map(questionGroupUserThreads, 'userId');
+        const threadIds = _.map(questionGroupUserThreads, 'threadId');
+        const userMap = await this.userManagement.getUserMap(keycloakRealm, _.uniq(userIds));
+        const itemReadMap = await this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }));
+        const threadUserIdMap = {};
+        threadIds.forEach((threadId, index) => {
+          threadUserIdMap[threadId] = userIds[index];
+        });
 
-                                  resolve({
-                                    id: thread.id,
-                                    latestMessage: thread.latestMessage,
-                                    title: this.userManagement.getUserDisplayName(user),
-                                    type: thread.type,
-                                    imageUrl: this.userManagement.getUserImage(user),
-                                    read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
-                                  });
-                                })
-                                .catch(reject);
-                            });
-                          });
+        const threadDatas = await this.models.findThreads(threadIds);
+        const threads = threadDatas.map((thread) => {
+          let userId = threadUserIdMap[thread.id];
+          let user = userMap[userId];
+          let threadRead = itemReadMap[`thread-${thread.id}`];
+          return {
+            id: thread.id,
+            latestMessage: thread.latestMessage,
+            title: this.userManagement.getUserDisplayName(user),
+            type: thread.type,
+            imageUrl: this.userManagement.getUserImage(user),
+            read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+          };
+        });
 
-                          Promise.all(threadPromises)
-                            .then((threads) => {
-                              
-                              threads.sort((a, b) => {
-                                let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
-                                let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
-                                return latestB - latestA;
-                              });
-                              
-                              client.sendMessage({
-                                "type": "question-group-threads-added",
-                                "data": {
-                                  'question-group-id': questionGroupId,
-                                  'threads': threads
-                                }
-                              });
-                            })
-                            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-                      })
-                      .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-                    })
-                    .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-                })
-                .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-            })
-            .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
-        })
-        .catch(this.handleWebSocketError(client, 'GET_QUESTION_GROUP_THREADS'));
+        threads.sort((a, b) => {
+          let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+          let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+          return latestB - latestA;
+        });
+
+        client.sendMessage({
+          "type": "question-group-threads-added",
+          "data": {
+            'question-group-id': questionGroupId,
+            'threads': threads
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        this.handleWebSocketError(client, "GET_QUESTION_GROUP_THREADS");
+      }
     }
     
     onGetMessages(message, client) {
@@ -737,25 +701,9 @@
       });
     }
     
-    getItemReadMap(userId, ids) {
-      return new Promise((resolve, reject) => {
-        const itemReadPromises = _.map(ids, (id) => {
-          return this.getItemRead(userId, id);
-        });
-
-        Promise.all(itemReadPromises)
-          .then((readItems) => {
-            const result = {};
-
-            _.forEach(ids, (id, index) => {
-              const readItem = readItems[index];
-              result[id] = readItem;
-            });
-
-            resolve(result);
-          })
-          .catch(reject);
-      });
+    async getItemReadMap(userId, ids) {
+      const readItems = await this.models.findItemReads(ids, userId);
+      return _.keyBy(readItems, "itemId");;
     }
     
     getItemRead(userId, id) {
