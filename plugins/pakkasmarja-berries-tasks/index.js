@@ -27,7 +27,7 @@
       this.userManagement = userManagement;
 
       this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
-      //this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
+      this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
       this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
       this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
       this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
