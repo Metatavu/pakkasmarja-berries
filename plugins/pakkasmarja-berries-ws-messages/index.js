@@ -211,16 +211,13 @@
       const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id });
       const questionGroupRoleMaps = await this.models.getQuestionGroupsUserGroupRoleMaps(questionGroupIds);
       
-      const roles = questionGroupRoleMaps.map((userGroupRoleMap) => {
-        return this.userManagement.getUserGroupRole(userGroupRoleMap, userGroupIds);
-      });
-      
       const questionGroupsUserThreads = await listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
       const questionGroupItemReadPromises = [];
       const questionGroups = [];
       questionGroupsData.forEach((questionGroup, index) => {
         let userThreads = questionGroupsUserThreads.filter(questionGroupsUserThread => questionGroupsUserThread.questionGroupId === questionGroup.id );
-        if (roles[index] === 'manager') {
+        let role = this.userManagement.getUserGroupRole(questionGroupRoleMaps[questionGroup.id], userGroupIds);
+        if (role === 'manager') {
           questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads, 'threadId')));
         } else {
           questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads.filter(filteredUserThread => filteredUserThread.userId === userId) , 'threadId')));
@@ -232,7 +229,7 @@
           originId: questionGroup.originId,
           imageUrl: questionGroup.imageUrl,
           latestMessage: questionGroup.latestMessage,
-          role: roles[index]
+          role: role
         });
       });
 
