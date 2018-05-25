@@ -585,7 +585,7 @@
           const result = {};
 
           _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
-              result[questionGroupUserGroupRole.questionGroupId] = { [questionGroupUserGroupRole.userGroupId]: questionGroupUserGroupRole.role };
+            result[questionGroupUserGroupRole.questionGroupId] = { [questionGroupUserGroupRole.userGroupId]: questionGroupUserGroupRole.role };
           });
 
           return result;

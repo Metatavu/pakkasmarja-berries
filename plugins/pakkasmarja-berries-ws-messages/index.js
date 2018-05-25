@@ -209,19 +209,19 @@
         const userGroupIds = await this.getUserGroupIds(client, userId);
         const questionGroupsResult = await this.models.listQuestionGroupsByUserGroupIds(userGroupIds);
         const questionGroupsData = _.flatten(questionGroupsResult);
-        const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id });
+        const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id; });
         const questionGroupRoleMaps = await this.models.getQuestionGroupsUserGroupRoleMaps(questionGroupIds);
 
         const questionGroupsUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
         const questionGroupItemReadPromises = [];
         const questionGroups = [];
-        questionGroupsData.forEach((questionGroup, index) => {
+        questionGroupsData.forEach((questionGroup) => {
           let userThreads = questionGroupsUserThreads.filter(questionGroupsUserThread => questionGroupsUserThread.questionGroupId === questionGroup.id );
           let role = this.userManagement.getUserGroupRole(questionGroupRoleMaps[questionGroup.id], userGroupIds);
-          if (role === 'manager') {
-            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads, 'threadId')));
+          if (role === "manager") {
+            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads, "threadId")));
           } else {
-            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads.filter(filteredUserThread => filteredUserThread.userId === userId) , 'threadId')));
+            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads.filter(filteredUserThread => filteredUserThread.userId === userId) , "threadId")));
           }
 
           questionGroups.push({
@@ -253,7 +253,7 @@
         });
       } catch (e) {
         console.error(e);
-        this.handleWebSocketError(client, 'GET_QUESTION_GROUPS');
+        this.handleWebSocketError(client, "GET_QUESTION_GROUPS");
       }
     }
     
@@ -696,9 +696,9 @@
     }
     
     async getThreadsHasUnreadMessages(userId, threadIds) {
-      const itemReads = await this.models.findItemReads(threadIds.map((threadId) => { return `thread-${threadId}` }), userId);
-      const itemReadsLookup = _.keyBy(itemReads, 'itemId');
-      const threads = await this.models.findThreads(threadIds)
+      const itemReads = await this.models.findItemReads(threadIds.map((threadId) => { return `thread-${threadId}`; }), userId);
+      const itemReadsLookup = _.keyBy(itemReads, "itemId");
+      const threads = await this.models.findThreads(threadIds);
       let result = false;
       
       for(let i = 0; i < threads.length; i++) {
@@ -708,7 +708,7 @@
         }
         
         let itemRead = itemReadsLookup[`thread-${thread.id}`];
-        if (!itemRead || thread.latestMessage.getTime() > itemRead.updatedAt.getTime()) {
+        if (!itemRead || thread.latestMessage.getTime() > itemRead.updatedAt.getTime()) {
           result = true;
           break;
         }
