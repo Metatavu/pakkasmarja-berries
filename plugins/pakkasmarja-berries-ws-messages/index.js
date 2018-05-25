@@ -703,7 +703,7 @@
         }
         
         let itemRead = itemReadsLookup[`thread-${thread.id}`];
-        if (!itemRead || thread.latestMessage.getTime() > itemRead.getTime()) {
+        if (!itemRead || thread.latestMessage.getTime() > itemRead.updatedAt.getTime()) {
           result = true;
           break;
         }
