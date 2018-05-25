@@ -204,52 +204,57 @@
     }
     
     async onGetQuestionGroups(message, client) {
-      const userId = await this.getUserId(client);
-      const userGroupIds = await this.getUserGroupIds(client, userId);
-      const questionGroupsResult = await this.models.listQuestionGroupsByUserGroupIds(userGroupIds);
-      const questionGroupsData = _.flatten(questionGroupsResult);
-      const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id });
-      const questionGroupRoleMaps = await this.models.getQuestionGroupsUserGroupRoleMaps(questionGroupIds);
-      
-      const questionGroupsUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
-      const questionGroupItemReadPromises = [];
-      const questionGroups = [];
-      questionGroupsData.forEach((questionGroup, index) => {
-        let userThreads = questionGroupsUserThreads.filter(questionGroupsUserThread => questionGroupsUserThread.questionGroupId === questionGroup.id );
-        let role = this.userManagement.getUserGroupRole(questionGroupRoleMaps[questionGroup.id], userGroupIds);
-        if (role === 'manager') {
-          questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads, 'threadId')));
-        } else {
-          questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads.filter(filteredUserThread => filteredUserThread.userId === userId) , 'threadId')));
-        }
-        
-        questionGroups.push({
-          id: questionGroup.id,
-          title: questionGroup.title,
-          originId: questionGroup.originId,
-          imageUrl: questionGroup.imageUrl,
-          latestMessage: questionGroup.latestMessage,
-          role: role
+      try {
+        const userId = await this.getUserId(client);
+        const userGroupIds = await this.getUserGroupIds(client, userId);
+        const questionGroupsResult = await this.models.listQuestionGroupsByUserGroupIds(userGroupIds);
+        const questionGroupsData = _.flatten(questionGroupsResult);
+        const questionGroupIds = questionGroupsData.map((questionGroup) => {return questionGroup.id });
+        const questionGroupRoleMaps = await this.models.getQuestionGroupsUserGroupRoleMaps(questionGroupIds);
+
+        const questionGroupsUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds);
+        const questionGroupItemReadPromises = [];
+        const questionGroups = [];
+        questionGroupsData.forEach((questionGroup, index) => {
+          let userThreads = questionGroupsUserThreads.filter(questionGroupsUserThread => questionGroupsUserThread.questionGroupId === questionGroup.id );
+          let role = this.userManagement.getUserGroupRole(questionGroupRoleMaps[questionGroup.id], userGroupIds);
+          if (role === 'manager') {
+            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads, 'threadId')));
+          } else {
+            questionGroupItemReadPromises.push(this.getThreadsHasUnreadMessages(userId, _.map(userThreads.filter(filteredUserThread => filteredUserThread.userId === userId) , 'threadId')));
+          }
+
+          questionGroups.push({
+            id: questionGroup.id,
+            title: questionGroup.title,
+            originId: questionGroup.originId,
+            imageUrl: questionGroup.imageUrl,
+            latestMessage: questionGroup.latestMessage,
+            role: role
+          });
         });
-      });
 
-      const questionGroupItemReads = await Promise.all(questionGroupItemReadPromises);
-      questionGroupItemReads.forEach((itemRead, index) => {
-        questionGroups[index].read = !itemRead;
-      });
+        const questionGroupItemReads = await Promise.all(questionGroupItemReadPromises);
+        questionGroupItemReads.forEach((itemRead, index) => {
+          questionGroups[index].read = !itemRead;
+        });
 
-      questionGroups.sort((a, b) => {
-        let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
-        let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
-        return latestB - latestA;
-      });
-      
-      client.sendMessage({
-        "type": "question-groups-added",
-        "data": {
-          'question-groups': questionGroups
-        }
-      });
+        questionGroups.sort((a, b) => {
+          let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+          let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+          return latestB - latestA;
+        });
+
+        client.sendMessage({
+          "type": "question-groups-added",
+          "data": {
+            'question-groups': questionGroups
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        this.handleWebSocketError(client, 'GET_QUESTION_GROUPS');
+      }
     }
     
     onSelectQuestionGroupThread(message, client) {

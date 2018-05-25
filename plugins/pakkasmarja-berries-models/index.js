@@ -508,7 +508,6 @@
       return this.Thread.findAll({ where: { id : { $in: ids } }});
     }
     
-    
     findThreadByOriginId(originId) {
       return this.Thread.findOne({ where: { originId : originId } });
     }
