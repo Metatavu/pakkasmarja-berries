@@ -252,7 +252,9 @@
             const result = {};
     
             users.forEach((user) => {
-              result[user.id] = user;
+              if (user) {
+                result[user.id] = user; 
+              }
             });
             
             resolve(result);

@@ -317,18 +317,21 @@
         });
 
         const threadDatas = await this.models.findThreads(threadIds);
-        const threads = threadDatas.map((thread) => {
+        const threads = [];
+        threadDatas.forEach((thread) => {
           let userId = threadUserIdMap[thread.id];
           let user = userMap[userId];
-          let threadRead = itemReadMap[`thread-${thread.id}`];
-          return {
-            id: thread.id,
-            latestMessage: thread.latestMessage,
-            title: this.userManagement.getUserDisplayName(user),
-            type: thread.type,
-            imageUrl: this.userManagement.getUserImage(user),
-            read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
-          };
+          if (user) {
+            let threadRead = itemReadMap[`thread-${thread.id}`];
+            threads.push({
+              id: thread.id,
+              latestMessage: thread.latestMessage,
+              title: this.userManagement.getUserDisplayName(user),
+              type: thread.type,
+              imageUrl: this.userManagement.getUserImage(user),
+              read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+            });
+          }
         });
 
         threads.sort((a, b) => {
