@@ -264,7 +264,13 @@
         const questionGroup = await this.models.findQuestionGroup(questionGroupId);
         const data = await this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroup.id, userId);
         const thread = data.thread;
-        const created = thread.createdAt;
+        const created = data.created;
+        client.sendMessage({
+          "type": "question-thread-selected",
+          "data": {
+            "thread-id": thread.id
+          }
+        });
 
         if (created) {
           const managerUserGroupIds = await this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
@@ -703,7 +709,12 @@
     
     async getItemReadMap(userId, ids) {
       const readItems = await this.models.findItemReads(ids, userId);
-      return _.keyBy(readItems, "itemId");;
+      const result = {};
+      readItems.forEach((readItem) => {
+        result[readItem.itemId] = readItem.updatedAt;
+      });
+
+      return result;
     }
     
     getItemRead(userId, id) {
