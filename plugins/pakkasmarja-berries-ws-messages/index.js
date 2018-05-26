@@ -264,7 +264,13 @@
         const questionGroup = await this.models.findQuestionGroup(questionGroupId);
         const data = await this.models.findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroup.id, userId);
         const thread = data.thread;
-        const created = thread.createdAt;
+        const created = data.created;
+        client.sendMessage({
+          "type": "question-thread-selected",
+          "data": {
+            "thread-id": thread.id
+          }
+        });
 
         if (created) {
           const managerUserGroupIds = await this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
