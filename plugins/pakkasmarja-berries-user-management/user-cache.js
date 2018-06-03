@@ -73,7 +73,7 @@
      * @returns key for user id
      */
     getKey(userId) {
-      return `user-${userId}`
+      return `user-${userId}`;
     }
 
   }
