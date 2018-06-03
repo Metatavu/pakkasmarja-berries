@@ -119,7 +119,7 @@
           this._resolveMessage()
             .then((message) => {
               if (message) {
-                this.userManagement.findUser(config.get("keycloak:admin:realm"), message.userId)
+                this.userManagement.findUser(message.userId)
                   .then((user) => {
                     this.user(user);
                     resolve(this._user);

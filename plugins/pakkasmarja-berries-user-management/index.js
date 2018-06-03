@@ -9,12 +9,14 @@
   const crypto = require("crypto");
   const KeycloakAdminClient = require("keycloak-admin-client");
   const Promise = require("bluebird");
+  const UserCache = require(`${__dirname}/user-cache`);
   
   class PakkasmarjaBerriesUserManagement {
     
     constructor (logger, models) {
       this.logger = logger;
       this.models = models;
+      this.userCache = config.get("cache:enabled") ? new UserCache(config.get("cache:expire-time")) : null;
       this._client = null;
       this._requireFreshClient = true;
       setInterval(() => {
@@ -25,17 +27,23 @@
     /**
      * Finds single user from Keycloak.
      * 
-     * @param {String} realm realm (optional)
      * @param {String} id user id
      * @return {Promise} promise for a user or null if not found
      */
-    findUser(realm, id) {
+    async findUser(id) {
+      const cachedUser = this.userCache ? await this.userCache.get(id) : null;
+      if (cachedUser) {
+        return cachedUser;
+      }
+
       return new Promise((resolve, reject) => {
         return this.getClient().then((client) => {
-          const keycloakRealm = arguments.length === 2 ? realm : null;
-          const keycloakId = arguments.length === 2 ? id : realm;
-          return client.users.find(keycloakRealm || config.get("keycloak:admin:realm"), { userId: keycloakId })
-            .then((user) => {
+          return client.users.find(config.get("keycloak:admin:realm"), { userId: id })
+            .then(async (user) => {
+              if (user && this.userCache) {
+                await this.userCache.set(id, user);
+              }
+
               resolve(user);
             })
             .catch((err) => {
@@ -132,17 +140,17 @@
     /**
      * Updates user into Keycloak
      * 
-     * @param {String} realm realm (optional)
      * @param {Object} user user object
      * @return {Promise} promise that resolves on success and rejects on failure
      */
-    updateUser(realm, user) {
-      return this.getClient().then((client) => {
-        const keycloakRealm = arguments.length === 2 ? realm : null;
-        const keycloakUser = arguments.length === 2 ? user : realm;
+    async updateUser(user) {
+      const client = await this.getClient();
+      const result = await client.users.update(config.get("keycloak:admin:realm"), user);
+      if (this.userCache) {
+        await this.userCache.unset(user.id);
+      }
 
-        return client.users.update(keycloakRealm || config.get("keycloak:admin:realm"), keycloakUser);
-      });
+      return result;
     }
     
     /**
@@ -241,10 +249,10 @@
       });
     }
     
-    getUserMap(realm, userIds) {
+    getUserMap(userIds) {
       return new Promise((resolve, reject) => {
         const userPromises = _.map(userIds, (userId) => {
-          return this.findUser(realm, userId);
+          return this.findUser(userId);
         });
 
         Promise.all(userPromises)
