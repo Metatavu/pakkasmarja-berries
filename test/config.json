@@ -1,6 +1,10 @@
 {
   "mode": "TEST",
   "session-secret": "sekriet",
+  "cache": {
+    "enabled": true,
+    "expire-time": 60000
+  },
   "keycloak": {
     "admin": {
       "realm": "pm",

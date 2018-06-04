@@ -274,7 +274,7 @@
 
         if (created) {
           const managerUserGroupIds = await this.models.getQuestionGroupManagerUserGroupIds(questionGroup.id)
-          const user = await this.userManagement.findUser(config.get("keycloak:admin:realm"), userId);
+          const user = await this.userManagement.findUser(userId);
           const userIds = await this.userManagement.listGroupsMemberIds(config.get("keycloak:admin:realm"), managerUserGroupIds);
           userIds.forEach((userId) => {
             this.shadyMessages.trigger("client:question-group-thread-added", {
@@ -309,7 +309,7 @@
         const questionGroupUserThreads = await this.models.listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId);
         const userIds = _.map(questionGroupUserThreads, 'userId');
         const threadIds = _.map(questionGroupUserThreads, 'threadId');
-        const userMap = await this.userManagement.getUserMap(keycloakRealm, _.uniq(userIds));
+        const userMap = await this.userManagement.getUserMap(_.uniq(userIds));
         const itemReadMap = await this.getItemReadMap(userId, _.map(threadIds, (threadId) => { return `thread-${threadId}`; }));
         const threadUserIdMap = {};
         threadIds.forEach((threadId, index) => {
@@ -376,7 +376,7 @@
                       const userIds = _.uniq(_.map(messages, 'userId'));
                       this.getThreadRoleMap(thread, userIds)
                         .then((roleMap) => {
-                          this.userManagement.getUserMap(keycloakRealm, userIds)
+                          this.userManagement.getUserMap(userIds)
                             .then((userMap) => {
                               client.sendMessage({
                                 "type": "messages-added",
