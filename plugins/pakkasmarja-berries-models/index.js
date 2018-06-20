@@ -1399,6 +1399,24 @@
     }
 
     /**
+     * Updates a contract deliveredQuantity 
+     * 
+     * @param {int} id 
+     * @param {String} deliveredQuantity 
+     * 
+     * @returns {Promise} promise for update
+     */
+    updateContractDeliveredQuantity(id, deliveredQuantity) {
+      return this.Contract.update({
+        deliveredQuantity: deliveredQuantity
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
      * Updates a contract 
      * 
      * @param {int} id contract id
