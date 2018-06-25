@@ -3,10 +3,11 @@
 (() => {
   "use strict";
   
-  const Promise = require("bluebird");
   const config = require("nconf");
   const Queue = require("better-queue");
   const SQLStore = require("better-queue-sql");
+  const xml2js = require("xml2js");
+  const fs = require("fs");
 
   /**
    * Task queue functionalities for Pakkasmarja Berries
@@ -32,6 +33,8 @@
       this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
       this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
       this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
+      this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
+      this.enqueueContractDeliveredQuantityUpdateQueue();
 
       this.enqueueContractDocumentStatusBatchQueue();
     }
@@ -57,18 +60,18 @@
       }));
 
       this[`${name}Queue`].on("task_progress", (taskId, completed, total) => {
-        console.log(`[taskqueue] Task with id ${taskId} progressing...`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
       });
 
       this[`${name}Queue`].on("task_finish", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} finished`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
         }
       });
 
       this[`${name}Queue`].on("task_failed", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} failed`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
         }
@@ -90,7 +93,14 @@
     enqueueContractDocumentStatusBatchQueue() {
       this.contractDocumentStatusBatchQueue.push({id: 1});
     }
-
+    
+    /**
+     * Adds task to sapContractDeliveredQuantityUpdateQueue
+     */
+    enqueueContractDeliveredQuantityUpdateQueue() {
+      this.sapContractDeliveredQuantityUpdateQueue.push({id: 1});
+    }
+    
     /**
      * Enqueues SAP contact update task
      * 
@@ -286,6 +296,90 @@
           message: err,
           operationReportItemId: data.operationReportItemId
         });
+      }
+    }
+
+    /**
+     * Executes a SAP contact update task
+     * 
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
+     */
+    async sapContractDeliveredQuantityUpdateTask(data, callback) {
+      const failTask = (reason) => {
+        this.logger.error(reason);
+        callback({
+          message: reason,
+          operationReportItemId: data.operationReportItemId
+        });
+        this.enqueueContractDeliveredQuantityUpdateQueue();
+      }
+
+      try {
+        const importFiles = config.get("sap:import-files") || [];
+        const approvedFile = importFiles.filter((importFile) => {
+          return importFile.status === "APPROVED";
+        })[0];
+
+        if (!approvedFile) {
+          return failTask("Could not find SAP file with APPROVED status");
+        }
+
+        const sapXml = await this.parseXml(await this.readFile(approvedFile.file));
+        const sapData = sapXml.SAP;
+        const sapContracts = sapData.Contracts ? sapData.Contracts.Contracts : null;
+
+        if (!sapContracts) {
+          return failTask("SAP file does not contain contracts");
+        }
+
+        const sapDeliveredQuantities = {};
+
+        sapContracts.forEach((sapContract) => {
+          const sapContractLines = Array.isArray(sapContract.ContractLines.ContractLine) ? sapContract.ContractLines.ContractLine : [sapContract.ContractLines.ContractLine];
+          sapContractLines.forEach((sapContractLine) => {
+            const sapItemGroupId = sapContractLine.ItemGroupCode;
+            const year = sapContract.Year;
+            const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
+            const deliveredQuantity = sapContractLine.DeliveredQuantity;
+            sapDeliveredQuantities[sapId] = deliveredQuantity;
+          });
+        });
+        
+        const contracts = await this.models.listContractsByStatusAndSapIdNotNull("APPROVED");
+        const totalCount = contracts.length;
+        let syncCount = 0;
+        const failedSapIds = [];
+
+        contracts.forEach((contract) => {
+          const sapId = contract.sapId;
+
+          const deliveredQuantity = sapDeliveredQuantities[sapId];
+          if (deliveredQuantity === undefined) {
+            failedSapIds.push(sapId);
+          } else {
+            const deliveredQuantityBefore = contract.deliveredQuantity;
+            this.models.updateContractDeliveredQuantity(contract.id, deliveredQuantity);
+            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
+            syncCount++;
+          }
+        });
+
+        if (failedSapIds.length > 0) {
+          this.logger.error(`Could not find following contracts from sap file ${failedSapIds.join(",")}`);
+        }
+
+        const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
+
+        this.logger.info(successMessage);
+        callback(null, {
+          message: successMessage,
+          operationReportItemId: data.operationReportItemId
+        });
+
+        this.enqueueContractDeliveredQuantityUpdateQueue();
+      } catch (err) {
+        return failTask(`Error processing queue ${err}`);
       }
     }
 
@@ -573,6 +667,46 @@
     resolveSapItemGroupDisplayName(sapId) {
       const displayNames = config.get("sap:item-group-display-names") || {};
       return displayNames[sapId];
+    }
+
+    /**
+     * Read a file as Promise
+     * 
+     * @param {String} file path to file
+     * @return {Promise} promise for file data 
+     */
+    readFile(file) {
+      return new Promise((resolve, reject) => {
+        fs.readFile(file, (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        });
+      });
+    }
+
+    /**
+     * Parses XML string into object
+     * 
+     * @param {String} data XML string
+     * @returns {Promise} promise for parsed object  
+     */
+    parseXml(data) {
+      return new Promise((resolve, reject) => {
+        const options = {
+          explicitArray: false
+        };
+
+        xml2js.parseString(data, options, (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+      });
     }
 
   }

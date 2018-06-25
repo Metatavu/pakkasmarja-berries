@@ -8,7 +8,7 @@
   const Promise = require("bluebird");
   const Umzug = require("umzug");
   const config = require("nconf");
-  
+
   class Models {
     
     constructor (logger, shadySequelize) {
@@ -1525,6 +1525,23 @@
         where: where, 
         offset: firstResult, 
         limit: maxResults
+      });
+    }
+
+    /**
+     * Lists contracts sap id is not null and have a specified status
+     * 
+     * @param {String} status status
+     * @return {Promise} promise for contracts
+     */
+    listContractsByStatusAndSapIdNotNull(status) {
+      return this.Contract.findAll({ 
+        where: {
+          status: status,
+          sapId: {
+            [this.Sequelize.Op.ne]: null
+          }
+        }
       });
     }
 
