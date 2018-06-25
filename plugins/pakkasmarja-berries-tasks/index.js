@@ -586,13 +586,9 @@
           areaDetails = contract.areaDetails;
           deliverAll = contract.deliverAll;
     
-          if (!config.get("sap:updateOnlyDeliveredQuantity")) {
-            await this.models.updateContract(contract.id, year, deliveryPlaceId, contract.proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
-              startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
-          } else {
-            await this.models.updateContractDeliveredQuantity(contract.id, deliveredQuantity);
-          }
-          
+          await this.models.updateContract(contract.id, year, deliveryPlaceId, contract.proposedDeliveryPlaceId, itemGroupId, contractQuantity, deliveredQuantity, proposedQuantity, 
+            startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+        
           callback(null, {
             message: `Updated contract details from SAP ${sapId}`,
             operationReportItemId: data.operationReportItemId
