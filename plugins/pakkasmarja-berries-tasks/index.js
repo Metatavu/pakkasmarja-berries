@@ -61,18 +61,18 @@
       }));
 
       this[`${name}Queue`].on("task_progress", (taskId, completed, total) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
       });
 
       this[`${name}Queue`].on("task_finish", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
         }
       });
 
       this[`${name}Queue`].on("task_failed", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
         }
@@ -329,7 +329,7 @@
           operationReportItemId: data.operationReportItemId
         });
         this.enqueueContractDeliveredQuantityUpdateQueue();
-      }
+      };
 
       try {
         const sapData = await this.loadSapApprovedData();
@@ -354,17 +354,17 @@
         }
 
         const user = await this.userManagement.findUser(userId);
-        if (!user) {
+        if (!user) {
           return failTask(`Contract ${contract.id} SAP creation failed because user could not be found`);
         }
 
         const itemGroupSapId = itemGroup.sapId;
-        if (!itemGroupSapId) {
+        if (!itemGroupSapId) {
           return failTask(`Contract ${contract.id} SAP creation failed because SAP item group id could not be resolved`);
         }
         
         const userSapId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
-        if (!userSapId) {
+        if (!userSapId) {
           return failTask(`Contract ${contract.id} SAP creation failed because user SAP id could not be resolved`);
         }
 
@@ -379,12 +379,12 @@
             }).length > 0;      
           })[0];
 
-        if (!sapContract) {
+        if (!sapContract) {
           return failTask(`Contract ${contract.id} SAP creation failed because sap contract could not be resolved`);
         }
 
         const contractSapId = `${year}-${sapContract.ContractId}-${itemGroupSapId}`;
-        if (!contractSapId) {
+        if (!contractSapId) {
           return failTask(`Contract ${contract.id} SAP creation failed because contract SAP id could not be resolved`);
         }
 
@@ -398,7 +398,7 @@
           operationReportItemId: data.operationReportItemId
         });
       } catch (e) {
-        return failTask(`Contract ${contract.id} SAP creation failed on error ${e}`);
+        return failTask(`Contract ${data.id} SAP creation failed on error ${e}`);
       }
     }
 
@@ -419,7 +419,7 @@
       }
 
       try {
-        const importFiles = config.get("sap:import-files") || [];
+        const importFiles = config.get("sap:import-files") || [];
         const approvedFile = importFiles.filter((importFile) => {
           return importFile.status === "APPROVED";
         })[0];
@@ -463,7 +463,7 @@
           } else {
             const deliveredQuantityBefore = contract.deliveredQuantity;
             this.models.updateContractDeliveredQuantity(contract.id, deliveredQuantity);
-            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
+            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
             syncCount++;
           }
         });
@@ -472,7 +472,7 @@
           this.logger.error(`Could not find following contracts from sap file ${failedSapIds.join(",")}`);
         }
 
-        const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
+        const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
 
         this.logger.info(successMessage);
         callback(null, {
@@ -490,7 +490,7 @@
      * Loads SAP data from the approved file
      */
     async loadSapApprovedData() {
-      const importFiles = config.get("sap:import-files") || [];
+      const importFiles = config.get("sap:import-files") || [];
       const approvedFile = importFiles.filter((importFile) => {
         return importFile.status === "APPROVED";
       })[0];
