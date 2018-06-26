@@ -16,6 +16,7 @@
   const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
   const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
   const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
+  const OPERATION_SAP_CONTRACT_SAPID_SYNC = "SAP_CONTRACT_SAPID_SYNC";
   const OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES = "ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES";
   
   /**
@@ -29,13 +30,15 @@
      * @param {Object} logger logger
      * @param {Object} models models
      * @param {Object} tasks tasks
+     * @param {Object} userManagement user management
      */
-    constructor (logger, models, tasks) {
+    constructor (logger, models, tasks, userManagement) {
       super();
       
       this.logger = logger;
       this.models = models;
       this.tasks = tasks;
+      this.userManagement = userManagement;
     }
 
     /**
@@ -70,6 +73,9 @@
           break;
         case OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES:
           operationReport = await this.createItemGroupDefaultDocumentTemplates();
+          break;
+        case OPERATION_SAP_CONTRACT_SAPID_SYNC:
+          operationReport = await this.createSapContractSapIds();
           break;
         default:
           this.sendBadRequest(res, `Invalid type ${type}`);
@@ -237,6 +243,20 @@
           });
         }
       });
+
+      return operationReport;
+    }
+
+    /**
+     * Creates missing SAP ids into approved contracts 
+     */
+    async createSapContractSapIds() {
+      const operationReport = await this.models.createOperationReport("SAP_CONTRACT_SAPID_SYNC");
+      const contracts = await this.models.listContractsByStatusAndSapIdIsNull("APPROVED");
+      for (let i = 0; i < contracts.length; i++) {
+        const contract = contracts[i];
+        this.tasks.enqueueSapContractSapIdSyncTask(operationReport.id, contract.id);
+      }
 
       return operationReport;
     }
