@@ -33,6 +33,7 @@
       this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
       this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
       this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
+      this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
       this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
       this.enqueueContractDeliveredQuantityUpdateQueue();
 
@@ -60,18 +61,18 @@
       }));
 
       this[`${name}Queue`].on("task_progress", (taskId, completed, total) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
       });
 
       this[`${name}Queue`].on("task_finish", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
         }
       });
 
       this[`${name}Queue`].on("task_failed", (taskId, result) => {
-        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
+        console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
         if (result && result.operationReportItemId) {
           this.models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
         }
@@ -161,6 +162,21 @@
         contract: contract,
         lineIndex: lineIndex,
         status: status,
+        operationReportItemId: operationReportItem.id
+      });
+    }
+
+    /**
+     * Adds task to sapContractSapIdSync queue
+     * 
+     * @param {int} contractDocumentId id
+     * @param {int} contractId id
+     */
+    async enqueueSapContractSapIdSyncTask(operationReportId, contractId) {
+      const operationReportItem = await this.models.createOperationReportItem(operationReportId, `Update contract ${contractId} sap id`, false, false);
+
+      this.sapContractSapIdSyncQueue.push({
+        id: contractId,
         operationReportItemId: operationReportItem.id
       });
     }
@@ -300,6 +316,93 @@
     }
 
     /**
+     * Resolves and updates SAP Contract's sapId
+     * 
+     * @param {Object} data task data
+     * @param {Function} callback task callback 
+     */
+    async sapContractSapIdSyncTask(data, callback) {
+      const failTask = (reason) => {
+        this.logger.error(reason);
+        callback({
+          message: reason,
+          operationReportItemId: data.operationReportItemId
+        });
+        this.enqueueContractDeliveredQuantityUpdateQueue();
+      };
+
+      try {
+        const sapData = await this.loadSapApprovedData();
+        if (!sapData) {
+          this.logger.error("Could not find approved SAP data");
+          return;
+        }
+  
+        const sapContracts = sapData.Contracts ? sapData.Contracts.Contracts : null;
+        if (!sapContracts) {
+          this.logger.error("SAP file does not contain contracts");
+          return;
+        }
+
+        const contract = await this.models.findContractById(data.id);
+        const userId = contract.userId;
+        const year = contract.year;
+
+        const itemGroup = await this.models.findItemGroupById(contract.itemGroupId);
+        if (!itemGroup) {
+          return failTask(`Contract ${contract.id} SAP creation failed because item group could not be found`);
+        }
+
+        const user = await this.userManagement.findUser(userId);
+        if (!user) {
+          return failTask(`Contract ${contract.id} SAP creation failed because user could not be found`);
+        }
+
+        const itemGroupSapId = itemGroup.sapId;
+        if (!itemGroupSapId) {
+          return failTask(`Contract ${contract.id} SAP creation failed because SAP item group id could not be resolved`);
+        }
+        
+        const userSapId = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_SAP_ID);
+        if (!userSapId) {
+          return failTask(`Contract ${contract.id} SAP creation failed because user SAP id could not be resolved`);
+        }
+
+        const sapContract = sapContracts
+          .filter((sapContract) => {
+            return userSapId === sapContract.CardCode;
+          })
+          .filter((sapContract) => {
+            const sapContractLines = Array.isArray(sapContract.ContractLines.ContractLine) ? sapContract.ContractLines.ContractLine : [sapContract.ContractLines.ContractLine];
+            return sapContractLines.filter((sapContractLine) => {
+              return sapContractLine.ItemGroupCode === itemGroupSapId;
+            }).length > 0;      
+          })[0];
+
+        if (!sapContract) {
+          return failTask(`Contract ${contract.id} SAP creation failed because sap contract could not be resolved`);
+        }
+
+        const contractSapId = `${year}-${sapContract.ContractId}-${itemGroupSapId}`;
+        if (!contractSapId) {
+          return failTask(`Contract ${contract.id} SAP creation failed because contract SAP id could not be resolved`);
+        }
+
+        await this.models.updateContractSapId(contract.id, contractSapId);
+
+        const successMessage = `Contract ${contract.id} SAP id changed to ${contractSapId}`;
+
+        this.logger.info(successMessage);
+        callback(null, {
+          message: successMessage,
+          operationReportItemId: data.operationReportItemId
+        });
+      } catch (e) {
+        return failTask(`Contract ${data.id} SAP creation failed on error ${e}`);
+      }
+    }
+
+    /**
      * Executes a SAP contact update task
      * 
      * @param {Object} data task data
@@ -316,7 +419,7 @@
       }
 
       try {
-        const importFiles = config.get("sap:import-files") || [];
+        const importFiles = config.get("sap:import-files") || [];
         const approvedFile = importFiles.filter((importFile) => {
           return importFile.status === "APPROVED";
         })[0];
@@ -360,7 +463,7 @@
           } else {
             const deliveredQuantityBefore = contract.deliveredQuantity;
             this.models.updateContractDeliveredQuantity(contract.id, deliveredQuantity);
-            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
+            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
             syncCount++;
           }
         });
@@ -369,7 +472,7 @@
           this.logger.error(`Could not find following contracts from sap file ${failedSapIds.join(",")}`);
         }
 
-        const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
+        const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
 
         this.logger.info(successMessage);
         callback(null, {
@@ -381,6 +484,23 @@
       } catch (err) {
         return failTask(`Error processing queue ${err}`);
       }
+    }
+
+    /**
+     * Loads SAP data from the approved file
+     */
+    async loadSapApprovedData() {
+      const importFiles = config.get("sap:import-files") || [];
+      const approvedFile = importFiles.filter((importFile) => {
+        return importFile.status === "APPROVED";
+      })[0];
+
+      if (!approvedFile) {
+        return null;
+      }
+
+      const sapXml = await this.parseXml(await this.readFile(approvedFile.file));
+      return sapXml.SAP;
     }
 
     /**

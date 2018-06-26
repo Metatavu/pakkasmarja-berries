@@ -35,7 +35,7 @@
       this.itemGroupsService = new ItemGroupsServiceImpl(logger, models);
       this.deliveryPlacesService = new DeliveryPlacesServiceImpl(logger, models);
       this.operationReportsService = new OperationReportsServiceImpl(logger, models);
-      this.operationsService = new OperationsServiceImpl(logger, models, tasks);
+      this.operationsService = new OperationsServiceImpl(logger, models, tasks, userManagement);
       this.signAuthenticationService = new SignAuthenticationServicesServiceImpl(logger, signature);
     }
     

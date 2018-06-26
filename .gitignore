@@ -4,6 +4,7 @@ node_modules
 .sass-cache
 webapp
 keycloak-3.*
+keycloak-4.*
 keycloak.log
 .instrument
 .nyc_output

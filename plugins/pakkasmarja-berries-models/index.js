@@ -1399,6 +1399,24 @@
     }
 
     /**
+     * Updates a contract sapId 
+     * 
+     * @param {int} id 
+     * @param {String} sapId 
+     * 
+     * @returns {Promise} promise for update
+     */
+    updateContractSapId(id, sapId) {
+      return this.Contract.update({
+        sapId: sapId
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
      * Updates a contract deliveredQuantity 
      * 
      * @param {int} id 
@@ -1540,6 +1558,23 @@
           status: status,
           sapId: {
             [this.Sequelize.Op.ne]: null
+          }
+        }
+      });
+    }
+
+    /**
+     * Lists contracts sap id is null and have a specified status
+     * 
+     * @param {String} status status
+     * @return {Promise} promise for contracts
+     */
+    listContractsByStatusAndSapIdIsNull(status) {
+      return this.Contract.findAll({ 
+        where: {
+          status: status,
+          sapId: {
+            [this.Sequelize.Op.eq]: null
           }
         }
       });
