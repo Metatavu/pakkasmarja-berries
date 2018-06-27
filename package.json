@@ -55,7 +55,6 @@
     "umzug": "^2.1.0",
     "uuid4": "1.0.0",
     "visma-sign-client": "0.0.7",
-    "why-is-node-running": "^2.0.2",
     "wkhtmltopdf": "^0.3.4",
     "wpapi": "^1.1.2",
     "xml2js": "^0.4.19"
