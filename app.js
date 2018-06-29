@@ -141,20 +141,26 @@
     });
     
     webSockets.on("close", (data) => {
-      const client = data.client;
-      const sessionId = client.getSessionId();
-      
-      //FIXME: remove timeout and fix this on the application side
-      
-      setTimeout(() => {
-        models.deleteSession(sessionId)
-          .then(() => {
-            logger.info(`Session ${sessionId} removed`);
-          })
-          .catch((e) => {
-            logger.error(`Failed to delete session ${e}`);
-          });
-      }, 1000 * 15);
+      try {
+        const client = data.client;
+        const sessionId = client.getSessionId();
+
+        console.log(`Websocket session ${sessionId} closed`);
+
+        //FIXME: remove timeout and fix this on the application side
+        
+        setTimeout(() => {
+          models.deleteSession(sessionId)
+            .then(() => {
+              logger.info(`Session ${sessionId} removed`);
+            })
+            .catch((e) => {
+              logger.error(`Failed to delete session ${e}`);
+            });
+        }, 1000 * 15);
+      } catch (e) {
+        console.log("Closing websocket session failed", e);
+      }
     });
     
     scheluders.start();

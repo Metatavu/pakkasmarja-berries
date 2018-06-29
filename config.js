@@ -23,7 +23,11 @@ module.exports = [
       }
     }
   },
-  "shady-websockets",
+  {
+    "packagePath": "shady-websockets",
+    "log-socket-open": true,
+    "log-socket-close": true
+  },
   "shady-worker",
   "./plugins/pakkasmarja-berries-models",
   "./plugins/pakkasmarja-berries-rest",

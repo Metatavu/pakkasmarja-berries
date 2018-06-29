@@ -1,7 +1,7 @@
 {
   "name": "pakkasmarja-berries",
   "description": "Shady Engine backend worker for Pakkasmarja Berries application",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -47,7 +47,7 @@
     "request": "^2.83.0",
     "shady-messages": "0.3.1",
     "shady-sequelize": "0.0.2",
-    "shady-websockets": "0.0.5",
+    "shady-websockets": "0.0.7",
     "shady-worker": "0.0.4",
     "slugify": "^1.2.9",
     "stream-to-array": "^2.3.0",
