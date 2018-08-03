@@ -181,7 +181,9 @@
         this.userManagement.ATTRIBUTE_STREET_1,
         this.userManagement.ATTRIBUTE_STREET_2,
         this.userManagement.ATTRIBUTE_PHONE_1,
-        this.userManagement.ATTRIBUTE_PHONE_2
+        this.userManagement.ATTRIBUTE_PHONE_2,
+        this.userManagement.ATTRIBUTE_CITY_1,
+        this.userManagement.ATTRIBUTE_CITY_2
       ];
 
       const trackedProperties = [
@@ -271,7 +273,7 @@
       
       return user;
     }
-     
+
     /**
      * Resolves Keycloak user's phone numbers
      * 
@@ -306,14 +308,14 @@
       const result = [];
       if (user && user.attributes) {
         const postalCode1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_1);
-        const postalCode2 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_2);
         const streetAddress1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_1);
-        const streetAddress2 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_2);
-         
+        const city1 = this.userManagement.getSingleAttribute(user, this.userManagement.ATTRIBUTE_CITY_1);
+
         if (postalCode1 && streetAddress1) {
           result.push(Address.constructFromObject({
             "streetAddress": streetAddress1,
-            "postalCode": postalCode1
+            "postalCode": postalCode1,
+            "city": city1
           }));  
         } 
       }
