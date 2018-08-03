@@ -268,8 +268,10 @@
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_PHONE_2, contact.phoneNumbers.length > 1 ? contact.phoneNumbers[1] : null);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_1, contact.addresses.length > 0 ? contact.addresses[0].postalCode : null);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_1, contact.addresses.length > 0 ? contact.addresses[0].streetAddress : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_CITY_1, contact.addresses.length > 0 ? contact.addresses[0].city : null);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_POSTAL_CODE_2, contact.addresses.length > 1 ? contact.addresses[1].postalCode : null);
       this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_STREET_2, contact.addresses.length > 1 ? contact.addresses[1].streetAddress : null);
+      this.userManagement.setSingleAttribute(user, this.userManagement.ATTRIBUTE_CITY_2, contact.addresses.length > 1 ? contact.addresses[1].city : null);
       
       return user;
     }
