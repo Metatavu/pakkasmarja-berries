@@ -128,7 +128,8 @@
       "email": "updatedemail@testrealm1.com",
       "addresses": [{
         "streetAddress": "Updated street",
-        "postalCode": "98765"
+        "postalCode": "98765",
+        "city": "Updated city"
       }],
       "BIC": "DABAIE3D",
       "IBAN": "FI1112345600000786",
