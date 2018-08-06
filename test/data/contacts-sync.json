@@ -12,7 +12,8 @@
     "addresses": [
       {
         "streetAddress": "Test Street 222",
-        "postalCode": "22222"
+        "postalCode": "22222",
+        "city": "Demo"
       }
     ],
     "BIC": "DEMO1234",
@@ -35,7 +36,8 @@
     "addresses": [
       {
         "streetAddress": "Test Street 123",
-        "postalCode": "10100"
+        "postalCode": "10100",
+        "city": "Test"
       }
     ],
     "BIC": "DABAIE2D",

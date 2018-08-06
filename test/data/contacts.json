@@ -27,7 +27,8 @@
     "addresses": [
       {
         "streetAddress": "20200",
-        "postalCode": "10100"
+        "postalCode": "10100",
+        "city": "Test"
       }
     ],
     "BIC": "DABAIE2D",
