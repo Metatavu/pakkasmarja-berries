@@ -11,3 +11,5 @@ keycloak.log
 coverage
 /public/css/
 *~
+app-config.json
+app-config.json
