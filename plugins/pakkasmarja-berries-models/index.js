@@ -102,22 +102,6 @@
         originId: { type: Sequelize.STRING(191), allowNull: false },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
-      }, {
-        hooks: {
-          "afterFind": (object) => {
-            if (!object) {
-              return;  
-            }
-            
-            const questionGroups = _.isArray(object) ? object : [ object ];
-            
-            const extendPromises = _.map(questionGroups, (questionGroup) => {
-              return this.createQuestionGroupLatestMessagePromise(questionGroup);
-            });
-            
-            return Promise.all(extendPromises);
-          }
-        }
       });
       
       this.defineModel("QuestionGroupUserGroupRole", {
@@ -1021,16 +1005,6 @@
       return this.getLatestMessageCreatedByThreadIds([thread.dataValues.id]).then((maxCreatedAt) => {
         thread.latestMessage = maxCreatedAt;
       });
-    }
-    
-    createQuestionGroupLatestMessagePromise(questionGroup) {
-      return this.listQuestionGroupUserThreadsByQuestionGroupId(questionGroup.id)
-        .then((questionGroupUserThreads) => {
-          const threadIds = _.map(questionGroupUserThreads, "threadId");
-          return this.getLatestMessageCreatedByThreadIds(threadIds).then((maxCreatedAt) => {
-            questionGroup.latestMessage = maxCreatedAt;
-          });
-        });
     }
     
     // ItemGroups
