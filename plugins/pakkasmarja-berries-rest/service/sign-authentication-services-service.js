@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  "use strict";
+  'use strict';
 
   const AbstractService = require(`${__dirname}/../abstract-service`);
 
