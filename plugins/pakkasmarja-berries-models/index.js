@@ -57,7 +57,8 @@
         type: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191) },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
-        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
+        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
+        answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" }
       }, {
         hooks: {
           "afterFind": (object) => {
@@ -74,6 +75,12 @@
             return Promise.all(extendPromises);
           }
         }
+      });
+
+      this.defineModel("ThreadPredefinedText", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
+        text: { type: Sequelize.STRING(191), allowNull: false }
       });
       
       this.defineModel("ThreadUserGroupRole", {
@@ -475,12 +482,22 @@
       return this.Thread.update({ archived: true }, { where: { id: id } });
     }
     
-    createThread(originId, title, type, imageUrl) {
+    /**
+     * Creates new thread
+     * 
+     * @param {String} originId id in origin system
+     * @param {String} title title
+     * @param {String} type type
+     * @param {String} imageUrl image url
+     * @param {String} answerType answerType
+     */
+    createThread(originId, title, type, imageUrl, answerType) {
       return this.Thread.create({
         originId: originId,
         title: title,
         type: type,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        answerType: answerType
       });
     }
     
@@ -547,7 +564,7 @@
     }
     
     findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, role) {
-     return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
+      return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
     }
     
     getQuestionGroupUserGroupRoleMap(questionGroupId) {
@@ -605,11 +622,21 @@
       return this.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
     }
     
-    updateThread(id, title, imageUrl, silentUpdate) {
+    /**
+     * Updates thread
+     * 
+     * @param {Number} id thread id 
+     * @param {String} title title
+     * @param {String} imageUrl image url
+     * @param {Boolean} silentUpdate silent update
+     * @param {String} answerType answer type
+     */
+    updateThread(id, title, imageUrl, silentUpdate, answerType) {
       return this.Thread.update({
         title: title,
         imageUrl: imageUrl,
-        archived: false
+        archived: false,
+        answerType: answerType
       }, {
         where: {
           id: id
@@ -651,7 +678,7 @@
     // Messages
     
     createMessage(threadId, userId, contents) {
-     return this.Message.create({
+      return this.Message.create({
         threadId: threadId,
         userId: userId,
         contents: contents
@@ -825,7 +852,7 @@
                 };
               });
           } else {
-            return this.createThread(null, null, "question", null)
+            return this.createThread(null, null, "question", null, "TEXT")
               .then((thread) => {
                 return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId)
                   .then(() => {
@@ -2010,6 +2037,79 @@
       });
     }
     
+    /**
+     * Create thread predefined text
+     * 
+     * @param {Integer} threadId thread id
+     * @param {String} text text
+     * @returns {Promise} Promise for created entity
+     */
+    createThreadPredefinedText(threadId, text) {
+      return this.ThreadPredefinedText.create({
+        threadId: threadId,
+        text: text
+      });
+    }
+
+    /**
+     * Find ThreadPredefinedTexts
+     * 
+     * @param {int} id
+     * @returns {Promise} Promise for ThreadPredefinedText
+     */
+    findThreadPredefinedTexts(id) {
+      return this.ThreadPredefinedText.findOne({
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
+     * List ThreadPredefinedTexts
+     * 
+     * @param {int} threadId thread id
+     * @returns {Promise} Promise for ThreadPredefinedTexts
+     */
+    listThreadPredefinedTextsByThreadId(threadId) {
+      return this.ThreadPredefinedText.findAll({
+        where: {
+          threadId: threadId
+        }
+      });
+    }
+
+    /**
+     * Updates ThreadPredefinedText 
+     * 
+     * @param {int} id id
+     * @param {string} text text 
+     */
+    updateThreadPredefinedText(id, text) {
+      return this.ThreadPredefinedText.update({
+        text: text
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
+     * Deletes predefined text from thread 
+     * 
+     * @param {int} threadId thread id
+     * @return {Promise} promise that resolves on successful removal
+     */
+    deleteThreadPredefinedTextByThreadIdAndText(threadId, text) {
+      return this.ThreadPredefinedText.destroy({ 
+        where: { 
+          threadId: threadId,
+          text: text 
+        } 
+      });
+    }
+
   }
   
   module.exports = (options, imports, register) => {

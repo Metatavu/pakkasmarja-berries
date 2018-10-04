@@ -38,32 +38,6 @@
           });
         });
     }
-
-    syncManagementChatThreads() {
-      console.log("[schedulers] Starting to sync chat threads...");
-      this.models.findAllChatThreads()
-        .then((chatThreads) => {
-          this.wordpress.listChatThreads()
-            .then((wpChatThreads) => {
-              
-              const existingManagementIds = wpChatThreads.map((wpChatThread) => {
-                return wpChatThread.id.toString();
-              });
-              
-              const chatThreadsToRemove = _.filter(chatThreads, (chatThread) => {
-                return existingManagementIds.indexOf(chatThread.originId) < 0;
-              });
-              
-              for (let i = 0; i < chatThreadsToRemove.length; i++) {
-                this.models.archiveThread(chatThreadsToRemove[i].id);
-              }
-              
-              wpChatThreads.forEach((thread) => {
-                this.pakkasmarjaBerriesUtils.updateOrCreateChatThread(thread, true);
-              });
-            });
-        });
-    }
     
     syncManagementQuestionGroups() {
       console.log("[schedulers] Starting to sync question groups...");

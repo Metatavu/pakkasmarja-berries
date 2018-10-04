@@ -90,7 +90,7 @@
       if (postStatus === 'publish') {
         this.wordpress.findChatThread(id)
           .then((wpChatThread) => {
-            this.pakkasmarjaBerriesUtils.updateOrCreateChatThread(wpChatThread);
+            return this.pakkasmarjaBerriesUtils.updateOrCreateChatThread(wpChatThread);
           })
           .catch((err) => {
             this.logger.error(`Failed to fetch chat thread ${id}`, err);
