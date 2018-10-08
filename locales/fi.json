@@ -6,5 +6,7 @@
   "contracts.exports.placeName": "Toimituspaikka",
   "contracts.exports.remarks": "Huomautuskenttä",
   "contracts.exports.signDate": "Viljelijän allekirjoituspäivä",
-  "contracts.exports.approvalDate": "Pakkasmarjan hyväksyntäpäivä"
+  "contracts.exports.approvalDate": "Pakkasmarjan hyväksyntäpäivä",
+  "chatThreadSummaryReport.answer": "Vastaus",
+  "chatThreadSummaryReport.count": "Määrä"
 }
