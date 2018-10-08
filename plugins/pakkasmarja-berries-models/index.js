@@ -54,6 +54,7 @@
       this.defineModel("Thread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191) },
+        description: { type: "LONGTEXT" },
         type: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191) },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
@@ -456,7 +457,7 @@
     getUserSettings(userId) {
       return this.UserSettings.findAll({ where: { userId: userId } });
     }
-   
+
     findUserSettingsByUserIdAndKey(userId, settingKey) {
       return this.UserSettings.findOne({ where: { userId: userId, settingKey: settingKey } });
     }
@@ -487,14 +488,16 @@
      * 
      * @param {String} originId id in origin system
      * @param {String} title title
+     * @param {String} description description
      * @param {String} type type
      * @param {String} imageUrl image url
      * @param {String} answerType answerType
      */
-    createThread(originId, title, type, imageUrl, answerType) {
+    createThread(originId, title, description, type, imageUrl, answerType) {
       return this.Thread.create({
         originId: originId,
         title: title,
+        description: description,
         type: type,
         imageUrl: imageUrl,
         answerType: answerType
@@ -627,13 +630,15 @@
      * 
      * @param {Number} id thread id 
      * @param {String} title title
+     * @param {String} description description
      * @param {String} imageUrl image url
      * @param {Boolean} silentUpdate silent update
      * @param {String} answerType answer type
      */
-    updateThread(id, title, imageUrl, silentUpdate, answerType) {
+    updateThread(id, title, description, imageUrl, silentUpdate, answerType) {
       return this.Thread.update({
         title: title,
+        description: description,
         imageUrl: imageUrl,
         archived: false,
         answerType: answerType
@@ -696,7 +701,7 @@
       
       return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
     }
-    
+
     updateMessage(id, contents) {
       return this.Message.update({
         contents: contents

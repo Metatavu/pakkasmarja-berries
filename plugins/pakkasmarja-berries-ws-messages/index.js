@@ -156,51 +156,58 @@
         .catch(this.handleWebSocketError(client, 'GET_NEWS'));
     }
     
-    onGetConversationThreads(message, client) {
-      this.getUserId(client)
-        .then((userId) => {
-          this.getUserGroupIds(client, userId)
-            .then((userGroupIds) => {
-              const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                return this.models.listConversationThreadsByUserGroupId(userGroupId);
-              });
+    /**
+     * Fetches conversation threads for logged user
+     * 
+     * @param {Object} message 
+     * @param {Object} client 
+     */
+    async onGetConversationThreads(message, client) {
+      try {
+        const userId = await this.getUserId(client);
+        const userGroupIds = await this.getUserGroupIds(client, userId);
+        const data = _.flatten(await Promise.all(_.map(userGroupIds, (userGroupId) => {
+          return this.models.listConversationThreadsByUserGroupId(userGroupId);
+        })));
+        
+        const itemReadMap = await this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }));
 
-              Promise.all(threadPromises)
-                .then((datas) => {
-                  const data = _.flatten(datas);
-          
-                  this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }))
-                    .then((itemReadMap) => {
-                      const threads = _.map(data, (thread) => {
-                        const threadRead = itemReadMap[`thread-${thread.id}`];
-                        return {
-                          'id': thread.id,
-                          'title': thread.title,
-                          'type': thread.type,
-                          'imageUrl': thread.imageUrl,
-                          'latestMessage': thread.latestMessage,
-                          'read': !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
-                        };
-                      });
-                      
-                      threads.sort((a, b) => {
-                        let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
-                        let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
-                        return latestB - latestA;
-                      });
-                      
-                      client.sendMessage({
-                        "type": "conversation-threads-added",
-                        "data": {
-                          threads: threads
-                        }
-                      });
-                    });
-                })
-                .catch(this.handleWebSocketError(client, 'GET_THREADS'));
-            })
-            .catch(this.handleWebSocketError(client, 'GET_THREADS'));
-      });
+        const threads = await Promise.all(_.map(data, async (thread) => {
+          const threadRead = itemReadMap[`thread-${thread.id}`];
+          const answerType = thread.answerType;
+          const predefinedTexts = answerType === "SELECT" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
+            return threadPredefinedText.text;
+          }) : [];
+
+          return {
+            "id": thread.id,
+            "title": thread.title,
+            "description": thread.description,
+            "type": thread.type,
+            "imageUrl": thread.imageUrl,
+            "latestMessage": thread.latestMessage,
+            "answerType": answerType,
+            "predefinedTexts": predefinedTexts,
+            "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
+          };
+        }));
+
+        threads.sort((a, b) => {
+          let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+          let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+          return latestB - latestA;
+        });
+
+        client.sendMessage({
+          "type": "conversation-threads-added",
+          "data": {
+            threads: threads
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        this.handleWebSocketError(client, "GET_THREADS");
+      }           
     }
     
     async onGetQuestionGroups(message, client) {
