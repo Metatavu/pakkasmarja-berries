@@ -23,12 +23,24 @@
     }
 
    /**
+    * Returns list of chat threads
+    * Returns list of chat threads
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    listChatThreads(req, res) {
+      res.status(501).send();
+    }
+
+   /**
     * Registers REST routes
     *
     * @param app express object
     **/
     register(app, keycloak) {
       app.get(`/rest/v1${this.toPath('/chatThreads/{threadId}/reports/{type}')}`, [ keycloak.protect() ], this.catchAsync(this.getChatThreadReport.bind(this)));
+      app.get(`/rest/v1${this.toPath('/chatThreads')}`, [ keycloak.protect() ], this.catchAsync(this.listChatThreads.bind(this)));
     }
   };
 

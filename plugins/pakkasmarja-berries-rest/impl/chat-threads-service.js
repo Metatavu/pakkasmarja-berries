@@ -9,6 +9,7 @@
   const slugify = require("slugify");
   const AbstractChatThreadsService = require(`${__dirname}/../service/chat-threads-service`);
   const ApplicationRoles = require(`${__dirname}/../application-roles`);
+  const ChatThread = require(`${__dirname}/../model/chat-thread`);
 
   /**
    * Threads REST service
@@ -29,6 +30,31 @@
       this.xlsx = xlsx;
     }
 
+    /**
+    * Returns list of chat threads
+    * Returns list of chat threads
+    *
+    * @param {http.ClientRequest} req client request object
+    * @param {http.ServerResponse} res server response object
+    **/
+    async listChatThreads(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
+        this.sendForbidden(res, "You have no permission to manage threads");
+        return;
+      }
+
+      const originId = req.query.originId;
+
+      if (!originId) {
+        return this.sendNotImplemented("Only origin id queries are currently supported");
+      }
+
+      const thread = await this.models.findThreadByOriginId(originId);
+      const result = thread ? [ this.translateChatThread(thread) ] : [];
+
+      res.send(result);
+    }
+
    /**
     * Returns chat thread report
     * Returns chat thread report
@@ -37,6 +63,11 @@
     * @param {http.ServerResponse} res server response object
     **/
     async getChatThreadReport(req, res) {
+      if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
+        this.sendForbidden(res, "You have no permission to manage threads");
+        return;
+      }
+
       const threadId = req.params.threadId;
       const type = req.params.type;
       const thread = await this.models.findThread(threadId);
@@ -74,7 +105,13 @@
      * @param {Object} thread thread 
      */
     async sendChatThreadSummaryReportXLSX(req, res, thread) {
+      const predefinedTexts = await this.models.listThreadPredefinedTextsByThreadId(thread.id).map((predefinedText) => {
+        return predefinedText.text;
+      });
+
       const messages = await this.models.listMessagesByThreadId(thread.id);
+      const predefinedTextCounts = {};
+
       const userAnswers = {};
 
       for (let i = 0; i < messages.length; i++) {
@@ -84,28 +121,33 @@
           userAnswers[message.userId] = answer;
         }
       }
-      
-      const summary = {};
-      const values = Object.values(userAnswers);
 
-      for (let i = 0; i < values.length; i++) {
-        const value = values[i];
-        summary[value] = (summary[value] || 0) + 1;  
+      for (let i = 0; i < predefinedTexts.length; i++) {
+        const predefinedText = predefinedTexts[i];
+        predefinedTextCounts[predefinedText] = (predefinedTextCounts[predefinedText] || 0) + 1;  
       }
 
+      const otherAnswers = _.without.apply(_, [Object.values(userAnswers)].concat(predefinedTexts));
+            
       const columnHeaders = [
         i18n.__("chatThreadSummaryReport.answer"),
         i18n.__("chatThreadSummaryReport.count")
       ];
 
-      const keys = Object.keys(summary);
-      keys.sort((a, b) => {
-        return parseInt(a) - parseInt(b);
-      });
-
       const rows = [];
-      for (let i = 0; i < keys.length; i++) {
-        rows.push([keys[i], summary[keys[i]]]);
+      for (let i = 0; i < predefinedTexts.length; i++) {
+        const predefinedText = predefinedTexts[i];
+        rows.push([predefinedText, predefinedTextCounts[predefinedText]]);
+      }
+
+      if (otherAnswers.length > 0) {
+        rows.push([]);
+        rows.push(["Muut vastaukset"]);
+        rows.push([]);
+      }
+
+      for (let i = 0; i < otherAnswers.length; i++) {
+        rows.push([otherAnswers[i]]);
       }
 
       const name = "summary-report";
@@ -114,6 +156,16 @@
       res.setHeader("Content-disposition", `attachment; filename=${filename}`);
       res.status(200).send(this.xlsx.buildXLSX(name, columnHeaders, rows));
     }
+
+    /**
+     * Translates database chat thread into REST chat thread 
+     * 
+     * @param {Object} databaseChatThread database chat thread
+     */
+    translateChatThread(databaseChatThread) {
+      return ChatThread.constructFromObject(databaseChatThread.dataValues);
+    }
+
 
   };
 

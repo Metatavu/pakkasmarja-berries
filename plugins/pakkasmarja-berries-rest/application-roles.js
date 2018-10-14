@@ -114,7 +114,13 @@
       return "create-operations";
     }
     
-   
+    /**
+     * Role that allows users to manage chat
+     */
+    static get MANAGE_THREADS() {
+      return "manage-threads";
+    }
+
   }
 
   module.exports = ApplicationRoles;
