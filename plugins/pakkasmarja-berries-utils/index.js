@@ -92,15 +92,15 @@
     
     async updateOrCreateChatThread(wpChatThread, silentUpdate) {
       const wpId = wpChatThread.id.toString();
-      const wpUserGroupSetings = wpChatThread['user-group-setings'];
-      const wpPredefinedTexts = wpChatThread['predefined-texts'] || [];
-      const wpFeaturedMediaUrl = wpChatThread['better_featured_image'] ? wpChatThread['better_featured_image'].source_url : null;
+      const wpUserGroupSetings = wpChatThread["user-group-setings"];
+      const wpPredefinedTexts = wpChatThread["predefined-texts"] || [];
+      const wpFeaturedMediaUrl = wpChatThread["better_featured_image"] ? wpChatThread["better_featured_image"].source_url : null;
       const wpTitle = wpChatThread.title.rendered;
       const wpContent = wpChatThread.content.rendered||null;
-      const wpType = 'conversation';
+      const wpType = "conversation";
       const userGroupRoles = {};
       const imageUrl = this.wordpress.resolveImageUrl(this.getBaseUrl(), wpFeaturedMediaUrl);
-      const answerType = wpChatThread["answer-type"] || "TEXT";
+      const answerType = wpChatThread["answer-type"] || "TEXT";
       const expires = wpChatThread.expires ? moment(wpChatThread.expires).toDate() : null;
 
       _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
@@ -206,7 +206,7 @@
           "contents": newsArticle.contents,
           "title": newsArticle.title,
           "created": moment(newsArticle.createdAt).format(),
-          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
           "image": newsArticle.imageUrl,
           "read": false
         }

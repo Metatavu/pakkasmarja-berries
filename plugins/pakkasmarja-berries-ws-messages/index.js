@@ -24,7 +24,7 @@
     
     handleWebSocketError(client, operation) {
       return (err) => {
-        const failedOperation = operation || 'UNKNOWN_OPERATION';
+        const failedOperation = operation || 'UNKNOWN_OPERATION';
         this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));
         // TODO notify client
       };
@@ -51,7 +51,7 @@
               
               this.models.findThread(threadId)
                 .then((thread) => {
-                  if (thread.type === 'conversation') {
+                  if (thread.type === 'conversation') {
                     this.onSendMessageConversation(userId, thread, contents, client);
                   } else if (thread.type === 'question') {
                     this.onSendMessageQuestion(userId, thread, contents, client);
@@ -141,9 +141,9 @@
                           "contents": newsArticle.contents,
                           "title": newsArticle.title,
                           "created": moment(newsArticle.createdAt).format(),
-                          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+                          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
                           "image": newsArticle.imageUrl,
-                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt.getTime()
+                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt.getTime()
                         };
                       })
                     }
@@ -179,7 +179,7 @@
             return threadPredefinedText.text;
           }) : [];
 
-          return {
+          return {
             "id": thread.id,
             "title": thread.title,
             "description": thread.description,
@@ -190,7 +190,7 @@
             "allowOtherAnswer": true,
             "expiresAt": thread.expiresAt ? moment(thread.expiresAt).format() : null,
             "predefinedTexts": predefinedTexts,
-            "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
+            "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
           };
         }));
 
@@ -337,7 +337,7 @@
               title: this.userManagement.getUserDisplayName(user),
               type: thread.type,
               imageUrl: this.userManagement.getUserImage(user),
-              read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+              read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
             });
           }
         });
@@ -653,7 +653,7 @@
         userName: this.userManagement.getUserDisplayName(user),  
         contents: message.contents,
         created: message.createdAt,
-        modified: message.modifiedAt || message.createdAt,
+        modified: message.modifiedAt || message.createdAt,
         role: role
       };
     }
