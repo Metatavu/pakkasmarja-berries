@@ -167,7 +167,7 @@
         const userId = await this.getUserId(client);
         const userGroupIds = await this.getUserGroupIds(client, userId);
         const data = _.flatten(await Promise.all(_.map(userGroupIds, (userGroupId) => {
-          return this.models.listConversationThreadsByUserGroupId(userGroupId);
+          return this.models.listConversationThreadsByUserGroupIdNotExpired(userGroupId);
         })));
         
         const itemReadMap = await this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }));
@@ -175,7 +175,7 @@
         const threads = await Promise.all(_.map(data, async (thread) => {
           const threadRead = itemReadMap[`thread-${thread.id}`];
           const answerType = thread.answerType;
-          const predefinedTexts = answerType === "SELECT" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
+          const predefinedTexts = answerType === "POLL" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
             return threadPredefinedText.text;
           }) : [];
 
@@ -187,6 +187,8 @@
             "imageUrl": thread.imageUrl,
             "latestMessage": thread.latestMessage,
             "answerType": answerType,
+            "allowOtherAnswer": true,
+            "expiresAt": thread.expiresAt ? moment(thread.expiresAt).format() : null,
             "predefinedTexts": predefinedTexts,
             "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
           };
@@ -491,7 +493,7 @@
             this.getUserGroupIds(client)
               .then((userGroupIds) => {
                 const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                  return this.models.listConversationThreadsByUserGroupId(userGroupId);
+                  return this.models.listConversationThreadsByUserGroupIdNotExpired(userGroupId);
                 });
 
                 Promise.all(threadPromises)

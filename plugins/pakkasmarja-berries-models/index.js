@@ -59,7 +59,8 @@
         originId: { type: Sequelize.STRING(191) },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
-        answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" }
+        answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
+        expiresAt: { type: Sequelize.DATE, allowNull: true }
       }, {
         hooks: {
           "afterFind": (object) => {
@@ -492,15 +493,17 @@
      * @param {String} type type
      * @param {String} imageUrl image url
      * @param {String} answerType answerType
+     * @param {Date} expiresAt expires
      */
-    createThread(originId, title, description, type, imageUrl, answerType) {
+    createThread(originId, title, description, type, imageUrl, answerType, expiresAt) {
       return this.Thread.create({
         originId: originId,
         title: title,
         description: description,
         type: type,
         imageUrl: imageUrl,
-        answerType: answerType
+        answerType: answerType,
+        expiresAt: expiresAt
       });
     }
     
@@ -520,11 +523,23 @@
       return this.Thread.findAll({ where: { type: "conversation", archived: false } });
     }
     
-    listConversationThreadsByUserGroupId(userGroupId) {
+    /**
+     * Lists non-expired threads where given user group has role
+     * 
+     * @param {String} userGroupId user group id 
+     */
+    listConversationThreadsByUserGroupIdNotExpired(userGroupId) {
       return this.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((threadUserGroupRoles) => {
           return this.Thread.findAll({ where: { 
-            id: {$in: _.map(threadUserGroupRoles, "threadId") },
+            id: { $in: _.map(threadUserGroupRoles, "threadId") },
+            expiresAt: {
+              [this.Sequelize.Op.or]: [{
+                [this.Sequelize.Op.eq]: null
+              }, {
+                [this.Sequelize.Op.gte]: new Date()
+              }]
+            },
             archived: false
           }});
         });
@@ -634,14 +649,16 @@
      * @param {String} imageUrl image url
      * @param {Boolean} silentUpdate silent update
      * @param {String} answerType answer type
+     * @param {Date} expiresAt expires
      */
-    updateThread(id, title, description, imageUrl, silentUpdate, answerType) {
+    updateThread(id, title, description, imageUrl, silentUpdate, answerType, expiresAt) {
       return this.Thread.update({
         title: title,
         description: description,
         imageUrl: imageUrl,
         archived: false,
-        answerType: answerType
+        answerType: answerType,
+        expiresAt: expiresAt
       }, {
         where: {
           id: id
@@ -857,7 +874,7 @@
                 };
               });
           } else {
-            return this.createThread(null, null, "question", null, "TEXT")
+            return this.createThread(null, null, "question", null, "TEXT", null)
               .then((thread) => {
                 return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId)
                   .then(() => {

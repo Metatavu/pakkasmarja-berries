@@ -110,24 +110,30 @@
       });
 
       const messages = await this.models.listMessagesByThreadId(thread.id);
+      messages.sort((a, b) => {
+        return a.createdAt.getTime() - b.createdAt.getTime();
+      });
+
       const predefinedTextCounts = {};
 
-      const userAnswers = {};
+      const userAnswerMap = {};
 
       for (let i = 0; i < messages.length; i++) {
         const message = messages[i];
         const answer = message.contents ? _.trim(message.contents) : null;
         if (answer) {
-          userAnswers[message.userId] = answer;
+          userAnswerMap[message.userId] = answer;
         }
       }
 
-      for (let i = 0; i < predefinedTexts.length; i++) {
-        const predefinedText = predefinedTexts[i];
-        predefinedTextCounts[predefinedText] = (predefinedTextCounts[predefinedText] || 0) + 1;  
+      const userAnswers = Object.values(userAnswerMap);
+
+      for (let i = 0; i < userAnswers.length; i++) {
+        const userAnswer = userAnswers[i];
+        predefinedTextCounts[userAnswer] = (predefinedTextCounts[userAnswer] || 0) + 1;  
       }
 
-      const otherAnswers = _.without.apply(_, [Object.values(userAnswers)].concat(predefinedTexts));
+      const otherAnswers = _.without.apply(_, [userAnswers].concat(predefinedTexts));
             
       const columnHeaders = [
         i18n.__("chatThreadSummaryReport.answer"),
@@ -137,7 +143,7 @@
       const rows = [];
       for (let i = 0; i < predefinedTexts.length; i++) {
         const predefinedText = predefinedTexts[i];
-        rows.push([predefinedText, predefinedTextCounts[predefinedText]]);
+        rows.push([predefinedText, predefinedTextCounts[predefinedText] || 0]);
       }
 
       if (otherAnswers.length > 0) {

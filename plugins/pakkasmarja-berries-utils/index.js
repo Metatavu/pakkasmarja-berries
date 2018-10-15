@@ -101,6 +101,7 @@
       const userGroupRoles = {};
       const imageUrl = this.wordpress.resolveImageUrl(this.getBaseUrl(), wpFeaturedMediaUrl);
       const answerType = wpChatThread["answer-type"] || "TEXT";
+      const expires = wpChatThread.expires ? moment(wpChatThread.expires).toDate() : null;
 
       _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
         userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
@@ -110,12 +111,12 @@
         let thread = await this.models.findThreadByOriginId(wpId); 
 
         if (thread) {
-          await this.models.updateThread(thread.id, wpTitle, wpContent, imageUrl, silentUpdate, answerType); 
+          await this.models.updateThread(thread.id, wpTitle, wpContent, imageUrl, silentUpdate, answerType, expires); 
           await this.models.setThreadUserGroupRoles(thread.id, userGroupRoles);
           this.logger.info(`Thread ${thread.id} updated`);
           this.notifyClusterConversationThreadAdded(thread);
         } else {
-          thread = await this.models.createThread(wpId, wpTitle, wpContent, wpType, imageUrl, answerType);
+          thread = await this.models.createThread(wpId, wpTitle, wpContent, wpType, imageUrl, answerType, expires);
           await this.models.setThreadUserGroupRoles(thread.id, userGroupRoles);
           this.logger.info(`Thread ${thread.id} created`);
           this.notifyClusterConversationThreadIdAdded(thread.id);
