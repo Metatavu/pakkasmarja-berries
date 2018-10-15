@@ -24,7 +24,7 @@
     
     handleWebSocketError(client, operation) {
       return (err) => {
-        const failedOperation = operation || 'UNKNOWN_OPERATION';
+        const failedOperation = operation || "UNKNOWN_OPERATION";
         this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));
         // TODO notify client
       };
