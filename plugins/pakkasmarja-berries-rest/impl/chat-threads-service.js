@@ -2,7 +2,7 @@
 /* global __dirname */
 
 (() => {
-  'use strict';
+  "use strict";
 
   const _ = require("lodash");
   const i18n = require("i18n");
