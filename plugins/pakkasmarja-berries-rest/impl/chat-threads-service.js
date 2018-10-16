@@ -55,13 +55,13 @@
       res.send(result);
     }
 
-   /**
-    * Returns chat thread report
-    * Returns chat thread report
-    *
-    * @param {http.ClientRequest} req client request object
-    * @param {http.ServerResponse} res server response object
-    **/
+    /**
+     * Returns chat thread report
+     * Returns chat thread report
+     *
+     * @param {http.ClientRequest} req client request object
+     * @param {http.ServerResponse} res server response object
+     **/
     async getChatThreadReport(req, res) {
       if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
         this.sendForbidden(res, "You have no permission to manage threads");
@@ -80,7 +80,7 @@
       }
       
       const expectedTypes = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
-      const accept = this.getBareContentType(req.header("accept")) || expectedTypes[0];
+      const accept = this.getBareContentType(req.header("accept")) || expectedTypes[0];
 
       if (expectedTypes.indexOf(accept) === -1) {
         this.sendBadRequest(res, `Unsupported accept ${accept}, should be one of ${expectedTypes.join(",")}`);
@@ -121,8 +121,8 @@
       for (let i = 0; i < messages.length; i++) {
         const message = messages[i];
         const answer = message.contents ? _.trim(message.contents) : null;
-        if (answer) {
-          userAnswerMap[message.userId] = answer;
+        if (answer) {
+          userAnswerMap[message.userId] = answer;
         }
       }
 
@@ -130,7 +130,7 @@
 
       for (let i = 0; i < userAnswers.length; i++) {
         const userAnswer = userAnswers[i];
-        predefinedTextCounts[userAnswer] = (predefinedTextCounts[userAnswer] || 0) + 1;  
+        predefinedTextCounts[userAnswer] = (predefinedTextCounts[userAnswer] || 0) + 1;  
       }
 
       const otherAnswers = _.without.apply(_, [userAnswers].concat(predefinedTexts));
@@ -143,7 +143,7 @@
       const rows = [];
       for (let i = 0; i < predefinedTexts.length; i++) {
         const predefinedText = predefinedTexts[i];
-        rows.push([predefinedText, predefinedTextCounts[predefinedText] || 0]);
+        rows.push([predefinedText, predefinedTextCounts[predefinedText] || 0]);
       }
 
       if (otherAnswers.length > 0) {
@@ -173,7 +173,7 @@
     }
 
 
-  };
+  }
 
   module.exports = ChatThreadsServiceImpl;
 

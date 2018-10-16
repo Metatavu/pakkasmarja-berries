@@ -51,9 +51,9 @@
               
               this.models.findThread(threadId)
                 .then((thread) => {
-                  if (thread.type === 'conversation') {
+                  if (thread.type === "conversation") {
                     this.onSendMessageConversation(userId, thread, contents, client);
-                  } else if (thread.type === 'question') {
+                  } else if (thread.type === "question") {
                     this.onSendMessageQuestion(userId, thread, contents, client);
                   } else {
                     this.logger.error(`Unknown thread type ${thread.type}`);
