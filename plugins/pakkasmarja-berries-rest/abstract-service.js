@@ -73,9 +73,14 @@
      */
     catchAsync(handler) {
       return (req, res) => {
-        return Promise.resolve(handler(req, res)).catch((err) => {
-          res.status(500).send(err);
-        });
+        try {
+          return Promise.resolve(handler(req, res)).catch((err) => {
+            console.error(err);
+            res.status(500).send(err);
+          });
+        } catch (e) {
+          console.error(e);
+        }
       };
     }
     
@@ -154,7 +159,18 @@
         "message": message || "Not implemented yet"
       }));
     }
-   
+
+    /**
+     * Returns content type without parameters
+     */
+    getBareContentType(contentType) {
+      if (!contentType) {
+        return null;
+      }
+
+      return contentType.split(";")[0].trim();
+    }
+
   }
 
   module.exports = AbstractService;

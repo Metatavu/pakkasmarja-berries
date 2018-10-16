@@ -1035,17 +1035,6 @@
     }
 
     /**
-     * Returns content type without parameters
-     */
-    getBareContentType(contentType) {
-      if (!contentType) {
-        return null;
-      }
-
-      return contentType.split(";")[0].trim();
-    }
-
-    /**
      * Returns company name for a contract
      * 
      * @param {Contract} contract contract 

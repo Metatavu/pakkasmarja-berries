@@ -11,6 +11,7 @@
   const OperationReportsServiceImpl = require(`${__dirname}/impl/operation-reports-service`);
   const OperationsServiceImpl = require(`${__dirname}/impl/operations-service`);
   const SignAuthenticationServicesServiceImpl = require(`${__dirname}/impl/sign-authentication-services-service`);
+  const ChatThreadsServiceImpl = require(`${__dirname}/impl/chat-threads-service`);
   
   /**
    * Rest services
@@ -37,6 +38,7 @@
       this.operationReportsService = new OperationReportsServiceImpl(logger, models);
       this.operationsService = new OperationsServiceImpl(logger, models, tasks, userManagement);
       this.signAuthenticationService = new SignAuthenticationServicesServiceImpl(logger, signature);
+      this.chatThreadsServiceImpl = new ChatThreadsServiceImpl(logger, models, xlsx);
     }
     
     /**
@@ -52,6 +54,7 @@
       this.operationReportsService.register(app, keycloak);
       this.operationsService.register(app, keycloak);
       this.signAuthenticationService.register(app, keycloak);
+      this.chatThreadsServiceImpl.register(app, keycloak);
     }
     
   }

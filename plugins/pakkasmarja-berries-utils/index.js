@@ -90,53 +90,62 @@
       });
     }
     
-    updateOrCreateChatThread(wpChatThread, silentUpdate) {
+    async updateOrCreateChatThread(wpChatThread, silentUpdate) {
       const wpId = wpChatThread.id.toString();
-      const wpUserGroupSetings = wpChatThread['user-group-setings'];
-      const wpFeaturedMediaUrl = wpChatThread['better_featured_image'] ? wpChatThread['better_featured_image'].source_url : null;
+      const wpUserGroupSetings = wpChatThread["user-group-setings"];
+      const wpPredefinedTexts = wpChatThread["predefined-texts"] || [];
+      const wpFeaturedMediaUrl = wpChatThread["better_featured_image"] ? wpChatThread["better_featured_image"].source_url : null;
       const wpTitle = wpChatThread.title.rendered;
-      const wpType = 'conversation';
+      const wpContent = wpChatThread.content.rendered||null;
+      const wpType = "conversation";
       const userGroupRoles = {};
       const imageUrl = this.wordpress.resolveImageUrl(this.getBaseUrl(), wpFeaturedMediaUrl);
+      const answerType = wpChatThread["answer-type"] || "TEXT";
+      const expires = wpChatThread.expires ? moment(wpChatThread.expires).toDate() : null;
 
       _.forEach(wpUserGroupSetings, (wpUserGroupSeting) => {
         userGroupRoles[wpUserGroupSeting.id] = wpUserGroupSeting.role;
       });
 
-      this.models.findThreadByOriginId(wpId)
-        .then((thread) => {
-          if (thread) {
-            this.models.updateThread(thread.id, wpTitle, imageUrl, silentUpdate)
-              .then(() => {
-                this.models.setThreadUserGroupRoles(thread.id, userGroupRoles)
-                  .then(() => {
-                    this.logger.info(`Thread ${thread.id} updated`);
-                    this.notifyClusterConversationThreadAdded(thread);
-                  })
-                  .catch((err) => {
-                    this.logger.error(`Failed to update chat thread group roles for ${wpId}`, err);
-                  });
-              }) 
-              .catch((err) => {
-                this.logger.error(`Failed to update chat thread ${wpId}`, err);
-              });
-          } else {
-            this.models.createThread(wpId, wpTitle, wpType, imageUrl)
-              .then((thread) => {
-                this.models.setThreadUserGroupRoles(thread.id, userGroupRoles)
-                  .then(() => {
-                    this.logger.info(`Thread ${thread.id} created`);
-                    this.notifyClusterConversationThreadIdAdded(thread.id);
-                  });
-              }) 
-              .catch((err) => {
-                this.logger.error(`Failed to create chat thread from ${wpId}`, err);
-              });
-          }
-        })
-        .catch((err) => {
-          this.logger.error(`Failed to find chat thread ${wpId}`, err);
+      try {
+        let thread = await this.models.findThreadByOriginId(wpId); 
+
+        if (thread) {
+          await this.models.updateThread(thread.id, wpTitle, wpContent, imageUrl, silentUpdate, answerType, expires); 
+          await this.models.setThreadUserGroupRoles(thread.id, userGroupRoles);
+          this.logger.info(`Thread ${thread.id} updated`);
+          this.notifyClusterConversationThreadAdded(thread);
+        } else {
+          thread = await this.models.createThread(wpId, wpTitle, wpContent, wpType, imageUrl, answerType, expires);
+          await this.models.setThreadUserGroupRoles(thread.id, userGroupRoles);
+          this.logger.info(`Thread ${thread.id} created`);
+          this.notifyClusterConversationThreadIdAdded(thread.id);
+        }
+
+        const predefinedTexts = await this.models.listThreadPredefinedTextsByThreadId(thread.id);
+        const existingTexts = predefinedTexts.map((predefinedText) => {
+          return predefinedText.text;
         });
+
+        for (let i = 0; i < wpPredefinedTexts.length; i++) {
+          const wpPredefinedText = wpPredefinedTexts[i];
+          const existingIndex = existingTexts.indexOf(wpPredefinedText);
+
+          if (existingIndex > -1) {
+            existingTexts.splice(existingIndex, 1);
+          } else {
+            await this.models.createThreadPredefinedText(thread.id, wpPredefinedText);
+          }
+        }
+
+        for (let i = 0; i < existingTexts.length; i++) {
+          const existingText = existingTexts[i];
+          await this.models.deleteThreadPredefinedTextByThreadIdAndText(thread.id, existingText);
+        }
+
+      } catch (err) {
+        this.logger.error(`Failed to find chat thread ${wpId}`, err);
+      }
     }
     
     updateOrCreateQuestionGroup(wpQuestionGroup, silentUpdate) {
@@ -197,7 +206,7 @@
           "contents": newsArticle.contents,
           "title": newsArticle.title,
           "created": moment(newsArticle.createdAt).format(),
-          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
           "image": newsArticle.imageUrl,
           "read": false
         }

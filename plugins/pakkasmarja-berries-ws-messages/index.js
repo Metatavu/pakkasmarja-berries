@@ -24,7 +24,7 @@
     
     handleWebSocketError(client, operation) {
       return (err) => {
-        const failedOperation = operation || 'UNKNOWN_OPERATION';
+        const failedOperation = operation || "UNKNOWN_OPERATION";
         this.logger.error(util.format('ERROR DURING OPERATION %s: %s', failedOperation, err));
         // TODO notify client
       };
@@ -51,9 +51,9 @@
               
               this.models.findThread(threadId)
                 .then((thread) => {
-                  if (thread.type === 'conversation') {
+                  if (thread.type === "conversation") {
                     this.onSendMessageConversation(userId, thread, contents, client);
-                  } else if (thread.type === 'question') {
+                  } else if (thread.type === "question") {
                     this.onSendMessageQuestion(userId, thread, contents, client);
                   } else {
                     this.logger.error(`Unknown thread type ${thread.type}`);
@@ -141,9 +141,9 @@
                           "contents": newsArticle.contents,
                           "title": newsArticle.title,
                           "created": moment(newsArticle.createdAt).format(),
-                          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
+                          "modified": moment(newsArticle.modifiedAt || newsArticle.createdAt).format(),
                           "image": newsArticle.imageUrl,
-                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt.getTime()
+                          "read": newsArticleRead && newsArticleRead.getTime() >= newsArticle.createdAt.getTime()
                         };
                       })
                     }
@@ -156,51 +156,60 @@
         .catch(this.handleWebSocketError(client, 'GET_NEWS'));
     }
     
-    onGetConversationThreads(message, client) {
-      this.getUserId(client)
-        .then((userId) => {
-          this.getUserGroupIds(client, userId)
-            .then((userGroupIds) => {
-              const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                return this.models.listConversationThreadsByUserGroupId(userGroupId);
-              });
+    /**
+     * Fetches conversation threads for logged user
+     * 
+     * @param {Object} message 
+     * @param {Object} client 
+     */
+    async onGetConversationThreads(message, client) {
+      try {
+        const userId = await this.getUserId(client);
+        const userGroupIds = await this.getUserGroupIds(client, userId);
+        const data = _.flatten(await Promise.all(_.map(userGroupIds, (userGroupId) => {
+          return this.models.listConversationThreadsByUserGroupIdNotExpired(userGroupId);
+        })));
+        
+        const itemReadMap = await this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }));
 
-              Promise.all(threadPromises)
-                .then((datas) => {
-                  const data = _.flatten(datas);
-          
-                  this.getItemReadMap(userId, _.map(data, (thread) => { return `thread-${thread.id}`; }))
-                    .then((itemReadMap) => {
-                      const threads = _.map(data, (thread) => {
-                        const threadRead = itemReadMap[`thread-${thread.id}`];
-                        return {
-                          'id': thread.id,
-                          'title': thread.title,
-                          'type': thread.type,
-                          'imageUrl': thread.imageUrl,
-                          'latestMessage': thread.latestMessage,
-                          'read': !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
-                        };
-                      });
-                      
-                      threads.sort((a, b) => {
-                        let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
-                        let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
-                        return latestB - latestA;
-                      });
-                      
-                      client.sendMessage({
-                        "type": "conversation-threads-added",
-                        "data": {
-                          threads: threads
-                        }
-                      });
-                    });
-                })
-                .catch(this.handleWebSocketError(client, 'GET_THREADS'));
-            })
-            .catch(this.handleWebSocketError(client, 'GET_THREADS'));
-      });
+        const threads = await Promise.all(_.map(data, async (thread) => {
+          const threadRead = itemReadMap[`thread-${thread.id}`];
+          const answerType = thread.answerType;
+          const predefinedTexts = answerType === "POLL" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
+            return threadPredefinedText.text;
+          }) : [];
+
+          return {
+            "id": thread.id,
+            "title": thread.title,
+            "description": thread.description,
+            "type": thread.type,
+            "imageUrl": thread.imageUrl,
+            "latestMessage": thread.latestMessage,
+            "answerType": answerType,
+            "allowOtherAnswer": true,
+            "expiresAt": thread.expiresAt ? moment(thread.expiresAt).format() : null,
+            "predefinedTexts": predefinedTexts,
+            "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
+          };
+        }));
+
+        threads.sort((a, b) => {
+          let latestA = a.latestMessage ? a.latestMessage.getTime() : 0;
+          let latestB = b.latestMessage ? b.latestMessage.getTime() : 0;
+          return latestB - latestA;
+        });
+
+        client.sendMessage({
+          "type": "conversation-threads-added",
+          "data": {
+            threads: threads
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        this.handleWebSocketError(client, "GET_THREADS");
+      }           
     }
     
     async onGetQuestionGroups(message, client) {
@@ -328,7 +337,7 @@
               title: this.userManagement.getUserDisplayName(user),
               type: thread.type,
               imageUrl: this.userManagement.getUserImage(user),
-              read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
+              read: !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage)
             });
           }
         });
@@ -484,7 +493,7 @@
             this.getUserGroupIds(client)
               .then((userGroupIds) => {
                 const threadPromises = _.map(userGroupIds, (userGroupId) => {
-                  return this.models.listConversationThreadsByUserGroupId(userGroupId);
+                  return this.models.listConversationThreadsByUserGroupIdNotExpired(userGroupId);
                 });
 
                 Promise.all(threadPromises)
@@ -644,7 +653,7 @@
         userName: this.userManagement.getUserDisplayName(user),  
         contents: message.contents,
         created: message.createdAt,
-        modified: message.modifiedAt || message.createdAt,
+        modified: message.modifiedAt || message.createdAt,
         role: role
       };
     }

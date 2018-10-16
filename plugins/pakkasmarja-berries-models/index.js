@@ -54,10 +54,13 @@
       this.defineModel("Thread", {
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         title: { type: Sequelize.STRING(191) },
+        description: { type: "LONGTEXT" },
         type: { type: Sequelize.STRING(191), allowNull: false },
         originId: { type: Sequelize.STRING(191) },
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
-        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
+        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
+        answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
+        expiresAt: { type: Sequelize.DATE, allowNull: true }
       }, {
         hooks: {
           "afterFind": (object) => {
@@ -74,6 +77,12 @@
             return Promise.all(extendPromises);
           }
         }
+      });
+
+      this.defineModel("ThreadPredefinedText", {
+        id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+        threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.Thread, key: "id" } },
+        text: { type: Sequelize.STRING(191), allowNull: false }
       });
       
       this.defineModel("ThreadUserGroupRole", {
@@ -449,7 +458,7 @@
     getUserSettings(userId) {
       return this.UserSettings.findAll({ where: { userId: userId } });
     }
-   
+
     findUserSettingsByUserIdAndKey(userId, settingKey) {
       return this.UserSettings.findOne({ where: { userId: userId, settingKey: settingKey } });
     }
@@ -475,12 +484,26 @@
       return this.Thread.update({ archived: true }, { where: { id: id } });
     }
     
-    createThread(originId, title, type, imageUrl) {
+    /**
+     * Creates new thread
+     * 
+     * @param {String} originId id in origin system
+     * @param {String} title title
+     * @param {String} description description
+     * @param {String} type type
+     * @param {String} imageUrl image url
+     * @param {String} answerType answerType
+     * @param {Date} expiresAt expires
+     */
+    createThread(originId, title, description, type, imageUrl, answerType, expiresAt) {
       return this.Thread.create({
         originId: originId,
         title: title,
+        description: description,
         type: type,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        answerType: answerType,
+        expiresAt: expiresAt
       });
     }
     
@@ -500,11 +523,23 @@
       return this.Thread.findAll({ where: { type: "conversation", archived: false } });
     }
     
-    listConversationThreadsByUserGroupId(userGroupId) {
+    /**
+     * Lists non-expired threads where given user group has role
+     * 
+     * @param {String} userGroupId user group id 
+     */
+    listConversationThreadsByUserGroupIdNotExpired(userGroupId) {
       return this.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
         .then((threadUserGroupRoles) => {
           return this.Thread.findAll({ where: { 
-            id: {$in: _.map(threadUserGroupRoles, "threadId") },
+            id: { $in: _.map(threadUserGroupRoles, "threadId") },
+            expiresAt: {
+              [this.Sequelize.Op.or]: [{
+                [this.Sequelize.Op.eq]: null
+              }, {
+                [this.Sequelize.Op.gte]: new Date()
+              }]
+            },
             archived: false
           }});
         });
@@ -547,7 +582,7 @@
     }
     
     findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, role) {
-     return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
+      return this.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
     }
     
     getQuestionGroupUserGroupRoleMap(questionGroupId) {
@@ -605,11 +640,25 @@
       return this.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
     }
     
-    updateThread(id, title, imageUrl, silentUpdate) {
+    /**
+     * Updates thread
+     * 
+     * @param {Number} id thread id 
+     * @param {String} title title
+     * @param {String} description description
+     * @param {String} imageUrl image url
+     * @param {Boolean} silentUpdate silent update
+     * @param {String} answerType answer type
+     * @param {Date} expiresAt expires
+     */
+    updateThread(id, title, description, imageUrl, silentUpdate, answerType, expiresAt) {
       return this.Thread.update({
         title: title,
+        description: description,
         imageUrl: imageUrl,
-        archived: false
+        archived: false,
+        answerType: answerType,
+        expiresAt: expiresAt
       }, {
         where: {
           id: id
@@ -651,7 +700,7 @@
     // Messages
     
     createMessage(threadId, userId, contents) {
-     return this.Message.create({
+      return this.Message.create({
         threadId: threadId,
         userId: userId,
         contents: contents
@@ -669,7 +718,7 @@
       
       return this.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
     }
-    
+
     updateMessage(id, contents) {
       return this.Message.update({
         contents: contents
@@ -825,7 +874,7 @@
                 };
               });
           } else {
-            return this.createThread(null, null, "question", null)
+            return this.createThread(null, null, "question", null, "TEXT", null)
               .then((thread) => {
                 return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId)
                   .then(() => {
@@ -2010,6 +2059,79 @@
       });
     }
     
+    /**
+     * Create thread predefined text
+     * 
+     * @param {Integer} threadId thread id
+     * @param {String} text text
+     * @returns {Promise} Promise for created entity
+     */
+    createThreadPredefinedText(threadId, text) {
+      return this.ThreadPredefinedText.create({
+        threadId: threadId,
+        text: text
+      });
+    }
+
+    /**
+     * Find ThreadPredefinedTexts
+     * 
+     * @param {int} id
+     * @returns {Promise} Promise for ThreadPredefinedText
+     */
+    findThreadPredefinedTexts(id) {
+      return this.ThreadPredefinedText.findOne({
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
+     * List ThreadPredefinedTexts
+     * 
+     * @param {int} threadId thread id
+     * @returns {Promise} Promise for ThreadPredefinedTexts
+     */
+    listThreadPredefinedTextsByThreadId(threadId) {
+      return this.ThreadPredefinedText.findAll({
+        where: {
+          threadId: threadId
+        }
+      });
+    }
+
+    /**
+     * Updates ThreadPredefinedText 
+     * 
+     * @param {int} id id
+     * @param {string} text text 
+     */
+    updateThreadPredefinedText(id, text) {
+      return this.ThreadPredefinedText.update({
+        text: text
+      }, {
+        where: {
+          id: id
+        }
+      });
+    }
+
+    /**
+     * Deletes predefined text from thread 
+     * 
+     * @param {int} threadId thread id
+     * @return {Promise} promise that resolves on successful removal
+     */
+    deleteThreadPredefinedTextByThreadIdAndText(threadId, text) {
+      return this.ThreadPredefinedText.destroy({ 
+        where: { 
+          threadId: threadId,
+          text: text 
+        } 
+      });
+    }
+
   }
   
   module.exports = (options, imports, register) => {
