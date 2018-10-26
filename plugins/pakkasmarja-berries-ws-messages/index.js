@@ -189,7 +189,7 @@
             "latestMessage": thread.latestMessage,
             "answerType": answerType,
             "pollAnswer": pollAnswer,
-            "allowOtherAnswer": true,
+            "allowOtherAnswer": thread.pollAllowOther,
             "expiresAt": thread.expiresAt ? moment(thread.expiresAt).format() : null,
             "predefinedTexts": predefinedTexts,
             "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
