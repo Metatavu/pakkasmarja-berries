@@ -175,7 +175,7 @@
         const threads = await Promise.all(_.map(data, async (thread) => {
           const threadRead = itemReadMap[`thread-${thread.id}`];
           const answerType = thread.answerType;
-          const pollAnswer = answerType === "POLL" ? ((await this.models.findLastMessageByThreadIdAndUserId(thread.id, userId)) || {}).contents : null;
+          const pollAnswer = answerType === "POLL" ? ((await this.models.findLastMessageByThreadIdAndUserId(thread.id, userId)) || {}).contents : null;
           const predefinedTexts = answerType === "POLL" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
             return threadPredefinedText.text;
           }) : [];
