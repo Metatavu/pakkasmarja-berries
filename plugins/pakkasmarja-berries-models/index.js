@@ -711,6 +711,24 @@
       return this.Message.findOne({ where: { id : id } });
     }
     
+    /**
+     * Finds last message posted into a thread by user 
+     * 
+     * @param {Number} threadId thread id 
+     * @param {String} userId contract's user id
+     * @return {Object} last message posted into a thread by user or null if not found
+     */
+    findLastMessageByThreadIdAndUserId(threadId, userId) {
+      return this.Message.findOne({ 
+        where: { 
+          threadId: threadId,
+          userId: userId 
+        }, 
+        limit: 1, 
+        order: [ [ "createdAt", "DESC" ] ] 
+      });
+    }
+
     listMessagesByThreadId(threadId, firstResult, maxResults) {
       if (!threadId) {
         return Promise.resolve([]);
