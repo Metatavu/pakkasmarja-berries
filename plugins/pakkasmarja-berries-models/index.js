@@ -60,6 +60,7 @@
         imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
         archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
         answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
+        pollAllowOther: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
         expiresAt: { type: Sequelize.DATE, allowNull: true }
       }, {
         hooks: {
@@ -493,9 +494,10 @@
      * @param {String} type type
      * @param {String} imageUrl image url
      * @param {String} answerType answerType
+     * @param {Boolean} pollAllowOther whether polls should allow other answers or not
      * @param {Date} expiresAt expires
      */
-    createThread(originId, title, description, type, imageUrl, answerType, expiresAt) {
+    createThread(originId, title, description, type, imageUrl, answerType, pollAllowOther, expiresAt) {
       return this.Thread.create({
         originId: originId,
         title: title,
@@ -503,6 +505,7 @@
         type: type,
         imageUrl: imageUrl,
         answerType: answerType,
+        pollAllowOther: pollAllowOther,
         expiresAt: expiresAt
       });
     }
@@ -649,15 +652,17 @@
      * @param {String} imageUrl image url
      * @param {Boolean} silentUpdate silent update
      * @param {String} answerType answer type
+     * @param {Boolean} pollAllowOther whether polls should allow other answers or not
      * @param {Date} expiresAt expires
      */
-    updateThread(id, title, description, imageUrl, silentUpdate, answerType, expiresAt) {
+    updateThread(id, title, description, imageUrl, silentUpdate, answerType, pollAllowOther, expiresAt) {
       return this.Thread.update({
         title: title,
         description: description,
         imageUrl: imageUrl,
         archived: false,
         answerType: answerType,
+        pollAllowOther: pollAllowOther,
         expiresAt: expiresAt
       }, {
         where: {
