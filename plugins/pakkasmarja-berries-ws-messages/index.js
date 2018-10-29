@@ -74,7 +74,10 @@
             .then(() => {
               this.userManagement.getThreadUserIds(config.get("keycloak:admin:realm"), thread.id)
                 .then((userIds) => {
-                  this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti', `Uusi viesti keskustelussa ${thread.title}`, 'conversation-push-notifications');
+                  if (thread.answerType === 'TEXT') {
+                    this.pakkasmarjaBerriesUtils.buildPushNotification(userIds, 'Uusi viesti', `Uusi viesti keskustelussa ${thread.title}`, 'conversation-push-notifications');
+                  }
+
                   this.models.upsertItemRead(`thread-${thread.id}`, userId)
                     .then(() => {})
                     .catch(this.handleWebSocketError(client, 'SEND_MESSAGE_QUESTION'));
@@ -183,7 +186,7 @@
           return {
             "id": thread.id,
             "title": thread.title,
-            "description": thread.description,
+            "description": thread.description || ' ',
             "type": thread.type,
             "imageUrl": thread.imageUrl,
             "latestMessage": thread.latestMessage,
