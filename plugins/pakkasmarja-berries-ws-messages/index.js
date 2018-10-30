@@ -179,6 +179,8 @@
           const threadRead = itemReadMap[`thread-${thread.id}`];
           const answerType = thread.answerType;
           const pollAnswer = answerType === "POLL" ? ((await this.models.findLastMessageByThreadIdAndUserId(thread.id, userId)) || {}).contents : null;
+          const read = answerType === "POLL" ? true : !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime());
+          const latestMessage = answerType === "POLL" ? null : thread.latestMessage;
           const predefinedTexts = answerType === "POLL" ? (await this.models.listThreadPredefinedTextsByThreadId(thread.id)).map((threadPredefinedText) => {
             return threadPredefinedText.text;
           }) : [];
@@ -189,13 +191,13 @@
             "description": thread.description || ' ',
             "type": thread.type,
             "imageUrl": thread.imageUrl,
-            "latestMessage": thread.latestMessage,
+            "latestMessage": latestMessage,
             "answerType": answerType,
             "pollAnswer": pollAnswer,
             "allowOtherAnswer": thread.pollAllowOther,
             "expiresAt": thread.expiresAt ? moment(thread.expiresAt).format() : null,
             "predefinedTexts": predefinedTexts,
-            "read": !thread.latestMessage || (threadRead && threadRead.getTime() >= thread.latestMessage.getTime())
+            "read": read
           };
         }));
 
