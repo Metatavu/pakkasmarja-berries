@@ -1,13 +1,256 @@
+import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
 import * as _ from "lodash";
 
-let instance: Models|null = null; 
+export interface SessionModel {
+  id: string,
+  userId: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ConnectSessionModel {
+  sid: string,
+  userId: string,
+  expires: Date,
+  data: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface UserSettingsModel {
+  id: number,
+  userId: string,
+  settingKey: string,
+  settingValue: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ThreadModel {
+  id: number,
+  title: string,
+  description: string,
+  type: string,
+  originId: string,
+  imageUrl: string,
+  archived: boolean,
+  answerType: string,
+  pollAllowOther: boolean,
+  expiresAt?: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ThreadPredefinedTextModel {
+  id: number,
+  threadId: number,
+  text: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ThreadUserGroupRoleModel {
+  id: number,
+  threadId: number,
+  userGroupId: string,
+  role: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface MessageModel {
+  id: number,
+  threadId: number,
+  userId: string,
+  contents: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface QuestionGroupModel {
+  id: number,
+  title: string,
+  originId: string,
+  imageUrl: string,
+  archived: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface QuestionGroupUserGroupRoleModel {
+  id: number,
+  questionGroupId: number,
+  userGroupId: string,
+  role: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface QuestionGroupUserThreadModel {
+  id: number,
+  questionGroupId: number,
+  threadId: number,
+  userId: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface NewsArticleModel {
+  id: number,
+  title: string,
+  contents: string,
+  originId: string,
+  imageUrl: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface MessageAttachmentModel {
+  id: number,
+  messageId: number,
+  contents: string,
+  contentType: string,
+  fileName: string,
+  size: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ItemReadModel {
+  id: number,
+  userId: string,
+  itemId: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ItemGroupModel {
+  id: number,
+  sapId: string,
+  externalId: string,
+  name: string,
+  category: string,
+  displayName?: string,
+  minimumProfitEstimation: number,
+  prerequisiteContractItemGroupId?: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ItemGroupPriceModel {
+  id: number,
+  externalId: string,
+  groupName: string,
+  unit: string,
+  price: string,
+  year: number,
+  itemGroupId: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface DeliveryPlaceModel {
+  id: number,
+  sapId: string,
+  externalId: string,
+  name: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ContractModel {
+  id: number,
+  externalId: string,
+  userId: string,
+  itemGroupId: number,
+  deliveryPlaceId: number,
+  proposedDeliveryPlaceId: number,
+  sapId?: string,
+  contractQuantity: number,
+  deliveredQuantity: number,
+  proposedQuantity: number,
+  year: number,
+  startDate: Date,
+  endDate: Date,
+  signDate: Date,
+  termDate: Date,
+  status: 'APPROVED' | 'ON_HOLD' | 'DRAFT' | 'TERMINATED' | 'REJECTED',
+  areaDetails: string,
+  deliverAll: boolean,
+  remarks: string,
+  deliveryPlaceComment: string,
+  quantityComment: string,
+  rejectComment: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface DocumentTemplateModel {
+  id: number,
+  contents: string,
+  header?: string,
+  footer?: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ItemGroupDocumentTemplateModel {
+  id: number,
+  externalId: string,
+  type: string,
+  itemGroupId: number,
+  documentTemplateId: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ContractDocumentTemplateModel {
+  id: number,
+  externalId: string,
+  type: string,
+  contractId: number,
+  documentTemplateId: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface ContractDocumentModel {
+  id: number,
+  type: string,
+  contractId: number,
+  vismaSignDocumentId: string,
+  signed: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface OperationReportModel {
+  id: number,
+  externalId: string,
+  type: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+export interface OperationReportItemModel {
+  id: number,
+  message?: string,
+  operationReportId: number,
+  completed: boolean,
+  success: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+const PRINT_MODEL_INTERFACES = true;
 
 export class Models { 
 
   private sequelize: Sequelize.Sequelize;
+  private Thread: Sequelize.Model<any, ThreadModel>;
   
-  constructor(sequelize: Sequelize.Sequelize) {
+  public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
     this.defineModels();
   }
@@ -22,13 +265,10 @@ export class Models {
     });
     
     this.defineModel("ConnectSession", {
-      sid: {
-        type: Sequelize.STRING(191),
-        primaryKey: true
-      },
-      userId: Sequelize.STRING(191),
-      expires: Sequelize.DATE,
-      data: Sequelize.TEXT
+      sid: { type: Sequelize.STRING(191), primaryKey: true },
+      userId: { type: Sequelize.STRING(191) },
+      expires: { type: Sequelize.DATE },
+      data: { type: Sequelize.TEXT }
     });
     
     this.defineModel("UserSettings", {
@@ -44,7 +284,7 @@ export class Models {
       }]
     });
     
-    this.defineModel("Thread", {
+    this.Thread = this.defineModel("Thread", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       title: { type: Sequelize.STRING(191) },
       description: { type: "LONGTEXT" },
@@ -222,17 +462,17 @@ export class Models {
       deliveredQuantity: { type: Sequelize.BIGINT },
       proposedQuantity: { type: Sequelize.BIGINT },
       year: { type: Sequelize.INTEGER, allowNull: false },
-      startDate: Sequelize.DATE,
-      endDate: Sequelize.DATE,
-      signDate: Sequelize.DATE,
-      termDate: Sequelize.DATE,
+      startDate: { type: Sequelize.DATE },
+      endDate: { type: Sequelize.DATE },
+      signDate: { type: Sequelize.DATE },
+      termDate: { type: Sequelize.DATE },
       status: { type: Sequelize.STRING(191), allowNull: false },
-      areaDetails: "LONGTEXT",
+      areaDetails: { type: "LONGTEXT" },
       deliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
-      remarks: Sequelize.TEXT,
-      deliveryPlaceComment: Sequelize.TEXT,
-      quantityComment: Sequelize.TEXT,
-      rejectComment: Sequelize.TEXT
+      remarks: { type: Sequelize.TEXT },
+      deliveryPlaceComment: { type: Sequelize.TEXT  },
+      quantityComment: { type: Sequelize.TEXT  },
+      rejectComment: { type: Sequelize.TEXT }
     }, {
       indexes: [{
         name: "UN_CONTRACT_EXTERNAL_ID",
@@ -324,13 +564,47 @@ export class Models {
    * @param {Object} attributes model attributes
    * @param {Object} options model options
    */
-  defineModel(name: string, attributes: any, options?: any) {
-    this.sequelize.define(name, attributes, Object.assign(options || {}, {
+  defineModel(name: string, attributes: any, options?: any): Sequelize.Model<any, any> {
+    const result = this.sequelize.define(name, attributes, Object.assign(options || {}, {
       charset: "utf8mb4",
       dialectOptions: {
         collate: "utf8mb4_unicode_ci"
       }
     }));
+
+    if (PRINT_MODEL_INTERFACES) {
+      this.printModel(name, attributes);
+    }
+
+    return result;
+  }
+
+  private printModel(name: string, attributes: any) {
+    const properties = Object.keys(attributes).map((attributeName: string) => {
+      const attribute = attributes[attributeName];
+      const attributeType = "" + attribute.type;
+      const optional = attribute.allowNull === true;
+      let type = "string";
+
+      if (["TEXT", "LONGTEXT", "LONGBLOB", "CHAR(36) BINARY", "VARCHAR(191)"].indexOf(attributeType) != -1) {
+        type = "string";
+      } else if (["BIGINT", "INTEGER", "DOUBLE PRECISION"].indexOf(attributeType) != -1) {
+        type = "number";
+      } else if (["TINYINT(1)"].indexOf(attributeType) != -1) {
+        type = "boolean";
+      } else if (["DATETIME"].indexOf(attributeType) != -1) {
+        type = "Date";
+      } else {
+        type = '"' + attributeType + '" == UNKNOWN!';
+      }
+
+      return `  ${attributeName}${optional ? "?" : ""}: ${type}`;
+    });
+
+    properties.push(`  createdAt: Date`);
+    properties.push(`  updatedAt: Date`);
+
+    console.log(`export interface ${name}Model {\n${properties.join(",\n")}\n}\n`);
   }
   
   // User settings
@@ -397,8 +671,8 @@ export class Models {
     });
   }
   
-  findThread(id: number) {
-    return this.sequelize.models.Thread.findOne({ where: { id : id } });
+  findThread(id: number): Bluebird<ThreadModel> {
+    return this.Thread.findOne({ where: { id : id } });
   }
   
   findThreads(ids: number[]) {
@@ -530,7 +804,7 @@ export class Models {
     return [];
   }
   
-  listThreadUserGroupRolesByThreadId(threadId: string) {
+  listThreadUserGroupRolesByThreadId(threadId: number) {
     return this.sequelize.models.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
   }
   
@@ -625,9 +899,9 @@ export class Models {
     });
   }
 
-  listMessagesByThreadId(threadId: number, firstResult: number, maxResults: number) {
+  listMessagesByThreadId(threadId: number, firstResult?: number, maxResults?: number): Bluebird<MessageModel[]> {
     if (!threadId) {
-      return Promise.resolve([]);
+      return Bluebird.resolve([]);
     }
     
     return this.sequelize.models.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
@@ -837,7 +1111,7 @@ export class Models {
     return this.sequelize.models.NewsArticle.findOne({ where: { originId : originId } });
   }
   
-  listNewsArticles(firstResult: number, maxResults: number) {
+  listNewsArticles(firstResult?: number, maxResults?: number) {
     return this.sequelize.models.NewsArticle.findAll({ offset: firstResult, limit: maxResults });
   }
   
@@ -982,7 +1256,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for created item group
    */
-  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number) {
+  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.create({
       sapId: sapId,
       name: name,
@@ -1004,7 +1278,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for updated item group
    */
-  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number) {
+  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number): Bluebird<[number, any]> {
     return this.sequelize.models.ItemGroup.update({
       name: name,
       displayName: displayName,
@@ -1024,7 +1298,7 @@ export class Models {
    * @param {int} id item group id
    * @return {Promise} promise for item group
    */
-  findItemGroupById(id: number) {
+  findItemGroupById(id: number): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { id : id } });
   }
   
@@ -1034,7 +1308,7 @@ export class Models {
    * @param {String} externalId item group externalId
    * @return {Promise} promise for item group
    */
-  findItemGroupByExternalId(externalId: string) {
+  findItemGroupByExternalId(externalId: string): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { externalId : externalId } });
   }
   
@@ -1044,7 +1318,7 @@ export class Models {
    * @param {String} sapId item group sapId
    * @return {Promise} promise for item group
    */
-  findItemGroupBySapId(sapId: string) {
+  findItemGroupBySapId(sapId: string): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { sapId : sapId } });
   }
   
@@ -1055,7 +1329,7 @@ export class Models {
    * @param {int} maxResults max results
    * @return {Promise} promise for item groups
    */
-  listItemGroups(firstResult: number, maxResults: number) {
+  listItemGroups(firstResult?: number, maxResults?: number): Bluebird<ItemGroupModel[]> {
     return this.sequelize.models.ItemGroup.findAll({ where: { }, offset: firstResult, limit: maxResults });
   }
   
@@ -1065,7 +1339,7 @@ export class Models {
    * @param {int} id item group id
    * @return {Promise} promise that resolves on successful removal
    */
-  deleteItemGroup(id: number) {
+  deleteItemGroup(id: number): Bluebird<number> {
     return this.sequelize.models.ItemGroup.destroy({ where: { id : id } });
   }
 
@@ -1123,7 +1397,7 @@ export class Models {
    * @param {String} orderDir order direction (defaults to DESC)
    * @return {Promise} promise for item group
    */
-  listItemGroupPrices(itemGroupId: number, year: number, firstResult: number, maxResults: number, orderBy: string, orderDir: string) {
+  listItemGroupPrices(itemGroupId?: number|null, year?: number|null, firstResult?: number|null, maxResults?: number|null, orderBy?: string|null, orderDir?: string|null) {
     const where: any = {};
 
     if (itemGroupId) {
@@ -1136,8 +1410,8 @@ export class Models {
 
     return this.sequelize.models.ItemGroupPrice.findAll({ 
       where: where,
-      offset: firstResult, 
-      limit: maxResults,
+      offset: firstResult || undefined, 
+      limit: maxResults || undefined,
       order: [[ orderBy || "createdAt", orderDir || "DESC" ] ]
     });
   }
@@ -1230,7 +1504,7 @@ export class Models {
    * @param {int} maxResults max results
    * @return {Promise} promise for delivery places
    */
-  listDeliveryPlaces(firstResult: number, maxResults: number) {
+  listDeliveryPlaces(firstResult?: number, maxResults?: number) {
     return this.sequelize.models.DeliveryPlace.findAll({ where: { }, offset: firstResult, limit: maxResults });
   }
     
@@ -1289,9 +1563,10 @@ export class Models {
    * 
    * @returns {Promise} promise for new contract
    */
-  createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, itemGroupId: number, sapId: string, 
-    contractQuantity: number, deliveredQuantity: number, proposedQuantity: number, startDate: Date, endDate: Date, signDate: Date, termDate: Date, 
-    status: string, areaDetails: string, deliverAll: boolean, remarks: string, deliveryPlaceComment: string, quantityComment: string, rejectComment: string) {
+  public createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
+    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
+    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<ContractModel> {
 
     return this.sequelize.models.Contract.create({
       userId: userId,
@@ -1325,7 +1600,7 @@ export class Models {
    * 
    * @returns {Promise} promise for update
    */
-  updateContractStatus(id: number, status: string) {
+  public updateContractStatus(id: number, status: string): Bluebird<[number, any]> {
     return this.sequelize.models.Contract.update({
       status: status
     }, {
@@ -1343,7 +1618,7 @@ export class Models {
    * 
    * @returns {Promise} promise for update
    */
-  updateContractSapId(id: number, sapId: string) {
+  public updateContractSapId(id: number, sapId: string): Bluebird<[number, any]> {
     return this.sequelize.models.Contract.update({
       sapId: sapId
     }, {
@@ -1361,7 +1636,7 @@ export class Models {
    * 
    * @returns {Promise} promise for update
    */
-  updateContractDeliveredQuantity(id: number, deliveredQuantity: string) {
+  public updateContractDeliveredQuantity(id: number, deliveredQuantity: string): Bluebird<[number, any]> {
     return this.sequelize.models.Contract.update({
       deliveredQuantity: deliveredQuantity
     }, {
@@ -1399,9 +1674,10 @@ export class Models {
    * 
    * @returns {Promise} promise for update
    */
-  updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, itemGroupId: number, sapId: string, 
-    contractQuantity: number, deliveredQuantity: number, proposedQuantity: number, startDate: Date, endDate: Date, signDate: Date, termDate: Date, 
-    status: string, areaDetails: string, deliverAll: boolean, remarks: string, deliveryPlaceComment: string, quantityComment: string, rejectComment: string) {
+  public updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
+    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
+    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
 
     return this.sequelize.models.Contract.update({
       year: year,
@@ -1436,7 +1712,7 @@ export class Models {
    * @param {int} id contract id
    * @return {Promise} promise for contract
    */
-  findContractById(id: number) {
+  public findContractById(id: number): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { id : id } });
   }
   
@@ -1446,7 +1722,7 @@ export class Models {
    * @param {String} externalId contract externalId
    * @return {Promise} promise for contract
    */
-  findContractByExternalId(externalId: string) {
+  public findContractByExternalId(externalId: string): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { externalId : externalId } });
   }
   
@@ -1456,7 +1732,7 @@ export class Models {
    * @param {String} sapId contract sapId
    * @return {Promise} promise for contract
    */
-  findContractBySapId(sapId: string) {
+  public findContractBySapId(sapId: string): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { sapId : sapId } });
   }
 
@@ -1474,7 +1750,7 @@ export class Models {
    * @param {int} maxResults max results
    * @return {Promise} promise for contracts
    */
-  listContracts(userId: string, itemGroupCategory: number, itemGroupId: number, year: number, status: string, firstResult: number, maxResults: number) {
+  public listContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null, firstResult?: number, maxResults?: number): Bluebird<ContractModel[]> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
     return this.sequelize.models.Contract.findAll({ 
@@ -1490,7 +1766,7 @@ export class Models {
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
-  listContractsByStatusAndSapIdNotNull(status: string) {
+  public listContractsByStatusAndSapIdNotNull(status: string): Bluebird<ContractModel[]> {
     return this.sequelize.models.Contract.findAll({ 
       where: {
         status: status,
@@ -1507,7 +1783,7 @@ export class Models {
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
-  listContractsByStatusAndSapIdIsNull(status: string) {
+  public listContractsByStatusAndSapIdIsNull(status: string): Bluebird<ContractModel[]> {
     return this.sequelize.models.Contract.findAll({ 
       where: {
         status: status,
@@ -1530,7 +1806,7 @@ export class Models {
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
-  countContracts(userId: string, itemGroupCategory: number, itemGroupId: number, year: number, status: string) {
+  public countContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null): Bluebird<number> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
     return this.sequelize.models.Contract.count({ 
@@ -1550,7 +1826,7 @@ export class Models {
    * @param {String} status status
    * @return {Object} where clause
    */
-  createListContractsWhere(userId: string, itemGroupCategory: number, itemGroupId: number, year: number, status: string) {
+  private createListContractsWhere(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null) {
     const where: any = {};
 
     if (userId) {
@@ -1587,7 +1863,7 @@ export class Models {
    * @param {int} id contract id
    * @return {Promise} promise that resolves on successful removal
    */
-  deleteContract(id: number) {
+  public deleteContract(id: number): Bluebird<number> {
     return this.sequelize.models.Contract.destroy({ where: { id : id } });
   }
   
@@ -1600,7 +1876,7 @@ export class Models {
    * @param {String} header header HTML
    * @param {String} footer footer HTML
    */
-  createDocumentTemplate(contents: string, header: string, footer: string) {
+  createDocumentTemplate(contents: string, header: string|null, footer: string|null) {
     return this.sequelize.models.DocumentTemplate.create({
       contents: contents,
       header: header,
@@ -1627,7 +1903,7 @@ export class Models {
    * @param {String} footer template footer
    * @return {Promise} promise for update
    */
-  updateDocumentTemplate(id: number, contents: string, header: string, footer: string) {
+  updateDocumentTemplate(id: number, contents: string, header: string|null, footer: string|null) {
     return this.sequelize.models.DocumentTemplate.update({
       contents: contents, 
       header: header,
@@ -1648,7 +1924,7 @@ export class Models {
    * @param {int} contractId contract id
    * @param {int} documentTemplateId document template id
    */
-  createContractDocumentTemplate(type: string, contractId: number, documentTemplateId: number) {
+  createContractDocumentTemplate(type: string, contractId: number, documentTemplateId: number): Bluebird<ContractDocumentTemplateModel> {
     return this.sequelize.models.ContractDocumentTemplate.create({
       type: type,
       contractId: contractId,
@@ -1662,7 +1938,7 @@ export class Models {
    * @param {String} externalId external id
    * @return {Promise} promise for contract document template
    */
-  findContractDocumentTemplateByExternalId(externalId: string) {
+  findContractDocumentTemplateByExternalId(externalId: string): Bluebird<ContractDocumentTemplateModel> {
     return this.sequelize.models.ContractDocumentTemplate.findOne({ where: { externalId: externalId } });
   }
     
@@ -1673,7 +1949,7 @@ export class Models {
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document template
    */
-  findContractDocumentTemplateByTypeAndContractId(type: string, contractId: number) {
+  findContractDocumentTemplateByTypeAndContractId(type: string, contractId: number): Bluebird<ContractDocumentTemplateModel> {
     return this.sequelize.models.ContractDocumentTemplate.findOne({ where: { type : type, contractId: contractId } });
   }
     
@@ -1683,7 +1959,7 @@ export class Models {
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document templates
    */
-  listContractDocumentTemplateByContractId(contractId: number) {
+  listContractDocumentTemplateByContractId(contractId: number): Bluebird<ContractDocumentTemplateModel[]> {
     return this.sequelize.models.ContractDocumentTemplate.findAll({ where: { contractId: contractId } });
   }
   
@@ -1696,7 +1972,7 @@ export class Models {
    * @param {int} itemGroupId item group id
    * @param {int} documentTemplateId document template id
    */
-  createItemGroupDocumentTemplate(type: string, itemGroupId: number, documentTemplateId: number) {
+  createItemGroupDocumentTemplate(type: string, itemGroupId: number, documentTemplateId: number): Bluebird<ItemGroupDocumentTemplateModel> {
     return this.sequelize.models.ItemGroupDocumentTemplate.create({
       type: type,
       itemGroupId: itemGroupId,
@@ -1711,7 +1987,7 @@ export class Models {
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document template
    */
-  findItemGroupDocumentTemplateByTypeAndItemGroupId(type: string, itemGroupId: number) {
+  findItemGroupDocumentTemplateByTypeAndItemGroupId(type: string, itemGroupId: number): Bluebird<ItemGroupDocumentTemplateModel> {
     return this.sequelize.models.ItemGroupDocumentTemplate.findOne({ where: { type : type, itemGroupId: itemGroupId } });
   }
 
@@ -1721,7 +1997,7 @@ export class Models {
    * @param {String} externalId externalId
    * @return {Promise} promise for contract document template
    */
-  findItemGroupDocumentTemplateByExternalId(externalId: string) {
+  findItemGroupDocumentTemplateByExternalId(externalId: string): Bluebird<ItemGroupDocumentTemplateModel> {
     return this.sequelize.models.ItemGroupDocumentTemplate.findOne({ where: { externalId: externalId } });
   }
     
@@ -1731,7 +2007,7 @@ export class Models {
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document templates
    */
-  listItemGroupDocumentTemplateByItemGroupId(itemGroupId: number) {
+  listItemGroupDocumentTemplateByItemGroupId(itemGroupId: number): Bluebird<ItemGroupDocumentTemplateModel[]> {
     return this.sequelize.models.ItemGroupDocumentTemplate.findAll({ where: { itemGroupId: itemGroupId } });
   }
   
@@ -1745,7 +2021,7 @@ export class Models {
    * @param {String} vismaSignDocumentId visma sign document id
    * @returns {Promise} Promise for ContractDocument
    */
-  createContractDocument(type: string, contractId: number, vismaSignDocumentId: string) {
+  createContractDocument(type: string, contractId: number, vismaSignDocumentId: string): Bluebird<ContractDocumentModel> {
     return this.sequelize.models.ContractDocument.create({
       type: type,
       contractId: contractId,
@@ -1760,7 +2036,7 @@ export class Models {
    * @param {int} id contract id
    * @returns {Promise} Promise for ContractDocument
    */
-  findContractDocumentById(id: number) {
+  findContractDocumentById(id: number): Bluebird<ContractDocumentModel> {
     return this.sequelize.models.ContractDocument.findOne({ where: { id : id } });
   }
   
@@ -1771,7 +2047,7 @@ export class Models {
    * @param {String} type type
    * @returns {Promise} Promise for ContractDocument
    */
-  findContractDocumentByContractAndType(contractId: number, type: string) {
+  findContractDocumentByContractAndType(contractId: number, type: string): Bluebird<ContractDocumentModel> {
     return this.sequelize.models.ContractDocument.findOne({ 
       where: {
         type: type,
@@ -1786,7 +2062,7 @@ export class Models {
    * @param {String} vismaSignDocumentId vismaSignDocumentId
    * @returns {Promise} Promise for ContractDocument
    */
-  findContractDocumentByVismaSignDocumentId(vismaSignDocumentId: string) {
+  findContractDocumentByVismaSignDocumentId(vismaSignDocumentId: string): Bluebird<ContractDocumentModel> {
     return this.sequelize.models.ContractDocument.findOne({ 
       where: {
         vismaSignDocumentId: vismaSignDocumentId
@@ -1800,7 +2076,7 @@ export class Models {
    * @param {boolean} signed signed
    * @returns {Promise} Promise for ContractDocuments
    */
-  listContractDocumentsBySigned(signed: boolean) {
+  listContractDocumentsBySigned(signed: boolean): Bluebird<ContractDocumentModel[]> {
     return this.sequelize.models.ContractDocument.findAll({ where: { signed: signed } });
   }
   
@@ -1811,7 +2087,7 @@ export class Models {
    * @param {boolean} signed signed
    * @returns {Promise} Promise for ContractDocument
    */
-  updateContractDocumentSigned(id: number, signed: boolean) {
+  updateContractDocumentSigned(id: number, signed: boolean): Bluebird<[number, any]> {
     return this.sequelize.models.ContractDocument.update({
       signed: signed
     }, {
@@ -1826,7 +2102,7 @@ export class Models {
    * 
    * @param {int} id contract document id 
    */
-  deleteContractDocument(id: number) {
+  deleteContractDocument(id: number): Bluebird<number> {
     return this.sequelize.models.ContractDocument.destroy({ where: { id : id } });
   }
   
@@ -1863,7 +2139,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReports(orderBy: string, orderDir: string, firstResult: number, maxResults: number) {
+  listOperationReports(orderBy: string, orderDir: string, firstResult?: number, maxResults?: number) {
     return this.sequelize.models.OperationReport.findAll({ offset: firstResult, limit: maxResults, order: [ [ orderBy || "createdAt", orderDir || "DESC" ] ] });
   }
 
@@ -1877,7 +2153,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReportsByType(type: string, orderBy: string, orderDir: string, firstResult: number, maxResults: number) {
+  listOperationReportsByType(type: string, orderBy: string, orderDir: string, firstResult?: number, maxResults?: number) {
     return this.sequelize.models.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [[orderBy || "createdAt", orderDir || "DESC" ]] });
   }
 
@@ -2049,14 +2325,10 @@ export class Models {
 
 }
 
+const instance = new Models();
+
 export function initializeModels(sequelize: Sequelize.Sequelize) {
-  instance = new Models(sequelize);
+  instance.init(sequelize);
 }
 
-export default () => {
-  if (!instance) {
-    throw new Error("Models not initialized");
-  }
-
-  return instance;
-};
+export default instance;
