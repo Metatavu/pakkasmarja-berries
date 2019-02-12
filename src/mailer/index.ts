@@ -1,9 +1,3 @@
-/**
-const fs = require("fs");
-const uuid = require("uuid4");
-const config = require("nconf");
-const Mailgun = require("mailgun-js");
- */
 import * as fs from "fs";
 import * as Mailgun from "mailgun-js";
 import * as config from "nconf";
