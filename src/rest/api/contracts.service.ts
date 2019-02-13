@@ -2,15 +2,6 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import AbstractService from "../abstract-service";
 
-/* tslint:disable */
-import { BadRequest } from '../model/badRequest';
-import { Contract } from '../model/contract';
-import { ContractDocumentSignRequest } from '../model/contractDocumentSignRequest';
-import { ContractDocumentTemplate } from '../model/contractDocumentTemplate';
-import { Forbidden } from '../model/forbidden';
-import { InternalServerError } from '../model/internalServerError';
-import { Price } from '../model/price';
-/* tslint:enable */
 export default abstract class ContractsService extends AbstractService {
 
   /**

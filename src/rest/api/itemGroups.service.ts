@@ -2,14 +2,6 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import AbstractService from "../abstract-service";
 
-/* tslint:disable */
-import { BadRequest } from '../model/badRequest';
-import { Forbidden } from '../model/forbidden';
-import { InternalServerError } from '../model/internalServerError';
-import { ItemGroup } from '../model/itemGroup';
-import { ItemGroupDocumentTemplate } from '../model/itemGroupDocumentTemplate';
-import { Price } from '../model/price';
-/* tslint:enable */
 export default abstract class ItemGroupsService extends AbstractService {
 
   /**

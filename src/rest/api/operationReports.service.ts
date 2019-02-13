@@ -2,13 +2,6 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import AbstractService from "../abstract-service";
 
-/* tslint:disable */
-import { BadRequest } from '../model/badRequest';
-import { Forbidden } from '../model/forbidden';
-import { InternalServerError } from '../model/internalServerError';
-import { OperationReport } from '../model/operationReport';
-import { OperationReportItem } from '../model/operationReportItem';
-/* tslint:enable */
 export default abstract class OperationReportsService extends AbstractService {
 
   /**

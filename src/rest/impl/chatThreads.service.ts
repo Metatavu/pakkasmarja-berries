@@ -3,7 +3,7 @@ import slugify from "slugify";
 import ChatThreadsService from "../api/chatThreads.service";
 import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
-import models, { Thread } from "../../models";
+import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
 import excel from "../../excel";
 import { ChatThread } from "../model/models";
 
@@ -86,8 +86,8 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @param {http.ServerResponse} res server response object
    * @param {Object} thread thread 
    */
-  async sendChatThreadSummaryReportXLSX(req: Request, res: Response, thread: Thread) {
-    const predefinedTexts = await models.listThreadPredefinedTextsByThreadId(thread.id).map((predefinedText) => {
+  async sendChatThreadSummaryReportXLSX(req: Request, res: Response, thread: ThreadModel) {
+    const predefinedTexts = (await models.listThreadPredefinedTextsByThreadId(thread.id)).map((predefinedText: ThreadPredefinedTextModel) => {
       return predefinedText.text;
     });
 
@@ -150,7 +150,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * 
    * @param {Object} databaseChatThread database chat thread
    */
-  translateChatThread(databaseChatThread: Thread) {
+  translateChatThread(databaseChatThread: ThreadModel) {
     let answerType: ChatThread.AnswerTypeEnum;
 
     if (databaseChatThread.answerType == "POLL") {
