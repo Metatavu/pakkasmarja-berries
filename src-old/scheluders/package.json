@@ -1,0 +1,17 @@
+{
+  "name": "pakkasmarja-berries-scheluders",
+  "version": "0.0.1",
+  "description": "Scheluder handlers for Pakkasmarja Berries",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "pakkasmarja-berries-scheluders"
+    ],
+    "consumes": [
+      "logger",
+      "pakkasmarja-berries-models",
+      "pakkasmarja-berries-wordpress",
+      "pakkasmarja-berries-utils"
+    ]
+  }
+}
