@@ -22,26 +22,6 @@ import excel from "../../excel";
 import pdf from "../../pdf";
 
 /**
-const fs = require("fs");
-const path = require("path");
-const _ = require("lodash");
-const pug = require("pug");
-const ApplicationRoles = require(`${__dirname}/../application-roles`);
-const AbstractContractsService = require(`${__dirname}/../service/contracts-service`);
-const Contract = require(`${__dirname}/../model/contract`);
-const AreaDetail = require(`${__dirname}/../model/area-detail`);
-const ContractDocumentSignRequest = require(`${__dirname}/../model/contract-document-sign-request`);
-const ContractDocumentTemplate = require(`${__dirname}/../model/contract-document-template`);
-const Price = require(`${__dirname}/../model/price`);
-const slugify = require("slugify");
-const moment = require("moment");
-const i18n = require("i18n");
-
-const config = require("nconf");
-const wkhtmltopdf = require("wkhtmltopdf");
-wkhtmltopdf.command = config.get("wkhtmltopdf:command");
- */
-/**
  * Implementation for Contracts REST service
  */
 interface HtmlContractDocumentData { 
