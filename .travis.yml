@@ -19,7 +19,7 @@ before_script:
   - mysql -e 'CREATE DATABASE pm /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */'
   - ./scripts/start-keycloak.sh
   - npm run instrument
-  - npm run run-cover &
+  - npm run run-cover > server.log &
   - echo "Waiting for server to start..."
   - sleep 30
   - echo "Running tests"
@@ -29,3 +29,5 @@ after_success:
   - curl -XPOST http://localhost:3002/system/shutdown
   - npm run coverage
   - cat ./coverage/lcov.info | coveralls
+after_failure:
+  cat server.log
