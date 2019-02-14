@@ -1,0 +1,50 @@
+{
+  "1d45568e-0fba-11e8-9ac4-a700da67a976": {
+    "id": "1d45568e-0fba-11e8-9ac4-a700da67a976",
+    "itemGroupId": "89723408-0f51-11e8-baa0-dfe7c7eae257",
+    "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
+    "proposedDeliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
+    "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
+    "contractQuantity": 50000,
+    "deliveredQuantity": 0,
+    "proposedQuantity": 50000,
+    "startDate": "2020-01-01T00:00:00.000Z",
+    "endDate": "2020-12-31T00:00:00.000Z",
+    "signDate": "2019-12-14T00:00:00.000Z",
+    "termDate": "2020-01-02T00:00:00.000Z",
+    "status": "APPROVED",
+    "remarks": "Ready for testing",
+    "year": 2017,
+    "sapId": "sapid-1",
+    "deliveryPlaceComment": null,
+    "quantityComment": null,
+    "rejectComment": null,
+    "areaDetails": [{
+      "name": "Test", "size": 123, "species": "something", "profitEstimation": 1234
+    }],
+    "deliverAll": true
+  },
+  "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
+    "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
+    "itemGroupId": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
+    "deliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
+    "proposedDeliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
+    "contactId": "677e99fd-b854-479f-afa6-74f295052770",
+    "contractQuantity": 75200,
+    "deliveredQuantity": 500,
+    "proposedQuantity": 75200,
+    "startDate": "2020-01-05T00:00:00.000Z",
+    "endDate": "2020-05-01T00:00:00.000Z",
+    "signDate": "2019-11-03T00:00:00.000Z",
+    "termDate": "2020-01-06T00:00:00.000Z",
+    "status": "DRAFT",
+    "remarks": null,
+    "year": 2018,
+    "sapId": "sapid-2",
+    "deliveryPlaceComment": null,
+    "quantityComment": null,
+    "rejectComment": null,
+    "areaDetails": [],
+    "deliverAll": false
+  }
+}

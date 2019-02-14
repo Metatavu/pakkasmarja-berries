@@ -1,0 +1,20 @@
+[
+  {
+    "name": "123000/Frozen Tes",
+    "displayName": "Frozen Test Group 1",
+    "category": "FROZEN",
+    "minimumProfitEstimation": 0
+  },
+  {
+    "name": "234000/Fresh Tes",
+    "displayName": "Fresh Test Group 1",
+    "category": "FRESH",
+    "minimumProfitEstimation": 500
+  },
+  {
+    "name": "345000/Frozen Te",
+    "displayName": "Frozen Test Group 2",
+    "category": "FROZEN",
+    "minimumProfitEstimation": 0
+  }
+]
