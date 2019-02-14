@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "instrument": "node_modules/.bin/istanbul instrument . -o .instrument",
-    "run-cover": "node_modules/.bin/istanbul cover --report none dist/app.js -- --host localhost --port 3002",
+    "run-cover": "npm run build && node_modules/.bin/istanbul cover --report none dist/app.js -- --host localhost --port 3002",
     "test": "npm run build && node_modules/.bin/istanbul cover --report none --dir coverage/unit node_modules/.bin/tape -- dist/test/*-test.js|node_modules/.bin/tap-spec",
     "coverage": "node_modules/.bin/istanbul report",
     "build": "node_modules/.bin/tsc"
