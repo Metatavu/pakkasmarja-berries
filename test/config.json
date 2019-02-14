@@ -84,6 +84,11 @@
     "item-group-minimum-profit-estimation": {
       "234": 500
     }
+  },
+  "contacts": {
+    "notifications": {
+      "email": "to@example.org"
+    }
   }
 }
 
