@@ -1,8 +1,10 @@
 import { Test } from "blue-tape"; 
 import * as request from "supertest";
+import * as path from "path";
 import auth from "./auth";
 
-const contactDatas = require(`${__dirname}/../../src/test/data/contacts.json`);
+const testDataDir = `${__dirname}/../../src/test/data/`;
+const contactDatas = require(path.resolve(testDataDir, 'contacts.json'));
 
 /**
  * Users utility class for tests
