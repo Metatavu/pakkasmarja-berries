@@ -12,16 +12,17 @@
 
 
 export interface ItemGroup { 
-    id?: string;
-    name?: string;
-    displayName?: string;
-    category?: string;
-    minimumProfitEstimation?: number;
+    id: string  | null;
+    name: string  | null;
+    displayName: string  | null;
+    category: string  | null;
+    minimumProfitEstimation: number  | null;
     /**
      * Require contract in specified item group before siging a contract
      */
-    prerequisiteContractItemGroupId?: string;
-}
+    prerequisiteContractItemGroupId: string  | null;
+}    
+
 export interface ItemGroupOpt { 
     id?: string;
     name?: string;

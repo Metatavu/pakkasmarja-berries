@@ -12,9 +12,10 @@
 
 
 export interface OperationReportItem { 
-    status?: OperationReportItem.StatusEnum;
-    message?: string;
-}
+    status: OperationReportItem.StatusEnum  | null;
+    message: string  | null;
+}    
+
 export interface OperationReportItemOpt { 
     status?: OperationReportItem.StatusEnum;
     message?: string;

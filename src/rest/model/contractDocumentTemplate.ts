@@ -12,13 +12,14 @@
 
 
 export interface ContractDocumentTemplate { 
-    id?: string;
-    contractId?: string;
-    type: string;
-    contents: string;
-    header?: string;
-    footer?: string;
-}
+    id: string  | null;
+    contractId: string  | null;
+    type: string ;
+    contents: string ;
+    header: string  | null;
+    footer: string  | null;
+}    
+
 export interface ContractDocumentTemplateOpt { 
     id?: string;
     contractId?: string;

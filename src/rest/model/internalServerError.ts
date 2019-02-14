@@ -12,9 +12,10 @@
 
 
 export interface InternalServerError { 
-    code?: number;
-    message?: string;
-}
+    code: number  | null;
+    message: string  | null;
+}    
+
 export interface InternalServerErrorOpt { 
     code?: number;
     message?: string;

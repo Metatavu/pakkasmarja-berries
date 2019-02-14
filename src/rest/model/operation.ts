@@ -12,9 +12,10 @@
 
 
 export interface Operation { 
-    type?: string;
-    operationReportId?: string;
-}
+    type: string  | null;
+    operationReportId: string  | null;
+}    
+
 export interface OperationOpt { 
     type?: string;
     operationReportId?: string;

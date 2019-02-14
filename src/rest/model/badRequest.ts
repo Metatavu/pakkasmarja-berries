@@ -12,9 +12,10 @@
 
 
 export interface BadRequest { 
-    code?: number;
-    message?: string;
-}
+    code: number  | null;
+    message: string  | null;
+}    
+
 export interface BadRequestOpt { 
     code?: number;
     message?: string;

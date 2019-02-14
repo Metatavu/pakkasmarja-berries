@@ -12,17 +12,18 @@
 
 
 export interface OperationReport { 
-    id?: string;
-    type?: string;
-    started?: string;
-    pendingCount?: number;
-    failedCount?: number;
-    successCount?: number;
-}
+    id: string  | null;
+    type: string  | null;
+    started: Date  | null;
+    pendingCount: number  | null;
+    failedCount: number  | null;
+    successCount: number  | null;
+}    
+
 export interface OperationReportOpt { 
     id?: string;
     type?: string;
-    started?: string;
+    started?: Date;
     pendingCount?: number;
     failedCount?: number;
     successCount?: number;

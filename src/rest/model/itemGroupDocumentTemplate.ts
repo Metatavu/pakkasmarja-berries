@@ -12,13 +12,14 @@
 
 
 export interface ItemGroupDocumentTemplate { 
-    id?: string;
-    itemGroupId?: string;
-    type?: string;
-    contents: string;
-    header?: string;
-    footer?: string;
-}
+    id: string  | null;
+    itemGroupId: string  | null;
+    type: string  | null;
+    contents: string ;
+    header: string  | null;
+    footer: string  | null;
+}    
+
 export interface ItemGroupDocumentTemplateOpt { 
     id?: string;
     itemGroupId?: string;

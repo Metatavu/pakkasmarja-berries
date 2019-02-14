@@ -12,9 +12,10 @@
 
 
 export interface NotImplemented { 
-    code?: number;
-    message?: string;
-}
+    code: number  | null;
+    message: string  | null;
+}    
+
 export interface NotImplementedOpt { 
     code?: number;
     message?: string;

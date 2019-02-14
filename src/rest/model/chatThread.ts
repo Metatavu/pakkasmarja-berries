@@ -12,13 +12,14 @@
 
 
 export interface ChatThread { 
-    id?: number;
-    title: string;
-    type?: string;
-    originId?: string;
-    imageUrl?: string;
-    answerType: ChatThread.AnswerTypeEnum;
-}
+    id: number  | null;
+    title: string ;
+    type: string  | null;
+    originId: string  | null;
+    imageUrl: string  | null;
+    answerType: ChatThread.AnswerTypeEnum ;
+}    
+
 export interface ChatThreadOpt { 
     id?: number;
     title?: string;

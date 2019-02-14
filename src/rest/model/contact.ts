@@ -13,20 +13,21 @@ import { Address } from './address';
 
 
 export interface Contact { 
-    id?: string;
-    sapId?: string;
-    firstName?: string;
-    lastName?: string;
-    companyName?: string;
-    phoneNumbers?: Array<string>;
-    email?: string;
-    addresses?: Array<Address>;
-    BIC?: string;
-    IBAN?: string;
-    taxCode?: string;
-    vatLiable?: Contact.VatLiableEnum;
-    audit?: string;
-}
+    id: string  | null;
+    sapId: string  | null;
+    firstName: string  | null;
+    lastName: string  | null;
+    companyName: string  | null;
+    phoneNumbers: Array<string>  | null;
+    email: string  | null;
+    addresses: Array<Address>  | null;
+    BIC: string  | null;
+    IBAN: string  | null;
+    taxCode: string  | null;
+    vatLiable: Contact.VatLiableEnum  | null;
+    audit: string  | null;
+}    
+
 export interface ContactOpt { 
     id?: string;
     sapId?: string;

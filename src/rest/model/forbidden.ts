@@ -12,9 +12,10 @@
 
 
 export interface Forbidden { 
-    code?: number;
-    message?: string;
-}
+    code: number  | null;
+    message: string  | null;
+}    
+
 export interface ForbiddenOpt { 
     code?: number;
     message?: string;

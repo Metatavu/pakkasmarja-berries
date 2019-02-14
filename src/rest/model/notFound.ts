@@ -12,9 +12,10 @@
 
 
 export interface NotFound { 
-    code?: number;
-    message?: string;
-}
+    code: number  | null;
+    message: string  | null;
+}    
+
 export interface NotFoundOpt { 
     code?: number;
     message?: string;

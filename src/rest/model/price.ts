@@ -12,12 +12,13 @@
 
 
 export interface Price { 
-    id?: string;
-    group: string;
-    year: number;
-    unit: string;
-    price: string;
-}
+    id: string  | null;
+    group: string ;
+    year: number ;
+    unit: string ;
+    price: string ;
+}    
+
 export interface PriceOpt { 
     id?: string;
     group?: string;

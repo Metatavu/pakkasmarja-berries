@@ -12,11 +12,12 @@
 
 
 export interface AreaDetail { 
-    name?: string;
-    size?: number;
-    species?: string;
-    profitEstimation?: number;
-}
+    name: string  | null;
+    size: number  | null;
+    species: string  | null;
+    profitEstimation: number  | null;
+}    
+
 export interface AreaDetailOpt { 
     name?: string;
     size?: number;

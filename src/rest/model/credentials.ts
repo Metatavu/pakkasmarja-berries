@@ -12,8 +12,9 @@
 
 
 export interface Credentials { 
-    password?: string;
-}
+    password: string  | null;
+}    
+
 export interface CredentialsOpt { 
     password?: string;
 }

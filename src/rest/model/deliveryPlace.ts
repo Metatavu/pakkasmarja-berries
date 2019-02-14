@@ -12,9 +12,10 @@
 
 
 export interface DeliveryPlace { 
-    id?: string;
-    name?: string;
-}
+    id: string  | null;
+    name: string  | null;
+}    
+
 export interface DeliveryPlaceOpt { 
     id?: string;
     name?: string;

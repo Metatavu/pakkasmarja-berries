@@ -13,28 +13,29 @@ import { AreaDetail } from './areaDetail';
 
 
 export interface Contract { 
-    id?: string;
-    sapId?: string;
-    contactId?: string;
-    deliveryPlaceId?: string;
-    proposedDeliveryPlaceId?: string;
-    deliveryPlaceComment?: string;
-    itemGroupId?: string;
-    year: number;
-    contractQuantity?: number;
-    deliveredQuantity?: number;
-    proposedQuantity?: number;
-    quantityComment?: string;
-    startDate?: string;
-    endDate?: string;
-    signDate?: string;
-    termDate?: string;
-    rejectComment?: string;
-    areaDetails?: Array<AreaDetail>;
-    deliverAll: boolean;
-    status: Contract.StatusEnum;
-    remarks?: string;
-}
+    id: string  | null;
+    sapId: string  | null;
+    contactId: string  | null;
+    deliveryPlaceId: string  | null;
+    proposedDeliveryPlaceId: string  | null;
+    deliveryPlaceComment: string  | null;
+    itemGroupId: string  | null;
+    year: number ;
+    contractQuantity: number  | null;
+    deliveredQuantity: number  | null;
+    proposedQuantity: number  | null;
+    quantityComment: string  | null;
+    startDate: Date  | null;
+    endDate: Date  | null;
+    signDate: Date  | null;
+    termDate: Date  | null;
+    rejectComment: string  | null;
+    areaDetails: Array<AreaDetail>  | null;
+    deliverAll: boolean ;
+    status: Contract.StatusEnum ;
+    remarks: string  | null;
+}    
+
 export interface ContractOpt { 
     id?: string;
     sapId?: string;
@@ -48,10 +49,10 @@ export interface ContractOpt {
     deliveredQuantity?: number;
     proposedQuantity?: number;
     quantityComment?: string;
-    startDate?: string;
-    endDate?: string;
-    signDate?: string;
-    termDate?: string;
+    startDate?: Date;
+    endDate?: Date;
+    signDate?: Date;
+    termDate?: Date;
     rejectComment?: string;
     areaDetails?: Array<AreaDetail>;
     deliverAll?: boolean;

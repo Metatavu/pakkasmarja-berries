@@ -12,10 +12,11 @@
 
 
 export interface SignAuthenticationService { 
-    identifier?: string;
-    name?: string;
-    image?: string;
-}
+    identifier: string  | null;
+    name: string  | null;
+    image: string  | null;
+}    
+
 export interface SignAuthenticationServiceOpt { 
     identifier?: string;
     name?: string;

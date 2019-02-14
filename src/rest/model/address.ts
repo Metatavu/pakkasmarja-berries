@@ -12,13 +12,12 @@
 
 
 export interface Address { 
-    type?: string;
-    streetAddress?: string;
-    postalCode?: string;
-    city?: string;
-}
+    streetAddress: string  | null;
+    postalCode: string  | null;
+    city: string  | null;
+}    
+
 export interface AddressOpt { 
-    type?: string;
     streetAddress?: string;
     postalCode?: string;
     city?: string;

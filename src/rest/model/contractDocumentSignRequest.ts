@@ -12,8 +12,9 @@
 
 
 export interface ContractDocumentSignRequest { 
-    redirectUrl?: string;
-}
+    redirectUrl: string  | null;
+}    
+
 export interface ContractDocumentSignRequestOpt { 
     redirectUrl?: string;
 }
