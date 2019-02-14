@@ -41,20 +41,28 @@ export default class ContactsServiceImpl extends ContactsService {
    * @inheritdoc
    */
   async listContacts(req: Request, res: Response) {
+    console.log("listContacts", 1);
+
     if (!this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTACTS)) {
       this.sendForbidden(res, "You have no permission to list contacts");
       return;
     }
+
+    console.log("listContacts", 2);
 
     const search = req.query.search;
     const users = await userManagement.listUsers({
       search: search
     });
 
+    console.log("listContacts", 3);
+
     const contacts = users.map((user: any) => {
       return this.translateKeycloakUser(user);
     });
     
+    console.log("listContacts", 4);
+
     res.status(200).send(contacts);
   }
   

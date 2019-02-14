@@ -1,17 +1,3 @@
-/**
-const moment = require("moment");
-const cheerio = require("cheerio");
-const test = require("blue-tape");
-const request = require("supertest");
-const requestUtils = require(`${__dirname}/request-utils`);
-const database = require(`${testDataDir}base`);
-const operations = require(`${__dirname}/operations`);
-const users = require(`${__dirname}/users`);
-const pdf = require(`${__dirname}/pdf`);
-const auth = require(`${__dirname}/auth`);
-const xlsx = require(`${__dirname}/xlsx`);
-const push = require(`${__dirname}/push`);
-**/
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import * as moment from "moment";
