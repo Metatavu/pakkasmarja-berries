@@ -1,15 +1,14 @@
 import * as _ from "lodash";
-import * as config from "nconf";
 import * as fs from "fs";
 import { getLogger, Logger } from "log4js";
 import models, { ContractModel } from "../models";
 import * as Queue from "better-queue"; 
-import SQLStore from "better-queue-sql";
+import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
 import { SAPExportBusinessPartner, SAPExportItemGroup, SAPExportDeliveryPlace, SAPExportContract, SAPExport, SAPExportRoot } from "../sap/export"; 
-import signature from "src/signature";
-import userManagement from "src/user-management";
-import { SAPImportFile } from "../config";  
+import signature from "../signature";
+import userManagement from "../user-management";
+import { SAPImportFile, config } from "../config";  
 /**
  * Task queue functionalities for Pakkasmarja Berries
  */
@@ -42,8 +41,9 @@ export default new class TaskQueue {
     this.sapContractUpdateQueue = this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
     this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
     this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
-    this.enqueueContractDeliveredQuantityUpdateQueue();
-    this.enqueueContractDocumentStatusBatchQueue();
+    // FIXME!
+    // this.enqueueContractDeliveredQuantityUpdateQueue();
+    // this.enqueueContractDocumentStatusBatchQueue();
   }
 
   /**
@@ -53,33 +53,35 @@ export default new class TaskQueue {
    * @param {Function} fn fn
    */
   createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
-    const options = config.get(`tasks:queues:${name}`) || {};
+    const queuesConfig: any = config().tasks.queues;
+
+    const options = queuesConfig || {};
     const queue: Queue = new Queue(fn, options);
 
     queue.use(new SQLStore({
       dialect: "mysql",
-      tableName: `${config.get("tasks:tableName")}_${name}`,
-      dbname: config.get("mysql:database"),
-      host: config.get("mysql:host") || "localhost",
-      port: config.get("mysql:port") || 3306,
-      username: config.get("mysql:username"),
-      password: config.get("mysql:password"),
+      tableName: `${config().tasks.tableName}_${name}`,
+      dbname: config().mysql.database,
+      host: config().mysql.host || "localhost",
+      port: config().mysql.port || 3306,
+      username: config().mysql.username,
+      password: config().mysql.password,
       charset: "utf8mb4"
     }));
 
     queue.on("task_progress", (taskId: string, completed: number, total: number) => {
-      console.log(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
+      this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
     });
 
     queue.on("task_finish", (taskId: string, result: any) => {
-      console.log(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
+      this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
       if (result && result.operationReportItemId) {
         models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
       }
     });
 
     queue.on("task_failed", (taskId: string, result: any) => {
-      console.log(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
+      this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
       if (result && result.operationReportItemId) {
         models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
       }
@@ -214,7 +216,6 @@ export default new class TaskQueue {
    * @param {function} callback callbackcheckContractDocumentSignatureStatus function
    */
   async checkContractDocumentSignatureStatusTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    let documentSigned = false;
     try {
       const contractDocument = await models.findContractDocumentById(data.contractDocumentId);
       if (!contractDocument) {
@@ -227,12 +228,9 @@ export default new class TaskQueue {
         const response = await signature.getDocumentStatus(contractDocument.vismaSignDocumentId);
         const documentStatus = response ? response.status : null;
         if (documentStatus === "signed") {
-          documentSigned = true;
           models.updateContractDocumentSigned(data.contractDocumentId, true);
           models.updateContractStatus(contractDocument.contractId, "APPROVED");
         }
-      } else {
-        documentSigned = true;
       }
     } catch(err) {
       this.logger.error(`Error finding document status with ${err}`);
@@ -428,7 +426,7 @@ export default new class TaskQueue {
     }
 
     try {
-      const importFiles: SAPImportFile[] = config.get("sap:import-files") || [];
+      const importFiles: SAPImportFile[] = config().sap["import-files"] || [];
       const approvedFile = importFiles.filter((importFile: SAPImportFile) => {
         return importFile.status === "APPROVED";
       })[0];
@@ -500,7 +498,7 @@ export default new class TaskQueue {
    * Loads SAP data from the approved file
    */
   private async loadSapApprovedData(): Promise<SAPExportRoot | null> {
-    const importFiles: SAPImportFile[] = config.get("sap:import-files") || [];
+    const importFiles: SAPImportFile[] = config().sap["import-files"] || [];
     const approvedFile = importFiles.filter((importFile: any) => {
       return importFile.status === "APPROVED";
     })[0];
@@ -757,7 +755,7 @@ export default new class TaskQueue {
    * @param {String} sapId sapId
    */
   private resolveSapItemGroupCategory(sapId: string) {
-    const itemGroupCategories = config.get("sap:item-group-categories") || {};
+    const itemGroupCategories = config().sap["item-group-categories"] || {};
     const categories = Object.keys(itemGroupCategories);
 
     for (let i = 0; i < categories.length; i++) {
@@ -777,7 +775,7 @@ export default new class TaskQueue {
    * @param {String} sapId sapId
    */
   private resolveSapMinimumProfitEstimation(sapId: string) {
-    const itemGroupMinimumProfitEstimations = config.get("sap:item-group-minimum-profit-estimation") || {};
+    const itemGroupMinimumProfitEstimations = config().sap["item-group-minimum-profit-estimation"] || {};
     return itemGroupMinimumProfitEstimations[sapId] || 0;
   }
 
@@ -788,7 +786,7 @@ export default new class TaskQueue {
    * @return {String} prerequisite contract item group id for given SAP id
    */
   private async resolveSapPrerequisiteContractItemGroupId(sapId: string): Promise<number|null|false> {
-    const itemGroupPrerequisites = config.get("sap:item-group-prerequisites") || {};
+    const itemGroupPrerequisites = config().sap["item-group-prerequisites"] || {};
     const prerequisitesSapId = itemGroupPrerequisites[sapId];
     if (!prerequisitesSapId) {
       return null;
@@ -809,7 +807,7 @@ export default new class TaskQueue {
    * @return {String} display name or null if not found
    */
   private resolveSapItemGroupDisplayName(sapId: string) {
-    const displayNames = config.get("sap:item-group-display-names") || {};
+    const displayNames = config().sap["item-group-display-names"] || {};
     return displayNames[sapId];
   }
 

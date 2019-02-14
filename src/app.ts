@@ -64,7 +64,7 @@ const start = async () => {
 
   i18n.configure({
     locales:["fi"],
-    directory: `${__dirname}/locales`,
+    directory: `${__dirname}/../locales`,
     defaultLocale: "fi",
     autoReload: false
   });
@@ -84,8 +84,8 @@ const start = async () => {
   app.use(cors());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
-  app.use(express.static(path.join(__dirname, "webapp")));
-  app.use(express.static(path.join(__dirname, "public")));
+  app.use(express.static(path.join(__dirname, "../webapp")));
+  app.use(express.static(path.join(__dirname, "../public")));
   app.use(i18n.init);
   app.set("views", path.join(__dirname, "views"));
   app.set("view engine", "pug"); 

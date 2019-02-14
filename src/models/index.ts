@@ -243,7 +243,7 @@ export interface OperationReportItemModel {
   updatedAt: Date
 }
 
-const PRINT_MODEL_INTERFACES = true;
+const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
 

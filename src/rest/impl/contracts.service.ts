@@ -2,6 +2,7 @@ import * as _ from "lodash";
 import * as Keycloak from "keycloak-connect";
 import * as path from "path";
 import * as fs from "fs";
+import * as i18n from "i18n";
 import { Response, Request, Application } from "express";
 import ContractsService from "../api/contracts.service";
 import ApplicationRoles from "../application-roles";
@@ -1020,11 +1021,13 @@ export default class ContractsServiceImpl extends ContractsService {
     if (!contractDocumentHtml) {
       return null;
     }
+
+    const dataStream = await pdf.renderPdf(contractDocumentHtml.content, contractDocumentHtml.header, contractDocumentHtml.footer, baseUrl);
     
     return {
       documentName: contractDocumentHtml.documentName, 
       filename: `${contractDocumentHtml.documentSlug}.pdf`, 
-      dataStream: await pdf.renderPdf(contractDocumentHtml.content, contractDocumentHtml.header, contractDocumentHtml.footer, baseUrl) 
+      dataStream: dataStream 
     };
   }
 

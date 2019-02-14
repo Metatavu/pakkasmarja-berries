@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { Stream } from "stream";
 import { config } from '../config';
+import { getLogger, Logger } from "log4js";
 
 wkhtmltopdf.command = config().wkhtmltopdf.command;
 
@@ -18,6 +19,8 @@ interface TempFiles {
  */
 export default new class Pdf {
 
+  private logger: Logger = getLogger();
+  
   /**
    * Renders PDF from HTML
    * 
@@ -47,6 +50,7 @@ export default new class Pdf {
           tempFiles.cleanup();
 
           if (err) {
+            this.logger.error("PDF printing failed", err);
             reject(err);
           } else {
             const transformStream = new Stream.Transform({
