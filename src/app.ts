@@ -24,7 +24,7 @@ process.on("unhandledRejection", (error) => {
   console.error("UNHANDLED REJECTION", error ? error.stack : null);
 });
 
-const start = async () => {
+(async () => {
   const logger: Logger = getLogger();
 
   const sequelize = new Sequelize(config().mysql.database, config().mysql.username, config().mysql.password, {
@@ -91,6 +91,4 @@ const start = async () => {
   app.set("view engine", "pug"); 
   
   new Api(app, keycloak);
-};
-  
-start();
+})();

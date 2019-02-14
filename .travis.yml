@@ -5,9 +5,8 @@ cache:
   directories:
     - keycloak-3.4.3.Final
 addons:
-  mariadb: '10.1'
+  mariadb: '10.3'
 services:
-  - rabbitmq
   - redis-server
 before_install:
   - gem install sass
