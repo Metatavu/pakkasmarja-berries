@@ -1,7 +1,6 @@
 import OperationReportsService from "../api/operationReports.service";
 import * as Keycloak from "keycloak-connect";
 import { Response, Request, Application } from "express";
-import { getLogger, Logger } from "log4js";
 import { OperationReport, OperationReportItem } from "../model/models";
 import models, { OperationReportModel, OperationReportItemModel } from "../../models";
 import ApplicationRoles from "../application-roles";
@@ -11,8 +10,6 @@ import ApplicationRoles from "../application-roles";
  */
 export default class OperationReportsServiceImpl extends OperationReportsService {
   
-  private logger: Logger;
-
   /**
    * Constructor
    * 
@@ -21,7 +18,6 @@ export default class OperationReportsServiceImpl extends OperationReportsService
    */
   constructor(app: Application, keycloak: Keycloak) {
     super(app, keycloak);
-    this.logger = getLogger();
   }
 
   /**
@@ -145,7 +141,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
   translateDatabaseOperationReportItem(operationReportItem: OperationReportItemModel) {
     const status = operationReportItem.completed ? operationReportItem.success ? "SUCCESS" : "FAILURE" : "PENDING";
     const result: OperationReportItem = {
-      "message": operationReportItem.message,
+      "message": operationReportItem.message || null,
       "status": status
     };
     

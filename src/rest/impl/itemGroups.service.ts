@@ -1,6 +1,5 @@
 import * as _ from "lodash";
 import { Response, Request } from "express";
-import { Logger } from "log4js";
 import { Price, ItemGroupDocumentTemplate, ItemGroup } from "../model/models";
 import models, { ItemGroupModel, ItemGroupDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel } from "../../models";
 
@@ -12,8 +11,6 @@ import ApplicationRoles from "../application-roles";
  */
 export default class ItemGroupsServiceImpl extends ItemGroupsService {
   
-  private logger: Logger;
-
   async findItemGroup(req: Request, res: Response) {
     const itemGroupId = req.params.id;
     if (!itemGroupId) {
@@ -372,10 +369,10 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
     const result: ItemGroup = {
       "id": itemGroup.externalId,
       "name": itemGroup.name,
-      "displayName": itemGroup.displayName,
+      "displayName": itemGroup.displayName || null,
       "category": itemGroup.category,
       "minimumProfitEstimation": itemGroup.minimumProfitEstimation,
-      "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : undefined
+      "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
     };
 
     return result;
@@ -394,8 +391,8 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       "itemGroupId": databaseItemGroup.externalId,
       "type": databaseItemGroupDocumentTemplate.type,
       "contents": databaseDocumentTemplate.contents,
-      "header": databaseDocumentTemplate.header,
-      "footer": databaseDocumentTemplate.footer
+      "header": databaseDocumentTemplate.header || null,
+      "footer": databaseDocumentTemplate.footer || null
     };
 
     return result;

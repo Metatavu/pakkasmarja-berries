@@ -4,11 +4,14 @@ import { NotFound } from './model/notFound';
 import { Forbidden } from './model/forbidden';
 import { InternalServerError } from './model/internalServerError';
 import { NotImplemented } from "./model/models";
+import { getLogger, Logger } from "log4js";
 
 /**
  * Abstract base class for all REST services
  */
 export default class AbstractService {
+
+  private baseLogger: Logger = getLogger();
 
   /**
    * Gets accesstoken from request
@@ -57,11 +60,11 @@ export default class AbstractService {
     return (req: Request, res: Response) => {
       try {
         return Promise.resolve(handler(req, res)).catch((err) => {
-          console.error(err);
+          this.baseLogger.error(`${req.method} request into ${req.path} failed in error`, err);
           res.status(500).send(err);
         });
       } catch (e) {
-        console.error(e);
+        this.baseLogger.error(`${req.method} request into ${req.path} failed with exception`, e);
         return null;
       }
     };
@@ -74,7 +77,7 @@ export default class AbstractService {
    * @return {String} route path
    */
   toPath(path: string) {
-    return path.replace(/\{(.*?)\}/g, (match, param) => { 
+    return path.replace(/\$\{encodeURIComponent\(String\((.*?)\)\)\}/g, (match, param) => { 
       return `:${param}`;
     });
   }

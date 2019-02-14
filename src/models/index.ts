@@ -1256,7 +1256,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for created item group
    */
-  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number): Bluebird<ItemGroupModel> {
+  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.create({
       sapId: sapId,
       name: name,
@@ -1278,7 +1278,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for updated item group
    */
-  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number): Bluebird<[number, any]> {
+  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<[number, any]> {
     return this.sequelize.models.ItemGroup.update({
       name: name,
       displayName: displayName,
@@ -1355,7 +1355,7 @@ export class Models {
    * @param {Integer} year year
    * @return {Promise} promise for created item group price
    */
-  createItemGroupPrice(itemGroupId: number, groupName: string, unit: string, price: string, year: number) {
+  createItemGroupPrice(itemGroupId: number, groupName: string, unit: string, price: string, year: number): Bluebird<ItemGroupPriceModel> {
     return this.sequelize.models.ItemGroupPrice.create({
       itemGroupId: itemGroupId,
       groupName: groupName,
@@ -1371,7 +1371,7 @@ export class Models {
    * @param {int} id item group id
    * @return {Promise} promise for item group
    */
-  findItemGroupPriceById(id: number) {
+  findItemGroupPriceById(id: number): Bluebird<ItemGroupPriceModel> {
     return this.sequelize.models.ItemGroupPrice.findOne({ where: { id : id } });
   }
     
@@ -1381,7 +1381,7 @@ export class Models {
    * @param {String} externalId item group external id
    * @return {Promise} promise for delivery place
    */
-  findItemGroupPriceByExternalId(externalId: string) {
+  findItemGroupPriceByExternalId(externalId: string): Bluebird<ItemGroupPriceModel> {
     return this.sequelize.models.ItemGroupPrice.findOne({ where: { externalId : externalId } });
   }
     
@@ -1397,7 +1397,7 @@ export class Models {
    * @param {String} orderDir order direction (defaults to DESC)
    * @return {Promise} promise for item group
    */
-  listItemGroupPrices(itemGroupId?: number|null, year?: number|null, firstResult?: number|null, maxResults?: number|null, orderBy?: string|null, orderDir?: string|null) {
+  listItemGroupPrices(itemGroupId?: number|null, year?: number|null, firstResult?: number|null, maxResults?: number|null, orderBy?: string|null, orderDir?: string|null): Bluebird<ItemGroupPriceModel[]> {
     const where: any = {};
 
     if (itemGroupId) {
@@ -1427,7 +1427,7 @@ export class Models {
    * @param {Integer} year year
    * @return {Promise} promise for created item group price
    */
-  updateItemGroupPrice(id: number, itemGroupId: number, groupName: string, unit: string, price: string, year: number) {
+  updateItemGroupPrice(id: number, itemGroupId: number, groupName: string, unit: string, price: string, year: number): Bluebird<[number, any]> {
     return this.sequelize.models.ItemGroupPrice.update({
       itemGroupId: itemGroupId,
       groupName: groupName,
@@ -1447,7 +1447,7 @@ export class Models {
    * @param {int} id item group price id
    * @return {Promise} promise that resolves on successful removal
    */
-  deleteItemGroupPrice(id: number) {
+  deleteItemGroupPrice(id: number): Bluebird<number> {
     return this.sequelize.models.ItemGroupPrice.destroy({ where: { id : id } });
   }    
   
@@ -2114,7 +2114,7 @@ export class Models {
    * @param {String} type type
    * @returns {Promise} Promise for OperationReport
    */
-  createOperationReport(type: string) {
+  createOperationReport(type: string): PromiseLike<OperationReportModel> {
     return this.sequelize.models.OperationReport.create({
       type: type
     });
@@ -2126,7 +2126,7 @@ export class Models {
    * @param {String} externalId operation report externalId
    * @return {Promise} promise for operation report
    */
-  findOperationReportByExternalId(externalId: string) {
+  findOperationReportByExternalId(externalId: string): PromiseLike<OperationReportModel> {
     return this.sequelize.models.OperationReport.findOne({ where: { externalId : externalId } });
   }
 
@@ -2139,7 +2139,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReports(orderBy: string, orderDir: string, firstResult?: number, maxResults?: number) {
+  listOperationReports(orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
     return this.sequelize.models.OperationReport.findAll({ offset: firstResult, limit: maxResults, order: [ [ orderBy || "createdAt", orderDir || "DESC" ] ] });
   }
 
@@ -2153,7 +2153,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReportsByType(type: string, orderBy: string, orderDir: string, firstResult?: number, maxResults?: number) {
+  listOperationReportsByType(type: string, orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
     return this.sequelize.models.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [[orderBy || "createdAt", orderDir || "DESC" ]] });
   }
 
@@ -2162,7 +2162,7 @@ export class Models {
    * 
    * @returns {Promise} Promise for count
    */
-  countOperationReports() {
+  countOperationReports(): PromiseLike<number> {
     return this.sequelize.models.OperationReport.count();
   }
 
@@ -2172,7 +2172,7 @@ export class Models {
    * @param {String} type type
    * @returns {Promise} Promise for count
    */
-  countOperationReportsByType(type: string) {
+  countOperationReportsByType(type: string): PromiseLike<number> {
     return this.sequelize.models.OperationReport.count({ where: { type: type }});
   }
 
@@ -2187,7 +2187,7 @@ export class Models {
    * @param {Boolean} success success
    * @returns {Promise} Promise for OperationReportItem
    */
-  createOperationReportItem(operationReportId: number, message: string, completed: boolean, success: boolean) {
+  createOperationReportItem(operationReportId: number, message: string | null, completed: boolean, success: boolean): PromiseLike<OperationReportItemModel> {
     return this.sequelize.models.OperationReportItem.create({
       operationReportId: operationReportId,
       message: message,
@@ -2202,7 +2202,7 @@ export class Models {
    * @param {int} operationReportId operationReportId
    * @returns {Promise} Promise for OperationReportItems
    */
-  listOperationReportItemsByOperationReportId(operationReportId: number) {
+  listOperationReportItemsByOperationReportId(operationReportId: number): PromiseLike<OperationReportItemModel[]> {
     return this.sequelize.models.OperationReportItem.findAll({ where: { operationReportId: operationReportId } });
   }
 
@@ -2213,7 +2213,7 @@ export class Models {
    * @param {Boolean} completed completed
    * @returns {Promise} Promise for OperationReportItems count
    */
-  countOperationReportItemsByOperationIdCompleted(operationReportId: number, completed: boolean) {
+  countOperationReportItemsByOperationIdCompleted(operationReportId: number, completed: boolean): PromiseLike<number> {
     return this.sequelize.models.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed } });
   }
 
@@ -2225,7 +2225,7 @@ export class Models {
    * @param {Boolean} success success
    * @returns {Promise} Promise for OperationReportItems count
    */
-  countOperationReportItemsByOperationIdCompletedAndSuccess(operationReportId: number, completed: boolean, success: boolean) {
+  countOperationReportItemsByOperationIdCompletedAndSuccess(operationReportId: number, completed: boolean, success: boolean): PromiseLike<number> {
     return this.sequelize.models.OperationReportItem.count({ where: { operationReportId: operationReportId, completed: completed, success: success } });
   }
 
@@ -2238,7 +2238,7 @@ export class Models {
    * @param {Boolean} success success
    * @returns {Promise} Promise for ContractDocument
    */
-  updateOperationReportItem(id: number, message: string, completed: boolean, success: boolean) {
+  updateOperationReportItem(id: number, message: string | null, completed: boolean, success: boolean): PromiseLike<[number, any]> {
     return this.sequelize.models.OperationReportItem.update({
       message: message,
       completed: completed,
@@ -2257,7 +2257,7 @@ export class Models {
    * @param {String} text text
    * @returns {Promise} Promise for created entity
    */
-  createThreadPredefinedText(threadId: number, text: string) {
+  createThreadPredefinedText(threadId: number, text: string): PromiseLike<ThreadPredefinedTextModel> {
     return this.sequelize.models.ThreadPredefinedText.create({
       threadId: threadId,
       text: text
@@ -2270,7 +2270,7 @@ export class Models {
    * @param {int} id
    * @returns {Promise} Promise for ThreadPredefinedText
    */
-  findThreadPredefinedTexts(id: number) {
+  findThreadPredefinedTexts(id: number): PromiseLike<ThreadPredefinedTextModel> {
     return this.sequelize.models.ThreadPredefinedText.findOne({
       where: {
         id: id
@@ -2284,7 +2284,7 @@ export class Models {
    * @param {int} threadId thread id
    * @returns {Promise} Promise for ThreadPredefinedTexts
    */
-  listThreadPredefinedTextsByThreadId(threadId: number) {
+  listThreadPredefinedTextsByThreadId(threadId: number): PromiseLike<ThreadPredefinedTextModel[]> {
     return this.sequelize.models.ThreadPredefinedText.findAll({
       where: {
         threadId: threadId
@@ -2298,7 +2298,7 @@ export class Models {
    * @param {int} id id
    * @param {string} text text 
    */
-  updateThreadPredefinedText(id: number, text: string) {
+  updateThreadPredefinedText(id: number, text: string): PromiseLike<[number, any]> {
     return this.sequelize.models.ThreadPredefinedText.update({
       text: text
     }, {
@@ -2314,7 +2314,7 @@ export class Models {
    * @param {int} threadId thread id
    * @return {Promise} promise that resolves on successful removal
    */
-  deleteThreadPredefinedTextByThreadIdAndText(threadId: number, text: string) {
+  deleteThreadPredefinedTextByThreadIdAndText(threadId: number, text: string): PromiseLike<number> {
     return this.sequelize.models.ThreadPredefinedText.destroy({ 
       where: { 
         threadId: threadId,

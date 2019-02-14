@@ -1,12 +1,11 @@
-import { getLogger, Logger } from "log4js";
-import wkhtmltopdf from 'wkhtmltopdf';
-import * as config from "nconf";
+import * as wkhtmltopdf from 'wkhtmltopdf';
 import * as tmp from "tmp";
 import * as fs from "fs";
 import * as path from "path";
 import { Stream } from "stream";
+import { config } from '../config';
 
-wkhtmltopdf.command = config.get('wkhtmltopdf:command');
+wkhtmltopdf.command = config().wkhtmltopdf.command;
 
 interface TempFiles {
   headerPath: string|null,
@@ -19,15 +18,6 @@ interface TempFiles {
  */
 export default new class Pdf {
 
-  private logger: Logger;
-
-  /**
-   * Constructor
-   */
-  constructor () {
-    this.logger = getLogger();
-  }
-  
   /**
    * Renders PDF from HTML
    * 

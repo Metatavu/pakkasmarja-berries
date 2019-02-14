@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as Umzug from "umzug"; 
 import * as Sequelize from "sequelize";
-import * as config from "nconf";
+import { config } from "../config";
 
 export default class Migration {
 
@@ -54,7 +54,7 @@ export default class Migration {
    * @return {Promise} Promise that resolves with whether lock was created by this worker
    */
   private obtainMigrationLock() {
-    const lockFile = config.get("migrations:lock-file");
+    const lockFile = config().migrations["lock-file"];
 
     return new Promise((resolve, reject) => {
       fs.open(lockFile, "wx", (err) => {
@@ -77,7 +77,7 @@ export default class Migration {
    * @return {Promise} Promise for removed lock file 
    */
   private releaseMigrationLock() {
-    const lockFile = config.get("migrations:lock-file");
+    const lockFile = config().migrations["lock-file"];
 
     return new Promise((resolve, reject) => {
       fs.unlink(lockFile, (err) => {
@@ -96,7 +96,7 @@ export default class Migration {
    * @return {Promise} Promise for released lock 
    */
   private waitMigrationLock() {
-    const lockFile = config.get("migrations:lock-file");
+    const lockFile = config().migrations["lock-file"];
 
     return new Promise((resolve, reject) => {
       fs.exists(lockFile, (exists) => {

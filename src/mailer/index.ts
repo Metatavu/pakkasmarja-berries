@@ -1,21 +1,21 @@
 import * as fs from "fs";
 import * as Mailgun from "mailgun-js";
-import * as config from "nconf";
-import uuid from "uuid4";
+import * as uuid from "uuid4";
+import { config } from "../config";
 
 export default new class Mailer {
  
   private mailgun: Mailgun.Mailgun | null;
   
   constructor () {
-    this.mailgun = !this.inTestMode() ? Mailgun({apiKey: config.get("mail:api_key"), domain: config.get("mail:domain")}) : null;
+    this.mailgun = !this.inTestMode() ? Mailgun({apiKey: config().mail.api_key, domain: config().mail.domain}) : null;
   }
 
   /**
    * Returns whether mail is running in test mode
    */
   inTestMode() {
-    return config.get("mode") === "TEST" || !config.get("mail:api_key") || !config.get("mail:domain");
+    return config().mode === "TEST" || !config().mail.api_key || !config().mail.domain;
   }
   
   /**
@@ -37,7 +37,7 @@ export default new class Mailer {
     if (!this.inTestMode() && this.mailgun) {
       return this.mailgun.messages().send(options);
     } else {
-      const mockFolder = config.get("mail:mockFolder");
+      const mockFolder = config().mail.mockFolder;
       const outbox = `${mockFolder}/outbox`;
 
       const outboxFolders = outbox.split("/");

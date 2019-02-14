@@ -1,18 +1,16 @@
-import OperationReportsService from "../api/operationReports.service";
 import * as _ from "lodash";
 import * as Keycloak from "keycloak-connect";
-import * as config from "nconf";
 import * as fs from "fs";
 import * as xml2js from "xml2js";
 import { Response, Request, Application } from "express";
 import { getLogger, Logger } from "log4js";
-import { OperationReport, OperationReportItem, Operation } from "../model/models";
-import models, { OperationReportModel, OperationReportItemModel } from "../../models";
+import { Operation } from "../model/models";
+import models from "../../models";
 import ApplicationRoles from "../application-roles";
 import OperationsService from "../api/operations.service";
-import tasks from "src/tasks";
-import { SAPExport, SAPExportRoot } from "src/sap/export";
-import { SAPImportFile } from "src/config";
+import tasks from "../../tasks";
+import { SAPExportRoot } from "../../sap/export";
+import { SAPImportFile, config } from "../../config";
 
 const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
 const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
@@ -103,7 +101,7 @@ export default class OperationsServiceImpl extends OperationsService {
    */
   private async readSapImportFileTask(type: string) {
     try {
-      const importFiles: SAPImportFile[] = config.get("sap:import-files");
+      const importFiles: SAPImportFile[] = config().sap["import-files"];
       const datas = await Promise.all(this.parseXmlFiles(importFiles.map((importFile: SAPImportFile) => {
         return importFile.file;
       })));
@@ -275,13 +273,14 @@ export default class OperationsServiceImpl extends OperationsService {
     const itemGroups = await models.listItemGroups();
     const operationReport = await models.createOperationReport("ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES");
     const type = `${(new Date()).getFullYear()}`;
-    const operationReportItems = Promise.all(itemGroups.map(async (itemGroup) => {
+    
+    Promise.all(itemGroups.map(async (itemGroup) => {
       try {
         const hasDocumentTemplate = !!(await models.findItemGroupDocumentTemplateByTypeAndItemGroupId(type, itemGroup.id)); 
         const message = hasDocumentTemplate ? `Item group ${itemGroup.name} already had template ${type}` : `Added document template ${type} for item group ${itemGroup.name}`;
         if (!hasDocumentTemplate) {
           const documentTemplate = await models.createDocumentTemplate("Insert Contents", null, null);
-          const itemGroupDocumentTemplate = await models.createItemGroupDocumentTemplate(type, itemGroup.id, documentTemplate.id); 
+          await models.createItemGroupDocumentTemplate(type, itemGroup.id, documentTemplate.id); 
         }
 
         return await models.createOperationReportItem(operationReport.id, message, true, true);

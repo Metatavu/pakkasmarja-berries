@@ -1,9 +1,9 @@
 import * as _ from "lodash";
-import * as config from "nconf";
 import * as crypto from "crypto";
 import UserCache from "./user-cache";
-import KeycloakAdminClient from "keycloak-admin-client";
+import * as keycloak_admin_client from "keycloak-admin-client";
 import models from "../models";
+import { config } from "../config";
 
 export default new class UserManagement {
 
@@ -12,7 +12,7 @@ export default new class UserManagement {
   private requireFreshClient: boolean;
   
   constructor () {
-    this.userCache = config.get("cache:enabled") ? new UserCache(config.get("cache:expire-time")) : null;
+    this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
     this.client = null;
     this.requireFreshClient = true;
     setInterval(() => {
@@ -31,14 +31,17 @@ export default new class UserManagement {
     if (cachedUser) {
       return cachedUser;
     }
-
-    const client = await this.getClient(); 
-    const user = await client.users.find(config.get("keycloak:admin:realm"), { userId: id });
+    
+    const user = await this.findKeycloakUser(id);
     if (user && this.userCache) {
-      return await this.userCache.set(id, user);
+      await this.userCache.set(id, user);
     }
 
-    return null;
+    if (user && this.userCache) {
+      await this.userCache.set(id, user);
+    }
+
+    return user;
   }
 
   /**
@@ -129,7 +132,7 @@ export default new class UserManagement {
    */
   async updateUser(user: any) {
     const client = await this.getClient();
-    const result = await client.users.update(config.get("keycloak:admin:realm"), user);
+    const result = await client.users.update(config().keycloak.admin.realm, user);
     if (this.userCache) {
       await this.userCache.unset(user.id);
     }
@@ -147,7 +150,7 @@ export default new class UserManagement {
    */
   resetUserPassword(userId: string, password: string, temporary: boolean) {
     return this.getClient().then((client: any) => {
-      const keycloakRealm = config.get("keycloak:admin:realm");
+      const keycloakRealm = config().keycloak.admin.realm;
       return client.users.resetPassword(keycloakRealm, userId, { temporary: temporary , value: password });
     });
   }
@@ -160,7 +163,7 @@ export default new class UserManagement {
    */
   listUsers(options?: any) {
     return this.getClient().then((client: any) => {
-      return client.users.find(config.get("keycloak:admin:realm"), options);
+      return client.users.find(config().keycloak.admin.realm, options);
     });
   }
   
@@ -191,7 +194,7 @@ export default new class UserManagement {
    */
   listGroups() {
     return this.getClient().then((client: any) => {
-      return client.groups.find(config.get("keycloak:admin:realm"));
+      return client.groups.find(config().keycloak.admin.realm);
     });
   }
   
@@ -469,12 +472,40 @@ export default new class UserManagement {
       delete user.attributes[name];
     }
   }
+
+  /**
+   * Find user from Keycloak
+   * 
+   * @param id id
+   * @retrn promise for user or null if not found 
+   */
+  private async findKeycloakUser(id: string): Promise<any> {
+    const client = await this.getClient(); 
+
+    return new Promise<any>((resolve, reject) => {
+      client.users.find(config().keycloak.admin.realm, { userId: id })
+        .then(async (user: any) => {
+          resolve(user);
+        })
+        .catch((err: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(null);
+          } 
+        });
+      });
+  }
   
-  getClient() {
+  /**
+   * Returns Keycloak admin client
+   * 
+   * @return Promise for keycloak admin client
+   */
+  private async getClient(): Promise<any> {
     if (!this.client || this.requireFreshClient) {
-      this.client = KeycloakAdminClient(config.get("keycloak:admin"));
+      this.client = await keycloak_admin_client(config().keycloak.admin);
       this.requireFreshClient = false;
-      console.log("[Usermanagement] getting fresh keycloak client...");
     }
     
     return this.client;

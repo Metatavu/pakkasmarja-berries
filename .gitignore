@@ -12,3 +12,5 @@ coverage
 /public/css/
 *~
 app-config.json
+data
+dist

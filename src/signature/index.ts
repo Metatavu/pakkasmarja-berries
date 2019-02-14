@@ -1,18 +1,19 @@
-import { getLogger, Logger } from "log4js";
-import VismaSignClient from "visma-sign-client";
-import * as config from "nconf";
+import * as VismaSignClient from "visma-sign-client";
 import * as moment from "moment";
+import { config, VismaSign } from "../config";
 
 const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
-VismaSignClient.ApiClient.instance.clientId = config.get('visma-sign:clientId');
-VismaSignClient.ApiClient.instance.clientSecret = config.get('visma-sign:clientSecret');
+const vismaSignConfig: VismaSign | null = config()["visma-sign"] || null;
 
+if (vismaSignConfig) {
+  VismaSignClient.ApiClient.instance.clientId = vismaSignConfig.clientId;
+  VismaSignClient.ApiClient.instance.clientSecret = vismaSignConfig.clientSecret;
+}
 /**
  * Digital signature functionalities for Pakkasmarja Berries
  */
 export default new class Signature {
 
-  private logger: Logger;
   private documentsApi: any;
   private filesApi: any;
   private invitationsApi: any;
@@ -22,7 +23,6 @@ export default new class Signature {
    * Constructor
    */
   constructor () {
-    this.logger = getLogger();
     this.documentsApi = new VismaSignClient.DocumentsApi();
     this.filesApi = new VismaSignClient.FilesApi();
     this.invitationsApi = new VismaSignClient.InvitationsApi();
@@ -53,9 +53,9 @@ export default new class Signature {
       name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
     };
 
-    if (config.get("visma-sign:affiliateCode")) {
+    if (vismaSignConfig && vismaSignConfig.affiliateCode) {
       documentData.affiliates = [{
-        code: config.get("visma-sign:affiliateCode")
+        code: vismaSignConfig.affiliateCode
       }];
     }
     

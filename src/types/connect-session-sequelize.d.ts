@@ -1,1 +1,1 @@
-declare module 'keycloak-admin-client';
+declare module 'connect-session-sequelize';

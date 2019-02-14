@@ -1,6 +1,6 @@
 import { Response, Request } from "express";
 import SignAuthenticationServicesService from "../api/signAuthenticationServices.service";
-import signature from "src/signature";
+import signature from "../../signature";
 import { SignAuthenticationService } from "../model/models";
 
 /**

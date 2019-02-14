@@ -1,7 +1,6 @@
 import * as Keycloak from "keycloak-connect";
 import { Response, Request, Application } from "express";
 import DeliveryPlacesService from "../api/deliveryPlaces.service";
-import { getLogger, Logger } from "log4js";
 import { DeliveryPlace } from "../model/models";
 import models, { DeliveryPlaceModel } from "../../models";
 
@@ -10,8 +9,6 @@ import models, { DeliveryPlaceModel } from "../../models";
  */
 export default class DeliveryPlacesServiceImpl extends DeliveryPlacesService {
   
-  private logger: Logger;
-
   /**
    * Constructor
    * 
@@ -20,7 +17,6 @@ export default class DeliveryPlacesServiceImpl extends DeliveryPlacesService {
    */
   constructor(app: Application, keycloak: Keycloak) {
     super(app, keycloak);
-    this.logger = getLogger();
   }
   
   async findDeliveryPlace(req: Request, res: Response) {

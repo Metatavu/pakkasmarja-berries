@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import * as config from "nconf";
 import * as Keycloak from "keycloak-connect";
 import * as path from "path";
 import * as fs from "fs";
@@ -8,8 +7,8 @@ import ContractsService from "../api/contracts.service";
 import ApplicationRoles from "../application-roles";
 import models, { ContractModel, ItemGroupModel, ContractDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel } from "../../models";
 import { getLogger, Logger } from "log4js";
-import { ContractDocumentTemplate, Contract, ItemGroup, ContractDocumentSignRequest, AreaDetail, Price } from "../model/models";
-import toArray from "stream-to-array";
+import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, Price } from "../model/models";
+import * as toArray from "stream-to-array";
 import * as pug from "pug";
 import * as Mustache from "mustache";
 import * as moment from "moment";
@@ -20,6 +19,7 @@ import pushNotifications from "../../push-notifications";
 import signature from "../../signature";
 import excel from "../../excel";
 import pdf from "../../pdf";
+import { config } from "../../config";
 
 /**
  * Implementation for Contracts REST service
@@ -258,7 +258,7 @@ export default class ContractsServiceImpl extends ContractsService {
       year = databaseContract.year;
       deliveryPlaceId = databaseContract.deliveryPlaceId;
       itemGroupId = databaseContract.itemGroupId;
-      sapId = databaseContract.sapId;
+      sapId = databaseContract.sapId || null;
       contractQuantity = databaseContract.contractQuantity;
       deliveredQuantity = databaseContract.deliveredQuantity;
       startDate = databaseContract.startDate;
@@ -715,7 +715,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const fileBuffer = Buffer.concat(buffers);
     const existingContractDocument = await models.findContractDocumentByContractAndType(contract.id, type);
 
-    if (config.get("mode") === "TEST") {
+    if (config().mode === "TEST") {
       const result: ContractDocumentSignRequest = {redirectUrl: "about:testmode" };
       // TODO: It's currently not possible to test sign service because
       // VismaSign does not provide  test account
@@ -731,13 +731,13 @@ export default class ContractsServiceImpl extends ContractsService {
         try {
           await signature.cancelDocument(existingContractDocument.vismaSignDocumentId);
         } catch (e) {
-          console.log(`Failed to cancel document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
+          this.logger.error(`Failed to cancel document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
         }
 
         try {
           await signature.deleteDocument(existingContractDocument.vismaSignDocumentId);
         } catch (e) {
-          console.log(`Failed to delete document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
+          this.logger.error(`Failed to delete document ${existingContractDocument.vismaSignDocumentId} from VismaSign`, e);
         }
 
         await models.deleteContractDocument(existingContractDocument.id);
@@ -745,7 +745,7 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     const vismaSignDocumentId = await signature.createDocument(document.documentName);
-    const contractDocument = await models.createContractDocument(type, contract.id, vismaSignDocumentId);
+    await models.createContractDocument(type, contract.id, vismaSignDocumentId);
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
     const appUrl = `${req.protocol}://${req.get("host")}`;      
     const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}`;
@@ -773,7 +773,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const result: Contract = {
       "id": contract.externalId,
-      "sapId": contract.sapId,
+      "sapId": contract.sapId || null,
       "contactId": contract.userId,
       "itemGroupId": itemGroup.externalId,
       "deliveryPlaceId": deliveryPlace.externalId,
@@ -811,8 +811,8 @@ export default class ContractsServiceImpl extends ContractsService {
       "contractId": databaseContract.externalId,
       "type": databaseContractDocumentTemplate.type,
       "contents": databaseDocumentTemplate.contents,
-      "header": databaseDocumentTemplate.header,
-      "footer": databaseDocumentTemplate.footer
+      "header": databaseDocumentTemplate.header || null,
+      "footer": databaseDocumentTemplate.footer || null
     };
     
     return result;
@@ -986,7 +986,7 @@ export default class ContractsServiceImpl extends ContractsService {
         footer: footer
       };    
     } catch (e) {
-      console.log("Failed to generate contract document html", e);
+      this.logger.error("Failed to generate contract document html", e);
       return null;
     }
   }

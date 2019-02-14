@@ -1,3 +1,22 @@
+import * as nconf from "nconf";
+
+nconf
+  .argv()
+  .env({
+    separator: "__",
+    lowerCase: true,
+    parseValues: true,
+    transform: (obj: { key: string }) => {
+      obj.key = obj.key.replace(/base[uU]rl/g, "baseUrl");
+      obj.key = obj.key.replace(/client[iI]d/g, "clientId");
+      obj.key = obj.key.replace(/client[sS]ecret/g, "clientSecret");
+      obj.key = obj.key.replace(/([^_])_([^_])/g, "$1-$2");
+      return obj;
+    }
+  })
+  .file({file: __dirname + "/../../config.json"})
+  .defaults(require( __dirname + "/../../default-config.json"));
+
 export interface Cache {
   enabled: boolean;
   "expire-time": number;
@@ -60,6 +79,15 @@ export interface Tasks {
   tableName: string;
 }
 
+export interface KeycloakAdminConfig {
+  realm: string;
+  baseUrl: string,
+  username: string,
+  password: string,
+  grant_type: string,
+  client_id: string
+}
+
 export interface KeycloakConfig {
   realm: string;
   "bearer-only"?: boolean;
@@ -71,7 +99,7 @@ export interface KeycloakConfig {
 }
 
 export interface Keycloak {
-  admin: KeycloakConfig;
+  admin: KeycloakAdminConfig;
   rest: KeycloakConfig;
   app: KeycloakConfig;
 }
@@ -118,7 +146,7 @@ export interface SAPItemGroupPrerequisites {
 }
 
 export interface SAPItemGroupMinimumProfitEstimation {
-  [key: string]: string
+  [key: string]: number
 }
 
 export interface SAP {
@@ -132,12 +160,14 @@ export interface SAP {
 export interface VismaSign {
   clientId: string;
   clientSecret: string;
-  affiliateCode: string;
+  affiliateCode?: string;
 }
 
 export interface Mail {
   api_key: string;
   domain: string;
+  mockFolder?: string;
+  sender: string;
 }
 
 export interface Notifications {
@@ -148,8 +178,17 @@ export interface Contacts {
   notifications: Notifications;
 }
 
+export interface PushNotification {
+  mockFolder: string;
+}
+
+export interface Migrations {
+  "lock-file": string;
+}
+
 export interface Config {
   mode: string;
+  port: number;
   "session-secret": string;
   cache: Cache;
   tasks: Tasks;
@@ -159,7 +198,13 @@ export interface Config {
   mysql: Mysql;
   wkhtmltopdf: Wkhtmltopdf;
   sap: SAP;
-  "visma-sign": VismaSign;
+  "visma-sign"?: VismaSign;
   mail: Mail;
-  contacts: Contacts;
+  contacts?: Contacts;
+  pushNotification: PushNotification
+  migrations: Migrations
+}
+
+export function config(): Config {
+  return nconf.get();
 }

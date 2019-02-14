@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as FCM from "fcm-push";
-import * as config from "nconf";
-import uuid from "uuid4";
+import { config } from "../config";
+import * as uuid from "uuid4";
 import { getLogger, Logger } from "log4js";
 
 export default new class PushNotifications {
@@ -11,14 +11,14 @@ export default new class PushNotifications {
   
   constructor () {
     this.logger = getLogger();
-    this.fcm = new FCM(config.get("firebase:server-key"));
+    this.fcm = new FCM(config().firebase["server-key"]);
   }
   
   sendPushNotification(to: string, title: string, body: string, sound: boolean) {
-    const mode = config.get("mode");
+    const mode = config().mode;
     if (mode !== "PRODUCTION") {
       if (mode === "TEST") {
-        const mockFolder = config.get("pushNotification:mockFolder");
+        const mockFolder = config().pushNotification.mockFolder;
         const outbox = `${mockFolder}/outbox`;
 
         const outboxFolders = outbox.split("/");

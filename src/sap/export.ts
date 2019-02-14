@@ -6,8 +6,12 @@ export interface SAPExportRoot {
   Contracts: {
     Contracts: SAPExportContract[]
   },
-  ItemGroups: SAPExportItemGroup[],
-  DeliveryPlaces: SAPExportDeliveryPlace[]
+  ItemGroups: {
+    ItemGroup: SAPExportItemGroup[]
+  },
+  DeliveryPlaces: {
+    DeliveryPlaces: SAPExportDeliveryPlace[]
+  }
 }
 
 export interface SAPExportItemGroup {

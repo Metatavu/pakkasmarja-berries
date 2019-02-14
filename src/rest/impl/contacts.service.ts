@@ -1,11 +1,11 @@
 import * as _ from "lodash";
-import * as config from "nconf";
 import { Response, Request } from "express";
 import ContactsService from "../api/contacts.service";
 import ApplicationRoles from "../application-roles";
 import userManagement from "../../user-management";
 import mailer from "../../mailer";
 import { Contact, Address } from "../model/models";
+import { config } from "../../config";
 
 /**
  * Implementation for Contacts REST service
@@ -21,7 +21,7 @@ export default class ContactsServiceImpl extends ContactsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const loggedUserId = this.getLoggedUserId(req);
     if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTACTS)) {
       this.sendForbidden(res, "You have no permission to find this contact");
@@ -85,7 +85,7 @@ export default class ContactsServiceImpl extends ContactsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
       .then(() => {
         return userManagement.findUser(userId);
@@ -169,7 +169,7 @@ export default class ContactsServiceImpl extends ContactsService {
       { "name": "lastName", "title": "Sukunimi" },
       { "name": "email", "title": "Sähköposti" }
     ];
-
+    
     trackedProperties.forEach((trackedProperty) => {
       const oldValue = oldUser[trackedProperty.name];
       const newValue = newUser[trackedProperty.name];
@@ -192,8 +192,12 @@ export default class ContactsServiceImpl extends ContactsService {
       const userDisplayName = userManagement.getUserDisplayName(newUser);
       const subject = `${userDisplayName} päivitti tietojaan`;
       const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
-      const sender = `${config.get("mail:sender")}@${config.get("mail:domain")}`;
-      mailer.send(sender, config.get("contacts:notifications:email"), subject, contents);
+      const sender = `${config().mail.sender}@${config().mail.domain}`;
+      const contactConfig = config().contacts; 
+
+      if (contactConfig && contactConfig.notifications && contactConfig.notifications.email) {
+        mailer.send(sender, contactConfig.notifications.email, subject, contents);
+      }
     }
   }
   
@@ -204,22 +208,33 @@ export default class ContactsServiceImpl extends ContactsService {
    * @return {Contact} contact 
    */
   translateKeycloakUser(user: any) {
+    const userVatLiable: string | null = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE);
+    let vatLiable: Contact.VatLiableEnum | null = null;
+
+    if ("true" == userVatLiable) {
+      vatLiable = userVatLiable;
+    } else if ("false" == userVatLiable) {
+      vatLiable = userVatLiable;
+    } else if ("EU" == userVatLiable) {
+      vatLiable = userVatLiable;
+    }
+
     const result: Contact = {
       'id': user.id,
-      "sapId": userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID) || undefined,
+      "sapId": userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID) ||null,
       'firstName': user.firstName,
       'lastName': user.lastName,
-      'companyName': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME) || undefined,
+      'companyName': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME) || null,
       'phoneNumbers': this.resolveKeycloakUserPhones(user),
       'email': user.email,
       'addresses': this.resolveKeycloakUserAddresses(user),
-      'BIC': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_BIC) || undefined,
-      'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || undefined,
-      'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || undefined,
-      'vatLiable': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE) == "true" ? "true" : "false",
-      'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || undefined
+      'BIC': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_BIC) || null,
+      'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || null,
+      'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || null,
+      'vatLiable': vatLiable,
+      'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null
     };
-
+    
     return result;
   }
   
@@ -300,7 +315,7 @@ export default class ContactsServiceImpl extends ContactsService {
         const address: Address = {
           "streetAddress": streetAddress1,
           "postalCode": postalCode1,
-          "city": city1 || undefined
+          "city": city1 || null
         };
 
         result.push(address);  
