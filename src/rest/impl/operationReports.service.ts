@@ -138,10 +138,12 @@ export default class OperationReportsServiceImpl extends OperationReportsService
    * @param {Object} operationReportItem Sequelize operation report item model
    * @return {OperationReportItem} REST entity
    */
-  translateDatabaseOperationReportItem(operationReportItem: OperationReportItemModel) {
+  private translateDatabaseOperationReportItem(operationReportItem: OperationReportItemModel) {
     const status = operationReportItem.completed ? operationReportItem.success ? "SUCCESS" : "FAILURE" : "PENDING";
+    const message = operationReportItem.message ? operationReportItem.message.toString() : null;
+
     const result: OperationReportItem = {
-      "message": operationReportItem.message || null,
+      "message": message,
       "status": status
     };
     

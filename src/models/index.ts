@@ -235,7 +235,7 @@ export interface OperationReportModel {
 
 export interface OperationReportItemModel {
   id: number,
-  message?: string,
+  message?: Buffer,
   operationReportId: number,
   completed: boolean,
   success: boolean,
