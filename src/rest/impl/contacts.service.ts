@@ -70,11 +70,15 @@ export default class ContactsServiceImpl extends ContactsService {
    * @inheritdoc
    */
   async updateContact(req: Request, res: Response) {
+    this.logger.info("updateContact 1");
+
     const userId = req.params.id;
     if (!userId) {
       this.sendNotFound(res);
       return;
     }
+
+    this.logger.info("updateContact 2");
 
     const loggedUserId = this.getLoggedUserId(req);
     if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTACTS)) {
@@ -82,17 +86,23 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
+    this.logger.info("updateContact 3");
+
     const updateContact: Contact = _.isObject(req.body) ? req.body : null;
     if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
     }
     
+    this.logger.info("updateContact 4");
+
     const user = await userManagement.findUser(userId);
     if (!user) {
       this.sendNotFound(res);
       return;
     }
+
+    this.logger.info("updateContact 5");
 
     userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
       .then(() => {

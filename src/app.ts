@@ -80,6 +80,11 @@ process.on("unhandledRejection", (error) => {
     logout: "/logout"
   }));
 
+  app.use((req, res, next) => {
+    logger.info(`${req.method} request into ${req.path}`);
+    next();
+  });
+
   app.set('trust proxy', true);
   app.use(cors());
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -91,4 +96,5 @@ process.on("unhandledRejection", (error) => {
   app.set("view engine", "pug"); 
   
   new Api(app, keycloak);
+
 })();
