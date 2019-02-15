@@ -29,10 +29,6 @@
       res.sendFile(path.join(__dirname, "..", "..", "webapp", "index.html"));
     }
     
-    getSystemPing(req, res) {
-      res.send("PONG");
-    }
-
     getVersion(req, res) {
       res.send(config.get("app-version"));
     }
@@ -298,26 +294,6 @@
         });
     }
     
-    /**
-    * Shutdown system
-    * Shuts the system down
-    *
-    * @param {http.ClientRequest} req client request object
-    * @param {http.ServerResponse} res server response object
-    **/
-    postSystemShutdown(req, res) {
-      if (config.get("mode") !== "TEST") {
-        res.status(403).send("I\"m sorry Dave, I\"m afraid I can\"t do that");
-        return;
-      }
-      
-      try {
-        res.status(204).send();
-      } finally {
-        process.exit(0);
-      }
-    }
-
     register(app, keycloak) {
       // Navigation     
       

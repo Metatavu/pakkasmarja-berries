@@ -12,6 +12,7 @@ import * as path from "path";
 import Migration from "./migration";
 import { initializeModels } from "./models";
 import Api from "./rest";
+import SystemRoutes from "./routes/system-routes";
 import { config } from "./config";
 import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
 
@@ -97,5 +98,6 @@ process.on("unhandledRejection", (error) => {
   app.set("view engine", "pug"); 
   
   new Api(app, keycloak);
+  new SystemRoutes(app);
 
 })();
