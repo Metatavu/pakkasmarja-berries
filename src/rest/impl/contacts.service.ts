@@ -94,7 +94,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
     
-    this.logger.info("updateContact 4");
+    this.logger.info("updateContact 4", userId);
 
     const user = await userManagement.findUser(userId);
     if (!user) {
