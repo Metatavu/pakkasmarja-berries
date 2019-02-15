@@ -27,6 +27,8 @@ export default new class Mailer {
    * @param String contents email contects as plain text 
    */
   send(sender: string, to: string, subject: string, contents: string) {
+    console.log("send", 1);
+
     const options = {
       from: sender,
       to: to,
@@ -34,14 +36,19 @@ export default new class Mailer {
       text: contents
     };
 
+    console.log("send", 2);
+
     if (!this.inTestMode() && this.mailgun) {
+      console.log("send", 3);
       return this.mailgun.messages().send(options);
     } else {
+      console.log("send", 4);
       const mockFolder = config().mail.mockFolder;
       const outbox = `${mockFolder}/outbox`;
 
       const outboxFolders = outbox.split("/");
       const parents = [];
+      console.log("send", 5);
 
       while (outboxFolders.length) {
         const folder = outboxFolders.shift();
@@ -53,9 +60,11 @@ export default new class Mailer {
 
         parents.push(folder);
       }
+      console.log("send", 6);
 
       return new Promise((resolve, reject) => {
         fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), (err) => {
+          console.log("send", 7, err);
           if (err) {
             reject(err);
           } else {
