@@ -216,34 +216,39 @@ export default class ContactsServiceImpl extends ContactsService {
    * @return {Contact} contact 
    */
   translateKeycloakUser(user: any) {
-    const userVatLiable: string | null = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE);
-    let vatLiable: Contact.VatLiableEnum | null = null;
+    try {
+      const userVatLiable: string | null = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE);
+      let vatLiable: Contact.VatLiableEnum | null = null;
 
-    if ("true" == userVatLiable) {
-      vatLiable = userVatLiable;
-    } else if ("false" == userVatLiable) {
-      vatLiable = userVatLiable;
-    } else if ("EU" == userVatLiable) {
-      vatLiable = userVatLiable;
+      if ("true" == userVatLiable) {
+        vatLiable = userVatLiable;
+      } else if ("false" == userVatLiable) {
+        vatLiable = userVatLiable;
+      } else if ("EU" == userVatLiable) {
+        vatLiable = userVatLiable;
+      }
+
+      const result: Contact = {
+        'id': user.id,
+        "sapId": userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID) ||null,
+        'firstName': user.firstName,
+        'lastName': user.lastName,
+        'companyName': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME) || null,
+        'phoneNumbers': this.resolveKeycloakUserPhones(user),
+        'email': user.email,
+        'addresses': this.resolveKeycloakUserAddresses(user),
+        'BIC': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_BIC) || null,
+        'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || null,
+        'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || null,
+        'vatLiable': vatLiable,
+        'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null
+      };
+      
+      return result;
+    } catch (e) {
+      this.logger.error("Failed to translate user", user);
+      return null;
     }
-
-    const result: Contact = {
-      'id': user.id,
-      "sapId": userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID) ||null,
-      'firstName': user.firstName,
-      'lastName': user.lastName,
-      'companyName': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME) || null,
-      'phoneNumbers': this.resolveKeycloakUserPhones(user),
-      'email': user.email,
-      'addresses': this.resolveKeycloakUserAddresses(user),
-      'BIC': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_BIC) || null,
-      'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || null,
-      'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || null,
-      'vatLiable': vatLiable,
-      'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null
-    };
-    
-    return result;
   }
   
   /**
