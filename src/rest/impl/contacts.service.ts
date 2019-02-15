@@ -70,7 +70,7 @@ export default class ContactsServiceImpl extends ContactsService {
    * @inheritdoc
    */
   async updateContact(req: Request, res: Response) {
-    this.logger.info("updateContact 1");
+    console.log("updateContact 1");
 
     const userId = req.params.id;
     if (!userId) {
@@ -78,7 +78,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    this.logger.info("updateContact 2");
+    console.log("updateContact 2");
 
     const loggedUserId = this.getLoggedUserId(req);
     if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTACTS)) {
@@ -86,7 +86,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    this.logger.info("updateContact 3");
+    console.log("updateContact 3");
 
     const updateContact: Contact = _.isObject(req.body) ? req.body : null;
     if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
@@ -94,7 +94,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
     
-    this.logger.info("updateContact 4", userId);
+    console.log("updateContact 4", userId);
 
     const user = await userManagement.findUser(userId);
     if (!user) {
@@ -102,14 +102,19 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    this.logger.info("updateContact 5");
+    console.log("updateContact 5");
 
     userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
       .then(() => {
+        console.log("updateContact 6");
         return userManagement.findUser(userId);
       })
       .then((updatedUser) => {
+        console.log("updateContact 7", updatedUser);
         this.triggerChangeNotification(user, updatedUser);
+        console.log("updateContact 8", updatedUser);
+        console.log("updateContact 9", this.translateKeycloakUser(updatedUser));
+
         res.status(200).send(this.translateKeycloakUser(updatedUser));
       })
       .catch((err) => {
