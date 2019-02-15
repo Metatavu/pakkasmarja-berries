@@ -17,6 +17,8 @@ nconf
   .file({file: __dirname + "/../../config.json"})
   .defaults(require( __dirname + "/../../default-config.json"));
 
+console.log("defaults", require( __dirname + "/../../default-config.json"));
+
 export interface Cache {
   enabled: boolean;
   "expire-time": number;
