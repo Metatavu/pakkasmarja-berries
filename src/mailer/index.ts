@@ -48,16 +48,20 @@ export default new class Mailer {
 
       const outboxFolders = outbox.split("/");
       const parents = [];
-      console.log("send", 5);
+      console.log("send", 5, outboxFolders);
 
       while (outboxFolders.length) {
+        console.log("send", 5.1);
         const folder = outboxFolders.shift();
+        console.log("send", 5.2);
         const path = `${parents.join("/")}/${folder}`;
+        console.log("send", 5.3);
 
         if (!fs.existsSync(path)) {
           fs.mkdirSync(path);
         }
 
+        console.log("send", 5.4);
         parents.push(folder);
       }
       console.log("send", 6);
