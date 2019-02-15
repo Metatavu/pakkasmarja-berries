@@ -46,7 +46,9 @@ export default class AbstractService {
    * @param {String} role realm role 
    */
   hasRealmRole(req: Request, role: string) {
+    console.log("role 1", role);
     const accessToken = this.getAccessToken(req);
+    console.log("role 2", accessToken);
     return accessToken.hasRealmRole(role);
   }
 
