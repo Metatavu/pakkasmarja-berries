@@ -19,6 +19,7 @@ export default class UserCache {
   constructor(expireTime: number) {
     this.logger = getLogger();
     this.client = redis.createClient();
+    this.client.on("error", this.onClientError.bind(this));
     this.expireTime = expireTime;
   }
 
@@ -91,6 +92,15 @@ export default class UserCache {
    */
   private getKey(userId: string) {
     return `user-${userId}`;
+  }
+
+  /**
+   * Handles redis client errors
+   * 
+   * @param err error
+   */
+  private onClientError(err: any) {
+    this.logger.error("Redis client error occurred", err);
   }
 
 }
