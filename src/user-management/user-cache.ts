@@ -28,11 +28,19 @@ export default class UserCache {
    * @returns {Promise} promise for data
    */
   async get(userId: string) {
+    console.log("cache 1", userId);
+
     const value = await (this.client as any).getAsync(this.getKey(userId));
+    console.log("cache 2", value);
+
     if (value) {
+      console.log("cache 3");
       const result = JSON.parse(value);
+      console.log("cache 4", result);
       const itemExpires = result.expires;
+      console.log("cache 5", itemExpires);
       const now = (new Date()).getTime();
+      console.log("cache 6", now);
       if (itemExpires > now) {
         return result.user;
       }
