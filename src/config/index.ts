@@ -17,9 +17,6 @@ nconf
   .file({file: __dirname + "/../../config.json"})
   .defaults(require( __dirname + "/../../default-config.json"));
 
-console.log("M 1", nconf.get("mail"));
-console.log("M 2", nconf.get("mail:mockFolder"));
-
 export interface Cache {
   enabled: boolean;
   "expire-time": number;
@@ -209,5 +206,13 @@ export interface Config {
 }
 
 export function config(): Config {
-  return nconf.get();
+  return { 
+    ... nconf.get(),
+    mail: {
+      api_key: nconf.get("mail:api_key"),
+      domain: nconf.get("mail:domain"),
+      mockFolder: nconf.get("mail:mockFolder"),
+      sender: nconf.get("mail:sender")
+    }
+  }
 }
