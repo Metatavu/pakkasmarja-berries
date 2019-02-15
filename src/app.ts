@@ -8,6 +8,7 @@ import * as i18n from "i18n";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
 import * as path from "path";
+import * as morgan from "morgan";
 
 import Migration from "./migration";
 import { initializeModels } from "./models";
@@ -87,6 +88,7 @@ process.on("unhandledRejection", (error) => {
 
   app.set('trust proxy', true);
   app.use(cors());
+  app.use(morgan('combined'));
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
   app.use(express.static(path.join(__dirname, "../webapp")));
