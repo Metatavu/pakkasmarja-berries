@@ -1,11 +1,13 @@
 import * as redis from "redis";
 import { promisify } from "util";
+import { getLogger, Logger } from "log4js";
 
 /**
  * Redis storage for users
  */
 export default class UserCache {
 
+  private logger: Logger;
   private client: redis.RedisClient;
   private expireTime: number;
 
@@ -15,6 +17,7 @@ export default class UserCache {
    * @param {int} expireTime cache expire time in milliseconds
    */
   constructor(expireTime: number) {
+    this.logger = getLogger();
     this.client = redis.createClient();
     this.expireTime = expireTime;
   }
@@ -25,25 +28,28 @@ export default class UserCache {
    * @param {String} userId 
    * @returns {Promise} promise for data
    */
-  async get(userId: string) {
-    console.log("cache 1", userId);
+  public async get(userId: string): Promise<any> {
+    try {
+      console.log("cache 1", userId);
 
-    const getAsync = promisify(this.client.get).bind(this.client);
-    const value = await getAsync(this.getKey(userId));
-    console.log("cache 2", value);
+      const getAsync = promisify(this.client.get).bind(this.client);
+      const value = await getAsync(this.getKey(userId));
+      console.log("cache 2", value);
 
-    if (value) {
-      console.log("cache 3");
-      const result = JSON.parse(value);
-      console.log("cache 4", result);
-      const itemExpires = result.expires;
-      console.log("cache 5", itemExpires);
-      const now = (new Date()).getTime();
-      console.log("cache 6", now);
-      if (itemExpires > now) {
-        return result.user;
+      if (value) {
+        const result = JSON.parse(value);
+        const itemExpires = result.expires;
+        const now = (new Date()).getTime();
+        console.log("cache 6", now);
+        if (itemExpires > now) {
+          return result.user;
+        }
       }
+    } catch (e) {
+      this.logger.error("User cache retrieve failed", e);
     }
+
+    console.log("cache 7");
 
     return null;
   }
@@ -55,7 +61,7 @@ export default class UserCache {
    * @param {Object} user 
    * @returns {Promise} promise
    */
-  async set(userId: string, user: any) {
+  public async set(userId: string, user: any): Promise<any> {
     const now = (new Date()).getTime();
     const setAsync = promisify(this.client.set).bind(this.client);
     return await setAsync(this.getKey(userId), JSON.stringify({
@@ -70,7 +76,7 @@ export default class UserCache {
    * @param {String} userId
    * @returns {Promise} promise
    */
-  async unset(userId: string) {   
+  public async unset(userId: string): Promise<any> {   
     const delAsync = promisify(this.client.del).bind(this.client);
     return await delAsync(this.getKey(userId));
   }
@@ -81,7 +87,7 @@ export default class UserCache {
    * @param {String} userId 
    * @returns key for user id
    */
-  getKey(userId: string) {
+  private getKey(userId: string) {
     return `user-${userId}`;
   }
 
