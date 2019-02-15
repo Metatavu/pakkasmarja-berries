@@ -66,10 +66,10 @@
   },
   "sap": {
     "import-files": [{
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export-Active.xml",
+      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-Active.xml",
       "status": "APPROVED"
     }, {
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/test/data/SAP-Export-History.xml",
+      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-History.xml",
       "status": "TERMINATED"
     }],
     "item-group-categories": {
@@ -83,6 +83,11 @@
     },
     "item-group-minimum-profit-estimation": {
       "234": 500
+    }
+  },
+  "contacts": {
+    "notifications": {
+      "email": "to@example.org"
     }
   }
 }
