@@ -38,7 +38,7 @@ export default class UserCache {
         const result = JSON.parse(value);
         const itemExpires = result.expires;
         const now = (new Date()).getTime();
-        console.log("cache 6", now, result);
+
         if (itemExpires > now) {
           return result.user;
         }
@@ -46,8 +46,6 @@ export default class UserCache {
     } catch (e) {
       this.logger.error("User cache retrieve failed", e);
     }
-
-    console.log("cache 7");
 
     return null;
   }

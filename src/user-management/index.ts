@@ -27,29 +27,19 @@ export default new class UserManagement {
    * @return {Promise} promise for a user or null if not found
    */
   async findUser(id: string) {
-    console.log("find 1", id);
-
     if (!id) {
       return null;
     }
 
-    console.log("find 2", id);
-
     const cachedUser = this.userCache ? await this.userCache.get(id) : null;
     if (cachedUser) {
-      console.log("find 3", cachedUser);
       return cachedUser;
     }
-    
-    console.log("find 4");
 
     const user = await this.findKeycloakUser(id);
     if (user && this.userCache) {
-      console.log("find 5", user);
       await this.userCache.set(id, user);
     }
-
-    console.log("find 6", user);
 
     return user;
   }

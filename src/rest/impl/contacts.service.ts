@@ -70,15 +70,11 @@ export default class ContactsServiceImpl extends ContactsService {
    * @inheritdoc
    */
   async updateContact(req: Request, res: Response) {
-    console.log("updateContact 1");
-
     const userId = req.params.id;
     if (!userId) {
       this.sendNotFound(res);
       return;
     }
-
-    console.log("updateContact 2");
 
     const loggedUserId = this.getLoggedUserId(req);
     if (loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.UPDATE_OTHER_CONTACTS)) {
@@ -86,15 +82,11 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    console.log("updateContact 3");
-
     const updateContact: Contact = _.isObject(req.body) ? req.body : null;
     if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
     }
-    
-    console.log("updateContact 4", userId);
 
     const user = await userManagement.findUser(userId);
     if (!user) {
@@ -102,19 +94,12 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    console.log("updateContact 5");
-
     userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
       .then(() => {
-        console.log("updateContact 6");
         return userManagement.findUser(userId);
       })
       .then((updatedUser) => {
-        console.log("updateContact 7", updatedUser);
         this.triggerChangeNotification(user, updatedUser);
-        console.log("updateContact 8", updatedUser);
-        console.log("updateContact 9", this.translateKeycloakUser(updatedUser));
-
         res.status(200).send(this.translateKeycloakUser(updatedUser));
       })
       .catch((err) => {
@@ -168,8 +153,6 @@ export default class ContactsServiceImpl extends ContactsService {
    * @param {Object} newUser new user object
    */
   triggerChangeNotification(oldUser: any, newUser: any) {
-    console.log("triggerChangeNotification", 1);
-
     const changes: string[] = [];
 
     const trackedAttributes = [
@@ -189,16 +172,12 @@ export default class ContactsServiceImpl extends ContactsService {
       userManagement.ATTRIBUTE_CITY_2
     ];
 
-    console.log("triggerChangeNotification", 2);
-
     const trackedProperties = [
       { "name": "firstName", "title": "Etunimi" },
       { "name": "lastName", "title": "Sukunimi" },
       { "name": "email", "title": "Sähköposti" }
     ];
     
-    console.log("triggerChangeNotification", 3);
-
     trackedProperties.forEach((trackedProperty) => {
       const oldValue = oldUser[trackedProperty.name];
       const newValue = newUser[trackedProperty.name];
@@ -207,8 +186,6 @@ export default class ContactsServiceImpl extends ContactsService {
         changes.push(`${trackedProperty.title}: ${oldValue} -> ${newValue}`);
       }
     });
-
-    console.log("triggerChangeNotification", 4);
 
     trackedAttributes.forEach((trackedAttribute) => {
       const oldValue = userManagement.getSingleAttribute(oldUser, trackedAttribute) || "";
@@ -219,30 +196,17 @@ export default class ContactsServiceImpl extends ContactsService {
       }
     });
 
-    console.log("triggerChangeNotification", 5);
-
     if (changes.length) {
-      console.log("triggerChangeNotification", 5.1);
       const userDisplayName = userManagement.getUserDisplayName(newUser);
-      console.log("triggerChangeNotification", 5.2);
       const subject = `${userDisplayName} päivitti tietojaan`;
-      console.log("triggerChangeNotification", 5.3);
       const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
-      console.log("triggerChangeNotification", 5.4);
       const sender = `${config().mail.sender}@${config().mail.domain}`;
-      console.log("triggerChangeNotification", 5.5);
       const contactConfig = config().contacts; 
-      console.log("triggerChangeNotification", 5.6);
 
       if (contactConfig && contactConfig.notifications && contactConfig.notifications.email) {
-        console.log("triggerChangeNotification", 5.7);
         mailer.send(sender, contactConfig.notifications.email, subject, contents);
-        console.log("triggerChangeNotification", 5.8);
       }
-      console.log("triggerChangeNotification", 5.9);
     }
-
-    console.log("triggerChangeNotification", 6);
   }
   
   /**
