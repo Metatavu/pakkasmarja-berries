@@ -168,6 +168,8 @@ export default class ContactsServiceImpl extends ContactsService {
    * @param {Object} newUser new user object
    */
   triggerChangeNotification(oldUser: any, newUser: any) {
+    console.log("triggerChangeNotification", 1);
+
     const changes: string[] = [];
 
     const trackedAttributes = [
@@ -187,12 +189,16 @@ export default class ContactsServiceImpl extends ContactsService {
       userManagement.ATTRIBUTE_CITY_2
     ];
 
+    console.log("triggerChangeNotification", 2);
+
     const trackedProperties = [
       { "name": "firstName", "title": "Etunimi" },
       { "name": "lastName", "title": "Sukunimi" },
       { "name": "email", "title": "Sähköposti" }
     ];
     
+    console.log("triggerChangeNotification", 3);
+
     trackedProperties.forEach((trackedProperty) => {
       const oldValue = oldUser[trackedProperty.name];
       const newValue = newUser[trackedProperty.name];
@@ -201,6 +207,8 @@ export default class ContactsServiceImpl extends ContactsService {
         changes.push(`${trackedProperty.title}: ${oldValue} -> ${newValue}`);
       }
     });
+
+    console.log("triggerChangeNotification", 4);
 
     trackedAttributes.forEach((trackedAttribute) => {
       const oldValue = userManagement.getSingleAttribute(oldUser, trackedAttribute) || "";
@@ -211,17 +219,30 @@ export default class ContactsServiceImpl extends ContactsService {
       }
     });
 
+    console.log("triggerChangeNotification", 5);
+
     if (changes.length) {
+      console.log("triggerChangeNotification", 5.1);
       const userDisplayName = userManagement.getUserDisplayName(newUser);
+      console.log("triggerChangeNotification", 5.2);
       const subject = `${userDisplayName} päivitti tietojaan`;
+      console.log("triggerChangeNotification", 5.3);
       const contents = `${userDisplayName} päivitti seuraavat tiedot:\n\n${changes.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+      console.log("triggerChangeNotification", 5.4);
       const sender = `${config().mail.sender}@${config().mail.domain}`;
+      console.log("triggerChangeNotification", 5.5);
       const contactConfig = config().contacts; 
+      console.log("triggerChangeNotification", 5.6);
 
       if (contactConfig && contactConfig.notifications && contactConfig.notifications.email) {
+        console.log("triggerChangeNotification", 5.7);
         mailer.send(sender, contactConfig.notifications.email, subject, contents);
+        console.log("triggerChangeNotification", 5.8);
       }
+      console.log("triggerChangeNotification", 5.9);
     }
+
+    console.log("triggerChangeNotification", 6);
   }
   
   /**
