@@ -47,6 +47,8 @@ process.on("unhandledRejection", (error) => {
   
   const port = config().port || 3000;
   const app = express();
+  app.use(morgan('combined'));
+
   const httpServer = http.createServer(app);
   const SequelizeStore = ConnectSessionSequelize(session.Store);
 
@@ -88,7 +90,6 @@ process.on("unhandledRejection", (error) => {
 
   app.set('trust proxy', true);
   app.use(cors());
-  app.use(morgan('combined'));
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
   app.use(express.static(path.join(__dirname, "../webapp")));
