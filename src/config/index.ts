@@ -17,8 +17,6 @@ nconf
   .file({file: __dirname + "/../../config.json"})
   .defaults(require( __dirname + "/../../default-config.json"));
 
-console.log("defaults", require( __dirname + "/../../default-config.json"));
-
 export interface Cache {
   enabled: boolean;
   "expire-time": number;
@@ -208,5 +206,22 @@ export interface Config {
 }
 
 export function config(): Config {
-  return nconf.get();
+  return {
+    mode: nconf.get("mode"),
+    port: nconf.get("port"),
+    "session-secret": nconf.get("session-secret"),
+    cache: nconf.get("cache"),
+    tasks: nconf.get("tasks"),
+    keycloak: nconf.get("keycloak"),
+    wordpress: nconf.get("wordpress"),
+    firebase: nconf.get("firebase"),
+    mysql: nconf.get("mysql"),
+    wkhtmltopdf: nconf.get("wkhtmltopdf"),
+    sap: nconf.get("sap"),
+    "visma-sign": nconf.get("visma-sign"),
+    mail: nconf.get("mail"),
+    contacts: nconf.get("contacts"),
+    pushNotification: nconf.get("pushNotification"),
+    migrations: nconf.get("migrations")
+  };
 }
