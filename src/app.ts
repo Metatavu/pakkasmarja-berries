@@ -8,7 +8,6 @@ import * as i18n from "i18n";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
 import * as path from "path";
-import * as morgan from "morgan";
 
 import Migration from "./migration";
 import { initializeModels } from "./models";
@@ -47,7 +46,6 @@ process.on("unhandledRejection", (error) => {
   
   const port = config().port || 3000;
   const app = express();
-  app.use(morgan('combined'));
 
   const httpServer = http.createServer(app);
   const SequelizeStore = ConnectSessionSequelize(session.Store);
