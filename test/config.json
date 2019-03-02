@@ -5,6 +5,14 @@
     "enabled": true,
     "expire-time": 60000
   },
+  "mqtt": {
+    "host": "test.mosquitto.org",
+    "port": 8081,
+    "secure": true,
+    "topicPrefix": "pm/",
+    "topic": "itests",
+    "topicPostfix": "/#"
+  },
   "keycloak": {
     "admin": {
       "realm": "pm",
