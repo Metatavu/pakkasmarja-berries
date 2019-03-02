@@ -3,6 +3,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import ApplicationRoles from "../rest/application-roles";
 import { NewsArticle } from "../rest/model/models";
+import mqtt from "./mqtt";
 
 /**
  * Creates news article
@@ -86,19 +87,28 @@ const deleteNewsArticle = async (token: string, id: number) => {
 
 test("Create news article", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.MANAGE_NEWS_ARTICLES]);
-  const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
+  
+  await mqtt.subscribe("newsarticles");
+  try {
+    const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
+    t.notEqual(createdNewsArticle, null);
+    t.notEqual(createdNewsArticle.id, null);
+    t.equal(createdNewsArticle.title, "Article title");
+    t.equal(createdNewsArticle.contents,  "Article content");
+    t.notEqual(createdNewsArticle.createdAt, null);
+    t.notEqual(createdNewsArticle.updatedAt, null);
+    t.equal(createdNewsArticle.imageUrl, null);
 
-  t.notEqual(createdNewsArticle, null);
-  t.notEqual(createdNewsArticle.id, null);
-  t.equal(createdNewsArticle.title, "Article title");
-  t.equal(createdNewsArticle.contents,  "Article content");
-  t.notEqual(createdNewsArticle.createdAt, null);
-  t.notEqual(createdNewsArticle.updatedAt, null);
-  t.equal(createdNewsArticle.imageUrl, null);
+    const messages = await mqtt.waitMessages(1);    
+    t.deepEquals(messages, [{
+      "operation": "CREATED",
+      "id": createdNewsArticle.id
+    }]);
 
-  await deleteNewsArticle(token, createdNewsArticle.id!);
-
-  t.equal((await listNewsArticles(token)).length, 0);
+    await deleteNewsArticle(token, createdNewsArticle.id!);
+  } finally {
+    await mqtt.unsubscribe("newsarticles");
+  }
 });
 
 test("Finds news article", async (t) => {
@@ -110,8 +120,6 @@ test("Finds news article", async (t) => {
   
   t.deepEqual(foundNewsArticle, createdNewsArticle);
   await deleteNewsArticle(token, createdNewsArticle.id!);
-
-  t.equal((await listNewsArticles(token)).length, 0);
 });
 
 test("Lists news article", async (t) => {
@@ -130,18 +138,29 @@ test("Lists news article", async (t) => {
   await Promise.all(createdArticles.map((createdArticle) => {
     return deleteNewsArticle(token, createdArticle.id!);
   }));
-
-  t.equal((await listNewsArticles(token)).length, 0);
 });
 
 test("Deletes news article", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.MANAGE_NEWS_ARTICLES]);
 
-  const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
-  
-  await findNewsArticle(token, createdNewsArticle.id!, 200);
-  await deleteNewsArticle(token, createdNewsArticle.id!);
-  await findNewsArticle(token, createdNewsArticle.id!, 404);
+  await mqtt.subscribe("newsarticles");
+  try {
+    const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
 
-  t.equal((await listNewsArticles(token)).length, 0);
+    await findNewsArticle(token, createdNewsArticle.id!, 200);
+    await deleteNewsArticle(token, createdNewsArticle.id!);
+    await findNewsArticle(token, createdNewsArticle.id!, 404);
+
+    const messages = await mqtt.waitMessages(2);
+    t.deepEquals(messages, [{
+      "operation": "CREATED",
+      "id": createdNewsArticle.id
+    }, {
+      "operation": "DELETED",
+      "id": createdNewsArticle.id
+    }]);
+
+  } finally {
+    await mqtt.unsubscribe("newsarticles");
+  }
 });

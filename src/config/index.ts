@@ -27,7 +27,8 @@ export interface Mqtt {
   port: number,
   secure: boolean,
   topic: string,
-  topicPrefix: string
+  topicPrefix: string,
+  topicPostfix: string
 }
 
 export interface ContractDocumentStatus {

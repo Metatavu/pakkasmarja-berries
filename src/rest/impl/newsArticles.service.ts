@@ -55,7 +55,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
     mqtt.publish("newsarticles", {
       "operation": "DELETED",
-      "id": newsArticleId
+      "id": databaseNewsArticle.id
     });
 
     res.status(204).send();
