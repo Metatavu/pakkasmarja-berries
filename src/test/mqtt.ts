@@ -51,7 +51,8 @@ export default new class Mqtt {
       }
     } while (timeout > (new Date().getTime()));
 
-    throw new Error("Timeout, expected " + count + " got " + this.getMessages().length);
+    const messages = this.getMessages();
+    throw new Error(`Timeout, expected ${count} got ${messages.length}. Messages: ${JSON.stringify(messages)}`);
   }
 
   /**
