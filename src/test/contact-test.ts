@@ -3,15 +3,15 @@ import * as request from "supertest";
 import auth from "./auth";
 import users from "./users";
 import ApplicationRoles from "../rest/application-roles";
-/**import mail from "./mail";
+import mail from "./mail";
 import database from "./database";
 import operations from "./operations";
- */
+
 const testDataDir = `${__dirname}/../../src/test/data/`;
-const contactDatas = require(`${testDataDir}/contacts.json`);/**
+const contactDatas = require(`${testDataDir}/contacts.json`);
 const contactDataSync = require(`${testDataDir}/contacts-sync.json`);
 const contactUpdateMails = require(`${testDataDir}/contact-update-mails.json`);
-*/
+
 test("Test listing contacts", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
   const token = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
@@ -34,7 +34,7 @@ test("Test listing contacts", async (t) => {
       t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], actualResponse[0]);
       t.deepEqual(contactDatas["677e99fd-b854-479f-afa6-74f295052770"], actualResponse[2]);
     });
-});/**
+});
 
 test("Test listing contacts - search", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
@@ -254,4 +254,4 @@ test("Test update contact password change", async (t) => {
       t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
       await users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
     });
-}); */
+});

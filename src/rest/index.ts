@@ -6,6 +6,7 @@ import ContactsServiceImpl from './impl/contacts.service';
 import ContractsServiceImpl from './impl/contracts.service';
 import DeliveryPlacesServiceImpl from './impl/deliveryPlaces.service';
 import ItemGroupsServiceImpl from './impl/itemGroups.service';
+import NewsArticlesServiceImpl from './impl/newsArticles.service';
 import OperationReportsServiceImpl from './impl/operationReports.service';
 import OperationsServiceImpl from './impl/operations.service';
 import SignAuthenticationServicesServiceImpl from './impl/signAuthenticationServices.service';
@@ -29,6 +30,8 @@ export default class Api {
       new DeliveryPlacesServiceImpl(app, keycloak);
     
       new ItemGroupsServiceImpl(app, keycloak);
+    
+      new NewsArticlesServiceImpl(app, keycloak);
     
       new OperationReportsServiceImpl(app, keycloak);
     
