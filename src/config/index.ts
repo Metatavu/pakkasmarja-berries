@@ -22,6 +22,14 @@ export interface Cache {
   "expire-time": number;
 }
 
+export interface Mqtt {
+  host: string,
+  port: number,
+  secure: boolean,
+  topic: string,
+  topicPrefix: string
+}
+
 export interface ContractDocumentStatus {
   afterProcessDelay: number;
   concurrent: number;
@@ -202,7 +210,8 @@ export interface Config {
   mail: Mail;
   contacts?: Contacts;
   pushNotification: PushNotification
-  migrations: Migrations
+  migrations: Migrations,
+  mqtt: Mqtt
 }
 
 export function config(): Config {

@@ -13,6 +13,7 @@ import Migration from "./migration";
 import { initializeModels } from "./models";
 import Api from "./rest";
 import SystemRoutes from "./routes/system-routes";
+import MqttRoutes from "./routes/mqtt-routes";
 import { config } from "./config";
 import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
 
@@ -59,7 +60,6 @@ process.on("unhandledRejection", (error) => {
   sessionStore.sync();
 
   const keycloak = new Keycloak({ store: sessionStore }, config().keycloak.rest);
-
   httpServer.listen(port, () => {
     logger.info("Http server started");
   });
@@ -99,5 +99,6 @@ process.on("unhandledRejection", (error) => {
   
   new Api(app, keycloak);
   new SystemRoutes(app);
+  new MqttRoutes(app, keycloak);
 
 })();
