@@ -100,7 +100,6 @@ export interface NewsArticleModel {
   id: number,
   title: string,
   contents: string,
-  originId: string,
   imageUrl: string,
   createdAt: Date,
   updatedAt: Date
@@ -377,7 +376,6 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       title: { type: Sequelize.STRING(191), allowNull: false },
       contents: { type: "LONGTEXT", allowNull: false },
-      originId: { type: Sequelize.STRING(191), allowNull: false },
       imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
     });
     
@@ -1086,36 +1084,54 @@ export class Models {
   
   // News Articles
   
-  createNewsArticle(originId: string, title: string, contents: string, imageUrl: string) {
+  /**
+   * Creates new article
+   * 
+   * @param title title 
+   * @param contents contents
+   * @param imageUrl image URL
+   * @returns promise for news article
+   */
+  createNewsArticle(title: string, contents: string, imageUrl: string | null): PromiseLike<NewsArticleModel> {
     return this.sequelize.models.NewsArticle.create({
       title: title,
       contents: contents,
-      originId: originId,
       imageUrl: imageUrl
     });
   }
   
-  removeNewsArticle(id: number) {
-    return this.sequelize.models.NewsArticle.destroy({ where: {id: id} });
-  }
-  
-  findNewsArticle(id: number) {
+  /**
+   * Finds an new article
+   * 
+   * @param id news article id
+   * @returns promise for news article or null if not found
+   */
+  findNewsArticleById(id: number): PromiseLike<NewsArticleModel | null> {
     return this.sequelize.models.NewsArticle.findOne({ where: { id : id } });
   }
   
-  findAllNewsArticles() {
-    return this.sequelize.models.NewsArticle.findAll();
-  }
-  
-  findNewsArticleByOriginId(originId: string) {
-    return this.sequelize.models.NewsArticle.findOne({ where: { originId : originId } });
-  }
-  
-  listNewsArticles(firstResult?: number, maxResults?: number) {
+  /**
+   * Lists news articles
+   * 
+   * @param firstResult first result
+   * @param maxResults max results
+   * @returns promise for news articles
+   */
+  listNewsArticles(firstResult?: number, maxResults?: number): PromiseLike<NewsArticleModel[]> {
     return this.sequelize.models.NewsArticle.findAll({ offset: firstResult, limit: maxResults });
   }
   
-  updateNewsArticle(id: number, title: string, contents: string, imageUrl: string, silentUpdate: boolean) {
+  /**
+   * Updates new article
+   * 
+   * @param id news article id
+   * @param title title 
+   * @param contents contents
+   * @param imageUrl image URL
+   * @param silentUpdate silent update
+   * @returns promise for update
+   */
+  updateNewsArticle(id: number, title: string, contents: string, imageUrl: string | null, silentUpdate: boolean): PromiseLike<[number, any]> {
     return this.sequelize.models.NewsArticle.update({
       title: title,
       contents: contents,
@@ -1126,6 +1142,16 @@ export class Models {
       },
       silent: silentUpdate ? silentUpdate : false
     });
+  }
+  
+  /**
+   * Deletes a news article
+   * 
+   * @param id news article id
+   * @returns promise for delete
+   */
+  deleteNewsArticle(id: number): PromiseLike<number> {
+    return this.sequelize.models.NewsArticle.destroy({ where: {id: id} });
   }
   
   // MessageAttachment

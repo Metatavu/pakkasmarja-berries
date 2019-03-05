@@ -114,5 +114,12 @@ export default class ApplicationRoles {
   static get MANAGE_THREADS() {
     return "manage-threads";
   }
+  
+  /**
+   * Role that allows users manage news articles
+   */
+  static get MANAGE_NEWS_ARTICLES() {
+    return "manage-news-articles";
+  }
 
 }

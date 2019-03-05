@@ -23,21 +23,7 @@ export default new class Mqtt {
    */
   constructor () {
     this.subscribers = new Map();
-
-    const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port;
-    const options: IClientOptions = { 
-      host: config().mqtt.host,
-      port: config().mqtt.port,
-      keepalive: 30 
-    };
-
-    this.client = mqtt.connect(url, options);
-    this.client.subscribe(`${config().mqtt.topicPrefix}${config().mqtt.topic}/`);
-    this.client.on("connect", this.onClientConnect.bind(this));
-    this.client.on("close", this.onClientClose.bind(this));
-    this.client.on("offline", this.onClientOffline.bind(this));
-    this.client.on("error", this.onClientError.bind(this));
-    this.client.on("message", this.onClientMessage.bind(this));
+    this.connect();
   }
 
   /**
@@ -71,12 +57,68 @@ export default new class Mqtt {
     topicSubscribers.push(onMessage);
     this.subscribers.set(subtopic, topicSubscribers);
   }
+  
+  /**
+   * Unsubscribes from given subtopic
+   * 
+   * @param subtopic subtopic
+   * @param onMessage message handler
+   */
+  public unsubscribe(subtopic: string, onMessage: OnMessageCallback) {
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
+    this.subscribers.set(subtopic, topicSubscribers.filter((topicSubscriber) => {
+      return topicSubscriber !== onMessage;
+    }));
+  }
+
+  /**
+   * Reconnects to MQTT server
+   */
+  public async reconnect() {
+    if (this.client && this.client.connected) {
+      await this.disconnect();
+    }
+
+    return this.connect();
+  }
+
+  /**
+   * Connects to the MQTT server
+   */
+  public connect() {
+    return new Promise((resolve) => {
+      if (this.client && this.client.connected) {
+        return;
+      }
+
+      const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port;
+      const options: IClientOptions = { 
+        host: config().mqtt.host,
+        port: config().mqtt.port,
+        keepalive: 30 
+      };
+
+      this.client = mqtt.connect(url, options);
+      this.client.subscribe(`${config().mqtt.topicPrefix}${config().mqtt.topic}${config().mqtt.topicPostfix}`);
+      this.client.on("close", this.onClientClose.bind(this));
+      this.client.on("offline", this.onClientOffline.bind(this));
+      this.client.on("error", this.onClientError.bind(this));
+      this.client.on("message", this.onClientMessage.bind(this));
+
+      this.client.once("connect", () => {
+        this.onClientConnect();
+        resolve();
+      });
+    });
+  }
 
   /**
    * Disconnects from the server
    */
-  public disconnect() {
-    this.client.end();
+  public async disconnect() {
+    return new Promise((resolve) => {
+      this.client.end(false, resolve);
+    });
   }
 
   /**
@@ -111,8 +153,10 @@ export default new class Mqtt {
    * Handles client message event
    */
   private onClientMessage(topic: string, payload: Buffer, packet: mqtt.Packet) {
+    const topicStripped = _.trim(topic, "/");
+    const subtopicIndex = topicStripped.lastIndexOf("/") + 1;
+    const subtopic = topicStripped.substr(subtopicIndex);
     const message = JSON.parse(payload.toString());
-    const subtopic = _.trim(topic.substr(config().mqtt.topic.length), "/");
     const topicSubscribers = this.subscribers.get(subtopic) || [];
     topicSubscribers.forEach((topicSubscriber: OnMessageCallback) => {
       topicSubscriber(message);
