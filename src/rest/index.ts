@@ -2,6 +2,7 @@ import { Application } from "express";
 import * as Keycloak from "keycloak-connect";
 
 import ChatGroupsServiceImpl from './impl/chatGroups.service';
+import ChatMessagesServiceImpl from './impl/chatMessages.service';
 import ChatThreadsServiceImpl from './impl/chatThreads.service';
 import ContactsServiceImpl from './impl/contacts.service';
 import ContractsServiceImpl from './impl/contracts.service';
@@ -23,6 +24,8 @@ export default class Api {
   constructor(app: Application, keycloak: Keycloak) {
     
       new ChatGroupsServiceImpl(app, keycloak);
+    
+      new ChatMessagesServiceImpl(app, keycloak);
     
       new ChatThreadsServiceImpl(app, keycloak);
     

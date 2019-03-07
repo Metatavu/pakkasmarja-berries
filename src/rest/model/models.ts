@@ -3,6 +3,7 @@ export * from './areaDetail';
 export * from './badRequest';
 export * from './chatGroup';
 export * from './chatGroupType';
+export * from './chatMessage';
 export * from './chatThread';
 export * from './contact';
 export * from './contract';

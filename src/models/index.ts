@@ -231,6 +231,7 @@ export class Models {
   private sequelize: Sequelize.Sequelize;
   private Thread: Sequelize.Model<any, ThreadModel>;
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
+  private Message: Sequelize.Model<any, MessageModel>;
   
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -306,7 +307,7 @@ export class Models {
       }]
     });
     
-    this.defineModel("Message", {
+    this.Message = this.defineModel("Message", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
@@ -705,16 +706,30 @@ export class Models {
   
   // Messages
   
-  createMessage(threadId: number, userId: string, contents: string) {
-    return this.sequelize.models.Message.create({
+  /**
+   * Creates new chat message
+   * 
+   * @param threadId thread id
+   * @param userId user id
+   * @param contents contents
+   * @returns created message
+   */
+  public createMessage(threadId: number, userId: string, contents: string): PromiseLike<MessageModel> {
+    return this.Message.create({ 
       threadId: threadId,
       userId: userId,
       contents: contents
-    });
+    } as any);
   }
-  
-  findMessage(id: number) {
-    return this.sequelize.models.Message.findOne({ where: { id : id } });
+
+  /**
+   * Finds a chat message
+   * 
+   * @param id id
+   * @returns found message or null if not found
+   */
+  public findMessage(id: number): PromiseLike<MessageModel | null> {
+    return this.Message.findOne({ where: { id : id } });
   }
   
   /**
@@ -724,8 +739,8 @@ export class Models {
    * @param {String} userId contract's user id
    * @return {Object} last message posted into a thread by user or null if not found
    */
-  findLastMessageByThreadIdAndUserId(threadId: number, userId: string) {
-    return this.sequelize.models.Message.findOne({ 
+  public findLastMessageByThreadIdAndUserId(threadId: number, userId: string): PromiseLike<MessageModel | null> {
+    return this.Message.findOne({ 
       where: { 
         threadId: threadId,
         userId: userId 
@@ -735,7 +750,15 @@ export class Models {
     });
   }
 
-  listMessagesByThreadId(threadId: number, firstResult?: number, maxResults?: number): Bluebird<MessageModel[]> {
+  /**
+   * Lists messages by thread id
+   * 
+   * @param threadId thread id
+   * @param firstResult first result
+   * @param maxResults max results
+   * @return promise for messages
+   */
+  public listMessagesByThreadId(threadId: number, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
     if (!threadId) {
       return Bluebird.resolve([]);
     }
@@ -743,7 +766,14 @@ export class Models {
     return this.sequelize.models.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
   }
 
-  updateMessage(id: number, contents: string) {
+  /**
+   * Updates a message
+   * 
+   * @param id id
+   * @param contents contents 
+   * @return promise for update
+   */
+  public updateMessage(id: number, contents: string): PromiseLike<[number, any]> {
     return this.sequelize.models.Message.update({
       contents: contents
     }, {
@@ -753,12 +783,24 @@ export class Models {
     });
   }
   
-  deleteMessage(id: number) {
-    return this.sequelize.models.Message.destroy({ where: { id : id } });
+  /**
+   * Returns last message creation date for given set of threads
+   * 
+   * @param threadIds thread ids
+   * @return promise for last message creation date for given set of threads
+   */
+  public getLatestMessageCreatedByThreadIds(threadIds: number[]) {
+    return this.sequelize.models.Message.max("createdAt", { where: { threadId: { $in: threadIds } } });
   }
   
-  getLatestMessageCreatedByThreadIds(threadIds: number[]) {
-    return this.sequelize.models.Message.max("createdAt", { where: { threadId: { $in: threadIds } } });
+  /**
+   * Deletes a message
+   * 
+   * @param id id
+   * @return promise for delete
+   */
+  public deleteMessage(id: number): PromiseLike<number> {
+    return this.sequelize.models.Message.destroy({ where: { id : id } });
   }
   
   // News Articles
