@@ -7,6 +7,8 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import PolicyRepresentation, { Logic, DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
 import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
 import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
+import { UserQuery } from "keycloak-admin/lib/resources/users";
+import CredentialRepresentation from "keycloak-admin/lib/defs/credentialRepresentation";
 
 export default new class UserManagement {
 
@@ -134,9 +136,8 @@ export default new class UserManagement {
    * @param {Object} user user object
    * @return {Promise} promise that resolves on success and rejects on failure
    */
-  async updateUser(user: UserRepresentation ) {
+  public async updateUser(user: UserRepresentation ) {
     const client = await this.getClient();
-
     await client.users.update({
       id: user.id!,
       realm: config().keycloak.admin.realm
@@ -145,7 +146,7 @@ export default new class UserManagement {
     if (this.userCache) {
       await this.userCache.unset(user.id!);
     }
-
+    
     return user;
   }
   
@@ -157,10 +158,18 @@ export default new class UserManagement {
    * @param {boolean} temporary if passoword is temporary or not
    * @return {Promise} promise that resolves on success and rejects on failure
    */
-  resetUserPassword(userId: string, password: string, temporary: boolean) {
-    return this.getClient().then((client: any) => {
-      const keycloakRealm = config().keycloak.admin.realm;
-      return client.users.resetPassword(keycloakRealm, userId, { temporary: temporary , value: password });
+  public async resetUserPassword(userId: string, password: string, temporary: boolean) {
+    const client = await this.getClient();
+    const credential: CredentialRepresentation = {
+      temporary: temporary,
+      value: password,
+      type: "password"
+    };
+
+    return client.users.resetPassword({
+      id: userId,
+      credential: credential,
+      realm: config().keycloak.admin.realm
     });
   }
   
@@ -170,10 +179,11 @@ export default new class UserManagement {
    * @param {Object} options options (optional)
    * @return {Promise} promise for users
    */
-  listUsers(options?: any) {
-    return this.getClient().then((client: any) => {
-      return client.users.find(config().keycloak.admin.realm, options);
-    });
+  public async listUsers(options?: UserQuery): Promise<UserRepresentation[]> {
+    const client = await this.getClient();
+    return client.users.find(Object.assign({}, options, {
+      realm: config().keycloak.admin.realm
+    }));
   }
   
   listUserGroupIds(realm: string, userId: string): Promise<number[]> {

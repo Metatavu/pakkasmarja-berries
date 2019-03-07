@@ -7,6 +7,7 @@ import mailer from "../../mailer";
 import { Contact, Address } from "../model/models";
 import { config } from "../../config";
 import { getLogger, Logger } from "log4js";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Implementation for Contacts REST service
@@ -94,19 +95,11 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact))
-      .then(() => {
-        return userManagement.findUser(userId);
-      })
-      .then((updatedUser) => {
-        this.triggerChangeNotification(user, updatedUser);
-        res.status(200).send(this.translateKeycloakUser(updatedUser));
-      })
-      .catch((err) => {
-        this.sendInternalServerError(res, err);
-        return;
-      });
-  }
+    await userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact));
+    const updatedUser = await userManagement.findUser(userId);
+    this.triggerChangeNotification(user, updatedUser);
+    res.status(200).send(this.translateKeycloakUser(updatedUser));
+}
   
   /**
    * @inheritdoc
@@ -258,7 +251,7 @@ export default class ContactsServiceImpl extends ContactsService {
    * @param {Contact} contact contact entity
    * @return {Object} updated Keycloak user
    */
-  updateKeycloakUserModel(keycloakUser: any, contact: Contact) {
+  private updateKeycloakUserModel(keycloakUser: UserRepresentation, contact: Contact): UserRepresentation {
     const user = Object.assign({}, keycloakUser, {
       'firstName': contact.firstName,
       'lastName': contact.lastName,

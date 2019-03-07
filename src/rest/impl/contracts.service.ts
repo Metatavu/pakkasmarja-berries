@@ -771,6 +771,29 @@ export default class ContractsServiceImpl extends ContractsService {
       const result: AreaDetail = areaDetail;
       return result;
     }) : [];  
+
+    let status: Contract.StatusEnum | null = null;
+    switch (contract.status) {
+      case 'APPROVED':
+        status = 'APPROVED';
+      break;
+      case 'ON_HOLD':
+        status = 'ON_HOLD';
+      break;
+      case 'DRAFT':
+        status = 'DRAFT';
+      break;
+      case 'TERMINATED':
+        status = 'TERMINATED';
+      break;
+      case 'REJECTED':
+        status = 'REJECTED';
+      break;
+    }
+
+    if (!status) {
+      return null;
+    }
     
     const result: Contract = {
       "id": contract.externalId,
@@ -786,7 +809,7 @@ export default class ContractsServiceImpl extends ContractsService {
       "endDate": contract.endDate,
       "signDate": contract.signDate,
       "termDate": contract.termDate,
-      "status": status as Contract.StatusEnum,
+      "status": status,
       "areaDetails": areaDetails || [],
       "deliverAll": contract.deliverAll,
       "remarks": contract.remarks,
