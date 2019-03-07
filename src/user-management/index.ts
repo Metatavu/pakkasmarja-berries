@@ -1,32 +1,36 @@
 import * as _ from "lodash";
 import * as crypto from "crypto";
 import UserCache from "./user-cache";
-import * as keycloak_admin_client from "keycloak-admin-client";
-import models from "../models";
+import KcAdminClient from "keycloak-admin";
 import { config } from "../config";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
+import PolicyRepresentation, { Logic, DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
+import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
+import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 
 export default new class UserManagement {
 
   private client: any;
   private userCache: UserCache|null;
   private requireFreshClient: boolean;
+  private restClientInternalId: string;
   
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
-    this.client = null;
+    this.client = new KcAdminClient();
     this.requireFreshClient = true;
     setInterval(() => {
       this.requireFreshClient = true;
     }, 45 * 1000);
   }
-  
+
   /**
    * Finds single user from Keycloak.
    * 
    * @param {String} id user id
    * @return {Promise} promise for a user or null if not found
    */
-  async findUser(id: string) {
+  public async findUser(id: string) {
     if (!id) {
       return null;
     }
@@ -130,14 +134,19 @@ export default new class UserManagement {
    * @param {Object} user user object
    * @return {Promise} promise that resolves on success and rejects on failure
    */
-  async updateUser(user: any) {
+  async updateUser(user: UserRepresentation ) {
     const client = await this.getClient();
-    const result = await client.users.update(config().keycloak.admin.realm, user);
+
+    await client.users.update({
+      id: user.id!,
+      realm: config().keycloak.admin.realm
+    }, user);
+
     if (this.userCache) {
-      await this.userCache.unset(user.id);
+      await this.userCache.unset(user.id!);
     }
 
-    return result;
+    return user;
   }
   
   /**
@@ -192,9 +201,151 @@ export default new class UserManagement {
   /**
    * Lists Groups from the Keycloak
    */
-  listGroups() {
-    return this.getClient().then((client: any) => {
-      return client.groups.find(config().keycloak.admin.realm);
+  public async listGroups() {
+    const client = await this.getClient();
+    return client.groups.find({
+      realm: config().keycloak.admin.realm
+    });
+  }
+
+  /**
+   * Finds authz resource by URI
+   * 
+   * @param uri URI
+   * @return Promise for found resource or null if not found
+   */
+  public async findResourceByUri(uri: string) {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzResources({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      uri: uri,
+      max: 1
+    });
+
+    return results.length ? results[0] : null;
+  }
+
+  /**
+   * Creates authz resource
+   * 
+   * @param name name
+   * @param displayName display name
+   * @param uri URI
+   * @param type type
+   * @return Promise created resource
+   */
+  public async createResource(name: string, displayName: string, uri: string, type: string, scopes: string[]) {
+    const client = await this.getClient();
+    const resource = {
+      name: name,
+      displayName: displayName,
+      type: type,
+      uri: uri,
+      scopes: scopes.map((scopeName) => {
+        return {
+          name: scopeName
+        };
+      }),
+      attributes: {}
+    };
+
+    return client.clients.createAuthzResource({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      resource: resource
+    });
+  }
+
+  /**
+   * Finds authz group policy by name
+   * 
+   * @param name name
+   * @return Promise for found policy or null if not found
+   */
+  public async findGroupPolicyByName(name: string) {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzGroupPolicies({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      name: name,
+      max: 1
+    });
+
+    return results.length ? results[0] : null;
+  }
+
+  /**
+   * Creates authz group policy
+   * 
+   * @param name name
+   * @param groupIds display name
+   * @return Promise created policy
+   */
+  public async createGroupPolicy(name: string, groupIds: string[]) {
+    const client = await this.getClient();
+    const policy: GroupPolicyRepresentation = {
+      name: name,
+      logic: Logic.POSITIVE,
+      groups: groupIds.map((groupId) => {
+        const result: GroupRepresentation = {
+          id: groupId
+        }
+
+        return result;
+      })
+    };
+
+    return client.clients.createAuthzGroupPolicy({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      policy: policy
+    });
+  }
+
+  /**
+   * Finds authz permission by name
+   * 
+   * @param name name
+   * @return Promise for found permission or null if not found
+   */
+  public async findPermissionByName(name: string) {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzPermissions({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      name: name,
+      max: 1
+    });
+
+    return results.length ? results[0] : null;
+  }
+
+  /**
+   * Creates authz scope permission
+   * 
+   * @param name name
+   * @param resourceIds resource ids
+   * @param scopes scopes
+   * @param policyIds policy ids
+   * @return Promise created permission
+   */
+  public async createScopePermission(name: string, resourceIds: string[], scopes: string[], policyIds: string[]) {
+    const client = await this.getClient();
+    const permission: PolicyRepresentation = {
+      "type":"scope",
+      "logic": Logic.POSITIVE,
+      "decisionStrategy": DecisionStrategy.UNANIMOUS,
+      "name": name,
+      "resources": resourceIds,
+      "scopes": scopes,
+      "policies": policyIds
+    };
+
+    return client.clients.createAuthzScopePermission({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      permission: permission
     });
   }
   
@@ -314,122 +465,12 @@ export default new class UserManagement {
     return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
   }
   
-  getThreadUserRole(realm: string, threadId: number, userId: string) {
-    return models.getThreadUserGroupRoleMap(threadId)
-      .then((userGroupRoleMap: any) => {
-        return this.listUserGroupIds(realm, userId)
-          .then((userGroupIds) => {
-            return this.getUserGroupRole(userGroupRoleMap, userGroupIds);
-          });
-      });
-  }
-  
-  getQuestionGroupUserRole(realm: string, questionGroupId: number, userId: string) {
-    return models.getQuestionGroupUserGroupRoleMap(questionGroupId)
-      .then((userGroupRoleMap: any) => {
-        return this.listUserGroupIds(realm, userId)
-          .then((userGroupIds) => {
-            return this.getUserGroupRole(userGroupRoleMap, userGroupIds);
-          });
-      });
-  }
-  
-  getUserGroupRole(userGroupRoleMap: any, userGroupIds: number[]) {
-    let result: any = null;
-    
-    userGroupIds.forEach((userGroupId) => {
-      const role = userGroupRoleMap[userGroupId];
-      if (this.getRoleIndex(role) > this.getRoleIndex(result)) {
-        result = role; 
-      }
-    });
-    
-    return result;
-  }
-  
-  getRoleIndex(role: string) {
-    if (role === "manager") {
-      return 2;
-    } else if (role === "user") {
-      return 1;
-    }
-    
-    return 0;
-  }
-  
-  getThreadUserIds(realm: string, threadId: number) {
-    return models.listThreadUserGroupIds(threadId)
-      .then((threadUserGroupIds) => {
-        return this.listGroupsMemberIds(realm, threadUserGroupIds);
-      });
-  }
-  
-  getQuestionGroupUserIds(realm: string, questionGroupId: number) {
-    return models.listQuestionGroupUserGroupIds(questionGroupId)
-      .then((questionGroupUserGroupIds) => {
-        return this.listGroupsMemberIds(realm, questionGroupUserGroupIds);
-      });
-  }
-  
   isValidUserId(userId: string) {
     if (typeof userId === "string") {
       return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
     }
     
     return false;
-  }
-  
-  checkPermissionToPostThread(realm: string, userId: string, threadId: number) {
-    return this.getThreadUserIds(realm, threadId)
-      .then((threadUserIds: string[]) => {
-        return _.indexOf(threadUserIds||[], userId) >= 0;
-      });
-  }
-  
-  checkPermissionToReadThread(realm: string, userId: string, threadId: number) {
-    return this.checkPermissionToPostThread(realm, userId, threadId);
-  }
-  
-  checkPermissionToReadMessage(realm: string, userId: string, messageId: number) {
-    return models.findMessage(messageId)
-      .then((message) => {
-        if (message) {
-          return this.checkPermissionToReadThread(realm, userId, message.threadId);
-        } else {
-          return false;
-        }
-      });
-  }
-  
-  checkPermissionToListQuestionGroupThreads(realm: string, userId: string, questionGroupId: number) {
-    return this.getQuestionGroupUserIds(realm, questionGroupId)
-      .then((threadUserIds: string[]) => {
-        return _.indexOf(threadUserIds||[], userId) >= 0;
-      });
-  }
-  
-  checkPermissionToDeleteMessages(realm: string, userId: string, messageId: number) {
-    return new Promise((resolve, reject) => {
-      this.getClient()
-        .then((client: any) => {
-          client.users.roleMappings.find(realm, userId)
-            .then((userRoleMappings: any) => {
-              let hasManagerRole = false;
-              if (userRoleMappings && userRoleMappings.realmMappings) {
-                const realmRoles = userRoleMappings.realmMappings;
-                for (let i = 0; i < realmRoles.length; i++) {
-                  if (realmRoles[i].name === "app-manager") {
-                    hasManagerRole = true;
-                    break;
-                  }
-                }
-              }
-              resolve(hasManagerRole);
-          })
-          .catch(reject);
-        })
-        .catch(reject);
-    });
   }
   
   /**
@@ -479,22 +520,25 @@ export default new class UserManagement {
    * @param id id
    * @retrn promise for user or null if not found 
    */
-  private async findKeycloakUser(id: string): Promise<any> {
+  private async findKeycloakUser(id: string): Promise<UserRepresentation> {
     const client = await this.getClient(); 
 
     return new Promise<any>((resolve, reject) => {
-      client.users.find(config().keycloak.admin.realm, { userId: id })
-        .then(async (user: any) => {
-          resolve(user);
-        })
-        .catch((err: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(null);
-          } 
-        });
+      client.users.findOne({
+        realm: config().keycloak.admin.realm,
+        id: id
+      })
+      .then(async (user: any) => {
+        resolve(user);
+      })
+      .catch((err: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(null);
+        } 
       });
+    });
   }
   
   /**
@@ -502,14 +546,52 @@ export default new class UserManagement {
    * 
    * @return Promise for keycloak admin client
    */
-  private async getClient(): Promise<any> {
+  private async getClient(): Promise<KcAdminClient> {
     if (!this.client || this.requireFreshClient) {
-      this.client = await keycloak_admin_client(config().keycloak.admin);
+      await this.client.auth({
+        username: config().keycloak.admin.username,
+        password: config().keycloak.admin.password,
+        grantType: config().keycloak.admin.grant_type,
+        clientId: config().keycloak.admin.client_id,
+        clientSecret: config().keycloak.admin.client_secret
+      });
+
       this.requireFreshClient = false;
     }
     
     return this.client;
   }
+
+  /**
+   * Returns rest client's internal id
+   * 
+   * @returns promise for rest client's internal id 
+   */
+  private async getRestClientInternalId(): Promise<string> {
+    if (!this.restClientInternalId) {
+      this.restClientInternalId = await this.resolveAuthzClientId();
+    }
+
+    return this.restClientInternalId;
+  }
+
+  /**
+   * Resolves rest client's internal id
+   * 
+   * @returns promise for rest client's internal id 
+   */
+  private async resolveAuthzClientId(): Promise<string> {
+    const clients = await (await this.getClient()).clients.find({
+      clientId: config().keycloak.rest.resource,
+      realm: config().keycloak.admin.realm
+    });
+
+    if (!clients.length) {
+      throw new Error("Failed to resolve REST client's id");
+    }
+
+    return clients[0].id!;
+  }  
   
   get ATTRIBUTE_SAP_ID() {
     return "sapId";
