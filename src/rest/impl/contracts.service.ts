@@ -771,7 +771,7 @@ export default class ContractsServiceImpl extends ContractsService {
       const result: AreaDetail = areaDetail;
       return result;
     }) : [];  
-
+    
     const result: Contract = {
       "id": contract.externalId,
       "sapId": contract.sapId || null,
@@ -786,7 +786,7 @@ export default class ContractsServiceImpl extends ContractsService {
       "endDate": contract.endDate,
       "signDate": contract.signDate,
       "termDate": contract.termDate,
-      "status": contract.status,
+      "status": status as Contract.StatusEnum,
       "areaDetails": areaDetails || [],
       "deliverAll": contract.deliverAll,
       "remarks": contract.remarks,

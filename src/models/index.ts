@@ -27,12 +27,22 @@ export interface UserSettingsModel {
   updatedAt: Date
 }
 
+export interface ChatGroupModel {
+  id: number,
+  type: string,
+  title: string,
+  imageUrl: string,
+  archived: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
 export interface ThreadModel {
   id: number,
   title: string,
   description: string,
   type: string,
-  originId: string,
+  groupId: number,
   imageUrl: string,
   archived: boolean,
   answerType: string,
@@ -64,34 +74,6 @@ export interface MessageModel {
   threadId: number,
   userId: string,
   contents: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-
-export interface QuestionGroupModel {
-  id: number,
-  title: string,
-  originId: string,
-  imageUrl: string,
-  archived: boolean,
-  createdAt: Date,
-  updatedAt: Date
-}
-
-export interface QuestionGroupUserGroupRoleModel {
-  id: number,
-  questionGroupId: number,
-  userGroupId: string,
-  role: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-
-export interface QuestionGroupUserThreadModel {
-  id: number,
-  questionGroupId: number,
-  threadId: number,
-  userId: string,
   createdAt: Date,
   updatedAt: Date
 }
@@ -174,7 +156,7 @@ export interface ContractModel {
   endDate: Date,
   signDate: Date,
   termDate: Date,
-  status: 'APPROVED' | 'ON_HOLD' | 'DRAFT' | 'TERMINATED' | 'REJECTED',
+  status: string,
   areaDetails: string,
   deliverAll: boolean,
   remarks: string,
@@ -234,7 +216,7 @@ export interface OperationReportModel {
 
 export interface OperationReportItemModel {
   id: number,
-  message?: Buffer,
+  message?: string,
   operationReportId: number,
   completed: boolean,
   success: boolean,
@@ -283,33 +265,25 @@ export class Models {
       }]
     });
     
+    this.defineModel("ChatGroup", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      type: { type: Sequelize.STRING(191), allowNull: false },
+      title: { type: Sequelize.STRING(191), allowNull: false },
+      imageUrl: { type: Sequelize.STRING(191) },
+      archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
+    });
+    
     this.Thread = this.defineModel("Thread", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       title: { type: Sequelize.STRING(191) },
       description: { type: "LONGTEXT" },
       type: { type: Sequelize.STRING(191), allowNull: false },
-      originId: { type: Sequelize.STRING(191) },
+      groupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ChatGroup, key: "id" } },
       imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
       answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
       pollAllowOther: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
       expiresAt: { type: Sequelize.DATE, allowNull: true }
-    }, {
-      hooks: {
-        "afterFind": (object: any) => {
-          if (!object) {
-            return;  
-          }
-          
-          const threads = _.isArray(object) ? object : [ object ];
-          
-          const extendPromises = _.map(threads, (thread) => {
-            return this.createThreadLatestMessagePromise(thread);
-          });
-          
-          return Promise.all(extendPromises);
-        }
-      }
     });
 
     this.defineModel("ThreadPredefinedText", {
@@ -336,40 +310,6 @@ export class Models {
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
       contents: { type: Sequelize.TEXT, allowNull: false }
-    });
-    
-    this.defineModel("QuestionGroup", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      title: { type: Sequelize.STRING(191), allowNull: false },
-      originId: { type: Sequelize.STRING(191), allowNull: false },
-      imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
-      archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
-    });
-    
-    this.defineModel("QuestionGroupUserGroupRole", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.QuestionGroup, key: "id" } },
-      userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
-      role: { type: Sequelize.STRING(191), allowNull: false  }
-    }, {
-      indexes: [{
-        name: "UN_QUESTIONGROUPUSERGROUPROLE_QUESTIONGROUPID_USERGROUPID",
-        unique: true,
-        fields: ["questionGroupId", "userGroupId"]
-      }]
-    });
-    
-    this.defineModel("QuestionGroupUserThread", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      questionGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.QuestionGroup, key: "id" } },
-      threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
-      userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
-    }, {
-      indexes: [{
-        name: "UN_QUESTIONGROUPUSERTHREAD_QUESTIONGROUPID_THREADID",
-        unique: true,
-        fields: ["questionGroupId", "threadId"]
-      }]
     });
     
     this.defineModel("NewsArticle", {
@@ -638,12 +578,6 @@ export class Models {
     return this.sequelize.models.Session.destroy({ where: { id : id } });
   }
   
-  // Threads
-  
-  archiveThread(id: number) {
-    return this.sequelize.models.Thread.update({ archived: true }, { where: { id: id } });
-  }
-  
   /**
    * Creates new thread
    * 
@@ -656,7 +590,7 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  createThread(originId: string|null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null) {
+  createThread(originId: string|null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
     return this.sequelize.models.Thread.create({
       originId: originId,
       title: title,
@@ -669,143 +603,42 @@ export class Models {
     });
   }
   
-  findThread(id: number): Bluebird<ThreadModel> {
+  /**
+   * Finds single thread from the database
+   * 
+   * @param id thread id
+   * @returns Promise for found thread or null if not found  
+   */
+  findThread(id: number): PromiseLike<ThreadModel> {
     return this.Thread.findOne({ where: { id : id } });
   }
-  
-  findThreads(ids: number[]) {
-    return this.sequelize.models.Thread.findAll({ where: { id : { $in: ids } }});
-  }
-  
-  findThreadByOriginId(originId: string) {
-    return this.sequelize.models.Thread.findOne({ where: { originId : originId } });
-  }
-  
-  findAllChatThreads() {
-    return this.sequelize.models.Thread.findAll({ where: { type: "conversation", archived: false } });
-  }
-  
+
   /**
-   * Lists non-expired threads where given user group has role
+   * Lists threads
    * 
-   * @param {String} userGroupId user group id 
+   * @param groupId filter by group id
+   * @param groupType filter by group type
+   * @param firstResult first result
+   * @param maxResults max results
+   * @returns promise for threads
    */
-  listConversationThreadsByUserGroupIdNotExpired(userGroupId: string) {
-    return this.sequelize.models.ThreadUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
-      .then((threadUserGroupRoles) => {
-        return this.sequelize.models.Thread.findAll({ where: { 
-          id: { $in: _.map(threadUserGroupRoles, "threadId") },
-          expiresAt: {
-            [Sequelize.Op.or]: [{
-              [Sequelize.Op.eq]: null
-            }, {
-              [Sequelize.Op.gte]: new Date()
-            }]
-          },
-          archived: false
-        }});
-      });
-  }
-  
-  async getThreadUserGroupRoleMap(threadId: number) {
-    const thread = await this.findThread(threadId);
+  listThreads(groupId: number | null, groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
+    const where: any = {};
 
-    if (thread.type === "conversation") {
-      return this.listThreadUserGroupRolesByThreadId(thread.id)
-        .then((threadUserGroupRoles: any[]) => {
-          const result = {};
-  
-          _.forEach(threadUserGroupRoles, (threadUserGroupRole) => {
-            result[threadUserGroupRole.userGroupId] = threadUserGroupRole.role;
-          });
-          
-          return result;
-        });
-    } else if (thread.type === "question") {
-      return this.findQuestionGroupByThreadId(thread.id)
-        .then((questionGroup: any) => {
-          return this.getQuestionGroupUserGroupRoleMap(questionGroup.id);
-        });
+    if (groupId) {
+      where.groupId = groupId;
+    } else if (groupType) {
+      const groupIds = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ChatGroups", {
+        attributes: ["id"],
+        where: { groupType: groupType }
+      }).slice(0, -1);
+
+      where.groupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${groupIds})`) };
     }
 
-    console.error(`Unknown thread type ${thread.type}`);
-    return null;
+    return this.sequelize.models.NewsArticle.findAll({ where: where, offset: firstResult, limit: maxResults });
   }
-  
-  getQuestionGroupManagerUserGroupIds(questionGroupId: string) {
-    return this.findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId, "manager")
-      .then((questionGroupUserGroupRoles: any[]) => {
-        const result: any[] = [];
 
-        _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
-          result.push(questionGroupUserGroupRole.userGroupId);
-        });
-
-        return result;
-      });
-  }
-  
-  findQuestionGroupUserGroupRolesByquestionGroupIdAndRole(questionGroupId: string, role: string) {
-    return this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId, role: role } });
-  }
-  
-  getQuestionGroupUserGroupRoleMap(questionGroupId: number) {
-    return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
-      .then((questionGroupUserGroupRoles: any[]) => {
-        const result = {};
-
-        _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
-          result[questionGroupUserGroupRole.userGroupId] = questionGroupUserGroupRole.role;
-        });
-
-        return result;
-      });
-  }
-  
-  getQuestionGroupsUserGroupRoleMaps(questionGroupIds: number[]) {
-    return this.listQuestionGroupUserGroupRolesByQuestionGroupIds(questionGroupIds)
-      .then((questionGroupUserGroupRoles: any[]) => {
-        const result = {};
-
-        _.forEach(questionGroupUserGroupRoles, (questionGroupUserGroupRole) => {
-          if (!result[questionGroupUserGroupRole.questionGroupId]) {
-            result[questionGroupUserGroupRole.questionGroupId] = {};
-          }
-          result[questionGroupUserGroupRole.questionGroupId][questionGroupUserGroupRole.userGroupId] = questionGroupUserGroupRole.role;
-        });
-
-        return result;
-      });
-  }
-  
-  async listThreadUserGroupIds(threadId: number) {
-    const thread = await this.findThread(threadId);
-
-    if (!thread) {
-      console.error("Thread not found");
-      return [];
-    } else {
-      if (thread.type === "conversation") {
-        return this.listThreadUserGroupRolesByThreadId(thread.id)
-          .then((threadUserGroupRole: any) => {
-            return _.map(threadUserGroupRole, "userGroupId");
-          });
-      } else if (thread.type === "question") {
-        return this.findQuestionGroupByThreadId(thread.id)
-          .then((questionGroup: any) => {
-            return this.listQuestionGroupUserGroupIds(questionGroup.id);
-          });
-      }
-    }
-
-    console.error(`Unknown thread type ${thread.type}`);
-    return [];
-  }
-  
-  listThreadUserGroupRolesByThreadId(threadId: number) {
-    return this.sequelize.models.ThreadUserGroupRole.findAll({ where: { threadId : threadId } });
-  }
-  
   /**
    * Updates thread
    * 
@@ -835,34 +668,10 @@ export class Models {
     });
   }
   
-  setThreadUserGroupRoles(threadId: number, roleMap: any) {
-    const newUserGroups = _.map(roleMap, (role, userGroupId) => {
-      return userGroupId;
-    });
-    
-    return this.sequelize.models.ThreadUserGroupRole.destroy({ 
-        where: { 
-          threadId : threadId,
-          userGroupId: {
-            $notIn: newUserGroups
-          }
-        } 
-      })
-      .then(() => {
-        const roleUpsertPromises = _.map(roleMap, (role, userGroupId) => {
-          return this.sequelize.models.ThreadUserGroupRole.upsert({
-            threadId: threadId,
-            userGroupId: userGroupId,
-            role: role
-          });
-        });
-
-        return Promise.all(roleUpsertPromises);
-      });
-  }
+  // Threads
   
-  findQuestionGroupUserThreadsByThreadId(threadId: number) {
-    return this.sequelize.models.QuestionGroupUserThread.findAll({ where: { threadId: threadId } });
+  archiveThread(id: number) {
+    return this.sequelize.models.Thread.update({ archived: true }, { where: { id: id } });
   }
   
   // Messages
@@ -921,165 +730,6 @@ export class Models {
   
   getLatestMessageCreatedByThreadIds(threadIds: number[]) {
     return this.sequelize.models.Message.max("createdAt", { where: { threadId: { $in: threadIds } } });
-  }
-
-  // QuestionGroup
-    
-  createQuestionGroup(originId: number, title: string, imageUrl: string) {
-    return this.sequelize.models.QuestionGroup.create({
-      title: title,
-      originId: originId,
-      imageUrl: imageUrl
-    });
-  }
-  
-  archiveQuestionGroup(id: number) {
-    return this.sequelize.models.QuestionGroup.update({ archived: true }, { where: { id: id } });
-  }
-  
-  findQuestionGroup(id: number) {
-    return this.sequelize.models.QuestionGroup.findOne({ where: { id : id } });
-  }
-  
-  findAllQuestionGroups() {
-    return this.sequelize.models.QuestionGroup.findAll({ where: { archived: false }});
-  }
-  
-  findQuestionGroupByThreadId(threadId: number) {
-    return this.sequelize.models.QuestionGroupUserThread.findOne({ where: { threadId : threadId } })
-      .then((questionGroupUserThread) => {
-        if (questionGroupUserThread) {
-          return this.findQuestionGroup(questionGroupUserThread.questionGroupId);
-        } else {
-          return null;
-        }
-      });
-  }
-  
-  findQuestionGroupByOriginId(originId: number) {
-    return this.sequelize.models.QuestionGroup.findOne({ where: { originId : originId } });
-  }
-  
-  listQuestionGroupsByUserGroupId(userGroupId: number) {
-    return this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: userGroupId } })
-      .then((questionGroupUserGroupRoles) => {
-        return this.sequelize.models.QuestionGroup.findAll({ where: { 
-          id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
-          archived: false
-        }});
-      });
-  }
-  
-  async listQuestionGroupsByUserGroupIds(userGroupIds: number[]) {
-    const questionGroupUserGroupRoles = await this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: { userGroupId: { $in: userGroupIds} } });
-    return this.sequelize.models.QuestionGroup.findAll({ where: {
-      id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
-      archived: false
-    }});
-  }
-  
-  listQuestionGroupsByUserGroupIdsAndRole(userGroupIds: number[], role: string) {
-    return this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: {
-        userGroupId: {$in: userGroupIds },
-        role: role
-      }})
-      .then((questionGroupUserGroupRoles) => {
-        return this.sequelize.models.QuestionGroup.findAll({ where: { 
-          id: {$in: _.map(questionGroupUserGroupRoles, "questionGroupId") },
-          archived: false
-        }});
-      });
-  }
-  
-  updateQuestionGroup(id: number, title: string, imageUrl: string, silentUpdate: boolean) {
-    return this.sequelize.models.QuestionGroup.update({
-      title: title,
-      imageUrl: imageUrl,
-      archived: false
-    }, {
-      where: {
-        id: id
-      },
-      silent: silentUpdate ? silentUpdate : false
-    });
-  }
-  
-  setQuestionGroupUserGroupRoles(questionGroupId: number, roleMap: any) {
-    const newUserGroups = _.map(roleMap, (role, userGroupId) => {
-      return userGroupId;
-    });
-    
-    return this.sequelize.models.QuestionGroupUserGroupRole.destroy({ 
-        where: { 
-          questionGroupId : questionGroupId,
-          userGroupId: {
-            $notIn: newUserGroups
-          }
-        } 
-      })
-      .then(() => {
-        const roleUpsertPromises = _.map(roleMap, (role, userGroupId) => {
-          return this.sequelize.models.QuestionGroupUserGroupRole.upsert({
-            questionGroupId: questionGroupId,
-            userGroupId: userGroupId,
-            role: role
-          });
-        });
-
-        return Promise.all(roleUpsertPromises);
-      });
-  }
-  
-  // QuestionGroupUserThreads
-  
-  createQuestionGroupUserThread(questionGroupId: number, threadId: number, userId: string) {
-    return this.sequelize.models.QuestionGroupUserThread.create({
-      threadId: threadId,
-      questionGroupId: questionGroupId,
-      userId: userId
-    });
-  }
-  
-  findQuestionGroupUserThread(id: number) {
-    return this.sequelize.models.QuestionGroupUserThread.findOne({ where: { id : id } });
-  }
-  
-  findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId: number, userId: string) {
-    return this.sequelize.models.QuestionGroupUserThread.findOne({ where: { questionGroupId : questionGroupId, userId: userId } } );
-  }
-  
-  findOrCreateQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId: number, userId: string) {
-    return this.findQuestionGroupUserThreadByQuestionGroupIdAndUserId(questionGroupId, userId)
-      .then((questionGroupUserThread) => {
-        if (questionGroupUserThread) {
-          return this.findThread(questionGroupUserThread.threadId)
-            .then((thread) => {
-              return {
-                thread: thread,
-                created: false
-              };
-            });
-        } else {
-          return this.createThread(null, null, null, "question", null, "TEXT", false, null)
-            .then((thread: any) => {
-              return this.createQuestionGroupUserThread(questionGroupId, thread.id, userId)
-                .then(() => {
-                  return {
-                    thread: thread,
-                    created: true
-                  };
-                });
-            });
-        }
-      });
-  }
-  
-  listQuestionGroupUserThreadsByQuestionGroupId(questionGroupId: number) {
-    return this.sequelize.models.QuestionGroupUserThread.findAll({ where: { questionGroupId : questionGroupId } } );
-  }
-  
-  listQuestionGroupUserThreadsByQuestionGroupIds(questionGroupIds: number[]) {
-    return this.sequelize.models.QuestionGroupUserThread.findAll({ where: { questionGroupId : { $in: questionGroupIds } } } );
   }
   
   // News Articles
@@ -1261,12 +911,6 @@ export class Models {
           return this.createQuestionGroupUserGroupRole(questionGroupId, userGroupId, role);
         }
       });
-  }
-  
-  createThreadLatestMessagePromise(thread: any) {
-    return this.getLatestMessageCreatedByThreadIds([thread.dataValues.id]).then((maxCreatedAt: Date) => {
-      thread.latestMessage = maxCreatedAt;
-    });
   }
   
   // ItemGroups

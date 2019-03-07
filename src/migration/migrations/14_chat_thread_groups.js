@@ -63,7 +63,7 @@
    * @param query query interface 
    */
   const copyQuestionGroups = async (query) => {
-    return (await query.sequelize.query("INSERT INTO ChatGroups (id, type, title, imageUrl, createdAt, updatedAt) SELECT id, 'QUESTION', title, imageUrl, createdAt, updatedAt from QuestionGroups"));
+    return (await query.sequelize.query("INSERT INTO ChatGroups (id, type, title, imageUrl, archived, createdAt, updatedAt) SELECT id, 'QUESTION', title, imageUrl, archived, createdAt, updatedAt from QuestionGroups"));
   }
 
   /**
@@ -142,12 +142,14 @@
         id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
         type: { type: Sequelize.STRING(191), allowNull: false },
         title: { type: Sequelize.STRING(191), allowNull: false },
-        imageUrl: { type: Sequelize.STRING(191) },
+        imageUrl: { type: Sequelize.STRING(191) },      
+        archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
         createdAt: { type: Sequelize.DATE, allowNull: false },
         updatedAt: { type: Sequelize.DATE, allowNull: false }        
       });
 
       await query.addColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: true });
+      await query.removeColumn("Threads", "originId");
 
       copyQuestionGroups(query);
 
@@ -195,6 +197,7 @@
 
       query.dropTable("threadusergrouproles");
       query.dropTable("questiongroupusergrouproles");
+      query.dropTable("questiongroupuserthread");
       await query.changeColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: false, references: { model: "ChatGroups", key: "id" } }); 
     }
   };

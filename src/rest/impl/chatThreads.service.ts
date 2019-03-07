@@ -5,36 +5,84 @@ import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
 import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
 import excel from "../../excel";
-import { ChatThread } from "../model/models";
+import { ChatThread, ChatGroupType } from "../model/models";
 
   /**
    * Threads REST service
    */
 export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
+
   /**
-  * Returns list of chat threads
-  * Returns list of chat threads
-  *
-  * @param {http.ClientRequest} req client request object
-  * @param {http.ServerResponse} res server response object
-  **/
-  async listChatThreads(req: Request, res: Response) {
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
-      this.sendForbidden(res, "You have no permission to manage threads");
+   * Creates new chat thread
+   * @summary Creates new chat thread
+   * Accepted parameters:
+    * - (body) ChatThread body - Payload
+  */
+  public async createChatThread(req: Request, res: Response): Promise<void> {
+
+  }
+
+
+ /**
+  * Deletes chat thread
+  * @summary Deletes chat thread
+  * Accepted parameters:
+   * - (path) number chatThreadId - Chat thread id
+ */
+  public async deleteChatThread(req: Request, res: Response): Promise<void> {
+    
+  }
+
+
+ /**
+  * Returns chat thread
+  * @summary Returns chat thread
+  * Accepted parameters:
+   * - (path) number chatThreadId - Chat thread id
+ */
+  public async findChatThread(req: Request, res: Response): Promise<void> {
+    // TODO: Secure
+    
+    const chatThreadId = req.params.chatThreadId;
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
       return;
     }
+    
+    res.status(200).send(this.translateChatThread(thread));
+  }
 
-    const originId = req.query.originId;
+ /**
+  * Returns list of chat threads
+  * @summary Returns list of chat threads
+  * Accepted parameters:
+   * - (query) number groupId - Filter chat threads by group id
+   * - (query) ChatGroupType groupType - Filter chat groups by group type
+ */
+  public async listChatThreads(req: Request, res: Response): Promise<void> {
+    // TODO: Secure
 
-    if (!originId) {
-      return this.sendNotImplemented(res, "Only origin id queries are currently supported");
-    }
+    const groupId = req.query.groupId;
+    const groupType: ChatGroupType = req.query.groupType;
 
-    const thread = await models.findThreadByOriginId(originId);
-    const result = thread ? [ this.translateChatThread(thread) ] : [];
+    const threads = await models.listThreads(groupId, groupType);
 
-    res.send(result);
+    res.status(200).send(threads.map((thread) => {
+      return this.translateChatThread(thread);
+    }));
+  }
+
+
+ /**
+  * Update chat thread
+  * @summary Update chat thread
+  * Accepted parameters:
+   * - (path) number chatThreadId - Chat thread id
+ */
+  public async updateChatThread(req: Request, res: Response): Promise<void> {
+    
   }
 
   /**
@@ -44,7 +92,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @param {http.ClientRequest} req client request object
    * @param {http.ServerResponse} res server response object
    **/
-  async getChatThreadReport(req: Request, res: Response) {
+  public async getChatThreadReport(req: Request, res: Response) {
     if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
       this.sendForbidden(res, "You have no permission to manage threads");
       return;
@@ -160,12 +208,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     } 
 
     const result: ChatThread = {
-      answerType: answerType,
       id: databaseChatThread.id,
-      imageUrl: databaseChatThread.imageUrl,
-      originId: databaseChatThread.originId,
       title: databaseChatThread.title,
-      type: databaseChatThread.type
+      imageUrl: databaseChatThread.imageUrl,
+      groupId: databaseChatThread.groupId,
+      answerType: answerType
     };
 
     return result;

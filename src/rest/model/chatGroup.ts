@@ -9,27 +9,19 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
+import { ChatGroupType } from './chatGroupType';
 
 
-export interface ChatThread { 
+export interface ChatGroup { 
     id: number  | null;
-    groupId: number  | null;
+    type: ChatGroupType ;
     title: string ;
     imageUrl: string  | null;
-    answerType: ChatThread.AnswerTypeEnum ;
 }    
 
-export interface ChatThreadOpt { 
+export interface ChatGroupOpt { 
     id?: number;
-    groupId?: number;
+    type?: ChatGroupType;
     title?: string;
     imageUrl?: string;
-    answerType?: ChatThread.AnswerTypeEnum;
-}
-export namespace ChatThread {
-    export type AnswerTypeEnum = 'TEXT' | 'POLL';
-    export const AnswerTypeEnum = {
-        TEXT: 'TEXT' as AnswerTypeEnum,
-        POLL: 'POLL' as AnswerTypeEnum
-    };
 }

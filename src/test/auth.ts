@@ -1,5 +1,4 @@
 import * as request from "request";
-import * as keycloak_admin_client from "keycloak-admin-client";
 import * as config from "nconf";
 config.file({file: `${__dirname}/../../config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
 
@@ -167,7 +166,7 @@ export default new class Auth {
    */
   async addRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
     const realm = config.get("keycloak:admin:realm");
-    const client = await keycloak_admin_client(config.get("keycloak:admin"));
+    const client: any = null;//await keycloak_admin_client(config.get("keycloak:admin"));
 
     return client.realms.maps.map(realm, userId, roles.map((role: string) => {
       return { id: this.getRealmRoleId(role), name: role };
@@ -184,8 +183,8 @@ export default new class Auth {
    */
   async removeRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
     const realm = config.get("keycloak:admin:realm");
-    const settings = config.get("keycloak:admin");
-    const client = await keycloak_admin_client(settings);
+    //const settings = config.get("keycloak:admin");
+    const client: any = null;//await keycloak_admin_client(settings);
 
     return client.realms.maps.unmap(realm, userId, roles.map((role) => {
       return { id: this.getRealmRoleId(role), name: role };
@@ -200,7 +199,7 @@ export default new class Auth {
   async createRoles() {
     const realm = config.get("keycloak:admin:realm");
     const roles = ["list-all-contacts","update-other-contacts","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations"];
-    const client = await keycloak_admin_client(config.get("keycloak:admin"));
+    const client: any = null;//await keycloak_admin_client(config.get("keycloak:admin"));
 
     return Promise.all(roles.map((role) => {
       return client.realms.roles.create(realm, {
