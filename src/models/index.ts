@@ -230,6 +230,7 @@ export class Models {
 
   private sequelize: Sequelize.Sequelize;
   private Thread: Sequelize.Model<any, ThreadModel>;
+  private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -265,7 +266,7 @@ export class Models {
       }]
     });
     
-    this.defineModel("ChatGroup", {
+    this.ChatGroup = this.defineModel("ChatGroup", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       type: { type: Sequelize.STRING(191), allowNull: false },
       title: { type: Sequelize.STRING(191), allowNull: false },
@@ -577,7 +578,35 @@ export class Models {
   deleteSession(id: number) {
     return this.sequelize.models.Session.destroy({ where: { id : id } });
   }
-  
+
+  /**
+   * Finds single chat group from the database
+   * 
+   * @param id chat group id
+   * @returns Promise for found chat group or null if not found  
+   */
+  findChatGroup(id: number): PromiseLike<ChatGroupModel> {
+    return this.ChatGroup.findOne({ where: { id : id } });
+  }
+
+  /**
+   * Lists chat groups
+   * 
+   * @param groupType filter by group type
+   * @param firstResult first result
+   * @param maxResults max results
+   * @returns promise for chat groups
+   */
+  listChatGroups( groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
+    const where: any = {};
+
+    if (groupType) {
+      where.groupType = groupType;
+    }
+
+    return this.ChatGroup.findAll({ where: where, offset: firstResult, limit: maxResults });
+  }
+
   /**
    * Creates new thread
    * 
@@ -636,7 +665,7 @@ export class Models {
       where.groupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${groupIds})`) };
     }
 
-    return this.sequelize.models.NewsArticle.findAll({ where: where, offset: firstResult, limit: maxResults });
+    return this.Thread.findAll({ where: where, offset: firstResult, limit: maxResults });
   }
 
   /**
