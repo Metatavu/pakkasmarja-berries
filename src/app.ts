@@ -16,6 +16,7 @@ import SystemRoutes from "./routes/system-routes";
 import MqttRoutes from "./routes/mqtt-routes";
 import { config } from "./config";
 import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
+import mqtt from "./mqtt";
 
 log4jsConfigure({
   appenders: { console: { type: 'console' } },
@@ -100,5 +101,7 @@ process.on("unhandledRejection", (error) => {
   new Api(app, keycloak);
   new SystemRoutes(app);
   new MqttRoutes(app, keycloak);
+
+  mqtt.connect();
 
 })();

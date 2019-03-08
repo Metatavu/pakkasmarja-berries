@@ -19,13 +19,14 @@ export default new class Auth {
    * @param {password} password
    * @return {Promise} promise for results
    */
-  async getClientToken(username: string, password: string, clientId: string): Promise<string> {
+  public async getClientToken(username: string, password: string, clientId: string, clientSecret?: string): Promise<string> {
     const realm = config.get("keycloak:app:realm");
     const url = `${config.get("keycloak:app:auth-server-url")}/realms/${realm}/protocol/openid-connect/token`;
 
     return new Promise((resolve: (accessToken: string) => void, reject: (err: any) => void) => {
       request.post({ url: url, form: {
         client_id: clientId,
+        client_secret: clientSecret,
         grant_type: "password",
         username: username,
         password: password
@@ -46,8 +47,8 @@ export default new class Auth {
    * @param {password} password
    * @return {Promise} promise for results
    */
-  getToken(username: string, password: string) {
-    return this.getClientToken(username, password, config.get("keycloak:app:resource"));
+  public getToken(username: string, password: string) {
+    return this.getClientToken(username, password, config.get("keycloak:app:resource"), config.get("keycloak:app:credentials:secret"));
   }
   
   /**
@@ -55,11 +56,11 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  getAdminToken() {
+  public getAdminToken() {
     return this.getToken("admin", "test");
   }
 
-  getAdminCliToken() {
+  public getAdminCliToken() {
     return this.getClientToken("admin", "test", "admin-cli");
   }
 

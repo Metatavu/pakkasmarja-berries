@@ -3,40 +3,62 @@ import { Request, Response } from "express";
 import ChatGroupsService from "../api/chatGroups.service";
 import models, { ChatGroupModel } from "../../models";
 import { ChatGroupType, ChatGroup } from "../model/models";
-  /**
-   * Groups REST service
-   */
+import mqtt from "../../mqtt";
+
+/**
+ * Chat Groups REST service
+ */
 export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
+  /**
+   * @inheritdoc
+   */
+  public async createChatGroup(req: Request, res: Response): Promise<void> {
+    // TODO: Secure
+
+    const payload: ChatGroup = req.body;
+    let type = this.getGroupType(payload.type);
+    if (!type) {
+      this.sendBadRequest(res, `Invalid type ${payload.type}`);
+      return;
+    }
+
+    const chatGroup = await models.createChatGroup(type, payload.title, payload.imageUrl);
+
+    res.status(200).send(this.translateChatGroup(chatGroup));
+
+    mqtt.publish("chatgroups", {
+      "operation": "CREATED",
+      "id": chatGroup.id
+    });
+  }
 
   /**
-   * Creates new chat group
-   * @summary Creates new chat group
-   * Accepted parameters:
-    * - (body) ChatGroup body - Payload
-  */
-  public async createChatGroup(req: Request, res: Response): Promise<void> {
-    
-  }
-
-
- /**
-  * Deletes a chat group
-  * @summary Deletes a chat group
-  * Accepted parameters:
-   * - (path) number chatGroupId - Chat group id
- */
+   * @inheritdoc
+   */
   public async deleteChatGroup(req: Request, res: Response): Promise<void> {
-    
+    // TODO: Secure
+
+    const chatGroupId = parseInt(req.params.chatGroupId);
+    const group = await models.findChatGroup(chatGroupId);
+    if (!group) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    await models.deleteChatGroup(chatGroupId);
+
+    mqtt.publish("chatgroups", {
+      "operation": "DELETED",
+      "id": chatGroupId
+    });
+
+    res.status(204).send();
   }
 
-
- /**
-  * Returns a chat group
-  * @summary Returns a chat group
-  * Accepted parameters:
-   * - (path) number chatGroupId - Chat group id
- */
+  /**
+   * @inheritdoc
+   */
   public async findChatGroup(req: Request, res: Response): Promise<void> {
     // TODO: Secure
         
@@ -50,13 +72,9 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     res.status(200).send(this.translateChatGroup(group));
   }
 
-
- /**
-  * Returns list of chat groups
-  * @summary Returns list of chat groups
-  * Accepted parameters:
-   * - (query) ChatGroupType groupType - Filter chat groups by group type
- */
+  /**
+   * @inheritdoc
+   */
   public async listChatGroups(req: Request, res: Response): Promise<void> {
     // TODO: Secure
 
@@ -69,18 +87,59 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }));
   }
 
-
- /**
-  * Update chat group
-  * @summary Update chat group
-  * Accepted parameters:
-   * - (body) ChatGroup body - Payload
-   * - (path) number chatGroupId - Chat group id
- */
+  /**
+   * @inheritdoc
+   */
   public async updateChatGroup(req: Request, res: Response): Promise<void> {
+    // TODO: Secure
+
+    const payload: ChatGroup = req.body;
+    let type = this.getGroupType(payload.type);
+    if (!type) {
+      this.sendBadRequest(res, `Invalid type ${payload.type}`);
+      return;
+    }
+        
+    const chatGroupId = parseInt(req.params.chatGroupId);
+    const group = await models.findChatGroup(chatGroupId);
+    if (!group) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    await models.updateChatGroup(chatGroupId, payload.title, payload.imageUrl);
+
+    mqtt.publish("chatgroups", {
+      "operation": "UPDATED",
+      "id": chatGroupId
+    });
+
+    res.status(200).send(this.translateChatGroup(group));
     
   }
 
+  /**
+   * Translates REST chat group type into Database type
+   * 
+   * @param type type
+   * @returns database type
+   */
+  private getGroupType(type: ChatGroupType): "CHAT" | "QUESTION" | null {
+    if (type == "CHAT") {
+      return "CHAT";
+    } else if (type == "QUESTION") {
+      return "QUESTION";
+    }
+
+    return null;
+  }
+
+  /**
+   * Translates database entity into REST entity
+   * 
+   * @param chatGroup database entity
+   * @returns REST entity
+   */
   private translateChatGroup(chatGroup: ChatGroupModel): ChatGroup | null {
     if (chatGroup == null) {
       return null

@@ -25,6 +25,7 @@ export interface Cache {
 export interface Mqtt {
   host: string,
   port: number,
+  path?: string,
   secure: boolean,
   topic: string,
   topicPrefix: string,

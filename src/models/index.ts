@@ -581,12 +581,28 @@ export class Models {
   }
 
   /**
+   * Creates new chat group
+   * 
+   * @param type chat group type
+   * @param title chat group title
+   * @param imageUrl chat group image url 
+   * @returns Promise for created chat group  
+   */
+  public createChatGroup(type: "CHAT" | "QUESTION", title: string, imageUrl: string | null): PromiseLike<ChatGroupModel> {
+    return this.ChatGroup.create({
+      type: type,
+      title: title,
+      imageUrl: imageUrl
+    } as any);
+  }
+
+  /**
    * Finds single chat group from the database
    * 
    * @param id chat group id
    * @returns Promise for found chat group or null if not found  
    */
-  findChatGroup(id: number): PromiseLike<ChatGroupModel> {
+  public findChatGroup(id: number): PromiseLike<ChatGroupModel> {
     return this.ChatGroup.findOne({ where: { id : id } });
   }
 
@@ -598,14 +614,47 @@ export class Models {
    * @param maxResults max results
    * @returns promise for chat groups
    */
-  listChatGroups( groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
+  public listChatGroups( groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
     const where: any = {};
 
     if (groupType) {
       where.groupType = groupType;
     }
 
-    return this.ChatGroup.findAll({ where: where, offset: firstResult, limit: maxResults });
+    return this.ChatGroup.findAll({ 
+      where: where, 
+      offset: firstResult,
+      limit: maxResults,
+      order: [ [ "createdAt", "DESC" ] ]
+    });
+  }
+
+  /**
+   * Updates chat group
+   * 
+   * @param id thread id 
+   * @param title title
+   * @param imageUrl image url
+   */
+  public updateChatGroup(id: number, title: string, imageUrl: string | null): PromiseLike<[number, any]> {
+    return this.sequelize.models.Thread.update({
+      title: title,
+      imageUrl: imageUrl,
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+  
+  /**
+   * Deletes chat group
+   * 
+   * @param id id
+   * @return promise for delete
+   */
+  public deleteChatGroup(id: number): PromiseLike<number> {
+    return this.ChatGroup.destroy({ where: { id : id } });
   }
 
   /**
