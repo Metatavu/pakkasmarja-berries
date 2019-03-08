@@ -107,14 +107,14 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    await models.updateChatGroup(chatGroupId, payload.title, payload.imageUrl);
+    await models.updateChatGroup(chatGroupId, payload.title, payload.type, payload.imageUrl);
 
     mqtt.publish("chatgroups", {
       "operation": "UPDATED",
       "id": chatGroupId
     });
 
-    res.status(200).send(this.translateChatGroup(group));
+    res.status(200).send(this.translateChatGroup(await models.findChatGroup(chatGroupId)));
     
   }
 

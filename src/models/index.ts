@@ -636,10 +636,11 @@ export class Models {
    * @param title title
    * @param imageUrl image url
    */
-  public updateChatGroup(id: number, title: string, imageUrl: string | null): PromiseLike<[number, any]> {
-    return this.sequelize.models.Thread.update({
+  public updateChatGroup(id: number, title: string, type: string, imageUrl: string | null): PromiseLike<[number, any]> {
+    return this.ChatGroup.update({
       title: title,
-      imageUrl: imageUrl,
+      type: type,
+      imageUrl: imageUrl || undefined
     }, {
       where: {
         id: id

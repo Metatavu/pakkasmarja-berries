@@ -68,6 +68,34 @@ const listChatGroups = (token: string): Promise<ChatGroup[]> => {
 }
 
 /**
+ * Updates chat group
+ * 
+ * @param token token
+ * @param title title
+ * @param type type
+ * @param imageUrl image url
+ * @returns promise for chat group
+ */
+const updateChatGroup = (token: string, id: number, title: string, type: ChatGroupType, imageUrl: string | null): Promise<ChatGroup> => {
+  const payload: ChatGroup = {
+    id: id,
+    title: title,
+    type: type,
+    imageUrl: imageUrl
+  };
+
+  return request("http://localhost:3002")
+    .put(`/rest/v1/chatGroups/${id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
  * Deletes chat group
  * 
  * @param token token
@@ -115,6 +143,21 @@ test("Finds chat group", async (t) => {
   await findChatGroup(token, 1234, 404);
   
   t.deepEqual(foundChatGroup, createdChatGroup);
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatGroups(token)).length, 0);
+});
+
+test("Updates chat group", async (t) => {
+  const token = await auth.getTokenUser1();
+  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
+  t.deepEqual(foundChatGroup, createdChatGroup);
+
+  const updatedChatGroup = await updateChatGroup(token, createdChatGroup.id!, "New title", "QUESTION", "http://www.exmaple.com/image");
+
+  t.equal(updatedChatGroup.title, "New title");
+  t.equal(updatedChatGroup.imageUrl, "http://www.exmaple.com/image");
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatGroups(token)).length, 0);
