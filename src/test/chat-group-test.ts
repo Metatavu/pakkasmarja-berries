@@ -3,6 +3,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import { ChatGroup, ChatGroupType } from "../rest/model/models";
 import mqtt from "./mqtt";
+import ApplicationRoles from "../rest/application-roles";
 
 /**
  * Creates chat group
@@ -111,7 +112,7 @@ const deleteChatGroup = async (token: string, id: number) => {
 }
 
 test("Create chat group", async (t) => {
-  const token = await auth.getTokenUser1();  
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
   
   await mqtt.subscribe("chatgroups");
   try {
@@ -137,7 +138,7 @@ test("Create chat group", async (t) => {
 });
 
 test("Finds chat group", async (t) => {
-  const token = await auth.getTokenUser1();
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
   const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
   await findChatGroup(token, 1234, 404);
@@ -149,7 +150,7 @@ test("Finds chat group", async (t) => {
 });
 
 test("Updates chat group", async (t) => {
-  const token = await auth.getTokenUser1();
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
   const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
   t.deepEqual(foundChatGroup, createdChatGroup);
@@ -164,7 +165,7 @@ test("Updates chat group", async (t) => {
 });
 
 test("Lists chat group", async (t) => {
-  const token = await auth.getTokenUser1();
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   const createdGroups = await Promise.all([
     createChatGroup(token, "Group 1", "CHAT"),
@@ -184,8 +185,8 @@ test("Lists chat group", async (t) => {
 });
 
 test("Lists chat group permissions", async (t) => {
-  const token1 = await auth.getTokenUser1();
-  const token2 = await auth.getTokenUser2();
+  const token1 = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  const token2 = await auth.getTokenUser2([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   const createdGroups1 = await Promise.all([
     createChatGroup(token1, "Group 1", "CHAT"),
@@ -215,7 +216,7 @@ test("Lists chat group permissions", async (t) => {
 });
 
 test("Deletes chat group", async (t) => {
-  const token = await auth.getTokenUser1();
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   await mqtt.subscribe("chatgroups");
   try {
