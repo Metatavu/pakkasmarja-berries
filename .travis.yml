@@ -22,6 +22,8 @@ before_script:
   - npm run run-cover > server.log &
   - echo "Waiting for server to start..."
   - sleep 30
+  - echo "Still waiting..."
+  - sleep 30
   - echo "Running tests"
 script:
   - npm run test
