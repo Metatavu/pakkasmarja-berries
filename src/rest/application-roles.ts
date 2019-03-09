@@ -122,4 +122,11 @@ export default class ApplicationRoles {
     return "manage-news-articles";
   }
 
+  /**
+   * Role that allows users create chat groups
+   */
+  static get CREATE_CHAT_GROUPS() {
+    return "create-chat-groups";
+  }
+
 }

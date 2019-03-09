@@ -9,6 +9,7 @@ import userManagement from "../user-management";
 import { ApplicationScope } from "./application-scopes";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
 import PolicyRepresentation from "keycloak-admin/lib/defs/policyRepresentation";
+import { ChatGroupModel } from "src/models";
 
 /**
  * Abstract base class for all REST services
@@ -111,6 +112,16 @@ export default class AbstractService {
     } 
 
     return resource!;
+  }
+
+  /**
+   * Returns resource name for a group
+   * 
+   * @param chatGroup chat group
+   * @return resource name for a group
+   */
+  protected getChatGroupResourceName(chatGroup: ChatGroupModel) {
+    return `chat-group-${chatGroup.id}`;
   }
   
   /**

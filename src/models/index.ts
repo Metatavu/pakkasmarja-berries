@@ -661,7 +661,6 @@ export class Models {
   /**
    * Creates new thread
    * 
-   * @param {String} originId id in origin system
    * @param {String} title title
    * @param {String} description description
    * @param {String} type type
@@ -670,9 +669,8 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  createThread(originId: string|null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
+  public createThread(title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
     return this.sequelize.models.Thread.create({
-      originId: originId,
       title: title,
       description: description,
       type: type,
@@ -689,31 +687,23 @@ export class Models {
    * @param id thread id
    * @returns Promise for found thread or null if not found  
    */
-  findThread(id: number): PromiseLike<ThreadModel> {
+  public findThread(id: number): PromiseLike<ThreadModel> {
     return this.Thread.findOne({ where: { id : id } });
   }
 
   /**
    * Lists threads
    * 
-   * @param groupId filter by group id
-   * @param groupType filter by group type
+   * @param groupIds filter by group ids
    * @param firstResult first result
    * @param maxResults max results
    * @returns promise for threads
    */
-  listThreads(groupId: number | null, groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
+  public listThreads(groupIds: number[] | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
     const where: any = {};
 
-    if (groupId) {
-      where.groupId = groupId;
-    } else if (groupType) {
-      const groupIds = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ChatGroups", {
-        attributes: ["id"],
-        where: { groupType: groupType }
-      }).slice(0, -1);
-
-      where.groupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${groupIds})`) };
+    if (groupIds) {
+      where.groupId = { [Sequelize.Op.in]: groupIds };
     }
 
     return this.Thread.findAll({ where: where, offset: firstResult, limit: maxResults });
@@ -731,7 +721,7 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  updateThread(id: number, title: string, description: string, imageUrl: string, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date) {
+  public updateThread(id: number, title: string, description: string | null, imageUrl: string | null, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date | null) {
     return this.sequelize.models.Thread.update({
       title: title,
       description: description,
@@ -747,11 +737,9 @@ export class Models {
       silent: silentUpdate ? silentUpdate : false
     });
   }
-  
-  // Threads
-  
-  archiveThread(id: number) {
-    return this.sequelize.models.Thread.update({ archived: true }, { where: { id: id } });
+
+  public archiveThread(id: number) {
+    return this.Thread.update({ archived: true }, { where: { id: id } });
   }
   
   // Messages

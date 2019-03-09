@@ -6,6 +6,7 @@ import { ChatGroupType, ChatGroup } from "../model/models";
 import mqtt from "../../mqtt";
 import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS } from "../application-scopes";
 import { Promise } from "bluebird";
+import ApplicationRoles from "../application-roles";
 
 /**
  * Chat Groups REST service
@@ -16,7 +17,10 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async createChatGroup(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
+    if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
+      this.sendForbidden(res, "You do not have permission to create chat groups");
+      return;
+    }
 
     const payload: ChatGroup = req.body;
     let type = this.getGroupType(payload.type);
@@ -26,7 +30,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
 
     const chatGroup = await models.createChatGroup(type, payload.title, payload.imageUrl);
-    this.addOwnerPermission(this.getLoggedUserId(req), "chat-group", this.getResourceName(chatGroup), this.getChatGroupUri(chatGroup.id), this.getOwnerPermissionName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+    this.addOwnerPermission(this.getLoggedUserId(req), "chat-group", this.getChatGroupResourceName(chatGroup), this.getChatGroupUri(chatGroup.id), this.getOwnerPermissionName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
 
     res.status(200).send(this.translateChatGroup(chatGroup));
 
@@ -47,13 +51,13 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
       this.sendForbidden(res);
       return;
     }
 
     await models.deleteChatGroup(chatGroupId);
-    await this.deleteOwnerPermission(this.getOwnerPermissionName(chatGroup));
+    await this.deletePermission(this.getOwnerPermissionName(chatGroup));
 
     mqtt.publish("chatgroups", {
       "operation": "DELETED",
@@ -74,7 +78,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
       this.sendForbidden(res);
       return;
     }
@@ -89,7 +93,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     const groupType: ChatGroupType = req.query.groupType;
 
     const chatGroups = await Promise.all(Promise.filter(models.listChatGroups(groupType), (chatGroup) => {
-      return this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
+      return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
     }));
 
     res.status(200).send(chatGroups.map((chatGroup) => {
@@ -115,7 +119,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
       this.sendForbidden(res);
       return;
     }
@@ -129,16 +133,6 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
     res.status(200).send(this.translateChatGroup(await models.findChatGroup(chatGroupId)));
     
-  }
-
-  /**
-   * Returns resource name for a group
-   * 
-   * @param chatGroup chat group
-   * @return resource name for a group
-   */
-  private getResourceName(chatGroup: ChatGroupModel) {
-    return `chat-group-${chatGroup.id}`;
   }
 
   /**
