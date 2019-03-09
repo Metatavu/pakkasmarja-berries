@@ -19,7 +19,7 @@ before_script:
   - mysql -e 'CREATE DATABASE pm /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */'
   - ./scripts/start-keycloak.sh
   - npm run instrument
-  - npm run run-cover > server.log &
+  - npm run run-cover &
   - echo "Waiting for server to start..."
   - sleep 30
   - echo "Still waiting..."
