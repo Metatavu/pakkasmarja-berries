@@ -72,7 +72,7 @@
    * @param query query interface 
    */
   const getChatThreadRoles = async (query) => {
-    return (await query.sequelize.query("SELECT threadId, userGroupId, role FROM threadusergrouproles"))[0];
+    return (await query.sequelize.query("SELECT threadId, userGroupId, role FROM ThreadUserGroupRoles"))[0];
   };
 
   /**
@@ -81,7 +81,7 @@
    * @param query query interface 
    */
   const getQuestionGroupRoles = async (query) => {
-    return (await query.sequelize.query("SELECT questionGroupId, userGroupId, role FROM questiongroupusergrouproles"))[0];
+    return (await query.sequelize.query("SELECT questionGroupId, userGroupId, role FROM QuestionGroupUserGroupRoles"))[0];
   };
 
   /**
@@ -91,7 +91,7 @@
    * @param questionGroupId question group id
    */
   const getQuestionGroupThreads = async (query, questionGroupId) => {
-    return (await query.sequelize.query(`SELECT threadId FROM questiongroupuserthreads WHERE questionGroupId = ${questionGroupId}`))[0].map((row) => {
+    return (await query.sequelize.query(`SELECT threadId FROM QuestionGroupUserThreads WHERE questionGroupId = ${questionGroupId}`))[0].map((row) => {
       return row.threadId;
     });
   };
@@ -195,8 +195,8 @@
         }
       }
 
-      query.dropTable("threadusergrouproles");
-      query.dropTable("questiongroupusergrouproles");
+      query.dropTable("ThreadUserGroupRoles");
+      query.dropTable("QuestionGroupUserGroupRoles");
       query.dropTable("questiongroupuserthread");
       await query.changeColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: false, references: { model: "ChatGroups", key: "id" } }); 
     }
