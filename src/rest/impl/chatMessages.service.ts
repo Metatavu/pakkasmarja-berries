@@ -90,9 +90,15 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * @inheritdoc
    */
   public async findChatMessage(req: Request, res: Response): Promise<void> {
-    const chatMessageId = req.params.chatMessageId;
+    const chatThreadId = req.params.chatThreadId;
+    const chatMessageId = req.params.messageId;
     const message = await models.findMessage(chatMessageId);
     if (!message) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    if (message.threadId != chatThreadId) {
       this.sendNotFound(res);
       return;
     }
@@ -200,9 +206,9 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const result: ChatMessage = {
       id: databaseChatMessage.id,
       contents: databaseChatMessage.contents,
-      createdAt: databaseChatMessage.createdAt,
+      createdAt: this.truncateTime(databaseChatMessage.createdAt),
       threadId: databaseChatMessage.threadId,
-      updatedAt: databaseChatMessage.updatedAt,
+      updatedAt: this.truncateTime(databaseChatMessage.updatedAt),
       userId: databaseChatMessage.userId
     };
 

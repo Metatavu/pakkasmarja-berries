@@ -10,6 +10,7 @@ import { ApplicationScope } from "./application-scopes";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
 import PolicyRepresentation from "keycloak-admin/lib/defs/policyRepresentation";
 import { ChatGroupModel } from "src/models";
+import moment = require("moment");
 
 /**
  * Abstract base class for all REST services
@@ -277,6 +278,16 @@ export default class AbstractService {
     }
 
     return contentType.split(";")[0].trim();
+  }
+
+  /**
+   * Truncates time to seconds
+   * 
+   * @param time time
+   * @returns time truncated to seconds
+   */
+  protected truncateTime(time: Date): Date  {
+    return moment(time).milliseconds(0).toDate();
   }
 
 }
