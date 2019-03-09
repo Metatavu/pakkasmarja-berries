@@ -8,6 +8,7 @@ import excel from "../../excel";
 import { ChatThread, ChatGroupType } from "../model/models";
 import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
 import { Promise } from "bluebird";
+import mqtt from "../../mqtt";
 
 /**
  * Threads REST service
@@ -33,6 +34,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     const thread = await models.createThread(payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
     res.status(200).send(this.translateChatThread(thread));
+
+    mqtt.publish("chatthreads", {
+      "operation": "CREATED",
+      "id": thread.id
+    });
   }
 
   /**
@@ -60,6 +66,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     models.archiveThread(thread.id);
 
     res.status(204).send();
+
+    mqtt.publish("chatthreads", {
+      "operation": "DELETED",
+      "id": thread.id
+    });
   }
 
   /**
@@ -141,6 +152,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     models.updateThread(thread.id, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
 
     res.status(200).send(this.translateChatThread(await models.findThread(chatThreadId)));
+
+    mqtt.publish("chatthreads", {
+      "operation": "UPDATED",
+      "id": thread.id
+    });
   }
 
   /**
