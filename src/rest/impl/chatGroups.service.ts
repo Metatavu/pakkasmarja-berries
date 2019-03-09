@@ -4,6 +4,8 @@ import ChatGroupsService from "../api/chatGroups.service";
 import models, { ChatGroupModel } from "../../models";
 import { ChatGroupType, ChatGroup } from "../model/models";
 import mqtt from "../../mqtt";
+import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS } from "../application-scopes";
+import { Promise } from "bluebird";
 
 /**
  * Chat Groups REST service
@@ -24,6 +26,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
 
     const chatGroup = await models.createChatGroup(type, payload.title, payload.imageUrl);
+    this.addOwnerPermission(this.getLoggedUserId(req), "chat-group", this.getResourceName(chatGroup), this.getChatGroupUri(chatGroup.id), this.getOwnerPermissionName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
 
     res.status(200).send(this.translateChatGroup(chatGroup));
 
@@ -37,16 +40,20 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async deleteChatGroup(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-
     const chatGroupId = parseInt(req.params.chatGroupId);
-    const group = await models.findChatGroup(chatGroupId);
-    if (!group) {
+    const chatGroup = await models.findChatGroup(chatGroupId);
+    if (!chatGroup) {
       this.sendNotFound(res);
       return;
     }
 
+    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      this.sendForbidden(res);
+      return;
+    }
+
     await models.deleteChatGroup(chatGroupId);
+    await this.deleteOwnerPermission(this.getOwnerPermissionName(chatGroup));
 
     mqtt.publish("chatgroups", {
       "operation": "DELETED",
@@ -60,30 +67,33 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async findChatGroup(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-        
     const chatGroupId = req.params.chatGroupId;
-    const group = await models.findChatGroup(chatGroupId);
-    if (!group) {
+    const chatGroup = await models.findChatGroup(chatGroupId);
+    if (!chatGroup) {
       this.sendNotFound(res);
       return;
     }
 
-    res.status(200).send(this.translateChatGroup(group));
+    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+      this.sendForbidden(res);
+      return;
+    }
+    
+    res.status(200).send(this.translateChatGroup(chatGroup));
   }
 
   /**
    * @inheritdoc
    */
   public async listChatGroups(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-
     const groupType: ChatGroupType = req.query.groupType;
 
-    const groups = await models.listChatGroups(groupType);
+    const chatGroups = await Promise.all(Promise.filter(models.listChatGroups(groupType), (chatGroup) => {
+      return this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
+    }));
 
-    res.status(200).send(groups.map((group) => {
-      return this.translateChatGroup(group);
+    res.status(200).send(chatGroups.map((chatGroup) => {
+      return this.translateChatGroup(chatGroup);
     }));
   }
 
@@ -91,8 +101,6 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async updateChatGroup(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-
     const payload: ChatGroup = req.body;
     let type = this.getGroupType(payload.type);
     if (!type) {
@@ -101,9 +109,14 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
         
     const chatGroupId = parseInt(req.params.chatGroupId);
-    const group = await models.findChatGroup(chatGroupId);
-    if (!group) {
+    const chatGroup = await models.findChatGroup(chatGroupId);
+    if (!chatGroup) {
       this.sendNotFound(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      this.sendForbidden(res);
       return;
     }
 
@@ -116,6 +129,26 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
     res.status(200).send(this.translateChatGroup(await models.findChatGroup(chatGroupId)));
     
+  }
+
+  /**
+   * Returns resource name for a group
+   * 
+   * @param chatGroup chat group
+   * @return resource name for a group
+   */
+  private getResourceName(chatGroup: ChatGroupModel) {
+    return `chat-group-${chatGroup.id}`;
+  }
+
+  /**
+   * Returns owner permission's name for a group
+   * 
+   * @param chatGroup chat group
+   * @return owner permission's name for a group
+   */
+  private getOwnerPermissionName(chatGroup: ChatGroupModel) {
+    return `chat-group-${chatGroup.id}-owner`;
   }
 
   /**
@@ -132,6 +165,16 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
 
     return null;
+  }
+
+  /**
+   * Returns chat group's URI
+   * 
+   * @param id chat group id
+   * @return chat group's URI
+   */
+  private getChatGroupUri(id: number) {
+    return `/rest/v1/chatGroups/${id}`;
   }
 
   /**

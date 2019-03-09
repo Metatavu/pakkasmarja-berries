@@ -183,6 +183,37 @@ test("Lists chat group", async (t) => {
   t.equal((await listChatGroups(token)).length, 0);
 });
 
+test("Lists chat group permissions", async (t) => {
+  const token1 = await auth.getTokenUser1();
+  const token2 = await auth.getTokenUser2();
+
+  const createdGroups1 = await Promise.all([
+    createChatGroup(token1, "Group 1", "CHAT"),
+    createChatGroup(token1, "Group 2", "CHAT"),
+  ]);
+
+  const createdGroups2 = await Promise.all([
+    createChatGroup(token2, "Group 3", "CHAT"),
+  ]);
+
+  const foundGroups1 = await listChatGroups(token1);
+  const foundGroups2 = await listChatGroups(token2);
+
+  t.deepEqual(createdGroups1, foundGroups1);
+  t.deepEqual(createdGroups2, foundGroups2);
+
+  await Promise.all(createdGroups1.map((createdGroup) => {
+    return deleteChatGroup(token1, createdGroup.id!);
+  }));
+
+  await Promise.all(createdGroups2.map((createdGroup) => {
+    return deleteChatGroup(token2, createdGroup.id!);
+  }));
+
+  t.equal((await listChatGroups(token1)).length, 0);
+  t.equal((await listChatGroups(token2)).length, 0);
+});
+
 test("Deletes chat group", async (t) => {
   const token = await auth.getTokenUser1();
 

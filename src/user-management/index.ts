@@ -9,6 +9,10 @@ import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepres
 import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 import { UserQuery } from "keycloak-admin/lib/resources/users";
 import CredentialRepresentation from "keycloak-admin/lib/defs/credentialRepresentation";
+import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
+import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
+import { URLSearchParams }  from "url";
+import fetch from "node-fetch";
 
 export default new class UserManagement {
 
@@ -247,7 +251,7 @@ export default new class UserManagement {
    */
   public async createResource(name: string, displayName: string, uri: string, type: string, scopes: string[]) {
     const client = await this.getClient();
-    const resource = {
+    const resource: ResourceRepresentation = {
       name: name,
       displayName: displayName,
       type: type,
@@ -264,7 +268,7 @@ export default new class UserManagement {
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       resource: resource
-    });
+    }) as any;
   }
 
   /**
@@ -276,6 +280,24 @@ export default new class UserManagement {
   public async findGroupPolicyByName(name: string) {
     const client = await this.getClient();
     const results = await client.clients.listAuthzGroupPolicies({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      name: name,
+      max: 1
+    });
+
+    return results.length ? results[0] : null;
+  }
+
+  /**
+   * Finds authz group policy by name
+   * 
+   * @param name name
+   * @return Promise for found policy or null if not found
+   */
+  public async findUserPolicyByName(name: string) {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzUserPolicies({
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       name: name,
@@ -312,6 +334,30 @@ export default new class UserManagement {
       policy: policy
     });
   }
+
+  /**
+   * Creates authz group policy
+   * 
+   * @param name name
+   * @param userIds user ids
+   * @return Promise created policy
+   */
+  public async createUserPolicy(name: string, userIds: string[]): Promise<UserPolicyRepresentation> {
+    const client = await this.getClient();
+    const policy: UserPolicyRepresentation = {
+      name: name,
+      logic: Logic.POSITIVE,
+      users: userIds
+    };
+
+    return await client.clients.createAuthzUserPolicy({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      policy: policy
+    });
+  }
+
+  
 
   /**
    * Finds authz permission by name
@@ -356,6 +402,56 @@ export default new class UserManagement {
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       permission: permission
+    });
+  }
+
+  /**
+   * Checks whether given access token has required scopes
+   * 
+   * @param resourceName resource name
+   * @param scopes scopes
+   * @param accessToken access token
+   * @returns promise which resolves if access token has given permissions
+   */
+  public async hasResourcePermission(resourceName: string, scopes: string[], accessToken: string) {
+    const url = `${config().keycloak.rest["auth-server-url"]}/realms/${config().keycloak.rest.realm}/protocol/openid-connect/token`;
+    const headers = {
+      Accept: 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${accessToken}`
+    };
+
+    const clientId = config().keycloak.rest.resource;
+
+    const body: URLSearchParams = new URLSearchParams(); 
+    body.append("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket");
+    body.append("client_id", clientId);
+    body.append("audience", clientId);
+
+    scopes.forEach((scope) => {
+      body.append("permission", `${resourceName}#${scope}`);
+    });
+
+    const result = await fetch(url, {
+      method: "POST", 
+      headers: headers,
+      body: body
+    });
+
+    return result.status === 200;
+  }
+
+  /**
+   * Deletes an permission
+   * 
+   * @param permissionId permission id
+   * @return Promise for succesful deletion
+   */
+  public async deletePermission(permissionId: string) {
+    const client = await this.getClient();
+    return client.clients.deleteAuthzPermission({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      permissionId: permissionId
     });
   }
   
