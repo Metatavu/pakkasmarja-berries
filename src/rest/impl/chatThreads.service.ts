@@ -32,7 +32,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const thread = await models.createThread(payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    const thread = await models.createThread(chatGroup.id, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
     res.status(200).send(this.translateChatThread(thread));
 
     mqtt.publish("chatthreads", {
@@ -63,7 +63,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    models.archiveThread(thread.id);
+    models.deleteThread(thread.id);
 
     res.status(204).send();
 
@@ -105,7 +105,6 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const groupId = req.query.groupId;
     const groupType: ChatGroupType = req.query.groupType;
     const allChatGroups = groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType);
-
     const chatGroups = await Promise.all(Promise.filter(allChatGroups, (chatGroup) => {
       if (!chatGroup) {
         return false;
@@ -149,7 +148,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    models.updateThread(thread.id, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    await models.updateThread(thread.id, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
 
     res.status(200).send(this.translateChatThread(await models.findThread(chatThreadId)));
 

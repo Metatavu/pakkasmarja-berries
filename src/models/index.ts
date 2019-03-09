@@ -609,16 +609,16 @@ export class Models {
   /**
    * Lists chat groups
    * 
-   * @param groupType filter by group type
+   * @param type filter by group type
    * @param firstResult first result
    * @param maxResults max results
    * @returns promise for chat groups
    */
-  public listChatGroups( groupType: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
+  public listChatGroups( type: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
     const where: any = {};
 
-    if (groupType) {
-      where.groupType = groupType;
+    if (type) {
+      where.type = type;
     }
 
     return this.ChatGroup.findAll({ 
@@ -669,16 +669,18 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  public createThread(title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
-    return this.sequelize.models.Thread.create({
+  public createThread(groupId: number, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
+    return this.Thread.create({
       title: title,
       description: description,
       type: type,
+      groupId: groupId,
       imageUrl: imageUrl,
       answerType: answerType,
       pollAllowOther: pollAllowOther,
-      expiresAt: expiresAt
-    });
+      expiresAt: expiresAt,
+      archived: false
+    } as any);
   }
   
   /**
@@ -738,8 +740,23 @@ export class Models {
     });
   }
 
+  /**
+   * Archives a thread
+   * 
+   * @param id thread id
+   * @return promise for update
+   */
   public archiveThread(id: number) {
     return this.Thread.update({ archived: true }, { where: { id: id } });
+  }
+  /**
+   * Deletes a thread
+   * 
+   * @param id id
+   * @return promise for delete
+   */
+  public deleteThread(id: number) {
+    return this.Thread.destroy({ where: { id : id } });
   }
   
   // Messages
