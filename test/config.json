@@ -6,9 +6,10 @@
     "expire-time": 60000
   },
   "mqtt": {
-    "host": "test.mosquitto.org",
-    "port": 8081,
-    "secure": true,
+    "host": "broker.mqttdashboard.com",
+    "path": "/mqtt", 
+    "port": 8000,
+    "secure": false,
     "topicPrefix": "pm/",
     "topic": "itests",
     "topicPostfix": "/#"
