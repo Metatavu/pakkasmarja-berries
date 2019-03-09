@@ -3,44 +3,93 @@ import ChatMessagesService from "../api/chatMessages.service";
 import { Request, Response } from "express";
 import models, { MessageModel } from "../../models";
 import { ChatMessage } from "../model/models";
-
-  /**
-   * Messages REST service
-   */
-export default class ChatMessagesServiceImpl extends ChatMessagesService {
+import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
+import mqtt from "../../mqtt";
 
 /**
-   * Creates new chat message
-   * @summary Creates new chat message
-   * Accepted parameters:
-    * - (body) ChatMessage body - Payload
-    * - (path) number chatThreadId - Chat thread
-  */
+ * Messages REST service
+ */
+export default class ChatMessagesServiceImpl extends ChatMessagesService {
+
+  /**
+   * @inheritdoc
+   */
   public async createChatMessage(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const payload: ChatMessage = req.body;
+
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents);
+    res.status(200).send(this.translateChatMessage(message));
+
+    mqtt.publish("chatmessages", {
+      "operation": "CREATED",
+      "id": message.id
+    });
   }
 
-
- /**
-  * Deletes chat message
-  * @summary Deletes chat message
-  * Accepted parameters:
-   * - (path) number chatThreadId - Chat thread
-   * - (path) number messageId - Chat message id
- */
+  /**
+   * @inheritdoc
+   */
   public async deleteChatMessage(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const messageId = req.params.messageId;
+
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    const chatMessage = await models.findMessage(messageId);
+    if (!chatMessage || chatMessage.threadId != thread.id) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    if (chatMessage.userId != this.getLoggedUserId(req)) {
+      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+        this.sendForbidden(res);
+        return;
+      }
+    }
+
+    await models.deleteMessage(chatMessage.id);
+
+    res.status(204).send();
+
+    mqtt.publish("chatmessages", {
+      "operation": "DELETED",
+      "id": chatMessage.id
+    });
   }
 
-
- /**
-  * Returns chat thread
-  * @summary Returns chat message
-  * Accepted parameters:
-   * - (path) number chatThreadId - Chat thread
-   * - (path) number messageId - Chat message id
- */
+  /**
+   * @inheritdoc
+   */
   public async findChatMessage(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-    
     const chatMessageId = req.params.chatMessageId;
     const message = await models.findMessage(chatMessageId);
     if (!message) {
@@ -48,20 +97,50 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
     
+    const thread = await models.findThread(message.threadId);
+    if (!thread) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (message.userId != this.getLoggedUserId(req)) {
+      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+        this.sendForbidden(res);
+        return;
+      }
+    }
+
     res.status(200).send(this.translateChatMessage(message));
   }
 
-
- /**
-  * Returns list of chat messages
-  * @summary Returns list of chat messages
-  * Accepted parameters:
-   * - (path) number chatThreadId - Chat thread
- */
+  /**
+   * @inheritdoc
+   */
   public async listChatMessages(req: Request, res: Response): Promise<void> {
-    // TODO: Secure
-
     const chatThreadId = req.params.chatThreadId;
+    
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendBadRequest(res, "Invalid thread id");
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+      this.sendForbidden(res);
+      return;
+    }
 
     const messages = await models.listMessagesByThreadId(chatThreadId);
 
@@ -70,15 +149,46 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     }));
   }
 
-
- /**
-  * Update chat message
-  * @summary Update chat message
-  * Accepted parameters:
-   * - (path) number chatThreadId - Chat thread
-   * - (path) number messageId - Chat message id
- */
+  /**
+   * @inheritdoc
+   */
   public async updateChatMessage(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const messageId = req.params.messageId;
+    const payload: ChatMessage = req.body;
+
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    const chatMessage = await models.findMessage(messageId);
+    if (!chatMessage || chatMessage.threadId != thread.id) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    if (chatMessage.userId != this.getLoggedUserId(req)) {
+      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+        this.sendForbidden(res);
+        return;
+      }
+    }
+
+    await models.updateMessage(chatMessage.id, payload.contents);
+    res.status(200).send(this.translateChatMessage(await models.findMessage(messageId)));
+
+    mqtt.publish("chatmessages", {
+      "operation": "UPDATED",
+      "id": chatMessage.id
+    });
   }
 
   /**
@@ -86,7 +196,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * 
    * @param {Object} databaseChatMessage database chat message
    */
-  translateChatMessage(databaseChatMessage: MessageModel) {
+  private translateChatMessage(databaseChatMessage: MessageModel) {
     const result: ChatMessage = {
       id: databaseChatMessage.id,
       contents: databaseChatMessage.contents,
