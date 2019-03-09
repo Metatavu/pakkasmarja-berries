@@ -783,7 +783,7 @@ export class Models {
    * @param id id
    * @returns found message or null if not found
    */
-  public findMessage(id: number): PromiseLike<MessageModel | null> {
+  public findMessage(id: number) {
     return this.Message.findOne({ where: { id : id } });
   }
   
