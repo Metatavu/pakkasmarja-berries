@@ -55,7 +55,7 @@
     }
 
     return await userManagement.createScopePermission(name, [ resourceId ], [role], [policyId]);
-  }
+  };
 
   /**
    * Copies question groups into ChatGroups maintainig their ids
@@ -64,7 +64,7 @@
    */
   const copyQuestionGroups = async (query) => {
     return (await query.sequelize.query("INSERT INTO ChatGroups (id, type, title, imageUrl, archived, createdAt, updatedAt) SELECT id, 'QUESTION', title, imageUrl, archived, createdAt, updatedAt from QuestionGroups"));
-  }
+  };
 
   /**
    * Returns thread user group roles from database
@@ -105,7 +105,7 @@
    */
   const insertChatGroup = async (query, type, name) => {
     return (await query.sequelize.query(`INSERT INTO ChatGroups (type, title, createdAt, updatedAt) VALUES ('${type}', '${name}', NOW(), NOW())`))[0];
-  }
+  };
 
   /**
    * Updates group id for a chat thread
@@ -116,7 +116,7 @@
    */
   const updateThreadGroupId = async (query, threadId, groupId) => {
     return (await query.sequelize.query(`UPDATE Threads SET groupId = ${groupId} WHERE id = ${threadId}`));
-  }
+  };
 
   /**
    * Finds or creates new group resource into the Keycloak
@@ -128,12 +128,12 @@
     const uri = `/rest/v1/chatGroups/${id}`;
     
     let resource = await userManagement.findResourceByUri(uri);        
-    if (!resource) {
+    if (!resource) {
       resource = await userManagement.createResource(name, name, uri, "chat-group", ["manage", "access"]);
     } 
 
     return resource;
-  }
+  };
   
   module.exports = {
 
@@ -165,7 +165,7 @@
       const questionGroupRoles = await getQuestionGroupRoles(query);
       const chatGroupIds = {};
 
-      for (let i = 0; i < chatThreadRoles.length; i++) {
+      for (let i = 0; i < chatThreadRoles.length; i++) {
         const chatThreadRole = chatThreadRoles[i];
         
         if (!chatGroupIds[chatThreadRole.userGroupId]) {
@@ -181,7 +181,7 @@
         await createGroupPermission(chatGroupId, chatThreadRole.userGroupId, resource._id, chatThreadRole.role == "manager" ? "manage" : "access", policyId);
       }
 
-      for (let i = 0; i < questionGroupRoles.length; i++) {
+      for (let i = 0; i < questionGroupRoles.length; i++) {
         const questionGroupRole = questionGroupRoles[i];
         const chatGroupId = questionGroupRole.questionGroupId;
         const questionGroupThreads = await getQuestionGroupThreads(query, chatGroupId);
