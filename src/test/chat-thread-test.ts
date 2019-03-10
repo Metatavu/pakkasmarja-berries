@@ -196,11 +196,10 @@ test("Create chat thread", async (t) => {
     const createdChatGroup = await createChatGroup(token, "Group title (Create chat thread)", "CHAT");
     const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-    const messages = await mqtt.waitMessages(1);    
-    t.deepEquals(messages, [{
+    await mqtt.expectMessage({
       "operation": "CREATED",
       "id": createdChatThread.id
-    }]);
+    });    
 
     await deleteChatThread(token, createdChatThread.id!);    
     await deleteChatGroup(token, createdChatGroup.id!);
@@ -346,14 +345,10 @@ test("Deletes chat thread", async (t) => {
     await deleteChatThread(token, createdChatThread.id!);
     await findChatThread(token, createdChatThread.id!, 404);
     
-    const messages = await mqtt.waitMessages(2);
-    t.deepEquals(messages, [{
-      "operation": "CREATED",
-      "id": createdChatThread.id
-    }, {
+    await mqtt.expectMessage({
       "operation": "DELETED",
       "id": createdChatThread.id
-    }]);
+    });
     
     await deleteChatGroup(token, createdChatGroup.id!);
   } finally {

@@ -123,12 +123,11 @@ test("Create chat group", async (t) => {
     t.equal(createdChatGroup.type,  "CHAT");
     t.equal(createdChatGroup.imageUrl, null);
 
-    const messages = await mqtt.waitMessages(1);    
-    t.deepEquals(messages, [{
+    await mqtt.expectMessage({
       "operation": "CREATED",
       "id": createdChatGroup.id
-    }]);
-    
+    });
+
     await deleteChatGroup(token, createdChatGroup.id!);
   } finally {
     await mqtt.unsubscribe("chatgroups");
@@ -234,14 +233,11 @@ test("Deletes chat group", async (t) => {
     await deleteChatGroup(token, createdChatGroup.id!);
     await findChatGroup(token, createdChatGroup.id!, 404);
 
-    const messages = await mqtt.waitMessages(2);
-    t.deepEquals(messages, [{
-      "operation": "CREATED",
-      "id": createdChatGroup.id
-    }, {
+    await mqtt.expectMessage({
       "operation": "DELETED",
       "id": createdChatGroup.id
-    }]);
+    });
+
   } finally {
     await mqtt.unsubscribe("chatgroups");
   }
