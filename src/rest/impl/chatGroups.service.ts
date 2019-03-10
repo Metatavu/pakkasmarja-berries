@@ -17,10 +17,14 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async createChatGroup(req: Request, res: Response): Promise<void> {
+    console.log("createChatGroup", 1);
+
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
       this.sendForbidden(res, "You do not have permission to create chat groups");
       return;
     }
+
+    console.log("createChatGroup", 2);
 
     const payload: ChatGroup = req.body;
     let type = this.getGroupType(payload.type);

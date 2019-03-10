@@ -115,7 +115,7 @@ test("Create chat group", async (t) => {
   console.log(1);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
   
-  console.log(2);
+  console.log(2, token);
   await mqtt.subscribe("chatgroups");
   try {
     console.log(3);
