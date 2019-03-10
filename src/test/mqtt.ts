@@ -21,8 +21,8 @@ export default new class Mqtt {
    * @param subtopic subtopic
    */
   public async subscribe(subtopic: string) {
-    this.messages = [];
     await mqtt.reconnect();
+    this.messages = [];
     await mqtt.subscribe(subtopic, this.onMessageHandler);
   }
 
