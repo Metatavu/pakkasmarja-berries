@@ -190,10 +190,10 @@ const deleteChatThread = async (token: string, threadId: number) => {
 
 test("Create chat thread", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  
+
   await mqtt.subscribe("chatthreads");
   try {
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+    const createdChatGroup = await createChatGroup(token, "Group title (Create chat thread)", "CHAT");
     const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
     const messages = await mqtt.waitMessages(1);    
@@ -209,11 +209,12 @@ test("Create chat thread", async (t) => {
   }
 
   t.equal((await listChatThreads(token)).length, 0);
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Finds chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
   const foundChatThread = await findChatThread(token, createdChatThread.id!);
@@ -225,11 +226,13 @@ test("Finds chat group", async (t) => {
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Updates chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Updates chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
   const foundChatThread = await findChatThread(token, createdChatThread.id!);
   t.deepEqual(foundChatThread, createdChatThread);
@@ -247,6 +250,8 @@ test("Updates chat group", async (t) => {
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Lists chat group", async (t) => {
@@ -279,6 +284,8 @@ test("Lists chat group", async (t) => {
   }));
 
   t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Lists chat group permissions", async (t) => {
@@ -322,20 +329,23 @@ test("Lists chat group permissions", async (t) => {
   await Promise.all(createdGroups2.map((createdGroup) => {
     return deleteChatGroup(token2, createdGroup.id!);
   }));
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser2Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Deletes chat group", async (t) => {
-  const token = await auth.getTokenUser1();
+test("Deletes chat thread", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   await mqtt.subscribe("chatthreads");
   try {
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+    const createdChatGroup = await createChatGroup(token, "Group title (Deletes chat thread)", "CHAT");
     const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
     await findChatThread(token, createdChatThread.id!, 200);
     await deleteChatThread(token, createdChatThread.id!);
     await findChatThread(token, createdChatThread.id!, 404);
-
+    
     const messages = await mqtt.waitMessages(2);
     t.deepEquals(messages, [{
       "operation": "CREATED",
@@ -351,4 +361,6 @@ test("Deletes chat group", async (t) => {
   }
 
   t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });

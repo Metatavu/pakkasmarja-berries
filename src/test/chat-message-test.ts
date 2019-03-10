@@ -214,7 +214,7 @@ test("Create chat message", async (t) => {
   
   await mqtt.subscribe("chatmessages");
   try {
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+    const createdChatGroup = await createChatGroup(token, "Group title (Create chat message)", "CHAT");
     const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
     const createdChatMessage = await createChatMessage(token, createdChatThread.id!, "Contents");
 
@@ -230,12 +230,14 @@ test("Create chat message", async (t) => {
   } finally {
     await mqtt.unsubscribe("chatmessages");
   }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Finds chat message", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat message)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
   const createdChatMessage = await createChatMessage(token, createdChatThread.id!, "Contents");
   const foundChatMessage = await findChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
@@ -249,12 +251,14 @@ test("Finds chat message", async (t) => {
   await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
   await deleteChatThread(token, createdChatThread.id!);    
   await deleteChatGroup(token, createdChatGroup.id!);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Updates chat message", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Updates chat message)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
   const createdChatMessage = await createChatMessage(token, createdChatThread.id!, "Contents");
 
@@ -266,6 +270,8 @@ test("Updates chat message", async (t) => {
   await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
   await deleteChatThread(token, createdChatThread.id!);    
   await deleteChatGroup(token, createdChatGroup.id!);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Lists chat messages", async (t) => {
@@ -309,6 +315,8 @@ test("Lists chat messages", async (t) => {
   await Promise.all(createdGroups.map((createdGroup) => {
     return deleteChatGroup(token, createdGroup.id!);
   }));
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Deletes chat message", async (t) => {
@@ -317,7 +325,7 @@ test("Deletes chat message", async (t) => {
   await mqtt.subscribe("chatmessages");
   try {
 
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+    const createdChatGroup = await createChatGroup(token, "Group title (Deletes chat message)", "CHAT");
     const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
     const createdChatMessage = await createChatMessage(token, createdChatThread.id!, "Contents");
 
@@ -339,4 +347,6 @@ test("Deletes chat message", async (t) => {
   } finally {
     await mqtt.unsubscribe("chatmessages");
   }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });

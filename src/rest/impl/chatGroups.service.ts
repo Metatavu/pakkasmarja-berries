@@ -30,7 +30,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
 
     const chatGroup = await models.createChatGroup(type, payload.title, payload.imageUrl);
-    this.addOwnerPermission(this.getLoggedUserId(req), "chat-group", this.getChatGroupResourceName(chatGroup), this.getChatGroupUri(chatGroup.id), this.getOwnerPermissionName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+    await this.addOwnerPermission(this.getLoggedUserId(req), "chat-group", this.getChatGroupResourceName(chatGroup), this.getChatGroupUri(chatGroup.id), this.getOwnerPermissionName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
 
     res.status(200).send(this.translateChatGroup(chatGroup));
 

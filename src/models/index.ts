@@ -625,7 +625,7 @@ export class Models {
       where: where, 
       offset: firstResult,
       limit: maxResults,
-      order: [ [ "createdAt", "DESC" ] ]
+      order: [ [ "id", "ASC" ] ]
     });
   }
 

@@ -116,10 +116,10 @@ test("Create chat group", async (t) => {
   
   await mqtt.subscribe("chatgroups");
   try {
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+    const createdChatGroup = await createChatGroup(token, "Group title (Create chat group)", "CHAT");
     t.notEqual(createdChatGroup, null);
     t.notEqual(createdChatGroup.id, null);
-    t.equal(createdChatGroup.title, "Group title");
+    t.equal(createdChatGroup.title, "Group title (Create chat group)");
     t.equal(createdChatGroup.type,  "CHAT");
     t.equal(createdChatGroup.imageUrl, null);
 
@@ -135,11 +135,13 @@ test("Create chat group", async (t) => {
   }
 
   t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Finds chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
   await findChatGroup(token, 1234, 404);
   
@@ -147,11 +149,13 @@ test("Finds chat group", async (t) => {
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Updates chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Updates chat group)", "CHAT");
   const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
   t.deepEqual(foundChatGroup, createdChatGroup);
 
@@ -182,6 +186,8 @@ test("Lists chat group", async (t) => {
   }));
 
   t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Lists chat group permissions", async (t) => {
@@ -213,6 +219,9 @@ test("Lists chat group permissions", async (t) => {
 
   t.equal((await listChatGroups(token1)).length, 0);
   t.equal((await listChatGroups(token2)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser2Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Deletes chat group", async (t) => {
@@ -220,8 +229,7 @@ test("Deletes chat group", async (t) => {
 
   await mqtt.subscribe("chatgroups");
   try {
-    const createdChatGroup = await createChatGroup(token, "Group title", "CHAT");
-
+    const createdChatGroup = await createChatGroup(token, "Group title (Deletes chat group)", "CHAT");
     await findChatGroup(token, createdChatGroup.id!, 200);
     await deleteChatGroup(token, createdChatGroup.id!);
     await findChatGroup(token, createdChatGroup.id!, 404);
@@ -239,4 +247,6 @@ test("Deletes chat group", async (t) => {
   }
 
   t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });

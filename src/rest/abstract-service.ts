@@ -31,7 +31,12 @@ export default class AbstractService {
   protected async addOwnerPermission(userId: string, resourceType: string, resourceName: string, resourceUri: string, permissionName: string, scopes: ApplicationScope[]) {
     const resource = await this.createGroupResource(resourceName, resourceUri, resourceType, scopes);
     const policy = await this.createUserPolicy(userId);
-    await this.createScopePermission(permissionName, resource, scopes, policy);
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (permission) {
+      await userManagement.deletePermission(permission.id!);
+    }
+    
+    return await this.createScopePermission(permissionName, resource, scopes, policy);
   }
 
   /**
