@@ -178,6 +178,14 @@ test("Lists chat group", async (t) => {
 
   const foundGroups = await listChatGroups(token);
 
+  createdGroups.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
+  foundGroups.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
   t.deepEqual(createdGroups, foundGroups);
 
   await Promise.all(createdGroups.map((createdGroup) => {
