@@ -25,19 +25,27 @@
     },
     "rest": {
       "realm": "pm",
-      "bearer-only": true,
       "auth-server-url": "http://localhost:8080/auth",
       "ssl-required": "external",
-      "resource": "pm-rest",
-      "confidential-port": 0
+      "resource": "pm",
+      "verify-token-audience": true,
+      "credentials": {
+        "secret": "25537085-819b-4137-bd5a-7e439f17ece0"
+      },
+      "confidential-port": 0,
+      "policy-enforcer": {}
     },
     "app": {
       "realm": "pm",
       "auth-server-url": "http://localhost:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
-      "public-client": true,
-      "confidential-port": 0
+      "verify-token-audience": true,
+      "credentials": {
+        "secret": "25537085-819b-4137-bd5a-7e439f17ece0"
+      },
+      "confidential-port": 0,
+      "policy-enforcer": {}
     }
   },
   "client": {
