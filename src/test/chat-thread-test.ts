@@ -288,7 +288,7 @@ test("Lists chat group", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Lists chat group permissions", async (t) => {
+test("Lists chat thread permissions", async (t) => {
   const token1 = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const token2 = await auth.getTokenUser2([ApplicationRoles.CREATE_CHAT_GROUPS]);
 

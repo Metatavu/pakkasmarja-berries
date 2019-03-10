@@ -708,7 +708,12 @@ export class Models {
       where.groupId = { [Sequelize.Op.in]: groupIds };
     }
 
-    return this.Thread.findAll({ where: where, offset: firstResult, limit: maxResults });
+    return this.Thread.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults, 
+      order: [ [ "id", "ASC" ] ]
+    });
   }
 
   /**
