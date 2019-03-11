@@ -13,20 +13,24 @@
 
 export interface ChatThread { 
     id: number  | null;
+    groupId: number ;
     title: string ;
-    type: string  | null;
-    originId: string  | null;
+    description: string  | null;
     imageUrl: string  | null;
     answerType: ChatThread.AnswerTypeEnum ;
+    pollAllowOther: boolean  | null;
+    expiresAt: Date  | null;
 }    
 
 export interface ChatThreadOpt { 
     id?: number;
+    groupId?: number;
     title?: string;
-    type?: string;
-    originId?: string;
+    description?: string;
     imageUrl?: string;
     answerType?: ChatThread.AnswerTypeEnum;
+    pollAllowOther?: boolean;
+    expiresAt?: Date;
 }
 export namespace ChatThread {
     export type AnswerTypeEnum = 'TEXT' | 'POLL';

@@ -13,9 +13,40 @@ export default abstract class ChatThreadsService extends AbstractService {
   constructor(app: Application, keycloak: Keycloak) {
     super();
 
+    app.post(`/rest/v1${this.toPath('/chatThreads')}`, [ keycloak.protect() ], this.catchAsync(this.createChatThread.bind(this)));
+    app.delete(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteChatThread.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatThread.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(threadId))}/reports/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getChatThreadReport.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads')}`, [ keycloak.protect() ], this.catchAsync(this.listChatThreads.bind(this)));
+    app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatThread.bind(this)));
   }
+
+
+  /**
+   * Creates new chat thread
+   * @summary Creates new chat thread
+   * Accepted parameters:
+    * - (body) ChatThread body - Payload
+  */
+  public abstract createChatThread(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Deletes chat thread
+   * @summary Deletes chat thread
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread id
+  */
+  public abstract deleteChatThread(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Returns chat thread
+   * @summary Returns chat thread
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread id
+  */
+  public abstract findChatThread(req: Request, res: Response): Promise<void>;
 
 
   /**
@@ -33,8 +64,18 @@ export default abstract class ChatThreadsService extends AbstractService {
    * Returns list of chat threads
    * @summary Returns list of chat threads
    * Accepted parameters:
-    * - (query) string originId - Filter chat threads by origin id
+    * - (query) number groupId - Filter chat threads by group id
+    * - (query) ChatGroupType groupType - Filter chat groups by group type
   */
   public abstract listChatThreads(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Update chat thread
+   * @summary Update chat thread
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread id
+  */
+  public abstract updateChatThread(req: Request, res: Response): Promise<void>;
 
 }

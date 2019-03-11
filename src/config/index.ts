@@ -25,6 +25,7 @@ export interface Cache {
 export interface Mqtt {
   host: string,
   port: number,
+  path?: string,
   secure: boolean,
   topic: string,
   topicPrefix: string,
@@ -95,6 +96,7 @@ export interface KeycloakAdminConfig {
   password: string,
   grant_type: string,
   client_id: string
+  client_secret: string
 }
 
 export interface KeycloakConfig {

@@ -5,6 +5,12 @@ import { Forbidden } from './model/forbidden';
 import { InternalServerError } from './model/internalServerError';
 import { NotImplemented } from "./model/models";
 import { getLogger, Logger } from "log4js";
+import userManagement from "../user-management";
+import { ApplicationScope } from "./application-scopes";
+import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
+import PolicyRepresentation from "keycloak-admin/lib/defs/policyRepresentation";
+import { ChatGroupModel } from "src/models";
+import moment = require("moment");
 
 /**
  * Abstract base class for all REST services
@@ -13,6 +19,117 @@ export default class AbstractService {
 
   private baseLogger: Logger = getLogger();
 
+  /**
+   * Grants user an owner permission to given resource
+   * 
+   * @param userId user id
+   * @param resourceType resource type
+   * @param resourceName resource name
+   * @param resourceUri resource URI
+   * @param permissionName permission's name
+   */
+  protected async addOwnerPermission(userId: string, resourceType: string, resourceName: string, resourceUri: string, permissionName: string, scopes: ApplicationScope[]) {
+    const resource = await this.createGroupResource(resourceName, resourceUri, resourceType, scopes);
+    const policy = await this.createUserPolicy(userId);
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (permission) {
+      await userManagement.deletePermission(permission.id!);
+    }
+    
+    return await this.createScopePermission(permissionName, resource, scopes, policy);
+  }
+
+  /**
+   * Deletes a permission
+   * 
+   * @param name permission name
+   * @return promise for deletion
+   */
+  protected async deletePermission(name: string) {
+    const permission = await userManagement.findPermissionByName(name);
+    if (permission && permission.id) {
+      this.deletePermissionById(permission.id);
+    }
+  }
+
+  /**
+   * Deletes a permission
+   * 
+   * @param permissionId permission id
+   * @return promise for deletion
+   */
+  protected deletePermissionById(permissionId: string) {
+    return userManagement.deletePermission(permissionId);
+  }
+
+  /**
+   * Checks whether given access token has required scopes
+   * 
+   * @param req request
+   * @param resourceName resource name 
+   * @param scopes required scopes
+   * @return Promise for whether user has permission to resource or not 
+   */
+  protected hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]) {
+    const accessToken = (req as any).kauth.grant.access_token;    
+    return userManagement.hasResourcePermission(resourceName, scopes, accessToken.token);
+  }
+
+  /**
+   * Creates scope permission
+   * 
+   * @param name name
+   * @param resource resource
+   * @param scopes scopes
+   * @param policy policy
+   * @return created permission
+   */
+  protected async createScopePermission(name: string, resource: ResourceRepresentation, scopes: ApplicationScope[], policy: PolicyRepresentation) {
+    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ]);
+  }
+
+  /**
+   * Finds or creates an user policy
+   * 
+   * @param userId user id
+   * @returns promise for user policy
+   */
+  protected async createUserPolicy(userId: string) {
+    const name = `user-${userId}`;
+    
+    let result = await userManagement.findUserPolicyByName(name);
+    if (!result) {
+      result = await userManagement.createUserPolicy(name, [ userId ]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Finds or creates new group resource into the Keycloak
+   * 
+   * @param id group id 
+   * @returns promise for group resource
+   */
+  protected async createGroupResource (name: string, uri: string, type: string, scopes: ApplicationScope[]): Promise<ResourceRepresentation> {
+    let resource = await userManagement.findResourceByUri(uri);        
+    if (!resource) {
+      resource = await userManagement.createResource(name, name, uri, type, scopes);
+    } 
+
+    return resource!;
+  }
+
+  /**
+   * Returns resource name for a group
+   * 
+   * @param chatGroup chat group
+   * @return resource name for a group
+   */
+  protected getChatGroupResourceName(chatGroup: ChatGroupModel) {
+    return `chat-group-${chatGroup.id}`;
+  }
+  
   /**
    * Gets accesstoken from request
    * 
@@ -166,6 +283,16 @@ export default class AbstractService {
     }
 
     return contentType.split(";")[0].trim();
+  }
+
+  /**
+   * Truncates time to seconds
+   * 
+   * @param time time
+   * @returns time truncated to seconds
+   */
+  protected truncateTime(time: Date): Date  {
+    return moment(time).milliseconds(0).toDate();
   }
 
 }

@@ -4,7 +4,6 @@ import ApplicationRoles from "../application-roles";
 import { NewsArticle } from "../model/models";
 import models, { NewsArticleModel } from "../../models";
 import mqtt from "../../mqtt";
-import moment = require("moment");
 
 /**
  * Implementation for NewsArticles REST service
@@ -139,16 +138,6 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       title: newsArticleModel.title,
       updatedAt: this.truncateTime(newsArticleModel.updatedAt)
     };
-  }
-
-  /**
-   * Truncates time to seconds
-   * 
-   * @param time time
-   * @returns time truncated to seconds
-   */
-  private truncateTime(time: Date): Date  {
-    return moment(time).milliseconds(0).toDate();
   }
 
 }
