@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import mqtt, { OnMessageCallback } from "../mqtt";
 
 /**
@@ -23,7 +24,7 @@ export default new class Mqtt {
   public async subscribe(subtopic: string) {
     await mqtt.reconnect();
     this.messages = [];
-    mqtt.subscribe(subtopic, this.onMessageHandler);
+    await mqtt.subscribe(subtopic, this.onMessageHandler);
   }
 
   /**
@@ -42,27 +43,36 @@ export default new class Mqtt {
    * @param count count
    * @returns messages
    */
-  public async waitMessages(count: number) {
+  public async expectMessage(expected: any) {
     const timeout = (new Date().getTime() + 5000);
     do {
-      const messages = await this.waitMessagesDelayed();
-      if (messages.length == count) {
-        return messages;
+      const result = await this.expectMessageWithDelay(expected);
+      
+      if (result) {
+        return true;
       }
+
     } while (timeout > (new Date().getTime()));
 
     const messages = this.getMessages();
-    throw new Error(`Timeout, expected ${count} got ${messages.length}. Messages: ${JSON.stringify(messages)}`);
+    throw new Error(`Timeout, expected ${JSON.stringify(expected)}, got: ${JSON.stringify(messages)}`);
   }
 
   /**
    * Retrieves messages after specified time
    * @returns promise for messages
    */
-  private waitMessagesDelayed(): Promise<any[]> {
+  private expectMessageWithDelay(expected: any): Promise<boolean> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(this.getMessages());
+        
+        for (let i = 0; i < this.messages.length; i++) {
+          if (_.isEqual(expected, this.messages[i])) {
+            return resolve(true);
+          }
+        } 
+
+        resolve(false);
       }, 100);
     });
   }

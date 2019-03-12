@@ -5,46 +5,163 @@ import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
 import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
 import excel from "../../excel";
-import { ChatThread } from "../model/models";
+import { ChatThread, ChatGroupType } from "../model/models";
+import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
+import { Promise } from "bluebird";
+import mqtt from "../../mqtt";
 
-  /**
-   * Threads REST service
-   */
+/**
+ * Threads REST service
+ */
 export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
   /**
-  * Returns list of chat threads
-  * Returns list of chat threads
-  *
-  * @param {http.ClientRequest} req client request object
-  * @param {http.ServerResponse} res server response object
-  **/
-  async listChatThreads(req: Request, res: Response) {
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
-      this.sendForbidden(res, "You have no permission to manage threads");
+   * @inheritdoc
+   */
+  public async createChatThread(req: Request, res: Response): Promise<void> {
+    const payload: ChatThread = req.body;
+    const chatGroupId = payload.groupId;
+    const chatGroup = await models.findChatGroup(chatGroupId);
+    if (!chatGroup) {
+      this.sendBadRequest(res, "Invalid chat group id");
       return;
     }
 
-    const originId = req.query.originId;
-
-    if (!originId) {
-      return this.sendNotImplemented(res, "Only origin id queries are currently supported");
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      this.sendForbidden(res);
+      return;
     }
 
-    const thread = await models.findThreadByOriginId(originId);
-    const result = thread ? [ this.translateChatThread(thread) ] : [];
+    const thread = await models.createThread(chatGroup.id, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    res.status(200).send(this.translateChatThread(thread));
 
-    res.send(result);
+    mqtt.publish("chatthreads", {
+      "operation": "CREATED",
+      "id": thread.id
+    });
   }
 
   /**
-   * Returns chat thread report
-   * Returns chat thread report
-   *
-   * @param {http.ClientRequest} req client request object
-   * @param {http.ServerResponse} res server response object
-   **/
-  async getChatThreadReport(req: Request, res: Response) {
+   * @inheritdoc
+   */
+  public async deleteChatThread(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    models.deleteThread(thread.id);
+
+    res.status(204).send();
+
+    mqtt.publish("chatthreads", {
+      "operation": "DELETED",
+      "id": thread.id
+    });
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async findChatThread(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    res.status(200).send(this.translateChatThread(thread));
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async listChatThreads(req: Request, res: Response): Promise<void> {
+    const groupId = req.query.groupId;
+    const groupType: ChatGroupType = req.query.groupType;
+    const allChatGroups = groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType);
+    const chatGroups = await Promise.all(Promise.filter(allChatGroups, (chatGroup) => {
+      if (!chatGroup) {
+        return false;
+      }
+
+      return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
+    }));
+
+    const chatGroupIds = chatGroups.map((chatGroup) => {
+      return chatGroup.id;
+    });
+
+    const threads = await models.listThreads(chatGroupIds);
+
+    res.status(200).send(threads.map((thread) => {
+      return this.translateChatThread(thread);
+    }));
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async updateChatThread(req: Request, res: Response): Promise<void> {
+    const payload: ChatThread = req.body;
+
+    const chatThreadId = req.params.chatThreadId;
+    const thread = await models.findThread(chatThreadId);
+    if (!thread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(thread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    await models.updateThread(thread.id, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+
+    res.status(200).send(this.translateChatThread(await models.findThread(chatThreadId)));
+
+    mqtt.publish("chatthreads", {
+      "operation": "UPDATED",
+      "id": thread.id
+    });
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async getChatThreadReport(req: Request, res: Response) {
     if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_THREADS)) {
       this.sendForbidden(res, "You have no permission to manage threads");
       return;
@@ -86,7 +203,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @param {http.ServerResponse} res server response object
    * @param {Object} thread thread 
    */
-  async sendChatThreadSummaryReportXLSX(req: Request, res: Response, thread: ThreadModel) {
+  private async sendChatThreadSummaryReportXLSX(req: Request, res: Response, thread: ThreadModel) {
     const predefinedTexts = (await models.listThreadPredefinedTextsByThreadId(thread.id)).map((predefinedText: ThreadPredefinedTextModel) => {
       return predefinedText.text;
     });
@@ -150,7 +267,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * 
    * @param {Object} databaseChatThread database chat thread
    */
-  translateChatThread(databaseChatThread: ThreadModel) {
+  private translateChatThread(databaseChatThread: ThreadModel) {
     let answerType: ChatThread.AnswerTypeEnum;
 
     if (databaseChatThread.answerType == "POLL") {
@@ -160,12 +277,14 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     } 
 
     const result: ChatThread = {
-      answerType: answerType,
       id: databaseChatThread.id,
-      imageUrl: databaseChatThread.imageUrl,
-      originId: databaseChatThread.originId,
       title: databaseChatThread.title,
-      type: databaseChatThread.type
+      description: databaseChatThread.description,
+      imageUrl: databaseChatThread.imageUrl,
+      groupId: databaseChatThread.groupId,
+      answerType: answerType,
+      expiresAt: databaseChatThread.expiresAt || null,
+      pollAllowOther: databaseChatThread.pollAllowOther
     };
 
     return result;

@@ -17,13 +17,14 @@ export default new class Mqtt {
   private logger: Logger = getLogger();
   private client: mqtt.MqttClient;
   private subscribers: Map<String, Array<OnMessageCallback>>;
+  private connecting: boolean;
 
   /**
    * Constructor
    */
   constructor () {
+    this.connecting = false;
     this.subscribers = new Map();
-    this.connect();
   }
 
   /**
@@ -85,13 +86,63 @@ export default new class Mqtt {
   /**
    * Connects to the MQTT server
    */
-  public connect() {
+  public async connect() {
+    await this.waitConnecting();
+    return await this.doConnect();
+  }
+
+  /**
+   * Waits for connecting status
+   */
+  public async waitConnecting() {
+    const timeout = (new Date().getTime() + 60000);
+    do {
+      if (await this.waitConnectingDelayed()) {
+        return null;
+      }
+    } while (timeout > (new Date().getTime()));
+
+    throw new Error(`Timeout`);
+  }
+
+  /**
+   * Disconnects from the server
+   */
+  public async disconnect() {
+    return new Promise((resolve) => {
+      if (this.client && this.client.connected) {
+        this.client.end(false, resolve);
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  /**
+   * Waits for connection connecting
+   * 
+   * @returns promise for connection not connecting
+   */
+  private waitConnectingDelayed(): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(!this.connecting);
+      }, 100);
+    });
+  }
+
+  /**
+   * Connects the MQTT client
+   * 
+   * @returns promise for connection
+   */
+  private doConnect() {
     return new Promise((resolve) => {
       if (this.client && this.client.connected) {
-        return;
+        return resolve();
       }
 
-      const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port;
+      const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port + (config().mqtt.path || ""); 
       const options: IClientOptions = { 
         host: config().mqtt.host,
         port: config().mqtt.port,
@@ -109,15 +160,7 @@ export default new class Mqtt {
         this.onClientConnect();
         resolve();
       });
-    });
-  }
 
-  /**
-   * Disconnects from the server
-   */
-  public async disconnect() {
-    return new Promise((resolve) => {
-      this.client.end(false, resolve);
     });
   }
 

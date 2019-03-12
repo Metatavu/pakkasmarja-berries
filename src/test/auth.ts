@@ -1,6 +1,8 @@
 import * as request from "request";
-import * as keycloak_admin_client from "keycloak-admin-client";
 import * as config from "nconf";
+import KcAdminClient from "keycloak-admin";
+import { RoleMappingPayload } from "keycloak-admin/lib/defs/roleRepresentation";
+
 config.file({file: `${__dirname}/../../config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
 
 const keyclockSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
@@ -17,13 +19,14 @@ export default new class Auth {
    * @param {password} password
    * @return {Promise} promise for results
    */
-  async getClientToken(username: string, password: string, clientId: string): Promise<string> {
+  public async getClientToken(username: string, password: string, clientId: string, clientSecret?: string): Promise<string> {
     const realm = config.get("keycloak:app:realm");
     const url = `${config.get("keycloak:app:auth-server-url")}/realms/${realm}/protocol/openid-connect/token`;
 
     return new Promise((resolve: (accessToken: string) => void, reject: (err: any) => void) => {
       request.post({ url: url, form: {
         client_id: clientId,
+        client_secret: clientSecret,
         grant_type: "password",
         username: username,
         password: password
@@ -44,8 +47,8 @@ export default new class Auth {
    * @param {password} password
    * @return {Promise} promise for results
    */
-  getToken(username: string, password: string) {
-    return this.getClientToken(username, password, config.get("keycloak:app:resource"));
+  public getToken(username: string, password: string) {
+    return this.getClientToken(username, password, config.get("keycloak:app:resource"), config.get("keycloak:app:credentials:secret"));
   }
   
   /**
@@ -53,11 +56,11 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  getAdminToken() {
+  public getAdminToken() {
     return this.getToken("admin", "test");
   }
 
-  getAdminCliToken() {
+  public getAdminCliToken() {
     return this.getClientToken("admin", "test", "admin-cli");
   }
 
@@ -66,7 +69,7 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  async getTokenUser1(roles?: string | string[]) {
+  public async getTokenUser1(roles?: string | string[]) {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser1Id();
@@ -166,12 +169,17 @@ export default new class Auth {
    * @returns {Promise} promise for added roles 
    */
   async addRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
-    const realm = config.get("keycloak:admin:realm");
-    const client = await keycloak_admin_client(config.get("keycloak:admin"));
-
-    return client.realms.maps.map(realm, userId, roles.map((role: string) => {
+    const client = await this.getClient();
+    const realm = config.get("keycloak:app:realm");
+    const roleMappings: RoleMappingPayload[] = roles.map((role: string) => {
       return { id: this.getRealmRoleId(role), name: role };
-    }));
+    });
+
+    return client.users.addRealmRoleMappings({
+      roles: roleMappings,
+      id: userId,
+      realm: realm
+    });
   }
 
   /**
@@ -183,13 +191,18 @@ export default new class Auth {
    * @returns {Promise} promise for removed roles 
    */
   async removeRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
-    const realm = config.get("keycloak:admin:realm");
-    const settings = config.get("keycloak:admin");
-    const client = await keycloak_admin_client(settings);
+    const client = await this.getClient();
+    const realm = config.get("keycloak:app:realm");
 
-    return client.realms.maps.unmap(realm, userId, roles.map((role) => {
+    const roleMappings: RoleMappingPayload[] = roles.map((role: string) => {
       return { id: this.getRealmRoleId(role), name: role };
-    }));
+    });
+
+    return client.users.delRealmRoleMappings({
+      roles: roleMappings,
+      id: userId,
+      realm: realm
+    });
   }
 
   /**
@@ -198,15 +211,34 @@ export default new class Auth {
    * @returns {Promise} promise for added roles 
    */
   async createRoles() {
-    const realm = config.get("keycloak:admin:realm");
     const roles = ["list-all-contacts","update-other-contacts","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations"];
-    const client = await keycloak_admin_client(config.get("keycloak:admin"));
-
+    const client = await this.getClient();
+    
     return Promise.all(roles.map((role) => {
-      return client.realms.roles.create(realm, {
+      return client.roles.create({
         name: role
       });
     }));
+  }
+
+  /**
+   * Returns client
+   * 
+   * @returns client
+   */
+  private async getClient(): Promise<KcAdminClient> {
+    const client: KcAdminClient = new KcAdminClient();
+    const keycloakConfig = config.get("keycloak:admin");
+
+    await client.auth({
+      username: keycloakConfig.username,
+      password: keycloakConfig.password,
+      grantType: keycloakConfig.grant_type,
+      clientId: keycloakConfig.client_id,
+      clientSecret: keycloakConfig.client_secret
+    });
+
+    return client;
   }
 
 }

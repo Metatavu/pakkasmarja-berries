@@ -99,11 +99,10 @@ test("Create news article", async (t) => {
     t.notEqual(createdNewsArticle.updatedAt, null);
     t.equal(createdNewsArticle.imageUrl, null);
 
-    const messages = await mqtt.waitMessages(1);    
-    t.deepEquals(messages, [{
+    await mqtt.expectMessage({
       "operation": "CREATED",
       "id": createdNewsArticle.id
-    }]);
+    });
 
     await deleteNewsArticle(token, createdNewsArticle.id!);
   } finally {
@@ -151,15 +150,11 @@ test("Deletes news article", async (t) => {
     await deleteNewsArticle(token, createdNewsArticle.id!);
     await findNewsArticle(token, createdNewsArticle.id!, 404);
 
-    const messages = await mqtt.waitMessages(2);
-    t.deepEquals(messages, [{
-      "operation": "CREATED",
-      "id": createdNewsArticle.id
-    }, {
+    await mqtt.expectMessage({
       "operation": "DELETED",
       "id": createdNewsArticle.id
-    }]);
-
+    });
+    
   } finally {
     await mqtt.unsubscribe("newsarticles");
   }
