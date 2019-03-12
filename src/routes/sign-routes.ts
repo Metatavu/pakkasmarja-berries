@@ -3,7 +3,7 @@ import Signature from "../signature";
 import models from "../models";
 
 /**
- * System routes
+ * Sign routes
  */
 export default class SignRoutes {
   
