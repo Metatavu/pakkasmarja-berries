@@ -481,7 +481,7 @@ export default new class UserManagement {
    */
   private async findKeycloakUser(id: string): Promise<any> {
     const client = await this.getClient(); 
-
+    
     return new Promise<any>((resolve, reject) => {
       client.users.find(config().keycloak.admin.realm, { userId: id })
         .then(async (user: any) => {

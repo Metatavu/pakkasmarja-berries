@@ -14,6 +14,7 @@ import { initializeModels } from "./models";
 import Api from "./rest";
 import SystemRoutes from "./routes/system-routes";
 import MqttRoutes from "./routes/mqtt-routes";
+import SignRoutes from "./routes/sign-routes";
 import { config } from "./config";
 import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
 
@@ -100,5 +101,6 @@ process.on("unhandledRejection", (error) => {
   new Api(app, keycloak);
   new SystemRoutes(app);
   new MqttRoutes(app, keycloak);
+  new SignRoutes(app);
 
 })();
