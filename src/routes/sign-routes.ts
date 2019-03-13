@@ -7,10 +7,21 @@ import models from "../models";
  */
 export default class SignRoutes {
   
+  /**
+   * Constructor 
+   * 
+   * @param app app
+   */
   constructor (app: Application) {
     app.get("/signcallback", this.getSignCallback.bind(this));
   }
   
+  /**
+   * Sign callback
+   * 
+   * @param req request
+   * @param res response
+   */
   private async getSignCallback(req: Request, res: Response) {
     const vismaSignDocumentId = req.query.vismaSignId;
     let success = false;

@@ -32,35 +32,6 @@
     getVersion(req, res) {
       res.send(config.get("app-version"));
     }
-
-    async getSignCallback(req, res) {
-      const vismaSignDocumentId = req.query.vismaSignId;
-      let success = false;
-      if (vismaSignDocumentId) {
-        try {
-          const documentStatus = await this.signature.getDocumentStatus(vismaSignDocumentId);
-          success = documentStatus && documentStatus.status === "signed";
-
-          if (success) {
-            const contractDocument = await this.models.findContractDocumentByVismaSignDocumentId(vismaSignDocumentId);
-            if (contractDocument) {
-              this.models.updateContractDocumentSigned(contractDocument.id, true);
-              this.models.updateContractStatus(contractDocument.contractId, "APPROVED");
-            } else {
-              console.error(`Could not find contract document for vismasignId ${vismaSignDocumentId}`);
-            }
-          }
-
-        } catch (e) {
-          success = false;
-          console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
-        }
-      }
-
-      res.render("signcallback", {
-        success: success
-      });
-    }
     
     getImagesWordpress(req, res) {
       const contentUrl = config.get("wordpress:content-url");
@@ -299,7 +270,6 @@
       
       app.get("/", this.getWebApp.bind(this));
       app.get("/version", this.getVersion.bind(this));
-      app.get("/signcallback", this.getSignCallback.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.post("/system/shutdown", this.postSystemShutdown.bind(this));
       
