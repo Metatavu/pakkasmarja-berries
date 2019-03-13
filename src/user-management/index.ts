@@ -23,7 +23,9 @@ export default new class UserManagement {
   
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
-    this.client = new KcAdminClient();
+    this.client = new KcAdminClient({
+      baseUrl: config().keycloak.rest["auth-server-url"]
+    });
     this.requireFreshClient = true;
     setInterval(() => {
       this.requireFreshClient = true;

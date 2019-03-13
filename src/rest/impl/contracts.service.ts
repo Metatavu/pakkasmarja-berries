@@ -372,8 +372,8 @@ export default class ContractsServiceImpl extends ContractsService {
             if (!document) {
               this.sendNotFound(res);
             } else {
-              res.setHeader("Content-type", "application/pdf");
-              res.setHeader("Content-disposition", `attachment; filename=${document.filename}`);
+              res.setHeader("Content-Type", "application/pdf");
+              res.setHeader("Content-Disposition", `attachment; filename=${document.filename}`);
               if (document.dataStream) {
                 document.dataStream.pipe(res);
               } else {
@@ -616,7 +616,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
     const userId = listAll ? null : this.getLoggedUserId(req);
     const databaseContracts = await models.listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults);
-
+    
     if (!userId && !listAll) {
       this.sendInternalServerError(res, "listAll not set but userId resolved to null");
       return;
@@ -748,7 +748,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const vismaSignDocumentId = await signature.createDocument(document.documentName);
     await models.createContractDocument(type, contract.id, vismaSignDocumentId);
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
-    const appUrl = `${req.protocol}://${req.get("host")}`;      
+    const appUrl = `${req.protocol}://${req.get("host")}`;
     const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}`;
     const fulfillResult = await signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
 
