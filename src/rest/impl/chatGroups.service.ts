@@ -4,7 +4,7 @@ import ChatGroupsService from "../api/chatGroups.service";
 import models, { ChatGroupModel } from "../../models";
 import { ChatGroupType, ChatGroup } from "../model/models";
 import mqtt from "../../mqtt";
-import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS } from "../application-scopes";
+import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE } from "../application-scopes";
 import { Promise } from "bluebird";
 import ApplicationRoles from "../application-roles";
 
@@ -78,7 +78,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE]))) {
       this.sendForbidden(res);
       return;
     }
@@ -93,7 +93,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     const groupType: ChatGroupType = req.query.groupType;
 
     const chatGroups = await Promise.all(Promise.filter(models.listChatGroups(groupType), (chatGroup) => {
-      return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
+      return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE]);
     }));
 
     res.status(200).send(chatGroups.map((chatGroup) => {

@@ -3,10 +3,10 @@ import slugify from "slugify";
 import ChatThreadsService from "../api/chatThreads.service";
 import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
-import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
+import models, { ThreadModel, ThreadPredefinedTextModel, ChatGroupModel } from "../../models";
 import excel from "../../excel";
 import { ChatThread, ChatGroupType } from "../model/models";
-import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
+import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE, CHAT_THREAD_ACCESS } from "../application-scopes";
 import { Promise } from "bluebird";
 import mqtt from "../../mqtt";
 
@@ -90,7 +90,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
@@ -113,11 +113,12 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
     }));
 
-    const chatGroupIds = chatGroups.map((chatGroup) => {
-      return chatGroup.id;
-    });
+    const chatGroupMap = _.keyBy(chatGroups, "id");
+    const chatGroupIds = _.map(chatGroups, "id");
 
-    const threads = await models.listThreads(chatGroupIds);
+    const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds), async (thread) => {
+      return this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
+    }));
 
     res.status(200).send(threads.map((thread) => {
       return this.translateChatThread(thread);
@@ -143,7 +144,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+    if (!(await this.isThreadManagePermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
