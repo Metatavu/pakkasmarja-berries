@@ -90,7 +90,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
@@ -113,11 +113,12 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
     }));
 
-    const chatGroupIds = chatGroups.map((chatGroup) => {
-      return chatGroup.id;
-    });
+    const chatGroupMap = _.keyBy(chatGroups, "id");
+    const chatGroupIds = _.map(chatGroups, "id");
 
-    const threads = await models.listThreads(chatGroupIds);
+    const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds), async (thread) => {
+      return this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
+    }));
 
     res.status(200).send(threads.map((thread) => {
       return this.translateChatThread(thread);
@@ -143,7 +144,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+    if (!(await this.isThreadManagePermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }

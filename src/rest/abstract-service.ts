@@ -6,10 +6,10 @@ import { InternalServerError } from './model/internalServerError';
 import { NotImplemented } from "./model/models";
 import { getLogger, Logger } from "log4js";
 import userManagement from "../user-management";
-import { ApplicationScope } from "./application-scopes";
+import { ApplicationScope, CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_THREAD_ACCESS } from "./application-scopes";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
 import PolicyRepresentation from "keycloak-admin/lib/defs/policyRepresentation";
-import { ChatGroupModel } from "src/models";
+import { ChatGroupModel, ThreadModel } from "src/models";
 import moment = require("moment");
 
 /**
@@ -118,6 +118,50 @@ export default class AbstractService {
     } 
 
     return resource!;
+  }
+
+  /**
+   * Returns whether logged user has access permission to given thread
+   * 
+   * @param req request
+   * @param thread thread
+   * @param chatGroup chat group
+   */
+  protected async isThreadAccessPermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
+    if (await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS])) {
+      return true;
+    }
+
+    if (await this.hasResourcePermission(req, this.getChatThreadResourceName(thread), [CHAT_THREAD_ACCESS])) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns whether logged user has manage permission to given thread
+   * 
+   * @param req request
+   * @param thread thread
+   * @param chatGroup chat group
+   */
+  protected async isThreadManagePermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
+    if (await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE])) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns resource name for a thread
+   * 
+   * @param chatThread chat thread
+   * @return resource name for a thread
+   */
+  protected getChatThreadResourceName(chatThread: ThreadModel) {
+    return `chat-thread-${chatThread.id}`;
   }
 
   /**

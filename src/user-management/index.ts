@@ -349,7 +349,9 @@ export default new class UserManagement {
     const policy: UserPolicyRepresentation = {
       name: name,
       logic: Logic.POSITIVE,
-      users: userIds
+      users: userIds,
+      type: "user",
+      decisionStrategy: DecisionStrategy.UNANIMOUS
     };
 
     return await client.clients.createAuthzUserPolicy({
@@ -423,7 +425,7 @@ export default new class UserManagement {
     };
 
     const clientId = config().keycloak.rest.resource;
-
+    
     const body: URLSearchParams = new URLSearchParams(); 
     body.append("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket");
     body.append("client_id", clientId);

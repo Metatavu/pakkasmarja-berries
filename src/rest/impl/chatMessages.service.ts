@@ -3,7 +3,6 @@ import ChatMessagesService from "../api/chatMessages.service";
 import { Request, Response } from "express";
 import models, { MessageModel } from "../../models";
 import { ChatMessage } from "../model/models";
-import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
 import mqtt from "../../mqtt";
 
 /**
@@ -30,7 +29,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
@@ -69,8 +68,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    if (chatMessage.userId != this.getLoggedUserId(req)) {
-      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+    if (chatMessage.userId != this.getLoggedUserId(req)) {    
+      if (!(await this.isThreadManagePermission(req, thread, chatGroup))) {
         this.sendForbidden(res);
         return;
       }
@@ -115,11 +114,9 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    if (message.userId != this.getLoggedUserId(req)) {
-      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
-        this.sendForbidden(res);
-        return;
-      }
+    if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
+      this.sendForbidden(res);
+      return;
     }
 
     res.status(200).send(this.translateChatMessage(message));
@@ -143,7 +140,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]))) {
+    if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
@@ -182,7 +179,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     }
 
     if (chatMessage.userId != this.getLoggedUserId(req)) {
-      if (!(await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE]))) {
+      if (!(await this.isThreadManagePermission(req, thread, chatGroup))) {
         this.sendForbidden(res);
         return;
       }
