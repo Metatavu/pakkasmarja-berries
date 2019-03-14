@@ -172,7 +172,7 @@
    * @param groupId group id
    */
   const updateThreadOwnerId = async (query, threadId, userId) => {
-    return (await query.sequelize.query(`UPDATE Threads SET ownerId = ${userId} WHERE id = ${threadId}`));
+    return (await query.sequelize.query(`UPDATE Threads SET ownerId = '${userId}' WHERE id = ${threadId}`));
   };
 
   /**
@@ -229,7 +229,7 @@
 
       for (let j = 0; j < questionGroupThreads.length; j++) {
         await updateThreadGroupId(query, questionGroupThreads[j].threadId, chatGroupId);
-        await updateThreadOwnerId(query, questionGroupThreads[j].userId, chatGroupId);
+        await updateThreadOwnerId(query, questionGroupThreads[j].threadId, questionGroupThreads[j].userId);
       }
     }
 
