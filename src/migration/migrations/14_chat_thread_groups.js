@@ -289,13 +289,9 @@
       await query.addColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: true });
       await query.removeColumn("Threads", "originId");
 
-      console.log("Migrating question groups...");
-
       // Migrate question groups 
 
       await migrateQuestionGroups(query, groupPolicyIds);
-
-      console.log("Migrating chat groups...");
 
       // Migrate chat groups
 
