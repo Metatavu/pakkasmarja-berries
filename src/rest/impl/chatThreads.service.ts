@@ -3,10 +3,10 @@ import slugify from "slugify";
 import ChatThreadsService from "../api/chatThreads.service";
 import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
-import models, { ThreadModel, ThreadPredefinedTextModel, ChatGroupModel } from "../../models";
+import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
 import excel from "../../excel";
 import { ChatThread, ChatGroupType } from "../model/models";
-import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE, CHAT_THREAD_ACCESS } from "../application-scopes";
+import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
 import { Promise } from "bluebird";
 import mqtt from "../../mqtt";
 
