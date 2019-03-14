@@ -139,9 +139,7 @@
    * @param questionGroupId question group id
    */
   const getQuestionGroupThreads = async (query, questionGroupId) => {
-    return (await query.sequelize.query(`SELECT threadId FROM QuestionGroupUserThreads WHERE questionGroupId = ${questionGroupId}`))[0].map((row) => {
-      return row.threadId;
-    });
+    return (await query.sequelize.query(`SELECT threadId, userId FROM QuestionGroupUserThreads WHERE questionGroupId = ${questionGroupId}`))[0];
   };
 
   /**
@@ -164,6 +162,17 @@
    */
   const updateThreadGroupId = async (query, threadId, groupId) => {
     return (await query.sequelize.query(`UPDATE Threads SET groupId = ${groupId} WHERE id = ${threadId}`));
+  };
+
+  /**
+   * Updates owner  id for a chat thread
+   * 
+   * @param query query interface 
+   * @param userId user id
+   * @param groupId group id
+   */
+  const updateThreadOwnerId = async (query, threadId, userId) => {
+    return (await query.sequelize.query(`UPDATE Threads SET ownerId = ${userId} WHERE id = ${threadId}`));
   };
 
   /**
@@ -219,7 +228,8 @@
       await createChatGroupGroupPermission(chatGroupId, questionGroupRole.userGroupId, resource._id, questionGroupRole.role == "manager" ? "chat-group:manage" : "chat-group:traverse", policyId);
 
       for (let j = 0; j < questionGroupThreads.length; j++) {
-        await updateThreadGroupId(query, questionGroupThreads[j], chatGroupId);
+        await updateThreadGroupId(query, questionGroupThreads[j].threadId, chatGroupId);
+        await updateThreadOwnerId(query, questionGroupThreads[j].userId, chatGroupId);
       }
     }
 
@@ -287,6 +297,7 @@
       // Add groupId and remove originId columns from Threads table
 
       await query.addColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: true });
+      await query.addColumn("Threads", "ownerId", { type: Sequelize.STRING(191), allowNull: true });
       await query.removeColumn("Threads", "originId");
 
       // Migrate question groups 
