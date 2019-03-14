@@ -54,7 +54,7 @@
     }
 
     return userManagement.createUserPolicy(policyName, [userId]);
-  }
+  };
 
   /**
    * Finds or creates group permission
@@ -88,26 +88,6 @@
    */
   const createChatThreadUserPermission = async (chatThreadId, userId, resourceId, role, policyId) => {
     const name = `chat-thread-${chatThreadId}-user-${userId}`;
-    const permission = await userManagement.findPermissionByName(name);
-    if (permission) {
-      return permission;
-    }
-
-    return await userManagement.createScopePermission(name, [ resourceId ], [role], [policyId]);
-  };
-
-  /**
-   * Finds or creates user permission
-   * 
-   * @param chatThreadId chat thread id
-   * @param userGroupId user group id
-   * @param resourceId, resource id
-   * @param role role
-   * @param policyId policy id
-   * @returns promise for group permission
-   */
-  const createChatThreadGroupPermission = async (chatThreadId, userGroupId, resourceId, role, policyId) => {
-    const name = `chat-thread-${chatThreadId}-user-group-${userGroupId}`;
     const permission = await userManagement.findPermissionByName(name);
     if (permission) {
       return permission;
@@ -255,10 +235,10 @@
       if (user) {
         const policy = await getUserPolicy(userId);
         const resource = await createThreadResource(chatThreadId);
-        await createChatThreadUserPermission(chatThreadId, userId, resource.id || resource._id, "chat-thread:access", policy.id);
+        await createChatThreadUserPermission(chatThreadId, userId, resource.id || resource._id, "chat-thread:access", policy.id);
       }
     }
-  }
+  };
 
   const migrateRoleChatGroups = async (query, groupPolicyIds, userGroupNames, role) => {
     const chatThreadRoles = await getChatThreadsByRole(query, role);
@@ -272,13 +252,13 @@
       const resource = await createGroupResource(chatGroupId);
       await createChatGroupGroupPermission(chatGroupId, chatThreadRole.userGroupId, resource._id, role == "manager" ? "chat-group:manage" : "chat-group:access", policyId);
     }
-  }
+  };
 
   const migrateChatGroups = async (query, groupPolicyIds, userGroupNames) => {
     // Create group for chat threads
     await migrateRoleChatGroups(query, groupPolicyIds, userGroupNames, "manager");
     await migrateRoleChatGroups(query, groupPolicyIds, userGroupNames, "user");
-  }
+  };
   
   module.exports = {
 
