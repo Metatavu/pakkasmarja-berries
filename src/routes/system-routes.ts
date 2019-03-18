@@ -1,5 +1,6 @@
 import { Response, Request, Application } from "express";
 import { config } from "../config";
+import * as fs from "fs";
 
 /**
  * System routes
@@ -8,6 +9,7 @@ export default class SystemRoutes {
   
   constructor (app: Application) {
     app.get("/system/ping", this.getSystemPing.bind(this));
+    app.get("/system/app-config.json", this.getAppConfig.bind(this));
     app.post("/system/shutdown", this.postSystemShutdown.bind(this));
   }
   
@@ -20,6 +22,24 @@ export default class SystemRoutes {
   getSystemPing(req: Request, res: Response) {
     res.send("PONG");
   }
+  
+  /**
+   * Returns app config
+   *
+   * @param req client request object
+   * @param res server response object
+   */
+  getAppConfig(req: Request, res: Response) {
+    fs.readFile(`${__dirname}/../../app-config.json`, (err, file) => {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.header("Content-Type", "application/json");
+        res.send(file);
+      }
+    });
+  }
+  
 
   /**
    * Shutdown system
