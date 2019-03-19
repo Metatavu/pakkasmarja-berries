@@ -519,7 +519,17 @@ export default new class UserManagement {
     });
   }
   
-  getUserDisplayName(user: any) {
+  /**
+   * Returns display name for an user
+   * 
+   * @param user user
+   * @returns display name for an user
+   */
+  public getUserDisplayName(user: UserRepresentation) {
+    if (!user) {
+      return null;
+    }
+
     const attributes: any = {};
 
     _.forEach(user.attributes||{}, (originalValue, key) => {
