@@ -19,7 +19,7 @@ export default class SystemRoutes {
    * @param req client request object
    * @param res server response object
    */
-  getSystemPing(req: Request, res: Response) {
+  public getSystemPing(req: Request, res: Response) {
     res.send("PONG");
   }
   
@@ -29,7 +29,7 @@ export default class SystemRoutes {
    * @param req client request object
    * @param res server response object
    */
-  getAppConfig(req: Request, res: Response) {
+  public getAppConfig(req: Request, res: Response) {
     fs.readFile(`${__dirname}/../../app-config.json`, (err, file) => {
       if (err) {
         res.status(500).send(err);
@@ -48,7 +48,7 @@ export default class SystemRoutes {
    * @param req client request object
    * @param res server response object
    **/
-  postSystemShutdown(req: Request, res: Response) {
+  public postSystemShutdown(req: Request, res: Response) {
     if (config().mode !== "TEST") {
       res.status(403).send("I\"m sorry Dave, I\"m afraid I can\"t do that");
       return;
