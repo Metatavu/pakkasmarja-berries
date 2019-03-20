@@ -258,6 +258,7 @@ export class Models {
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   private Message: Sequelize.Model<any, MessageModel>;
   private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
+  private Product: Sequelize.Model<any, ProductModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -534,7 +535,7 @@ export class Models {
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
 
-    this.defineModel("Product", {
+    this.Product = this.defineModel("Product", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
       name: { type: Sequelize.STRING(191), allowNull: false },
@@ -2322,16 +2323,16 @@ export class Models {
   /**
    * Create Product
    * 
-   * @param {string} id id
-   * @param {int} itemGroupId item group id
-   * @param {string} name name
-   * @param {int} units units
-   * @param {int} unitSize unitSize
-   * @param {string} unitName unitName
-   * @return {Promise} promise on created product
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
    */
   public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
-    return this.sequelize.models.Product.create({
+    return this.Product.create({
       id: id,
       itemGroupId: itemGroupId,
       name: name,
@@ -2344,16 +2345,16 @@ export class Models {
   /**
    * Update Product
    * 
-   * @param {string} id id
-   * @param {int} itemGroupId item group id
-   * @param {string} name name
-   * @param {int} units units
-   * @param {int} unitSize unitSize
-   * @param {string} unitName unitName
-   * @return {Promise} promise on created product
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
    */
   public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
-    return this.sequelize.models.Product.update({
+    return this.Product.update({
       itemGroupId: itemGroupId,
       name: name,
       units: units,
@@ -2369,11 +2370,11 @@ export class Models {
   /**
    * Delete prodcut
    * 
-   * @param {string} productId productId
-   * @return {Promise} promise on created week delivery prediction
+   * @param productId productId
+   * @return promise on created week delivery prediction
    */
   public deleteProductById(productId: string): PromiseLike<number> {
-    return this.sequelize.models.PRoduct.destroy({
+    return this.Product.destroy({
       where: {
         id: productId
       }
@@ -2383,8 +2384,8 @@ export class Models {
   /**
    * Find product by id
    * 
-   * @param {string} productId productId
-   * @return {Promise} promise on created week delivery prediction
+   * @param productId productId
+   * @return promise on created week delivery prediction
    */
   public findProductById(productId: string): PromiseLike<ProductModel> {
     return this.sequelize.models.WeekDeliveryPrediction.findOne({
@@ -2392,6 +2393,59 @@ export class Models {
         id: productId
       }
     });
+  }
+
+  /**
+   * Lists products
+   * 
+   * @param itemGroupId itemGroupId 
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+    const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
+
+    return this.WeekDeliveryPrediction.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting products. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param itemGroupId itemGroupId
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @return where clause
+   */
+  private createListProductsWhere(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (contractUserId) {
+      where.userId = contractUserId;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
   }
 
 }

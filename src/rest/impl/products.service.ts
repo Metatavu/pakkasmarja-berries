@@ -128,10 +128,15 @@ export default class ProductsServiceImpl extends ProductsService {
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
     const loggedUserId = this.getLoggedUserId(req);
-    if (!loggedUserId !== contractUserId && !this.hasRealmRole(req, ApplicationRoles.LIST_OTHER_USER_PRODUCTS)) {
+    if (contractUserId && !loggedUserId !== contractUserId && !this.hasRealmRole(req, ApplicationRoles.LIST_OTHER_USER_PRODUCTS)) {
       this.sendForbidden(res, "You have no permission to list other users products");
       return;
     }
+
+    const products: ProductModel[] = await models.listProducts(databaseItemGroupId, itemGroupType, contractUserId, firstResult, maxResults);
+    res.status(200).send(await Promise.all(products.map((product) => {
+      return this.translateDatabaseProduct(product);
+    })));
   }
 
   /**
@@ -199,7 +204,7 @@ export default class ProductsServiceImpl extends ProductsService {
   /**
    * Translates database product into REST entity
    * 
-   * @param {ProductModel} product product 
+   * @param product product 
    */
   private async translateDatabaseProduct(product: ProductModel) {
     const itemGroup = await models.findItemGroupById(product.itemGroupId);
