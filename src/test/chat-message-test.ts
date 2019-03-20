@@ -229,7 +229,7 @@ const deleteChatMessage = async (token: string, threadId: number, messageId: num
  * @return updated message
  */
 const updateMessageCreated = async (token: string, message: ChatMessage, createdAt: Date) => {
-  database.executeSql(`UPDATE Messages SET createdAt = FROM_UNIXTIME(${createdAt.getTime() / 1000}) WHERE id = ${message.id}`);
+  await database.executeSql(`UPDATE Messages SET createdAt = FROM_UNIXTIME(${createdAt.getTime() / 1000}) WHERE id = ${message.id}`);
   return findChatMessage(token, message.threadId, message.id!);
 }
 
