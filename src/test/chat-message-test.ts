@@ -140,7 +140,12 @@ const listChatMessages = (token: string, threadId: number, createdBefore?: Date,
     .set("Accept", "application/json")
     .expect(200)
     .then((response) => {
-      return response.body;
+      const result: ChatMessage[] = response.body;
+      result.sort((a, b) => {
+        return a.id! - b.id!;
+      });
+      
+      return result;
     });  
 }
 

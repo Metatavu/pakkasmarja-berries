@@ -64,9 +64,15 @@ const listChatGroups = (token: string): Promise<ChatGroup[]> => {
     .set("Accept", "application/json")
     .expect(200)
     .then((response) => {
-      return response.body;
+      const groups: ChatGroup[] = response.body;
+      groups.sort((a, b) => {
+        return a.id! - b.id!;
+      });
+      
+      return groups;
     });  
 }
+
 
 /**
  * Updates chat group
@@ -177,14 +183,6 @@ test("Lists chat group", async (t) => {
   ]);
 
   const foundGroups = await listChatGroups(token);
-
-  createdGroups.sort((a, b) => {
-    return a.id! - b.id!;
-  });
-
-  foundGroups.sort((a, b) => {
-    return a.id! - b.id!;
-  });
 
   t.deepEqual(createdGroups, foundGroups);
 
