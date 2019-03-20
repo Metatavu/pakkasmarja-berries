@@ -53,7 +53,7 @@ export default abstract class ProductsService extends AbstractService {
    * @summary Lists products
    * Accepted parameters:
     * - (query) string itemGroupId - filter by item group id
-    * - (query) ItemGroupType itemGroupType - filter by item group id
+    * - (query) ItemGroupCategory itemGroupCategory - filter by item group id
     * - (query) string contractUserId - output only products what specified user has contract in
     * - (query) number firstResult - Offset of first result. Defaults to 0
     * - (query) number maxResults - Max results. Defaults to 5

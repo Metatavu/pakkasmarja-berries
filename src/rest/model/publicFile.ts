@@ -11,18 +11,12 @@
  */
 
 
-export interface Price { 
+export interface PublicFile { 
     id: string  | null;
-    group: string ;
-    year: number ;
-    unit: string ;
-    price: string ;
+    url: string ;
 }    
 
-export interface PriceOpt { 
+export interface PublicFileOpt { 
     id?: string;
-    group?: string;
-    year?: number;
-    unit?: string;
-    price?: string;
+    url?: string;
 }

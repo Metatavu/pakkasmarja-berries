@@ -8,7 +8,7 @@ import ContractsService from "../api/contracts.service";
 import ApplicationRoles from "../application-roles";
 import models, { ContractModel, ItemGroupModel, ContractDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel } from "../../models";
 import { getLogger, Logger } from "log4js";
-import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, Price } from "../model/models";
+import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, ItemGroupPrice } from "../model/models";
 import * as toArray from "stream-to-array";
 import * as pug from "pug";
 import * as Mustache from "mustache";
@@ -611,7 +611,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You have no permission to list this contracts prices");
       return;
     }
-
+    
     const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
     const userId = listAll ? null : this.getLoggedUserId(req);
@@ -848,8 +848,8 @@ export default class ContractsServiceImpl extends ContractsService {
    * @param {ItemGroupPrice} databasePrice Sequelize item group price
    * @param {ItemGroup} itemGroup Sequelize item group
    */
-  translateItemGroupPrice(databasePrice: ItemGroupPriceModel, itemGroup: ItemGroupModel) {
-    const result: Price = {
+  private translateItemGroupPrice(databasePrice: ItemGroupPriceModel, itemGroup: ItemGroupModel) {
+    const result: ItemGroupPrice = {
       "id": databasePrice.externalId,
       "group": databasePrice.groupName,
       "unit": databasePrice.unit,

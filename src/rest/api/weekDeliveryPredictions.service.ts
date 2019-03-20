@@ -53,7 +53,7 @@ export default abstract class WeekDeliveryPredictionsService extends AbstractSer
    * @summary Lists weekDeliveryPredictions
    * Accepted parameters:
     * - (query) string itemGroupId - filter by item group id
-    * - (query) ItemGroupType itemGroupType - filter by item group id
+    * - (query) ItemGroupCategory itemGroupCategory - filter by item group id
     * - (query) string userId - filter by user id
     * - (query) number weekNumber - filter by week number
     * - (query) number year - filter by year
