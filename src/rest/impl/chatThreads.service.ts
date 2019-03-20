@@ -47,7 +47,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @inheritdoc
    */
   public async deleteChatThread(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
+    const chatThreadId = parseInt(req.params.chatThreadId);
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
       this.sendNotFound(res);
