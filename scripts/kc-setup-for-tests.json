@@ -8454,6 +8454,34 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
+    }, {
+      "id" : "aac81c2e-4ae9-11e9-8646-d663bd873d93",
+      "name" : "create-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac8202a-4ae9-11e9-8646-d663bd873d93",
+      "name" : "update-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac821ce-4ae9-11e9-8646-d663bd873d93",
+      "name" : "delete-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac826a6-4ae9-11e9-8646-d663bd873d93",
+      "name" : "list-other-user-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
     } ],
     "client" : {
       "delete me" : [ ],

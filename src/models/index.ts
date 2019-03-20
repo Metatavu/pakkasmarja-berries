@@ -237,6 +237,18 @@ export interface WeekDeliveryPredictionModel {
   days: number;
 }
 
+/**
+ * Interface for product
+ */
+export interface ProductModel { 
+  id: string | null;
+  itemGroupId: number;
+  name: string;
+  units: number;
+  unitSize: number;
+  unitName: string;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -517,6 +529,17 @@ export class Models {
       weekNumber: { type: Sequelize.INTEGER, allowNull: false },
       year: { type: Sequelize.INTEGER, allowNull: false },
       days: { type: Sequelize.TINYINT, allowNull: false },
+      createdAt: { type: Sequelize.DATE, allowNull: false },
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    this.defineModel("Product", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      units: { type: Sequelize.INTEGER, allowNull: false },
+      unitSize: { type: Sequelize.INTEGER, allowNull: false },
+      unitName: { type: Sequelize.STRING(191), allowNull: false },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
@@ -2291,6 +2314,83 @@ export class Models {
     }
 
     return where;
+  }
+
+  // Products
+
+  /**
+   * Create Product
+   * 
+   * @param {string} id id
+   * @param {int} itemGroupId item group id
+   * @param {string} name name
+   * @param {int} units units
+   * @param {int} unitSize unitSize
+   * @param {string} unitName unitName
+   * @return {Promise} promise on created product
+   */
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
+    return this.sequelize.models.Product.create({
+      id: id,
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    });
+  }
+
+  /**
+   * Update Product
+   * 
+   * @param {string} id id
+   * @param {int} itemGroupId item group id
+   * @param {string} name name
+   * @param {int} units units
+   * @param {int} unitSize unitSize
+   * @param {string} unitName unitName
+   * @return {Promise} promise on created product
+   */
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
+    return this.sequelize.models.Product.update({
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Delete prodcut
+   * 
+   * @param {string} productId productId
+   * @return {Promise} promise on created week delivery prediction
+   */
+  public deleteProductById(productId: string): PromiseLike<number> {
+    return this.sequelize.models.PRoduct.destroy({
+      where: {
+        id: productId
+      }
+    });
+  }
+
+  /**
+   * Find product by id
+   * 
+   * @param {string} productId productId
+   * @return {Promise} promise on created week delivery prediction
+   */
+  public findProductById(productId: string): PromiseLike<ProductModel> {
+    return this.sequelize.models.WeekDeliveryPrediction.findOne({
+      where: {
+        id: productId
+      }
+    });
   }
 
 }

@@ -150,4 +150,32 @@ export default class ApplicationRoles {
     return "create-chat-groups";
   }
 
+  /**
+   * Role that allows users create products
+   */
+  static get CREATE_PRODUCTS() {
+    return "create-products";
+  }
+
+  /**
+   * Role that allows users create products
+   */
+  static get UPDATE_PRODUCTS() {
+    return "update-products";
+  }
+
+   /**
+   * Role that allows users create products
+   */
+  static get DELETE_PRODUCTS() {
+    return "delete-products";
+  }
+
+  /**
+   * Role that allows user to list other user products
+   */
+  static get LIST_OTHER_USER_PRODUCTS() {
+    return "list-other-user-products";
+  }
+
 }
