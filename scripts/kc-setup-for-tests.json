@@ -8433,6 +8433,27 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
+    }, {
+      "id" : "74c937e8-4a3a-11e9-8646-d663bd873d93",
+      "name" : "update-other-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "cd315b42-4a3d-11e9-8646-d663bd873d93",
+      "name" : "list-all-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "9cbb92e2-4a3e-11e9-8646-d663bd873d93",
+      "name" : "delete-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
     } ],
     "client" : {
       "delete me" : [ ],

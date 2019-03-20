@@ -225,6 +225,19 @@ export interface OperationReportItemModel {
   updatedAt: Date
 }
 
+/**
+ * Interface for week delivery prediction
+ */
+export interface WeekDeliveryPredictionModel { 
+  id: string | null;
+  itemGroupId: number;
+  userId: string;
+  amount: number;
+  weekNumber: number;
+  year: number;
+  days: number;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -233,7 +246,8 @@ export class Models {
   private Thread: Sequelize.Model<any, ThreadModel>;
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   private Message: Sequelize.Model<any, MessageModel>;
-  
+  private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
+
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
     this.defineModels();
@@ -496,6 +510,18 @@ export class Models {
       operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OperationReport, key: "id" } },
       completed: { type: Sequelize.BOOLEAN, allowNull: false },
       success: { type: Sequelize.BOOLEAN, allowNull: false }
+    });
+
+    this.WeekDeliveryPrediction = this.defineModel("WeekDeliveryPrediction", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ItemGroup, key: "id" } },
+      userId: { type: Sequelize.STRING(191), allowNull: false },
+      amount: { type: Sequelize.BIGINT, allowNull: false },
+      weekNumber: { type: Sequelize.INTEGER, allowNull: false },
+      year: { type: Sequelize.INTEGER, allowNull: false },
+      days: { type: Sequelize.TINYINT, allowNull: false },
+      createdAt: { type: Sequelize.DATE, allowNull: false },
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
   }
 
@@ -2129,6 +2155,150 @@ export class Models {
         text: text 
       } 
     });
+  }
+
+  // Week delivery predictions
+
+  /**
+   * Create week delivery prediction
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param userId user id
+   * @param amount amount
+   * @param weekNumber week number
+   * @param year year
+   * @param days days
+   * @return promise on created week delivery prediction
+   */
+  public createWeekDeliveryPrediction(id: string, itemGroupId: number, userId: string, amount: number, weekNumber: number, year: number, days: number): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.WeekDeliveryPrediction.create({
+      id: id,
+      itemGroupId: itemGroupId,
+      userId: userId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    });
+  }
+
+  /**
+   * Find week delivery prediction by id
+   * 
+   * @param weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return promise on created week delivery prediction
+   */
+  public findWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.WeekDeliveryPrediction.findOne({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Delete week delivery prediction
+   * 
+   * @param weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return promise on created week delivery prediction
+   */
+  public deleteWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<number> {
+    return this.WeekDeliveryPrediction.destroy({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Updates WeekDeliveryPrediction
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param amount amount
+   * @param weekNumber week number
+   * @param year year
+   * @param days days
+   * @return promise on updated week delivery prediction
+   */
+  public updateWeekDeliveryPrediction(id: string, itemGroupId: number, amount: number, weekNumber: number, year: number, days: number): PromiseLike<[number, any]>  {
+    return this.WeekDeliveryPrediction.update({
+      itemGroupId: itemGroupId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Lists week delivery predictions
+   * 
+   * @param itemGroupId 
+   * @param itemGroupType 
+   * @param userId 
+   * @param weekNumber 
+   * @param year 
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
+    const where = this.createListWeekDeliveryPredictionsWhere(itemGroupId, itemGroupType, userId, weekNumber, year);
+
+    return this.WeekDeliveryPrediction.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting week delivery predictions. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param itemGroupId 
+   * @param itemGroupType 
+   * @param userId 
+   * @param weekNumber 
+   * @param year  
+   * @return where clause
+   */
+  private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (weekNumber) {
+      where.weekNumber = weekNumber;
+    }
+
+    if (year) {
+      where.year = year;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
   }
 
 }

@@ -12,6 +12,7 @@ import NewsArticlesServiceImpl from './impl/newsArticles.service';
 import OperationReportsServiceImpl from './impl/operationReports.service';
 import OperationsServiceImpl from './impl/operations.service';
 import SignAuthenticationServicesServiceImpl from './impl/signAuthenticationServices.service';
+import WeekDeliveryPredictionsServive from './impl/weekDeliveryPredictions.service';
 
 export default class Api {
 
@@ -44,6 +45,8 @@ export default class Api {
       new OperationsServiceImpl(app, keycloak);
     
       new SignAuthenticationServicesServiceImpl(app, keycloak);
+      
+      new WeekDeliveryPredictionsServive(app, keycloak);
     
   }
 }

@@ -18,6 +18,27 @@ export default class ApplicationRoles {
   }
 
   /**
+   * Role that allows users to update other peoples week delivery predictions
+   */
+  static get UPDATE_OTHER_WEEK_DELIVERY_PREDICTION () {
+    return "update-other-week-delivery-predictions";
+  }
+
+  /**
+   * Role that allows users to list other peoples week delivery predictions
+   */
+  static get LIST_ALL_WEEK_DELIVERY_PREDICTION () {
+    return "list-all-week-delivery-predictions";
+  }
+
+  /**
+   * Role that allows users to delete week delivery predictions
+   */
+  static get DELETE_WEEK_DELIVERY_PREDICTIONS () {
+    return "delete-week-delivery-predictions";
+  }
+
+  /**
    * Role that allows users create new contracts
    */
   static get CREATE_CONTRACT ()  {

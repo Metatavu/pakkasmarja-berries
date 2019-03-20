@@ -23,3 +23,4 @@ export * from './operationReport';
 export * from './operationReportItem';
 export * from './price';
 export * from './signAuthenticationService';
+export * from './weekDeliveryPrediction';
