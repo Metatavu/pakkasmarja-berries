@@ -7,7 +7,7 @@
     up: async (query, Sequelize) => {
       
       await query.createTable("WeekDeliveryPredictions", {
-        id: { type: Sequelize.UUID, primaryKey: true, validate: { notNull: true }, allowNull: false, validate: { isUUID: 4 } },
+        id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
         itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
         userId: { type: Sequelize.STRING(191), allowNull: false },
         amount: { type: Sequelize.BIGINT, allowNull: false },
