@@ -334,10 +334,18 @@ test("Lists chat messages", async (t) => {
     await createChatMessage(token, createdChatThreads[0].id!, "Message 1.3")
   ]); 
 
+  createdMessages1.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
   const createdMessages2 = await Promise.all([
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.1"),
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.2")
   ]); 
+
+  createdMessages2.sort((a, b) => {
+    return a.id! - b.id!;
+  });
 
   t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!), createdMessages1);
   t.deepEqual(await listChatMessages(token, createdChatThreads[1].id!), createdMessages2);
