@@ -68,8 +68,8 @@ export default class ProductsServiceImpl extends ProductsService {
     }
 
     const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName);
-    res.status(200).send(this.translateDatabaseProduct(createdProduct));
-  }
+    res.status(200).send(await this.translateDatabaseProduct(createdProduct));
+  } 
   
   /**
    * @inheritdoc
@@ -81,8 +81,7 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const loggedUserId = this.getLoggedUserId(req);
-    if (!loggedUserId && !this.hasRealmRole(req, ApplicationRoles.DELETE_PRODUCTS)) {
+    if (!this.hasRealmRole(req, ApplicationRoles.DELETE_PRODUCTS)) {
       this.sendForbidden(res, "You have no permission to delete product");
       return;
     }
@@ -118,17 +117,17 @@ export default class ProductsServiceImpl extends ProductsService {
    * @inheritdoc
    */
   public async listProducts(req: Request, res: Response) {
-    const itemGroupId = req.params.itemGroupId || null;
-    const itemGroupType = req.params.itemGroupType || null;
-    const contractUserId = req.params.contractUserId || null;
-    const firstResult = req.params.firstResult || 0;
-    const maxResults = req.params.maxResults || 5;
+    const itemGroupId = req.query.itemGroupId || null;
+    const itemGroupType = req.query.itemGroupType || null;
+    const contractUserId = req.query.contractUserId || null;
+    const firstResult = req.query.firstResult || 0;
+    const maxResults = req.query.maxResults || 5;
 
     const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
     const loggedUserId = this.getLoggedUserId(req);
-    if (contractUserId && !loggedUserId !== contractUserId && !this.hasRealmRole(req, ApplicationRoles.LIST_OTHER_USER_PRODUCTS)) {
+    if (contractUserId && loggedUserId !== contractUserId && !this.hasRealmRole(req, ApplicationRoles.LIST_OTHER_USER_PRODUCTS)) {
       this.sendForbidden(res, "You have no permission to list other users products");
       return;
     }
@@ -143,7 +142,7 @@ export default class ProductsServiceImpl extends ProductsService {
    * @inheritdoc
    */
   public async updateProduct(req: Request, res: Response) {
-    const productId = req.body.productId;
+    const productId = req.params.productId;
     if (!productId) {
       this.sendBadRequest(res, "Missing required param productId");
       return;
@@ -198,7 +197,7 @@ export default class ProductsServiceImpl extends ProductsService {
       this.sendNotFound(res);
     }
 
-    res.status(200).send(this.translateDatabaseProduct(product));
+    res.status(200).send(await this.translateDatabaseProduct(product));
   }
 
   /**
@@ -217,7 +216,7 @@ export default class ProductsServiceImpl extends ProductsService {
       "unitSize": product.unitSize,
       "unitName": product.unitName
     };
-    
+
     return result;
   }
 

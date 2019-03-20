@@ -2388,7 +2388,7 @@ export class Models {
    * @return promise on created week delivery prediction
    */
   public findProductById(productId: string): PromiseLike<ProductModel> {
-    return this.sequelize.models.WeekDeliveryPrediction.findOne({
+    return this.Product.findOne({
       where: {
         id: productId
       }
@@ -2408,7 +2408,7 @@ export class Models {
   public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
     const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
 
-    return this.WeekDeliveryPrediction.findAll({ 
+    return this.Product.findAll({ 
       where: where, 
       offset: firstResult, 
       limit: maxResults
