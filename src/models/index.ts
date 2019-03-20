@@ -224,6 +224,19 @@ export interface OperationReportItemModel {
   updatedAt: Date
 }
 
+/**
+ * Interface for week delivery prediction
+ */
+export interface WeekDeliveryPredictionModel { 
+  id: string | null;
+  itemGroupId: number;
+  userId: string;
+  amount: number;
+  weekNumber: number;
+  year: number;
+  days: number;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -494,6 +507,18 @@ export class Models {
       operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OperationReport, key: "id" } },
       completed: { type: Sequelize.BOOLEAN, allowNull: false },
       success: { type: Sequelize.BOOLEAN, allowNull: false }
+    });
+
+    this.defineModel("WeekDeliveryPrediction", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ItemGroup, key: "id" } },
+      userId: { type: Sequelize.STRING(191), allowNull: false },
+      amount: { type: Sequelize.BIGINT, allowNull: false },
+      weekNumber: { type: Sequelize.INTEGER, allowNull: false },
+      year: { type: Sequelize.INTEGER, allowNull: false },
+      days: { type: Sequelize.TINYINT, allowNull: false },
+      createdAt: { type: Sequelize.DATE, allowNull: false },
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
   }
 
@@ -2122,6 +2147,148 @@ export class Models {
         text: text 
       } 
     });
+  }
+
+  // Week delivery predictions hiiii
+
+  /**
+   * Create week delivery prediction
+   * 
+   * @param {int} itemGroupId item group id
+   * @param {string} userId user id
+   * @param {int} amount amount
+   * @param {int} weekNumber week number
+   * @param {int} year year
+   * @param {int} days days
+   * @return {Promise} promise on created week delivery prediction
+   */
+  public createWeekDeliveryPrediction(itemGroupId: number, userId: string, amount: number, weekNumber: number, year: number, days: number): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.sequelize.models.WeekDeliveryPrediction.create({
+      itemGroupId: itemGroupId,
+      userId: userId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    });
+  }
+
+  /**
+   * Find week delivery prediction by id
+   * 
+   * @param {string} weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return {Promise} promise on created week delivery prediction
+   */
+  public findWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.sequelize.models.WeekDeliveryPrediction.findOne({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Delete week delivery prediction
+   * 
+   * @param {string} weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return {Promise} promise on created week delivery prediction
+   */
+  public deleteWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<number> {
+    return this.sequelize.models.WeekDeliveryPrediction.destroy({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Updates WeekDeliveryPrediction
+   * 
+   * @param {string} id id
+   * @param {int} itemGroupId item group id
+   * @param {int} amount amount
+   * @param {int} weekNumber week number
+   * @param {int} year year
+   * @param {int} days days
+   * @return {Promise} promise on updated week delivery prediction
+   */
+  public updateWeekDeliveryPrediction(id: string, itemGroupId: number, amount: number, weekNumber: number, year: number, days: number): PromiseLike<[number, any]>  {
+    return this.sequelize.models.WeekDeliveryPrediction.update({
+      itemGroupId: itemGroupId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Lists week delivery predictions
+   * 
+   * @param {integer} itemGroupId 
+   * @param {string} itemGroupType 
+   * @param {string} userId 
+   * @param {integer} weekNumber 
+   * @param {integer} year 
+   * @param {integer} firstResult 
+   * @param {integer} maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
+    const where = this.createListWeekDeliveryPredictionsWhere(itemGroupId, itemGroupType, userId, weekNumber, year);
+
+    return this.sequelize.models.WeekDeliveryPrediction.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting week delivery predictions. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param {integer} itemGroupId 
+   * @param {string} itemGroupType 
+   * @param {string} userId 
+   * @param {integer} weekNumber 
+   * @param {integer} year  
+   * @return {Object} where clause
+   */
+  private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (weekNumber) {
+      where.weekNumber = weekNumber;
+    }
+
+    if (year) {
+      where.year = year;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
   }
 
 }
