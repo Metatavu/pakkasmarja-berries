@@ -5,6 +5,7 @@ import WeekDeliveryPredictionsService from "../api/weekDeliveryPredictions.servi
 import { WeekDeliveryPrediction } from "../model/models";
 import { WeekDeliveryPredictionDays } from '../model/weekDeliveryPredictionDays';
 import ApplicationRoles from "../application-roles";
+import * as uuid from "uuid/v4";
 
 /**
  * Implementation for WeekDeliveryPredictions REST service
@@ -65,7 +66,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
 
     const daysBitValue = this.getDaysBitValue(days);
 
-    const result = await models.createWeekDeliveryPrediction(databaseItemGroup.id, loggedUserId, amount, weekNumber, year, daysBitValue);
+    const result = await models.createWeekDeliveryPrediction(uuid(), databaseItemGroup.id, loggedUserId, amount, weekNumber, year, daysBitValue);
     res.status(200).send(await this.translateDatabaseWeekDeliveryPredictions(result));
   }
 

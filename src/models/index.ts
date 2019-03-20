@@ -1,6 +1,5 @@
 import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
-import * as uuid from "uuid/v4";
 import * as _ from "lodash";
 
 export interface SessionModel {
@@ -250,7 +249,6 @@ export class Models {
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
     this.defineModels();
-    this.beforeCreation();
   }
 
   /**
@@ -521,15 +519,6 @@ export class Models {
       days: { type: Sequelize.TINYINT, allowNull: false },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
-    });
-  }
-
-  /**
-   * Set before create hooks to models
-   */
-  private beforeCreation() {
-    this.sequelize.models.WeekDeliveryPrediction.beforeCreate((weekDeliveryPrediction) => {
-      return weekDeliveryPrediction.id = uuid();
     });
   }
 
@@ -2160,11 +2149,12 @@ export class Models {
     });
   }
 
-  // Week delivery predictions hiiii
+  // Week delivery predictions
 
   /**
    * Create week delivery prediction
    * 
+   * @param {string} id id
    * @param {int} itemGroupId item group id
    * @param {string} userId user id
    * @param {int} amount amount
@@ -2173,8 +2163,9 @@ export class Models {
    * @param {int} days days
    * @return {Promise} promise on created week delivery prediction
    */
-  public createWeekDeliveryPrediction(itemGroupId: number, userId: string, amount: number, weekNumber: number, year: number, days: number): PromiseLike<WeekDeliveryPredictionModel> {
+  public createWeekDeliveryPrediction(id: string, itemGroupId: number, userId: string, amount: number, weekNumber: number, year: number, days: number): PromiseLike<WeekDeliveryPredictionModel> {
     return this.sequelize.models.WeekDeliveryPrediction.create({
+      id: id,
       itemGroupId: itemGroupId,
       userId: userId,
       amount: amount,
