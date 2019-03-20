@@ -312,7 +312,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
       "year": weekDeliveryPrediction.year,
       "days": this.getDaysObject(weekDeliveryPrediction.days)
     };
-
+    
     return result;
   }
 }

@@ -16,6 +16,7 @@
     "email": "devs@metatavu.fi"
   },
   "dependencies": {
+    "@types/uuid": "^3.4.4",
     "async": "2.6.1",
     "basic-auth": "^2.0.1",
     "better-queue": "^3.8.10",
@@ -55,6 +56,7 @@
     "stream-to-array": "^2.3.0",
     "tmp": "0.0.33",
     "umzug": "^2.2.0",
+    "uuid": "^3.3.2",
     "visma-sign-client": "0.0.7",
     "wkhtmltopdf": "^0.3.4",
     "wpapi": "^1.2.1",
