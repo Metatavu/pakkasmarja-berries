@@ -25,7 +25,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * @inheritdoc
    */
-  async createWeekDeliveryPrediction(req: Request, res: Response) {
+  public async createWeekDeliveryPrediction(req: Request, res: Response) {
     const itemGroupId = req.body.itemGroupId;
     if (!itemGroupId) {
       this.sendBadRequest(res, "Missing required param item group id");
@@ -74,7 +74,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * @inheritdoc
    */
-  async deleteWeekDeliveryPrediction(req: Request, res: Response) {
+  public async deleteWeekDeliveryPrediction(req: Request, res: Response) {
     const weekDeliveryPredictionId = req.params.weekDeliveryPredictionId;
     const databaseWeekDeliveryPredication = await models.findWeekDeliveryPredictionById(weekDeliveryPredictionId);
 
@@ -98,7 +98,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * @inheritdoc
    */
-  async findWeekDeliveryPrediction(req: Request, res: Response) {
+  public async findWeekDeliveryPrediction(req: Request, res: Response) {
     const weekDeliveryPredictionId = req.params.weekDeliveryPredictionId;
     const databaseWeekDeliveryPredication = await models.findWeekDeliveryPredictionById(weekDeliveryPredictionId);
 
@@ -121,7 +121,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * @inheritdoc
    */
-  async listWeekDeliveryPredictions(req: Request, res: Response) {
+  public async listWeekDeliveryPredictions(req: Request, res: Response) {
     const itemGroupId = req.query.itemGroupId || null;
     const itemGroupType = req.query.itemGroupType || null;
     const userId = req.query.userId || null;
@@ -154,7 +154,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * @inheritdoc
    */
-  async updateWeekDeliveryPrediction(req: Request, res: Response) {
+  public async updateWeekDeliveryPrediction(req: Request, res: Response) {
     const userId = req.body.userId;
     if (!userId) {
       this.sendNotFound(res);
@@ -226,43 +226,15 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
    * @return bit value number
    */
   private getDaysBitValue(days: WeekDeliveryPredictionDays): number {
-    const MONDAY = 1 << 0;
-    const TUESDAY = 1 << 1;
-    const WEDNESDAY = 1 << 2;
-    const THURSDAY = 1 << 3;
-    const FRIDAY = 1 << 4;
-    const SATURDAY = 1 << 5;
-    const SUNDAY = 1 << 6;
+    const dayBitmasks = this.getDayBitmasks();
 
-    let byteNumber = 0;
+    const byteNumber = Object.keys(dayBitmasks).reduce((previousValue, day) => {
+      if (days[day]) {
+        return previousValue | dayBitmasks[day];
+      }
 
-    if (days['monday']) {
-      byteNumber = byteNumber | MONDAY;
-    }
-
-    if (days['tuesday']) {
-      byteNumber = byteNumber | TUESDAY;
-    }
-
-    if (days['wednesday']) {
-      byteNumber = byteNumber | WEDNESDAY;
-    }
-
-    if (days['thursday']) {
-      byteNumber = byteNumber | THURSDAY;
-    }
-
-    if (days['friday']) {
-      byteNumber = byteNumber | FRIDAY;
-    }
-
-    if (days['saturday']) {
-      byteNumber = byteNumber | SATURDAY;
-    }
-
-    if (days['sunday']) {
-      byteNumber = byteNumber | SUNDAY;
-    }
+      return previousValue;
+    }, 0);
 
     return byteNumber;
   }
@@ -270,29 +242,40 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
   /**
    * Get days object
    * 
-   * @param {integer} days days
-   * @return {WeekDeliveryPredictionDays} days 
+   * @param days days
+   * @return days 
    */
   private getDaysObject(days: number) {
-    const MONDAY = 1 << 0;
-    const TUESDAY = 1 << 1;
-    const WEDNESDAY = 1 << 2;
-    const THURSDAY = 1 << 3;
-    const FRIDAY = 1 << 4;
-    const SATURDAY = 1 << 5;
-    const SUNDAY = 1 << 6;
+    const dayBitmasks = this.getDayBitmasks();
 
     const daysObject: WeekDeliveryPredictionDays = {
-      monday: !!(days & MONDAY),
-      tuesday: !!(days & TUESDAY),
-      wednesday: !!(days & WEDNESDAY),
-      thursday: !!(days & THURSDAY),
-      friday: !!(days & FRIDAY),
-      saturday: !!(days & SATURDAY),
-      sunday: !!(days & SUNDAY),
+      monday: !!(days & dayBitmasks.monday),
+      tuesday: !!(days & dayBitmasks.tuesday),
+      wednesday: !!(days & dayBitmasks.wednesday),
+      thursday: !!(days & dayBitmasks.thursday),
+      friday: !!(days & dayBitmasks.friday),
+      saturday: !!(days & dayBitmasks.saturday),
+      sunday: !!(days & dayBitmasks.sunday),
     }
 
     return daysObject;
+  }
+
+  /**
+   * Returns bitmasks for days
+   * 
+   * @return Object of days and bit masks
+   */
+  private getDayBitmasks() {
+    return {
+      monday: 1 << 0,
+      tuesday: 1 << 1,
+      wednesday: 1 << 2,
+      thursday: 1 << 3,
+      friday: 1 << 4,
+      saturday: 1 << 5,
+      sunday: 1 << 6
+    };
   }
   
   /**
