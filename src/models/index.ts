@@ -860,6 +860,46 @@ export class Models {
   }
 
   /**
+   * Lists messages
+   * 
+   * @param threadId thread id
+   * @param createdBefore created before
+   * @param createdAfter created after
+   * @param firstResult first result
+   * @param maxResults max results
+   * @return promise for messages
+   */
+  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
+    if (!threadId) {
+      return Bluebird.resolve([]);
+    }
+
+    const where: { [key: string]: any } = {
+      threadId : threadId
+    };
+
+    if (createdAfter && createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.between]: [createdAfter, createdBefore]
+      };
+    } else if (createdAfter) {
+      where.createdAt = {
+        [Sequelize.Op.gt]: createdAfter
+      };
+    } else if (createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.lt]: createdBefore
+      };
+    }
+
+    return this.sequelize.models.Message.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults, 
+      order: [ [ "createdAt", "DESC" ] ] });
+  }
+
+  /**
    * Updates a message
    * 
    * @param id id

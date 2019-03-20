@@ -6,6 +6,20 @@ import mqtt from "./mqtt";
 import ApplicationRoles from "../rest/application-roles";
 
 /**
+ * Sorts list by id
+ * 
+ * @param list list
+ * @return sorted list
+ */
+const sorted = (list: any[]) => {
+  list.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+  
+  return list;
+}
+
+/**
  * Creates chat group
  * 
  * @param token token
@@ -64,9 +78,10 @@ const listChatGroups = (token: string): Promise<ChatGroup[]> => {
     .set("Accept", "application/json")
     .expect(200)
     .then((response) => {
-      return response.body;
+      return sorted(response.body);
     });  
 }
+
 
 /**
  * Updates chat group
@@ -170,21 +185,13 @@ test("Updates chat group", async (t) => {
 test("Lists chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
-  const createdGroups = await Promise.all([
+  const createdGroups = sorted(await Promise.all([
     createChatGroup(token, "Group 1", "CHAT"),
     createChatGroup(token, "Group 2", "CHAT"),
     createChatGroup(token, "Group 3", "CHAT"),
-  ]);
+  ]));
 
   const foundGroups = await listChatGroups(token);
-
-  createdGroups.sort((a, b) => {
-    return a.id! - b.id!;
-  });
-
-  foundGroups.sort((a, b) => {
-    return a.id! - b.id!;
-  });
 
   t.deepEqual(createdGroups, foundGroups);
 
@@ -201,14 +208,14 @@ test("Lists chat group permissions", async (t) => {
   const token1 = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const token2 = await auth.getTokenUser2([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
-  const createdGroups1 = await Promise.all([
+  const createdGroups1 = sorted(await Promise.all([
     createChatGroup(token1, "Group 1", "CHAT"),
     createChatGroup(token1, "Group 2", "CHAT"),
-  ]);
+  ]));
 
-  const createdGroups2 = await Promise.all([
+  const createdGroups2 = sorted(await Promise.all([
     createChatGroup(token2, "Group 3", "CHAT"),
-  ]);
+  ]));
 
   const foundGroups1 = await listChatGroups(token1);
   const foundGroups2 = await listChatGroups(token2);
