@@ -39,7 +39,9 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
 
     mqtt.publish("chatmessages", {
       "operation": "CREATED",
-      "id": message.id
+      "messageId": message.id,
+      "threadId": thread.id,
+      "groupId": chatGroup.id
     });
   }
 
