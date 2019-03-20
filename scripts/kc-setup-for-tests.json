@@ -8477,7 +8477,7 @@
       "attributes" : { }
     }, {
       "id" : "aac826a6-4ae9-11e9-8646-d663bd873d93",
-      "name" : "list-other-user-products",
+      "name" : "list-other-users-contract-products",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "pm",

@@ -174,8 +174,8 @@ export default class ApplicationRoles {
   /**
    * Role that allows user to list other user products
    */
-  static get LIST_OTHER_USER_PRODUCTS() {
-    return "list-other-user-products";
+  static get LIST_OTHER_USERS_CONTRACT_PRODUCTS() {
+    return "list-other-users-contract-products";
   }
 
 }
