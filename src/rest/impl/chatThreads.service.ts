@@ -71,7 +71,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     mqtt.publish("chatthreads", {
       "operation": "DELETED",
-      "id": thread.id
+      "id": chatThreadId
     });
   }
 
