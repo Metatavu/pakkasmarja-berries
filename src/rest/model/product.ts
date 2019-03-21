@@ -11,18 +11,20 @@
  */
 
 
-export interface Price { 
+export interface Product { 
     id: string  | null;
-    group: string ;
-    year: number ;
-    unit: string ;
-    price: string ;
+    itemGroupId: string ;
+    name: string ;
+    units: number ;
+    unitSize: number ;
+    unitName: string ;
 }    
 
-export interface PriceOpt { 
+export interface ProductOpt { 
     id?: string;
-    group?: string;
-    year?: number;
-    unit?: string;
-    price?: string;
+    itemGroupId?: string;
+    name?: string;
+    units?: number;
+    unitSize?: number;
+    unitName?: string;
 }

@@ -18,6 +18,27 @@ export default class ApplicationRoles {
   }
 
   /**
+   * Role that allows users to update other peoples week delivery predictions
+   */
+  static get UPDATE_OTHER_WEEK_DELIVERY_PREDICTION () {
+    return "update-other-week-delivery-predictions";
+  }
+
+  /**
+   * Role that allows users to list other peoples week delivery predictions
+   */
+  static get LIST_ALL_WEEK_DELIVERY_PREDICTION () {
+    return "list-all-week-delivery-predictions";
+  }
+
+  /**
+   * Role that allows users to delete week delivery predictions
+   */
+  static get DELETE_WEEK_DELIVERY_PREDICTIONS () {
+    return "delete-week-delivery-predictions";
+  }
+
+  /**
    * Role that allows users create new contracts
    */
   static get CREATE_CONTRACT ()  {
@@ -127,6 +148,34 @@ export default class ApplicationRoles {
    */
   static get CREATE_CHAT_GROUPS() {
     return "create-chat-groups";
+  }
+
+  /**
+   * Role that allows users create products
+   */
+  static get CREATE_PRODUCTS() {
+    return "create-products";
+  }
+
+  /**
+   * Role that allows users create products
+   */
+  static get UPDATE_PRODUCTS() {
+    return "update-products";
+  }
+
+   /**
+   * Role that allows users create products
+   */
+  static get DELETE_PRODUCTS() {
+    return "delete-products";
+  }
+
+  /**
+   * Role that allows user to list other user products
+   */
+  static get LIST_OTHER_USERS_CONTRACT_PRODUCTS() {
+    return "list-other-users-contract-products";
   }
 
 }

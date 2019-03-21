@@ -30,7 +30,7 @@ export default abstract class ItemGroupsService extends AbstractService {
    * Creates an item group price
    * @summary Creates item group price
    * Accepted parameters:
-    * - (body) Price body - Payload
+    * - (body) ItemGroupPrice body - Payload
     * - (path) string itemGroupId - item group id
   */
   public abstract createItemGroupPrice(req: Request, res: Response): Promise<void>;
@@ -120,7 +120,7 @@ export default abstract class ItemGroupsService extends AbstractService {
    * Updates a item group price
    * @summary Update item group price
    * Accepted parameters:
-    * - (body) Price body - Payload
+    * - (body) ItemGroupPrice body - Payload
     * - (path) string itemGroupId - item group id
     * - (path) string priceId - price id
   */

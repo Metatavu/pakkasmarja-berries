@@ -8433,6 +8433,55 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
+    }, {
+      "id" : "74c937e8-4a3a-11e9-8646-d663bd873d93",
+      "name" : "update-other-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "cd315b42-4a3d-11e9-8646-d663bd873d93",
+      "name" : "list-all-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "9cbb92e2-4a3e-11e9-8646-d663bd873d93",
+      "name" : "delete-week-delivery-predictions",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac81c2e-4ae9-11e9-8646-d663bd873d93",
+      "name" : "create-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac8202a-4ae9-11e9-8646-d663bd873d93",
+      "name" : "update-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac821ce-4ae9-11e9-8646-d663bd873d93",
+      "name" : "delete-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "aac826a6-4ae9-11e9-8646-d663bd873d93",
+      "name" : "list-other-users-contract-products",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
     } ],
     "client" : {
       "delete me" : [ ],

@@ -3,6 +3,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import { ChatGroup, ChatGroupType, ChatThread, ChatMessage } from "../rest/model/models";
 import mqtt from "./mqtt";
+import database from "./database";
 import ApplicationRoles from "../rest/application-roles";
 
 /**
@@ -105,7 +106,7 @@ const createChatMessage = (token: string, threadId: number, contents: string): P
  * @param expectStatus expected http status. Defaults to 200
  * @returns promise for chat group
  */
-const findChatMessage = (token: string, threadId: number, messageId: number, expectStatus?: number): Promise<ChatGroup> => {
+const findChatMessage = (token: string, threadId: number, messageId: number, expectStatus?: number): Promise<ChatMessage> => {
   return request("http://localhost:3002")
     .get(`/rest/v1/chatThreads/${threadId}/messages/${messageId}`)
     .set("Authorization", `Bearer ${token}`)
@@ -123,14 +124,29 @@ const findChatMessage = (token: string, threadId: number, messageId: number, exp
  * @param threadId thread id
  * @returns promise for chat groups
  */
-const listChatMessages = (token: string, threadId: number): Promise<ChatMessage[]> => {
+const listChatMessages = (token: string, threadId: number, createdBefore?: Date, createdAfter?: Date): Promise<ChatMessage[]> => {
+  const query: string[] = [];
+
+  if (createdBefore) {
+    query.push(`createdBefore=${createdBefore.toISOString()}`);
+  }
+
+  if (createdAfter) {
+    query.push(`createdAfter=${createdAfter.toISOString()}`);
+  }
+  
   return request("http://localhost:3002")
-  .get(`/rest/v1/chatThreads/${threadId}/messages`)
+    .get(`/rest/v1/chatThreads/${threadId}/messages?${query.join("&")}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(200)
     .then((response) => {
-      return response.body;
+      const result: ChatMessage[] = response.body;
+      result.sort((a, b) => {
+        return a.id! - b.id!;
+      });
+      
+      return result;
     });  
 }
 
@@ -211,6 +227,35 @@ const deleteChatMessage = async (token: string, threadId: number, messageId: num
     .expect(204);
 }
 
+/**
+ * Updates message createdAt value 
+ * 
+ * @param token token
+ * @param message message
+ * @param createdAt createdAt
+ * @return updated message
+ */
+const updateMessageCreated = async (token: string, message: ChatMessage, createdAt: Date) => {
+  await database.executeSql(`UPDATE Messages SET createdAt = FROM_UNIXTIME(${createdAt.getTime() / 1000}) WHERE id = ${message.id}`);
+  return findChatMessage(token, message.threadId, message.id!);
+}
+
+/**
+ * Returns Date object
+ * 
+ * @param year year
+ * @param month month
+ * @param date date
+ * @returns Date object
+ */
+const getDate = (year: number, month: number, date: number) => {
+  const result = new Date();
+  result.setFullYear(year);
+  result.setMonth(month);
+  result.setDate(date);
+  return result;
+}
+
 test("Create chat message", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   
@@ -222,7 +267,9 @@ test("Create chat message", async (t) => {
 
     await mqtt.expectMessage({
       "operation": "CREATED",
-      "id": createdChatThread.id
+      "messageId": createdChatMessage.id,
+      "threadId": createdChatThread.id,
+      "groupId": createdChatGroup.id
     });    
     
     await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
@@ -290,16 +337,37 @@ test("Lists chat messages", async (t) => {
 
   const createdMessages1 = await Promise.all([
     await createChatMessage(token, createdChatThreads[0].id!, "Message 1.1"),
-    await createChatMessage(token, createdChatThreads[0].id!, "Message 1.2")
+    await createChatMessage(token, createdChatThreads[0].id!, "Message 1.2"),
+    await createChatMessage(token, createdChatThreads[0].id!, "Message 1.3")
   ]); 
+
+  createdMessages1.sort((a, b) => {
+    return a.id! - b.id!;
+  });
 
   const createdMessages2 = await Promise.all([
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.1"),
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.2")
   ]); 
 
+  createdMessages2.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
   t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!), createdMessages1);
   t.deepEqual(await listChatMessages(token, createdChatThreads[1].id!), createdMessages2);
+
+  const messageCreated1 = getDate(2017, 3, 2);
+  const messageCreated2 = getDate(2017, 3, 4);
+  const messageCreated3 = getDate(2017, 3, 6);
+
+  createdMessages1[0] = await updateMessageCreated(token, createdMessages1[0], messageCreated1);
+  createdMessages1[1] = await updateMessageCreated(token, createdMessages1[1], messageCreated2);
+  createdMessages1[2] = await updateMessageCreated(token, createdMessages1[2], messageCreated3);
+
+  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 3), undefined), [ createdMessages1[0] ]);
+  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, undefined, getDate(2017, 3, 5)), [ createdMessages1[2] ]);
+  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 5), getDate(2017, 3, 3)), [ createdMessages1[1] ]);
 
   await Promise.all(createdMessages1.map((message) => {
     return deleteChatMessage(token, message.threadId, message.id!);

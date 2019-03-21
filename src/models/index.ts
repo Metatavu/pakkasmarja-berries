@@ -215,6 +215,32 @@ export interface OperationReportItemModel {
   updatedAt: Date
 }
 
+/**
+ * Interface for week delivery prediction
+ */
+export interface WeekDeliveryPredictionModel { 
+  id: string | null;
+  itemGroupId: number;
+  userId: string;
+  amount: number;
+  weekNumber: number;
+  year: number;
+  days: number;
+}
+
+/**
+ * Interface for product
+ */
+export interface ProductModel { 
+  id: string | null;
+  itemGroupId: number;
+  name: string;
+  units: number;
+  unitSize: number;
+  unitName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const PRINT_MODEL_INTERFACES = false;
 
@@ -224,7 +250,9 @@ export class Models {
   private Thread: Sequelize.Model<any, ThreadModel>;
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   private Message: Sequelize.Model<any, MessageModel>;
-  
+  private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
+  private Product: Sequelize.Model<any, ProductModel>;
+
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
     this.defineModels();
@@ -479,6 +507,27 @@ export class Models {
       operationReportId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OperationReport, key: "id" } },
       completed: { type: Sequelize.BOOLEAN, allowNull: false },
       success: { type: Sequelize.BOOLEAN, allowNull: false }
+    });
+
+    this.WeekDeliveryPrediction = this.defineModel("WeekDeliveryPrediction", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ItemGroup, key: "id" } },
+      userId: { type: Sequelize.STRING(191), allowNull: false },
+      amount: { type: Sequelize.BIGINT, allowNull: false },
+      weekNumber: { type: Sequelize.INTEGER, allowNull: false },
+      year: { type: Sequelize.INTEGER, allowNull: false },
+      days: { type: Sequelize.TINYINT, allowNull: false },
+      createdAt: { type: Sequelize.DATE, allowNull: false },
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    this.Product = this.defineModel("Product", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      units: { type: Sequelize.INTEGER, allowNull: false },
+      unitSize: { type: Sequelize.INTEGER, allowNull: false },
+      unitName: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -814,6 +863,46 @@ export class Models {
     }
     
     return this.sequelize.models.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
+  }
+
+  /**
+   * Lists messages
+   * 
+   * @param threadId thread id
+   * @param createdBefore created before
+   * @param createdAfter created after
+   * @param firstResult first result
+   * @param maxResults max results
+   * @return promise for messages
+   */
+  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
+    if (!threadId) {
+      return Bluebird.resolve([]);
+    }
+
+    const where: { [key: string]: any } = {
+      threadId : threadId
+    };
+
+    if (createdAfter && createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.between]: [createdAfter, createdBefore]
+      };
+    } else if (createdAfter) {
+      where.createdAt = {
+        [Sequelize.Op.gt]: createdAfter
+      };
+    } else if (createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.lt]: createdBefore
+      };
+    }
+
+    return this.sequelize.models.Message.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults, 
+      order: [ [ "createdAt", "DESC" ] ] });
   }
 
   /**
@@ -2092,6 +2181,280 @@ export class Models {
         text: text 
       } 
     });
+  }
+
+  // Week delivery predictions
+
+  /**
+   * Create week delivery prediction
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param userId user id
+   * @param amount amount
+   * @param weekNumber week number
+   * @param year year
+   * @param days days
+   * @return promise on created week delivery prediction
+   */
+  public createWeekDeliveryPrediction(id: string, itemGroupId: number, userId: string, amount: number, weekNumber: number, year: number, days: number): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.WeekDeliveryPrediction.create({
+      id: id,
+      itemGroupId: itemGroupId,
+      userId: userId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    });
+  }
+
+  /**
+   * Find week delivery prediction by id
+   * 
+   * @param weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return promise on created week delivery prediction
+   */
+  public findWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<WeekDeliveryPredictionModel> {
+    return this.WeekDeliveryPrediction.findOne({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Delete week delivery prediction
+   * 
+   * @param weekDeliveryPredictionId weekDeliveryPredictionId
+   * @return promise on created week delivery prediction
+   */
+  public deleteWeekDeliveryPredictionById(weekDeliveryPredictionId: string): PromiseLike<number> {
+    return this.WeekDeliveryPrediction.destroy({
+      where: {
+        id: weekDeliveryPredictionId
+      }
+    });
+  }
+
+  /**
+   * Updates WeekDeliveryPrediction
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param amount amount
+   * @param weekNumber week number
+   * @param year year
+   * @param days days
+   * @return promise on updated week delivery prediction
+   */
+  public updateWeekDeliveryPrediction(id: string, itemGroupId: number, amount: number, weekNumber: number, year: number, days: number): PromiseLike<[number, any]>  {
+    return this.WeekDeliveryPrediction.update({
+      itemGroupId: itemGroupId,
+      amount: amount,
+      weekNumber: weekNumber,
+      year: year,
+      days: days
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Lists week delivery predictions
+   * 
+   * @param itemGroupId 
+   * @param itemGroupType 
+   * @param userId 
+   * @param weekNumber 
+   * @param year 
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
+    const where = this.createListWeekDeliveryPredictionsWhere(itemGroupId, itemGroupType, userId, weekNumber, year);
+
+    return this.WeekDeliveryPrediction.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting week delivery predictions. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param itemGroupId 
+   * @param itemGroupType 
+   * @param userId 
+   * @param weekNumber 
+   * @param year  
+   * @return where clause
+   */
+  private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (weekNumber) {
+      where.weekNumber = weekNumber;
+    }
+
+    if (year) {
+      where.year = year;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
+  }
+
+  // Products
+
+  /**
+   * Create Product
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
+   */
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
+    return this.Product.create({
+      id: id,
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    } as any);
+  }
+
+  /**
+   * Update Product
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
+   */
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
+    return this.Product.update({
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Delete prodcut
+   * 
+   * @param productId productId
+   * @return promise on created week delivery prediction
+   */
+  public deleteProductById(productId: string): PromiseLike<number> {
+    return this.Product.destroy({
+      where: {
+        id: productId
+      }
+    });
+  }
+
+  /**
+   * Find product by id
+   * 
+   * @param productId productId
+   * @return promise on created week delivery prediction
+   */
+  public findProductById(productId: string): PromiseLike<ProductModel> {
+    return this.Product.findOne({
+      where: {
+        id: productId
+      }
+    });
+  }
+
+  /**
+   * Lists products
+   * 
+   * @param itemGroupId itemGroupId 
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+    const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
+
+    return this.Product.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting products. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param itemGroupId itemGroupId
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @return where clause
+   */
+  private createListProductsWhere(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (contractUserId) {
+      where.userId = contractUserId;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
   }
 
 }

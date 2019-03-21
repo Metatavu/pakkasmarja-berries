@@ -1,4 +1,5 @@
 import * as _ from "lodash";
+import * as moment from "moment";
 import ChatMessagesService from "../api/chatMessages.service";
 import { Request, Response } from "express";
 import models, { MessageModel } from "../../models";
@@ -142,12 +143,17 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
+    const createdBefore = req.query.createdBefore ? moment(req.query.createdBefore).toDate() : null;
+    const createdAfter = req.query.createdAfter ? moment(req.query.createdAfter).toDate() : null;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 5;
+
     if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
       return;
     }
 
-    const messages = await models.listMessagesByThreadId(chatThreadId);
+    const messages = await models.listMessages(chatThreadId, createdBefore, createdAfter, firstResult, maxResults);
 
     res.status(200).send(messages.map((message) => {
       return this.translateChatMessage(message);
