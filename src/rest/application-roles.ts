@@ -174,8 +174,29 @@ export default class ApplicationRoles {
   /**
    * Role that allows user to list other user products
    */
-  static get LIST_OTHER_USERS_CONTRACT_PRODUCTS() {
+  static get LIST_OTHER_CONTRACT_PRODUCTS() {
     return "list-other-users-contract-products";
+  }
+
+  /**
+   * Role that allows deleting other deliveries
+   */
+  static get DELETE_OTHER_DELIVERIES() {
+    return "delete-other-deliveries";
+  }
+
+  /**
+   * Role that allows updating other deliveries
+   */
+  static get UPDATE_OTHER_DELIVERIES() {
+    return "update-other-deliveries";
+  }
+
+  /**
+   * Role that allows listing and finding other users deliveries
+   */
+  static get LIST_AND_FIND_OTHER_DELIVERIES() {
+    return "list-other-deliveries";
   }
 
 }

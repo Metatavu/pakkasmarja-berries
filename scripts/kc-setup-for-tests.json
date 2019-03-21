@@ -8482,6 +8482,27 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
+    }, {
+      "id" : "eb574338-4bb5-11e9-8646-d663bd873d93",
+      "name" : "delete-other-deliveries",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "eb5745f4-4bb5-11e9-8646-d663bd873d93",
+      "name" : "update-other-deliveries",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    }, {
+      "id" : "eb574770-4bb5-11e9-8646-d663bd873d93",
+      "name" : "list-other-deliveries",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
     } ],
     "client" : {
       "delete me" : [ ],
