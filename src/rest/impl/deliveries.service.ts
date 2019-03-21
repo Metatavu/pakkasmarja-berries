@@ -384,7 +384,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   private async translateDatabaseDeliveryNote(deliveryNote: DeliveryNoteModel) {
     const result: DeliveryNote = {
       "id": deliveryNote.id,
-      "deliveryId": deliveryNote.deliveryId,
       "text": deliveryNote.text,
       "image": deliveryNote.image
     };
