@@ -34,7 +34,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents);
+    const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents || "");
     res.status(200).send(this.translateChatMessage(message));
 
     mqtt.publish("chatmessages", {
@@ -187,7 +187,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       }
     }
 
-    await models.updateMessage(chatMessage.id, payload.contents);
+    await models.updateMessage(chatMessage.id, payload.contents || "");
     res.status(200).send(this.translateChatMessage(await models.findMessage(messageId)));
 
     mqtt.publish("chatmessages", {
@@ -204,7 +204,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   private translateChatMessage(databaseChatMessage: MessageModel) {
     const result: ChatMessage = {
       id: databaseChatMessage.id,
-      contents: databaseChatMessage.contents,
+      contents: databaseChatMessage.contents || null,
+      image: databaseChatMessage.image || null,
       createdAt: this.truncateTime(databaseChatMessage.createdAt),
       threadId: databaseChatMessage.threadId,
       updatedAt: this.truncateTime(databaseChatMessage.updatedAt),

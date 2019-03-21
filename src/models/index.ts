@@ -42,8 +42,8 @@ export interface ThreadModel {
   title: string,
   description: string,
   type: string,
+  ownerId?: string,
   groupId: number,
-  ownerId: string,
   imageUrl: string,
   archived: boolean,
   answerType: string,
@@ -74,7 +74,8 @@ export interface MessageModel {
   id: number,
   threadId: number,
   userId: string,
-  contents: string,
+  contents?: string,
+  image?: string,
   createdAt: Date,
   updatedAt: Date
 }
@@ -225,6 +226,7 @@ export interface OperationReportItemModel {
   updatedAt: Date
 }
 
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -313,7 +315,8 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
-      contents: { type: Sequelize.TEXT, allowNull: false }
+      contents: { type: Sequelize.TEXT, allowNull: true },
+      image: { type: Sequelize.TEXT, allowNull: true }
     });
     
     this.defineModel("NewsArticle", {

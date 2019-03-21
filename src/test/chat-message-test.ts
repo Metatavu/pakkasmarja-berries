@@ -78,6 +78,7 @@ const createChatMessage = (token: string, threadId: number, contents: string): P
   const payload: ChatMessage = {
     id: null,
     contents: contents,
+    image: null,
     threadId: threadId,
     createdAt: null,
     updatedAt: null,
@@ -146,6 +147,7 @@ const updateChatMessage = (token: string, id: number, threadId: number, contents
   const payload: ChatMessage = {
     id: null,
     contents: contents,
+    image: null,
     createdAt: null,
     threadId: threadId,
     updatedAt: null,
