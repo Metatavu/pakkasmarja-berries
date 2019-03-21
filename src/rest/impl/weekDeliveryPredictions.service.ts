@@ -127,8 +127,8 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
     const userId = req.query.userId || null;
     const weekNumber = req.query.weekNumber || null;
     const year = req.query.year || null;
-    const firstResult = req.query.firstResult || 0;
-    const maxResults = req.query.maxResults || 5;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 5;
 
     const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
 

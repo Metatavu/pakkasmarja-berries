@@ -27,49 +27,42 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async createDelivery(req: Request, res: Response) {
     const productId = req.body.productId;
     if (!productId) {
-      console.log("Create delivery missing productId");
       this.sendBadRequest(res, "Missing required body param productId");
       return;
     }
 
     const userId = req.body.userId;
     if (!userId) {
-      console.log("Create delivery missing userId");
       this.sendBadRequest(res, "Missing required body param userId");
       return;
     }
 
     const time = req.body.time;
     if (!time) {
-      console.log("Create delivery missing time");
       this.sendBadRequest(res, "Missing required body param time");
       return;
     }
 
     const status = req.body.status;
     if (!status) {
-      console.log("Create delivery missing status");
       this.sendBadRequest(res, "Missing required body param status");
       return;
     }
 
     const amount = req.body.amount;
     if (!amount) {
-      console.log("Create delivery missing amount");
       this.sendBadRequest(res, "Missing required body param amount");
       return;
     }
 
     const deliveryPlaceId = req.body.deliveryPlaceId;
     if (!deliveryPlaceId) {
-      console.log("Create delivery missing deliveryPlaceId");
       this.sendBadRequest(res, "Missing required body param deliveryPlaceId");
       return;
     }
 
-    const databaseDeliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceId);
+    const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId);
     if (!databaseDeliveryPlace) {
-      console.log("Create delivery missing databaseDeliveryPlace");
       this.sendNotFound(res);
       return;
     }
@@ -77,7 +70,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const price = req.body.price;
     const quality = req.body.quality;
 
-    const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, quality, deliveryPlaceId);
+    const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
     res.status(200).send(await this.translateDatabaseDelivery(result));
   }
 
@@ -87,14 +80,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async createDeliveryNote(req: Request, res: Response) {
     const deliveryId = req.body.deliveryId;
     if (!deliveryId) {
-      console.log("Create deliveryNote missing deliveryId");
       this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(deliveryId);
     if (!databaseDelivery) {
-      console.log("Create deliveryNote missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -112,14 +103,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async deleteDelivery(req: Request, res: Response) {
     const deliveryId = req.params.deliveryId;
     if (!deliveryId) {
-      console.log("Delete delivery missing deliveryId");
       this.sendBadRequest(res, "Missing required param deliveryId");
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(deliveryId);
     if (!databaseDelivery) {
-      console.log("Delete delivery missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -140,21 +129,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async deleteDeliveryNote(req: Request, res: Response) {
     const deliveryNoteId = req.params.deliveryNoteId;
     if (!deliveryNoteId) {
-      console.log("Delete deliveryNote missing deliveryNoteId");
       this.sendBadRequest(res, "Missing required param deliveryNoteId");
       return;
     }
 
     const databaseDeliveryNote = await models.findDeliveryNoteById(deliveryNoteId);
     if (!databaseDeliveryNote) {
-      console.log("Delete deliveryNote missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(databaseDeliveryNote.deliveryId);
     if (!databaseDelivery) {
-      console.log("Delete deliverynote missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -175,14 +161,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async findDelivery(req: Request, res: Response) {
     const deliveryId = req.params.deliveryId;
     if (!deliveryId) {
-      console.log("Find delivery missing deliveryId");
       this.sendBadRequest(res, "Missing required param deliveryId");
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(deliveryId);
     if (!databaseDelivery) {
-      console.log("Find delivery missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -202,21 +186,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async findDeliveryNote(req: Request, res: Response) {
     const deliveryNoteId = req.params.deliveryNoteId;
     if (!deliveryNoteId) {
-      console.log("Find deliverynote missing deliveryNoteId");
       this.sendBadRequest(res, "Missing required param deliveryNoteId");
       return;
     }
 
     const databaseDeliveryNote = await models.findDeliveryNoteById(deliveryNoteId);
     if (!databaseDeliveryNote) {
-      console.log("Find deliverynote missing databaseDeliveryNote");
       this.sendNotFound(res);
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(databaseDeliveryNote.deliveryId);
     if (!databaseDelivery) {
-      console.log("Find deliverynote missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -252,8 +233,13 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
     const loggedUserId = this.getLoggedUserId(req);
-    if (userId && loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.LIST_OTHER_CONTRACT_PRODUCTS)) {
-      this.sendForbidden(res, "You have no permission to list other users products");
+    if (userId && loggedUserId !== userId && !this.hasRealmRole(req, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES)) {
+      this.sendForbidden(res, "You have no permission to list other users deliveries");
+      return;
+    }
+
+    if (!userId && !this.hasRealmRole(req, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES)) {
+      this.sendForbidden(res, "You have no permission to list all deliveries");
       return;
     }
 
@@ -281,56 +267,48 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async updateDelivery(req: Request, res: Response) {
     const deliveryId = req.params.deliveryId;
     if (!deliveryId) {
-      console.log("Update delivery missing deliveryId");
       this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
     }
 
     const productId = req.body.productId;
     if (!productId) {
-      console.log("Create delivery missing productId");
       this.sendBadRequest(res, "Missing required body param productId");
       return;
     }
 
     const userId = req.body.userId;
     if (!userId) {
-      console.log("Create delivery missing userId");
       this.sendBadRequest(res, "Missing required body param userId");
       return;
     }
 
     const time = req.body.time;
     if (!time) {
-      console.log("Create delivery missing time");
       this.sendBadRequest(res, "Missing required body param time");
       return;
     }
 
     const status = req.body.status;
     if (!status) {
-      console.log("Create delivery missing status");
       this.sendBadRequest(res, "Missing required body param status");
       return;
     }
 
     const amount = req.body.amount;
     if (!amount) {
-      console.log("Create delivery missing amount");
       this.sendBadRequest(res, "Missing required body param amount");
       return;
     }
 
     const deliveryPlaceId = req.body.deliveryPlaceId;
     if (!deliveryPlaceId) {
-      console.log("Create delivery missing deliveryPlaceId");
       this.sendBadRequest(res, "Missing required body param deliveryPlaceId");
       return;
     }
 
-    const databaseDeliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceId);
+    const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId);
     if (!databaseDeliveryPlace) {
-      console.log("Create delivery missing databaseDeliveryPlace");
       this.sendNotFound(res);
       return;
     }
@@ -338,7 +316,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const price = req.body.price;
     const quality = req.body.quality;
 
-    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, quality, deliveryPlaceId);
+    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
     const databaseDelivery = await models.findDeliveryById(deliveryId);
 
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
@@ -350,21 +328,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   public async updateDeliveryNote(req: Request, res: Response) {
     const deliveryNoteId = req.body.deliveryNoteId;
     if (!deliveryNoteId) {
-      console.log("Create deliveryNote missing deliveryNoteId");
       this.sendBadRequest(res, "Missing required body param deliveryNoteId");
       return;
     }
 
     const deliveryId = req.body.deliveryId;
     if (!deliveryId) {
-      console.log("Create deliveryNote missing deliveryId");
       this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
     }
 
     const databaseDelivery = await models.findDeliveryById(deliveryId);
     if (!databaseDelivery) {
-      console.log("Create deliveryNote missing databaseDelivery");
       this.sendNotFound(res);
       return;
     }
@@ -374,7 +349,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     await models.updateDeliveryNote(deliveryNoteId, deliveryId, text, image);
     const databaseDeliveryNote = await models.findDeliveryNoteById(deliveryNoteId);
-    
+
     res.status(200).send(await this.translateDatabaseDeliveryNote(databaseDeliveryNote));
   }
 
@@ -384,7 +359,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param delivery delivery 
    */
   private async translateDatabaseDelivery(delivery: DeliveryModel) {
-    const deliveryPlace = await models.findContractById(delivery.deliveryPlaceId);
+    const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
     const result: Delivery = {
       "id": delivery.id,

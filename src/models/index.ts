@@ -43,8 +43,8 @@ export interface ThreadModel {
   title: string,
   description: string,
   type: string,
+  ownerId?: string,
   groupId: number,
-  ownerId: string,
   imageUrl: string,
   archived: boolean,
   answerType: string,
@@ -75,7 +75,8 @@ export interface MessageModel {
   id: number,
   threadId: number,
   userId: string,
-  contents: string,
+  contents?: string,
+  image?: string,
   createdAt: Date,
   updatedAt: Date
 }
@@ -374,7 +375,8 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
-      contents: { type: Sequelize.TEXT, allowNull: false }
+      contents: { type: Sequelize.TEXT, allowNull: true },
+      image: { type: Sequelize.TEXT, allowNull: true }
     });
     
     this.defineModel("NewsArticle", {
@@ -582,8 +584,8 @@ export class Models {
 
     this.Delivery = this.defineModel("Delivery", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
-      productId: { type: Sequelize.UUID, validate: { isUUID: 4 }, allowNull: false, references: { model: "Products", key: "id" } },
-      userId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 } },
+      productId: { type: Sequelize.UUID, allowNull: false, references: { model: "Products", key: "id" } },
+      userId: { type: Sequelize.UUID, allowNull: false },
       time: { type: Sequelize.DATE, allowNull: false },
       status: { type: Sequelize.STRING(191), allowNull: false },
       amount: { type: Sequelize.INTEGER, allowNull: false },
@@ -594,7 +596,7 @@ export class Models {
 
     this.DeliveryNote = this.defineModel("DeliveryNote", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
-      deliveryId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 } },
+      deliveryId: { type: Sequelize.UUID, allowNull: false },
       text: { type: Sequelize.TEXT, allowNull: true },
       image: { type: Sequelize.STRING(191), allowNull: true },
     });
@@ -2712,16 +2714,21 @@ export class Models {
         where: { category: itemGroupCategory }
       }).slice(0, -1);
 
-      where.itemGroupCategory = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+      const productSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Products", {
+        attributes: ["id"],
+        where: { itemGroupId: { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) } }
+      }).slice(0, -1);
+
+      where.productId = { [Sequelize.Op.in]: this.sequelize.literal(`(${productSQL})`) };
     }
 
     if (itemGroupId) {
-      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+      const itemGroupSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Products", {
         attributes: ["id"],
         where: { id: itemGroupId }
       }).slice(0, -1);
 
-      where.itemGroupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+      where.productId = { [Sequelize.Op.in]: this.sequelize.literal(`(${itemGroupSQL})`) };
     }
 
     return where;
