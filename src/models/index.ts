@@ -238,6 +238,20 @@ export interface WeekDeliveryPredictionModel {
   days: number;
 }
 
+/**
+ * Interface for product
+ */
+export interface ProductModel { 
+  id: string | null;
+  itemGroupId: number;
+  name: string;
+  units: number;
+  unitSize: number;
+  unitName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -247,6 +261,7 @@ export class Models {
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   private Message: Sequelize.Model<any, MessageModel>;
   private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
+  private Product: Sequelize.Model<any, ProductModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -522,6 +537,15 @@ export class Models {
       days: { type: Sequelize.TINYINT, allowNull: false },
       createdAt: { type: Sequelize.DATE, allowNull: false },
       updatedAt: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    this.Product = this.defineModel("Product", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      itemGroupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "ItemGroups", key: "id" } },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      units: { type: Sequelize.INTEGER, allowNull: false },
+      unitSize: { type: Sequelize.INTEGER, allowNull: false },
+      unitName: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -2327,6 +2351,136 @@ export class Models {
 
     if (year) {
       where.year = year;
+    }
+
+    if (itemGroupType) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { type: itemGroupType }
+      }).slice(0, -1);
+
+      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
+  }
+
+  // Products
+
+  /**
+   * Create Product
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
+   */
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
+    return this.Product.create({
+      id: id,
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    } as any);
+  }
+
+  /**
+   * Update Product
+   * 
+   * @param id id
+   * @param itemGroupId item group id
+   * @param name name
+   * @param units units
+   * @param unitSize unitSize
+   * @param unitName unitName
+   * @return promise on created product
+   */
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
+    return this.Product.update({
+      itemGroupId: itemGroupId,
+      name: name,
+      units: units,
+      unitSize: unitSize,
+      unitName: unitName
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Delete prodcut
+   * 
+   * @param productId productId
+   * @return promise on created week delivery prediction
+   */
+  public deleteProductById(productId: string): PromiseLike<number> {
+    return this.Product.destroy({
+      where: {
+        id: productId
+      }
+    });
+  }
+
+  /**
+   * Find product by id
+   * 
+   * @param productId productId
+   * @return promise on created week delivery prediction
+   */
+  public findProductById(productId: string): PromiseLike<ProductModel> {
+    return this.Product.findOne({
+      where: {
+        id: productId
+      }
+    });
+  }
+
+  /**
+   * Lists products
+   * 
+   * @param itemGroupId itemGroupId 
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of week delivery predictions
+   */
+  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+    const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
+
+    return this.Product.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting products. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param itemGroupId itemGroupId
+   * @param itemGroupType itemGroupType
+   * @param contractUserId contractUserId
+   * @return where clause
+   */
+  private createListProductsWhere(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string | null) {
+    const where: any = {};
+
+    if (itemGroupId) {
+      where.itemGroupId = itemGroupId;
+    }
+
+    if (contractUserId) {
+      where.userId = contractUserId;
     }
 
     if (itemGroupType) {

@@ -1,0 +1,15 @@
+[{
+  "id": null,
+  "itemGroupId": "a9d715c6-4a09-11e9-8646-d663bd873d93",
+  "name": "Name",
+  "units": 10,
+  "unitSize": 20,
+  "unitName": "unitname"
+},{
+  "id": null,
+  "itemGroupId": "a9d715c6-4a09-11e9-8646-d663bd873d93",
+  "name": "Name 2",
+  "units": 11,
+  "unitSize": 22,
+  "unitName": "unitname2"
+}]

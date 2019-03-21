@@ -31,4 +31,5 @@ export * from './product';
 export * from './publicFile';
 export * from './signAuthenticationService';
 export * from './weekDeliveryPrediction';
+export * from './product';
 export * from './weekDeliveryPredictionDays';
