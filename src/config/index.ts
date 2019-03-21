@@ -197,6 +197,16 @@ export interface Migrations {
   "lock-file": string;
 }
 
+export interface ClientServerConfig {
+  host: string
+  port: string
+  secure: boolean
+}
+
+export interface ClientConfig {
+  server: ClientServerConfig
+}
+
 export interface Config {
   mode: string;
   port: number;
@@ -214,7 +224,9 @@ export interface Config {
   contacts?: Contacts;
   pushNotification: PushNotification
   migrations: Migrations,
-  mqtt: Mqtt
+  mqtt: Mqtt,
+  uploadDirectory: string,
+  client: ClientConfig
 }
 
 export function config(): Config {

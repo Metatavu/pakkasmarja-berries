@@ -89,17 +89,6 @@ export interface NewsArticleModel {
   updatedAt: Date
 }
 
-export interface MessageAttachmentModel {
-  id: number,
-  messageId: number,
-  contents: string,
-  contentType: string,
-  fileName: string,
-  size: number,
-  createdAt: Date,
-  updatedAt: Date
-}
-
 export interface ItemReadModel {
   id: number,
   userId: string,
@@ -324,15 +313,6 @@ export class Models {
       title: { type: Sequelize.STRING(191), allowNull: false },
       contents: { type: "LONGTEXT", allowNull: false },
       imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
-    });
-    
-    this.defineModel("MessageAttachment", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      messageId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Message, key: "id" } },
-      contents: { type: "LONGBLOB", allowNull: false },
-      contentType: { type: Sequelize.STRING(191), allowNull: false },
-      fileName: { type: Sequelize.STRING(191) },
-      size: { type: Sequelize.BIGINT }
     });
     
     this.defineModel("ItemRead", {
@@ -943,26 +923,6 @@ export class Models {
    */
   deleteNewsArticle(id: number): PromiseLike<number> {
     return this.sequelize.models.NewsArticle.destroy({ where: {id: id} });
-  }
-  
-  // MessageAttachment
-  
-  createMessageAttachment(messageId: number, contents: string, contentType: string, fileName: string, size: number) {
-    return this.sequelize.models.MessageAttachment.create({
-      messageId: messageId,
-      contents: contents,
-      contentType: contentType,
-      fileName: fileName,
-      size: size
-    });
-  }
-  
-  findMessageAttachments(id: number) {
-    return this.sequelize.models.MessageAttachment.findOne({ where: { id : id } });
-  }
-  
-  deleteMessageAttachmentsByMessageId(messageId: number) {
-    return this.sequelize.models.MessageAttachment.destroy({ where: { messageId : messageId } });
   }
   
   // ItemRead
