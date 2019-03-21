@@ -43,6 +43,7 @@ export interface ThreadModel {
   description: string,
   type: string,
   groupId: number,
+  ownerId: string,
   imageUrl: string,
   archived: boolean,
   answerType: string,
@@ -309,6 +310,7 @@ export class Models {
       title: { type: Sequelize.STRING(191) },
       description: { type: "LONGTEXT" },
       type: { type: Sequelize.STRING(191), allowNull: false },
+      ownerId: { type: Sequelize.STRING(191), allowNull: true },
       groupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ChatGroup, key: "id" } },
       imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
@@ -711,6 +713,8 @@ export class Models {
   /**
    * Creates new thread
    * 
+   * @param {Number} groupId owner id
+   * @param {String} ownerId owner id
    * @param {String} title title
    * @param {String} description description
    * @param {String} type type
@@ -719,11 +723,12 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  public createThread(groupId: number, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
+  public createThread(groupId: number, ownerId: string | null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
     return this.Thread.create({
       title: title,
       description: description,
       type: type,
+      ownerId: ownerId,
       groupId: groupId,
       imageUrl: imageUrl,
       answerType: answerType,
@@ -770,6 +775,7 @@ export class Models {
    * Updates thread
    * 
    * @param {Number} id thread id 
+   * @param {String} ownerId owner id
    * @param {String} title title
    * @param {String} description description
    * @param {String} imageUrl image url
@@ -778,9 +784,10 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  public updateThread(id: number, title: string, description: string | null, imageUrl: string | null, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date | null) {
+  public updateThread(id: number, ownerId: string | null, title: string, description: string | null, imageUrl: string | null, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date | null) {
     return this.sequelize.models.Thread.update({
       title: title,
+      ownerId: ownerId,
       description: description,
       imageUrl: imageUrl,
       archived: false,
@@ -874,6 +881,46 @@ export class Models {
     }
     
     return this.sequelize.models.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
+  }
+
+  /**
+   * Lists messages
+   * 
+   * @param threadId thread id
+   * @param createdBefore created before
+   * @param createdAfter created after
+   * @param firstResult first result
+   * @param maxResults max results
+   * @return promise for messages
+   */
+  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
+    if (!threadId) {
+      return Bluebird.resolve([]);
+    }
+
+    const where: { [key: string]: any } = {
+      threadId : threadId
+    };
+
+    if (createdAfter && createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.between]: [createdAfter, createdBefore]
+      };
+    } else if (createdAfter) {
+      where.createdAt = {
+        [Sequelize.Op.gt]: createdAfter
+      };
+    } else if (createdBefore) {
+      where.createdAt = {
+        [Sequelize.Op.lt]: createdBefore
+      };
+    }
+
+    return this.sequelize.models.Message.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults, 
+      order: [ [ "createdAt", "DESC" ] ] });
   }
 
   /**

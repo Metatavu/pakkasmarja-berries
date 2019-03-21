@@ -67,6 +67,8 @@ test("Test listing contacts - invalid token", async () => {
 });
 
 test("Test find contact", async (t) => {
+  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+
   return request("http://localhost:3002")
     .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -132,7 +134,9 @@ test("Test update contact", async (t) => {
     "IBAN": "FI1112345600000786",
     "taxCode": "FI23456789",
     "vatLiable": "EU",
-    "audit": "No"
+    "audit": "No",
+    "avatarUrl": "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
+    "displayName": "Updated first name Updated last name Updated company name"
   });
   
   return request("http://localhost:3002")

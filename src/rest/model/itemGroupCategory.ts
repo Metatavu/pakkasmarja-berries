@@ -11,9 +11,9 @@
  */
 
 
-export type ItemGroupType = 'FRESH' | 'FROZEN';
+export type ItemGroupCategory = 'FRESH' | 'FROZEN';
 
-export const ItemGroupType = {
-    FRESH: 'FRESH' as ItemGroupType,
-    FROZEN: 'FROZEN' as ItemGroupType
+export const ItemGroupCategory = {
+    FRESH: 'FRESH' as ItemGroupCategory,
+    FROZEN: 'FROZEN' as ItemGroupCategory
 };

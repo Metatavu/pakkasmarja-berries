@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import { Response, Request } from "express";
-import { Price, ItemGroupDocumentTemplate, ItemGroup } from "../model/models";
+import { ItemGroupPrice, ItemGroupDocumentTemplate, ItemGroup, ItemGroupCategory } from "../model/models";
 import models, { ItemGroupModel, ItemGroupDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel } from "../../models";
 
 import ItemGroupsService from "../api/itemGroups.service";
@@ -195,7 +195,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    const payload: Price = _.isObject(req.body) ? req.body : null;
+    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -250,7 +250,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    const payload: Price = _.isObject(req.body) ? req.body : null;
+    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -364,13 +364,15 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
    * @param {Object} itemGroup Sequelize item group model
    * @return {ItemGroup} REST entity
    */
-  async translateDatabaseItemGroup(itemGroup: ItemGroupModel) {
+  private async translateDatabaseItemGroup(itemGroup: ItemGroupModel) {
     const prerequisiteContractItemGroup = itemGroup.prerequisiteContractItemGroupId ? await models.findItemGroupById(itemGroup.prerequisiteContractItemGroupId) : null;
+    const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
+
     const result: ItemGroup = {
       "id": itemGroup.externalId,
       "name": itemGroup.name,
       "displayName": itemGroup.displayName || null,
-      "category": itemGroup.category,
+      "category": category,
       "minimumProfitEstimation": itemGroup.minimumProfitEstimation,
       "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
     };
@@ -405,7 +407,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
    * @param {ItemGroup} itemGroup Sequelize item group
    */
   translateItemGroupPrice(databasePrice: ItemGroupPriceModel, itemGroup: ItemGroupModel) {
-    const result: Price = {
+    const result: ItemGroupPrice = {
       "id": databasePrice.externalId,
       "group": databasePrice.groupName,
       "unit": databasePrice.unit,

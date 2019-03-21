@@ -519,7 +519,17 @@ export default new class UserManagement {
     });
   }
   
-  getUserDisplayName(user: any) {
+  /**
+   * Returns display name for an user
+   * 
+   * @param user user
+   * @returns display name for an user
+   */
+  public getUserDisplayName(user: UserRepresentation) {
+    if (!user) {
+      return null;
+    }
+
     const attributes: any = {};
 
     _.forEach(user.attributes||{}, (originalValue, key) => {
@@ -568,9 +578,15 @@ export default new class UserManagement {
     return true;
   }
   
-  getUserImage(user: any) {
+  /**
+   * Returns image URL for an user
+   * 
+   * @param user user
+   * @return image URL for an user
+   */
+  public getUserImage(user: UserRepresentation) {
     const shasum = crypto.createHash("sha1");
-    shasum.update(user.email.toLowerCase());
+    shasum.update((user.email || "").toLowerCase());
     const hash = shasum.digest("hex");
     return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
   }

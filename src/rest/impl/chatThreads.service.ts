@@ -3,12 +3,13 @@ import slugify from "slugify";
 import ChatThreadsService from "../api/chatThreads.service";
 import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
-import models, { ThreadModel, ThreadPredefinedTextModel } from "../../models";
+import models, { ThreadModel, ThreadPredefinedTextModel, ChatGroupModel } from "../../models";
 import excel from "../../excel";
 import { ChatThread, ChatGroupType } from "../model/models";
 import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
 import { Promise } from "bluebird";
 import mqtt from "../../mqtt";
+import userManagement from "../../user-management";
 
 /**
  * Threads REST service
@@ -32,8 +33,9 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const thread = await models.createThread(chatGroup.id, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
-    res.status(200).send(this.translateChatThread(thread));
+    const ownerId = this.getLoggedUserId(req);
+    const thread = await models.createThread(chatGroup.id, ownerId, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    res.status(200).send(await this.translateChatThread(thread, chatGroup));
 
     mqtt.publish("chatthreads", {
       "operation": "CREATED",
@@ -45,7 +47,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @inheritdoc
    */
   public async deleteChatThread(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
+    const chatThreadId = parseInt(req.params.chatThreadId);
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
       this.sendNotFound(res);
@@ -69,7 +71,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     mqtt.publish("chatthreads", {
       "operation": "DELETED",
-      "id": thread.id
+      "id": chatThreadId
     });
   }
 
@@ -95,7 +97,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    res.status(200).send(this.translateChatThread(thread));
+    res.status(200).send(await this.translateChatThread(thread, chatGroup));
   }
 
   /**
@@ -120,9 +122,9 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
     }));
 
-    res.status(200).send(threads.map((thread) => {
-      return this.translateChatThread(thread);
-    }));
+    res.status(200).send(await Promise.all(threads.map((thread) => {
+      return this.translateChatThread(thread, chatGroupMap[thread.groupId]);
+    })));
   }
 
   /**
@@ -149,9 +151,9 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    await models.updateThread(thread.id, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    await models.updateThread(thread.id, thread.ownerId, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
 
-    res.status(200).send(this.translateChatThread(await models.findThread(chatThreadId)));
+    res.status(200).send(await this.translateChatThread(await models.findThread(chatThreadId), chatGroup));
 
     mqtt.publish("chatthreads", {
       "operation": "UPDATED",
@@ -268,7 +270,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * 
    * @param {Object} databaseChatThread database chat thread
    */
-  private translateChatThread(databaseChatThread: ThreadModel) {
+  private async translateChatThread(databaseChatThread: ThreadModel, databaseChatGroup: ChatGroupModel) {
     let answerType: ChatThread.AnswerTypeEnum;
 
     if (databaseChatThread.answerType == "POLL") {
@@ -277,9 +279,13 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       answerType = "TEXT";
     } 
 
+    const title = databaseChatGroup.type == "QUESTION" && databaseChatThread.ownerId 
+      ? userManagement.getUserDisplayName(await userManagement.findUser(databaseChatThread.ownerId)) 
+      : databaseChatThread.title;
+
     const result: ChatThread = {
       id: databaseChatThread.id,
-      title: databaseChatThread.title,
+      title: title,
       description: databaseChatThread.description,
       imageUrl: databaseChatThread.imageUrl,
       groupId: databaseChatThread.groupId,
