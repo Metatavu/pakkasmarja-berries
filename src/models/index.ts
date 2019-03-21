@@ -247,6 +247,8 @@ export interface ProductModel {
   units: number;
   unitSize: number;
   unitName: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const PRINT_MODEL_INTERFACES = false;
@@ -541,9 +543,7 @@ export class Models {
       name: { type: Sequelize.STRING(191), allowNull: false },
       units: { type: Sequelize.INTEGER, allowNull: false },
       unitSize: { type: Sequelize.INTEGER, allowNull: false },
-      unitName: { type: Sequelize.STRING(191), allowNull: false },
-      createdAt: { type: Sequelize.DATE, allowNull: false },
-      updatedAt: { type: Sequelize.DATE, allowNull: false }
+      unitName: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -2339,7 +2339,7 @@ export class Models {
       units: units,
       unitSize: unitSize,
       unitName: unitName
-    });
+    } as any);
   }
 
   /**
