@@ -2812,7 +2812,7 @@ export class Models {
   public listDeliveryNotes(deliveryId: string | null): Bluebird<DeliveryNoteModel[]> {
     const where = this.createListDeliveryNotesWhere(deliveryId);
 
-    return this.Delivery.findAll({ 
+    return this.DeliveryNote.findAll({ 
       where: where
     });
   }

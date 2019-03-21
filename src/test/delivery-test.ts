@@ -1,12 +1,13 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
-import { Delivery } from "../rest/model/models";
+import { Delivery, DeliveryNote } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveriesData = require(`${testDataDir}/deliveries.json`);
+const deliveryNotesData = require(`${testDataDir}/deliveryNote.json`);
 
 /**
  * Creates delivery
@@ -22,6 +23,66 @@ const createDelivery = (token: string, deliveryModel?: Delivery): Promise<Delive
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Creates delivery note
+ * 
+ * @param token token
+ * @returns promise for delivery
+ */
+const createDeliveryNote = (token: string, id: string, deliveryNoteModel?: DeliveryNote): Promise<DeliveryNote> => {
+  const payload: Delivery = deliveryNoteModel || deliveryNotesData[0];
+
+  return request("http://localhost:3002")
+    .post(`/rest/v1/deliveries/${id}/notes`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Updates delivery note
+ * 
+ * @param token token
+ * @param deliveryId deliveryId
+ * @param noteId noteId
+ * @returns promise for delivery note
+ */
+const updateDeliveryNote = (token: string, deliveryId: string, noteId: string, deliveryNoteModel?: DeliveryNote): Promise<DeliveryNote> => {
+  const payload: Delivery = deliveryNoteModel || deliveryNotesData[1];
+
+  return request("http://localhost:3002")
+    .put(`/rest/v1/deliveries/${deliveryId}/notes/${noteId}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Lists delivery notes
+ * 
+ * @param token token
+ * @param deliveryId deliveryId
+ * @returns promise for list of deliveries
+ */
+const listDeliveryNotes = (token: string, deliveryId: string): Promise<DeliveryNote[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/deliveries/${deliveryId}/notes`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
     .expect(200)
     .then((response) => {
       return response.body;
@@ -261,3 +322,84 @@ test("List deliveries with itemGroupCategory", async (t) => {
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
+
+
+test("Create delivery notes", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  try {
+    const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    t.notEqual(createdDeliveryNote, null);
+    t.notEqual(createdDeliveryNote.id, null);
+    t.equal(createdDeliveryNote.text, deliveryNotesData[0].text)
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Update delivery notes", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  try {
+    const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    const updatedDeliveryNote = await updateDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08", createdDeliveryNote.id || "");
+    t.notEqual(updatedDeliveryNote, null);
+    t.notEqual(updatedDeliveryNote.id, null);
+    t.equal(updatedDeliveryNote.text, deliveryNotesData[1].text)
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("List delivery notes", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  try {
+    await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+
+    const notes = await listDeliveryNotes(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    t.equal(notes.length, 3);
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Delete delivery note", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  try {
+    const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    await request("http://localhost:3002")
+      .delete(`/rest/v1/deliveries/bad02318-1a44-11e8-87a4-c7808d590a08/notes/${createdDeliveryNote.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(204)
+      .then((response) => {});
+    await request("http://localhost:3002")
+      .get(`/rest/v1/deliveries/bad02318-1a44-11e8-87a4-c7808d590a08/notes/${createdDeliveryNote.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(404)
+      .then((response) => {});
+
+    const notes = await listDeliveryNotes(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
+    t.equal(notes.length, 0);
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+

@@ -78,7 +78,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @inheritdoc
    */
   public async createDeliveryNote(req: Request, res: Response) {
-    const deliveryId = req.body.deliveryId;
+    const deliveryId = req.params.deliveryId;
     if (!deliveryId) {
       this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
@@ -93,8 +93,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const text = req.body.text;
     const image = req.body.image;
 
-    const result = models.createDeliveryNote(uuid(), deliveryId, text, image);
-    res.status(200).send(result);
+    const result = await models.createDeliveryNote(uuid(), deliveryId, text, image);
+    res.status(200).send(await this.translateDatabaseDeliveryNote(result));
   }
 
   /**
@@ -253,7 +253,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @inheritdoc
    */
   public async listDeliveryNotes(req: Request, res: Response) {
-    const deliveryId = req.query.deliveryId;
+    const deliveryId = req.params.deliveryId;
     const deliveryNotes: DeliveryNoteModel[] = await models.listDeliveryNotes(deliveryId);
 
     res.status(200).send(await Promise.all(deliveryNotes.map((deliveryNote) => {
@@ -326,15 +326,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @inheritdoc
    */
   public async updateDeliveryNote(req: Request, res: Response) {
-    const deliveryNoteId = req.body.deliveryNoteId;
-    if (!deliveryNoteId) {
-      this.sendBadRequest(res, "Missing required body param deliveryNoteId");
+    const deliveryId = req.params.deliveryId;
+    if (!deliveryId) {
+      this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
     }
 
-    const deliveryId = req.body.deliveryId;
-    if (!deliveryId) {
-      this.sendBadRequest(res, "Missing required body param deliveryId");
+    const deliveryNoteId = req.params.deliveryNoteId;
+    if (!deliveryNoteId) {
+      this.sendBadRequest(res, "Missing required body param deliveryNoteId");
       return;
     }
 
