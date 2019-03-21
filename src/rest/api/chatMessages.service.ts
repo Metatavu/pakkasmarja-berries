@@ -56,6 +56,10 @@ export default abstract class ChatMessagesService extends AbstractService {
    * @summary Returns list of chat messages
    * Accepted parameters:
     * - (path) number chatThreadId - Chat thread
+    * - (query) string createdBefore - Messages created before given time
+    * - (query) string createdAfter - Messages created after given time
+    * - (query) number firstResult - Offset of first result. Defaults to 0
+    * - (query) number maxResults - Max results. Defaults to 5
   */
   public abstract listChatMessages(req: Request, res: Response): Promise<void>;
 

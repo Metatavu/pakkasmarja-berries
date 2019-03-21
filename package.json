@@ -16,7 +16,6 @@
     "email": "devs@metatavu.fi"
   },
   "dependencies": {
-    "@types/uuid": "^3.4.4",
     "async": "2.6.1",
     "basic-auth": "^2.0.1",
     "better-queue": "^3.8.10",
@@ -86,6 +85,7 @@
     "@types/supertest": "^2.0.7",
     "@types/tmp": "0.0.33",
     "@types/umzug": "^2.2.0",
+    "@types/uuid": "^3.4.4",
     "@types/xml2js": "^0.4.3",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.24.1",

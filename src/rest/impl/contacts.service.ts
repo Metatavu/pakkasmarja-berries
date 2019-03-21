@@ -234,7 +234,9 @@ export default class ContactsServiceImpl extends ContactsService {
         'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || null,
         'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || null,
         'vatLiable': vatLiable,
-        'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null
+        'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null,
+        "avatarUrl": userManagement.getUserImage(user),
+        "displayName": userManagement.getUserDisplayName(user)
       };
       
       return result;
