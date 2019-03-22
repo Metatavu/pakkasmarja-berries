@@ -23,7 +23,7 @@
    */
   const getThreadsWithImages = async (query) => {
     return (await query.sequelize.query("select id, imageUrl from Threads where imageUrl is not null"))[0];
-  }
+  };
 
   /**
    * Returns chat groups with image
@@ -32,7 +32,7 @@
    */
   const getChatGroupsWithImages = async (query) => {
     return (await query.sequelize.query("select id, imageUrl from ChatGroups where imageUrl is not null"))[0];
-  }
+  };
 
   /**
    * Returns news articles with image
@@ -41,7 +41,7 @@
    */
   const getNewsArticlesWithImages = async (query) => {
     return (await query.sequelize.query("select id, imageUrl from NewsArticles where imageUrl is not null"))[0];
-  }
+  };
 
   /**
    * Finds message attachment by id
@@ -51,7 +51,7 @@
    */
   const getMessageAttachment = async (query, id) => {
     return (await query.sequelize.query(`SELECT contentType, contents FROM MessageAttachments WHERE id = ${id}`))[0];
-  }
+  };
 
   /**
    * Updates messages image and contents
@@ -63,7 +63,7 @@
    */
   const updateMessageImageAndContents = async (query, id, image, contents) => {
     return (await query.sequelize.query(`UPDATE Messages SET image = '${image}', contents = '${contents}' WHERE id = ${id}`));
-  }
+  };
 
   /**
    * Updates thread image
@@ -74,7 +74,7 @@
    */
   const updateThreadImage = async (query, id, image) => {
     return (await query.sequelize.query(`UPDATE Threads SET imageUrl = '${image}' WHERE id = ${id}`));
-  }
+  };
 
   /**
    * Updates news article image
@@ -85,7 +85,7 @@
    */
   const updateNewsArticleImage = async (query, id, image) => {
     return (await query.sequelize.query(`UPDATE NewsArticles SET imageUrl = '${image}' WHERE id = ${id}`));
-  }
+  };
 
   /**
    * Updates chat group image
@@ -96,7 +96,7 @@
    */
   const updateChatGroupImage = async (query, id, image) => {
     return (await query.sequelize.query(`UPDATE ChatGroups SET imageUrl = '${image}' WHERE id = ${id}`));
-  }
+  };
 
   /**
    * Resolves image storage folder
@@ -108,9 +108,9 @@
     }
 
     return path;
-  }
+  };
 
-    /**
+  /**
    * Returns server base url for the client
    */
   const getBaseUrl = () => {
@@ -119,7 +119,7 @@
     const port = config().client.server.port;
     const protocol = secure ? "https" : "http";
     return `${protocol}://${host}:${port}`;
-  }
+  };
 
   /**
    * Resolves file extension
@@ -136,7 +136,7 @@
       default:
         return "";
     }
-  }
+  };
 
   /**
    * Extracts image url from chat message
@@ -145,7 +145,7 @@
    */
   const getImageUrlFromMessage = (message) => {
     const contents = message.contents;
-    const match = /src="([.a-zA-Z0-9:\/-]*)"/gmi.exec(contents);
+    const match = /src="([.a-zA-Z0-9:/-]*)"/gmi.exec(contents);
     if (!match) {
       return null;
     }
@@ -154,7 +154,7 @@
     }
 
     return null;
-  }
+  };
 
   /**
    * Migrates single chat message
@@ -175,7 +175,7 @@
     await fs.writeFile(`${getImageFolder()}/${filename}`, attachment[0].contents);
     const fileUrl = `${getBaseUrl()}/files/${filename}`;
     await updateMessageImageAndContents(query, message.id, fileUrl, "");
-  }
+  };
 
   const downloadWordpressImage = async(imageDbUrl) => {
     const imagePath = imageDbUrl.substr(imageDbUrl.lastIndexOf(WP_PATH_SEPARATOR) + WP_PATH_SEPARATOR.length);
@@ -183,8 +183,7 @@
     const url = `${contentUrl}/${imagePath}`;
     const res = await fetch(url);
     return res.arrayBuffer();
-
-  }
+  };
 
   /**
    * Migrates single thread
@@ -194,13 +193,13 @@
    */
   const migrateThread = async (query, thread) => {
     const imageDbUrl = thread.imageUrl;
-    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf('.')) : "";
+    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf(".")) : "";
     const filename = `${uuid()}${extension}`;
     const buffer = await downloadWordpressImage(imageDbUrl);
     await fs.writeFile(`${getImageFolder()}/${filename}`, Buffer.from(buffer));
     const fileUrl = `${getBaseUrl()}/files/${filename}`;
     await updateThreadImage(query, thread.id, fileUrl);
-  }
+  };
 
   /**
    * Migrates single news article
@@ -210,13 +209,13 @@
    */
   const migrateNewsArticle = async (query, newsArticle) => {
     const imageDbUrl = newsArticle.imageUrl;
-    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf('.')) : "";
+    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf(".")) : "";
     const filename = `${uuid()}${extension}`;
     const buffer = await downloadWordpressImage(imageDbUrl);
     await fs.writeFile(`${getImageFolder()}/${filename}`, Buffer.from(buffer));
     const fileUrl = `${getBaseUrl()}/files/${filename}`;
     await updateNewsArticleImage(query, newsArticle.id, fileUrl);
-  }
+  };
 
   /**
    * Migrates single chat groups
@@ -232,7 +231,7 @@
     await fs.writeFile(`${getImageFolder()}/${filename}`, Buffer.from(buffer));
     const fileUrl = `${getBaseUrl()}/files/${filename}`;
     await updateChatGroupImage(query, chatGroup.id, fileUrl);
-  }
+  };
 
   module.exports = {
 
