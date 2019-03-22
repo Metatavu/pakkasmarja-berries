@@ -13,14 +13,12 @@
 
 export interface DeliveryNote { 
     id: string  | null;
-    deliveryId: string ;
     text: string  | null;
     image: string  | null;
 }    
 
 export interface DeliveryNoteOpt { 
     id?: string;
-    deliveryId?: string;
     text?: string;
     image?: string;
 }
