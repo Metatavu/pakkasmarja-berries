@@ -21,10 +21,12 @@ interface FileUploadResponse {
 const createImage = (token: string): Promise<FileUploadResponse> => {
   return request("http://localhost:3002")
     .post("/upload")
+    .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${token}`)
     .attach('file', `${testDataDir}logo.png`)
     .expect(200)
     .then((response) => {
+      console.log(response.body);
       return response.body;
     });
 }
