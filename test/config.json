@@ -102,6 +102,7 @@
       "234": 500
     }
   },
+  "uploadDirectory": "/tmp/",
   "contacts": {
     "notifications": {
       "email": "to@example.org"
