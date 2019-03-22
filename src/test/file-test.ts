@@ -179,8 +179,9 @@ test("Test public files", async (t) => {
   const findUpdatedPublicFile = await findPublicFile(token, createdPublicFile.id!);
   t.equal(findUpdatedPublicFile.url, createdImage3.url);
 
-  await deletePublicFile(token, createdPublicFile.id!);
-  await deletePublicFile(token, createdPublicFile2.id!);
+  const token2 = await auth.getTokenUser1();
+  await deletePublicFile(token2, createdPublicFile.id!);
+  await deletePublicFile(token2, createdPublicFile2.id!);
 
   const noPublicFilesList = await listPublicFiles(token);
   t.equal(0, noPublicFilesList.length);
