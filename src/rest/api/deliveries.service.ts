@@ -87,6 +87,7 @@ export default abstract class DeliveriesService extends AbstractService {
    * Lists deliveries
    * @summary Lists deliveries
    * Accepted parameters:
+    * - (query) string userId - filter by user id
     * - (query) DeliveryStatus status - filter by status
     * - (query) ItemGroupCategory itemGroupCategory - filter by item group id
     * - (query) string itemGroupId - filter by item group id

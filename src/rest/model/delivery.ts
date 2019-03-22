@@ -15,14 +15,14 @@ import { DeliveryStatus } from './deliveryStatus';
 
 export interface Delivery { 
     id: string  | null;
-    productId: string  | null;
-    userId: string  | null;
-    time: Date  | null;
-    status: DeliveryStatus  | null;
-    amount: number  | null;
+    productId: string ;
+    userId: string ;
+    time: Date ;
+    status: DeliveryStatus ;
+    amount: number ;
     price: string  | null;
     quality: DeliveryQuality  | null;
-    deliveryPlaceId: string  | null;
+    deliveryPlaceId: string ;
 }    
 
 export interface DeliveryOpt { 
