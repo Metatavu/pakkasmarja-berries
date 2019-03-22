@@ -6,6 +6,7 @@ import ChatMessagesServiceImpl from './impl/chatMessages.service';
 import ChatThreadsServiceImpl from './impl/chatThreads.service';
 import ContactsServiceImpl from './impl/contacts.service';
 import ContractsServiceImpl from './impl/contracts.service';
+import DeliveriesServiceImpl from './impl/deliveries.service';
 import DeliveryPlacesServiceImpl from './impl/deliveryPlaces.service';
 import ItemGroupsServiceImpl from './impl/itemGroups.service';
 import NewsArticlesServiceImpl from './impl/newsArticles.service';
@@ -35,6 +36,8 @@ export default class Api {
       new ContactsServiceImpl(app, keycloak);
     
       new ContractsServiceImpl(app, keycloak);
+    
+      new DeliveriesServiceImpl(app, keycloak);
     
       new DeliveryPlacesServiceImpl(app, keycloak);
     

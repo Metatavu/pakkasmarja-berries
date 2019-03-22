@@ -1,6 +1,7 @@
 import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
 import * as _ from "lodash";
+import { DeliveryStatus, DeliveryQuality, ItemGroupCategory } from "src/rest/model/models";
 
 export interface SessionModel {
   id: string,
@@ -243,6 +244,35 @@ export interface ProductModel {
 }
 
 /**
+ * Interface for delivery
+ */
+export interface DeliveryModel { 
+  id: string | null;
+  productId: string;
+  userId: string;
+  time: Date;
+  status: DeliveryStatus;
+  amount: number;
+  price: string | null;
+  quality: DeliveryQuality | null;
+  deliveryPlaceId: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Interface for delivery note
+ */
+export interface DeliveryNoteModel { 
+  id: string | null;
+  deliveryId: string;
+  text: string | null;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
  * Interface for public file
  */
 export interface PublicFileModel { 
@@ -260,6 +290,8 @@ export class Models {
   private Message: Sequelize.Model<any, MessageModel>;
   private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
   private Product: Sequelize.Model<any, ProductModel>;
+  private Delivery: Sequelize.Model<any, DeliveryModel>;
+  private DeliveryNote: Sequelize.Model<any, DeliveryNoteModel>;
   private PublicFile: Sequelize.Model<any, PublicFileModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
@@ -539,6 +571,25 @@ export class Models {
       unitName: { type: Sequelize.STRING(191), allowNull: false }
     });
 
+    this.Delivery = this.defineModel("Delivery", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      productId: { type: Sequelize.UUID, allowNull: false, references: { model: "Products", key: "id" } },
+      userId: { type: Sequelize.UUID, allowNull: false },
+      time: { type: Sequelize.DATE, allowNull: false },
+      status: { type: Sequelize.STRING(191), allowNull: false },
+      amount: { type: Sequelize.INTEGER, allowNull: false },
+      price: { type: Sequelize.STRING(191), allowNull: true },
+      quality: { type: Sequelize.STRING(191), allowNull: true },
+      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
+    });
+
+    this.DeliveryNote = this.defineModel("DeliveryNote", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      deliveryId: { type: Sequelize.UUID, allowNull: false },
+      text: { type: Sequelize.TEXT, allowNull: true },
+      image: { type: Sequelize.STRING(191), allowNull: true },
+    });
+    
     this.PublicFile = this.defineModel("PublicFile", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       url: { type: Sequelize.STRING(191), allowNull: false }
@@ -2531,6 +2582,292 @@ export class Models {
       }).slice(0, -1);
 
       where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+    }
+
+    return where;
+  }
+
+  // Deliveries
+
+  /**
+   * Create Delivery
+   * 
+   * @param id id
+   * @param productId productId
+   * @param userId userId
+   * @param time time
+   * @param status status
+   * @param amount amount
+   * @param price price
+   * @param quality quality
+   * @param deliveryPlaceId deliveryPlaceId
+   * @return promise on created delivery
+   */
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, quality: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
+    return this.Delivery.create({
+      id: id,
+      productId: productId,
+      userId: userId,
+      time: time,
+      status: status,
+      amount: amount,
+      price: price,
+      quality: quality,
+      deliveryPlaceId: deliveryPlaceId
+    } as any);
+  }
+
+  /**
+   * Update Delivery
+   * 
+   * @param id id
+   * @param productId productId
+   * @param userId userId
+   * @param time time
+   * @param status status
+   * @param amount amount
+   * @param price price
+   * @param quality quality
+   * @param deliveryPlaceId deliveryPlaceId
+   * @return promise on created delivery
+   */
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, price: string | null, quality: DeliveryQuality | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+    return this.Delivery.update({
+      productId: productId,
+      userId: userId,
+      time: time,
+      status: status,
+      amount: amount,
+      price: price,
+      quality: quality,
+      deliveryPlaceId: deliveryPlaceId
+    }, {
+      where: {
+        id: id
+      }
+    } as any);
+  }
+
+  /**
+   * Find delivery by id
+   * 
+   * @param deliveryId deliveryId
+   * @return promise on found delivery
+   */
+  public findDeliveryById(deliveryId: string): PromiseLike<DeliveryModel> {
+    return this.Delivery.findOne({
+      where: {
+        id: deliveryId
+      }
+    });
+  }
+
+   /**
+   * Delete delivery
+   * 
+   * @param deliveryId deliveryId
+   * @return promise that resolves successful removal
+   */
+  public deleteDeliveryById(deliveryId: string): PromiseLike<number> {
+    return this.Delivery.destroy({
+      where: {
+        id: deliveryId
+      }
+    });
+  }
+
+  /**
+   * Lists deliveries
+   * 
+   * @param status status
+   * @param userId userId
+   * @param itemGroupCategory itemGroupCategory
+   * @param itemGroupId itemGroupId
+   * @param productId productId
+   * @param deliveryPlaceId deliveryPlaceId
+   * @param timeBefore timeBefore
+   * @param timeAfter timeAfter
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of deliveries
+   */
+  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number, maxResults?: number): Bluebird<DeliveryModel[]> {
+    const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productId, deliveryPlaceId, timeBefore, timeAfter);
+
+    return this.Delivery.findAll({ 
+      where: where, 
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  /**
+   * Creates a where clause for listing / counting deliveries. 
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param status status
+   * @param userId userId
+   * @param itemGroupCategory itemGroupCategory
+   * @param itemGroupId itemGroupId
+   * @param productId productId
+   * @param deliveryPlaceId deliveryPlaceId
+   * @param timeBefore timeBefore
+   * @param timeAfter timeAfter
+   * @return where clause
+   */
+  private createListDeliveriesWhere(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null) {
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (productId) {
+      where.productId = productId;
+    }
+
+    if (deliveryPlaceId) {
+      where.deliveryPlaceId = deliveryPlaceId;
+    }
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (timeBefore) {
+      where.timeBefore = {
+        $lte: timeBefore
+      };
+    }
+
+    if (timeAfter) {
+      where.timeAfter = {
+        $gte: timeAfter
+      };
+    }
+
+    if (itemGroupCategory) {
+      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+        attributes: ["id"],
+        where: { category: itemGroupCategory }
+      }).slice(0, -1);
+
+      const productSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Products", {
+        attributes: ["id"],
+        where: { itemGroupId: { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) } }
+      }).slice(0, -1);
+
+      where.productId = { [Sequelize.Op.in]: this.sequelize.literal(`(${productSQL})`) };
+    }
+
+    if (itemGroupId) {
+      const itemGroupSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Products", {
+        attributes: ["id"],
+        where: { id: itemGroupId }
+      }).slice(0, -1);
+
+      where.productId = { [Sequelize.Op.in]: this.sequelize.literal(`(${itemGroupSQL})`) };
+    }
+
+    return where;
+  }
+
+  // Delivery notes
+
+  /**
+   * Create DeliveryNote
+   * 
+   * @param id id
+   * @param deliveryId deliveryId
+   * @param text text
+   * @param image image
+   * @return promise on created delivery note
+   */
+  public createDeliveryNote(id: string, deliveryId: string, text: string | null, image: string | null): PromiseLike<DeliveryNoteModel> {
+    return this.DeliveryNote.create({
+      id: id,
+      deliveryId: deliveryId,
+      text: text,
+      image: image
+    } as any);
+  }
+
+  /**
+   * Update DeliveryNote
+   * 
+   * @param id id
+   * @param deliveryId deliveryId
+   * @param text text
+   * @param image image
+   * @return promise on created delivery note
+   */
+  public updateDeliveryNote(id: string, deliveryId: string, text: string | null, image: string | null): PromiseLike<[number, any]> {
+    return this.DeliveryNote.update({
+      deliveryId: deliveryId,
+      text: text,
+      image: image
+    }, {
+      where: {
+        id: id
+      }
+    } as any);
+  }
+
+  /**
+   * Find delivery note by id
+   * 
+   * @param deliveryNoteId deliveryNoteId
+   * @return promise on found delivery note
+   */
+  public findDeliveryNoteById(deliveryNoteId: string): PromiseLike<DeliveryNoteModel> {
+    return this.DeliveryNote.findOne({
+      where: {
+        id: deliveryNoteId
+      }
+    });
+  }
+
+   /**
+   * Delete delivery note
+   * 
+   * @param deliveryNoteId deliveryNoteId
+   * @return promise that resolves successful removal
+   */
+  public deleteDeliveryNoteById(deliveryNoteId: string): PromiseLike<number> {
+    return this.DeliveryNote.destroy({
+      where: {
+        id: deliveryNoteId
+      }
+    });
+  }
+
+  /**
+   * Lists delivery notes
+   * 
+   * @param deliveryId deliveryId
+   * @return Promise that resolves list of delivery notes
+   */
+  public listDeliveryNotes(deliveryId: string | null): Bluebird<DeliveryNoteModel[]> {
+    const where = this.createListDeliveryNotesWhere(deliveryId);
+
+    return this.DeliveryNote.findAll({ 
+      where: where
+    });
+  }
+  /**
+   * Creates a where clause for listing / counting delivery notes
+   * 
+   * All parameters are optional and ignored if not given
+   *  
+   * @param deliveryId deliveryId
+   * @return where clause
+   */
+  private createListDeliveryNotesWhere(deliveryId: string | null) {
+    const where: any = {};
+
+    if (deliveryId) {
+      where.deliveryId = deliveryId;
     }
 
     return where;

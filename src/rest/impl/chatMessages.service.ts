@@ -34,7 +34,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       this.sendForbidden(res);
       return;
     }
-
+    
     const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents, payload.image);
     res.status(200).send(this.translateChatMessage(message));
 
