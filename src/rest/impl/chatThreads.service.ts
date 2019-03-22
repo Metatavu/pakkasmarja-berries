@@ -151,7 +151,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    await models.updateThread(thread.id, thread.ownerId, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    await models.updateThread(thread.id, thread.ownerId || null, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
 
     res.status(200).send(await this.translateChatThread(await models.findThread(chatThreadId), chatGroup));
 
