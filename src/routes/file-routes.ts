@@ -52,9 +52,9 @@ export default class FileRoutes {
         cb(null, config().uploadDirectory)
       },
       filename: (req, file, cb) => {
-        const filename = file.filename;
+        const filename = file.originalname;
         const extension = filename.indexOf(".") > -1 ? filename.substr(filename.lastIndexOf('.') + 1) : "";
-        cb(null, `${uuid()}.${extension}}`)
+        cb(null, `${uuid()}.${extension}`)
       }
     });
   }
