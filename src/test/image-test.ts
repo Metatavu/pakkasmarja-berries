@@ -19,13 +19,10 @@ interface FileUploadResponse {
  * @returns promise for image
  */
 const createImage = (token: string): Promise<FileUploadResponse> => {
-  const payload = fs.readFileSync(`${testDataDir}logo.png`);
-
   return request("http://localhost:3002")
     .post("/upload")
     .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
+    .attach('file', `${testDataDir}logo.png`)
     .expect(200)
     .then((response) => {
       return response.body;
