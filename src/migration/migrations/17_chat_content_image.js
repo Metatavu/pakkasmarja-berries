@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const fetch = require('node-fetch');
+  const fetch = require("node-fetch");
   const config = require(__dirname + "/../../config").config;
   const fs = require("fs").promises;
   const uuid = require("uuid4");
@@ -225,7 +225,7 @@
    */
   const migrateChatGroup = async (query, chatGroup) => {
     const imageDbUrl = chatGroup.imageUrl;
-    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf('.')) : "";
+    const extension = imageDbUrl.indexOf(".") > -1 ? imageDbUrl.substr(imageDbUrl.lastIndexOf(".")) : "";
     const filename = `${uuid()}${extension}`;
     const buffer = await downloadWordpressImage(imageDbUrl);
     await fs.writeFile(`${getImageFolder()}/${filename}`, Buffer.from(buffer));
