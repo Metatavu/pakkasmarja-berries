@@ -11,9 +11,10 @@ import ItemGroupsServiceImpl from './impl/itemGroups.service';
 import NewsArticlesServiceImpl from './impl/newsArticles.service';
 import OperationReportsServiceImpl from './impl/operationReports.service';
 import OperationsServiceImpl from './impl/operations.service';
+import ProductsServiceImpl from './impl/products.service';
+import PublicFilesServiceImpl from './impl/publicFiles.service';
 import SignAuthenticationServicesServiceImpl from './impl/signAuthenticationServices.service';
 import WeekDeliveryPredictionsServiceImpl from './impl/weekDeliveryPredictions.service';
-import ProductsServiceImpl from './impl/products.service';
 
 export default class Api {
 
@@ -45,11 +46,13 @@ export default class Api {
     
       new OperationsServiceImpl(app, keycloak);
     
-      new SignAuthenticationServicesServiceImpl(app, keycloak);
-      
-      new WeekDeliveryPredictionsServiceImpl(app, keycloak);
-
       new ProductsServiceImpl(app, keycloak);
+    
+      new PublicFilesServiceImpl(app, keycloak);
+    
+      new SignAuthenticationServicesServiceImpl(app, keycloak);
+    
+      new WeekDeliveryPredictionsServiceImpl(app, keycloak);
     
   }
 }

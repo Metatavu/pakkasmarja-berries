@@ -242,6 +242,14 @@ export interface ProductModel {
   updatedAt: Date;
 }
 
+/**
+ * Interface for public file
+ */
+export interface PublicFileModel { 
+  id: string | null;
+  url: string
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -252,6 +260,7 @@ export class Models {
   private Message: Sequelize.Model<any, MessageModel>;
   private WeekDeliveryPrediction: Sequelize.Model<any, WeekDeliveryPredictionModel>;
   private Product: Sequelize.Model<any, ProductModel>;
+  private PublicFile: Sequelize.Model<any, PublicFileModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -528,6 +537,11 @@ export class Models {
       units: { type: Sequelize.INTEGER, allowNull: false },
       unitSize: { type: Sequelize.INTEGER, allowNull: false },
       unitName: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.PublicFile = this.defineModel("PublicFile", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      url: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -813,11 +827,12 @@ export class Models {
    * @param contents contents
    * @returns created message
    */
-  public createMessage(threadId: number, userId: string, contents: string): PromiseLike<MessageModel> {
+  public createMessage(threadId: number, userId: string, contents: string | null, image: string | null): PromiseLike<MessageModel> {
     return this.Message.create({ 
       threadId: threadId,
       userId: userId,
-      contents: contents
+      contents: contents,
+      image: image
     } as any);
   }
 
@@ -912,9 +927,10 @@ export class Models {
    * @param contents contents 
    * @return promise for update
    */
-  public updateMessage(id: number, contents: string): PromiseLike<[number, any]> {
+  public updateMessage(id: number, contents: string | null, image: string | null): PromiseLike<[number, any]> {
     return this.sequelize.models.Message.update({
-      contents: contents
+      contents: contents,
+      image: image
     }, {
       where: {
         id: id
@@ -1014,6 +1030,69 @@ export class Models {
     return this.sequelize.models.NewsArticle.destroy({ where: {id: id} });
   }
   
+  // Public files
+  
+  /**
+   * Creates public file
+   * 
+   * @param url url 
+   * @returns promise for public file
+   */
+  createPublicFile(id: string, url: string): PromiseLike<PublicFileModel> {
+    return this.PublicFile.create({
+      id: id,
+      url: url
+    });
+  }
+  
+  /**
+   * Finds a public file
+   * 
+   * @param id public file id
+   * @returns promise for public file or null if not found
+   */
+  findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
+    return this.PublicFile.findOne({ where: { id : id } });
+  }
+  
+  /**
+   * Lists public files
+   * 
+   * @param firstResult first result
+   * @param maxResults max results
+   * @returns promise for public files
+   */
+  listPublicFiles(firstResult?: number, maxResults?: number): PromiseLike<PublicFileModel[]> {
+    return this.PublicFile.findAll({ offset: firstResult, limit: maxResults });
+  }
+  
+  /**
+   * Updates public file
+   * 
+   * @param id public file id
+   * @param url url 
+   * @returns promise for update
+   */
+  updatePublicFile(id: number, url: string): PromiseLike<[number, any]> {
+    return this.PublicFile.update({
+      url: url
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+  
+  /**
+   * Deletes a public file
+   * 
+   * @param id public file id
+   * @returns promise for delete
+   */
+  deletePublicFile(id: number): PromiseLike<number> {
+    return this.PublicFile.destroy({ where: {id: id} });
+  }
+
   // ItemRead
   
   createItemRead(itemId: number, userId: string) {
