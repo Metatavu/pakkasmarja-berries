@@ -132,21 +132,6 @@ const listPublicFiles = (token: string): Promise<PublicFile[]> => {
       return response.body;
     });
 }
-
-/**
- * Deletes public file
- * 
- * @param token access token
- * @param id id
- */
-const deletePublicFile = (token: string, id: string) => {
-  return request("http://localhost:3002")
-    .delete(`/rest/v1/products/${id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .expect(204);
-}
-
 test("Create file", async (t) => {
   const token = await auth.getTokenUser1();
   const createdImage = await createFile(token);
@@ -165,7 +150,7 @@ test("Test public files", async (t) => {
   t.equal(createdImage.url, createdPublicFile.url);
 
   const createdImage2 = await createFile(token);
-  const createdPublicFile2 = await createPublicFile(token, createdImage2.url);
+  await createPublicFile(token, createdImage2.url);
 
   const publicFiles = await listPublicFiles(token);
   t.equal(2, publicFiles.length);
@@ -178,11 +163,4 @@ test("Test public files", async (t) => {
   await updatePublicFile(token, createdPublicFile.id!, createdImage3.url);
   const findUpdatedPublicFile = await findPublicFile(token, createdPublicFile.id!);
   t.equal(findUpdatedPublicFile.url, createdImage3.url);
-
-  const token2 = await auth.getTokenUser1();
-  await deletePublicFile(token2, createdPublicFile.id!);
-  await deletePublicFile(token2, createdPublicFile2.id!);
-
-  const noPublicFilesList = await listPublicFiles(token);
-  t.equal(0, noPublicFilesList.length);
 });
