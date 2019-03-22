@@ -40,8 +40,8 @@ const createImage = (token: string): Promise<FileUploadResponse> => {
  */
 const findImage = (token: string, url: string): Promise<any> => {
   console.log("url:  " + url);
-  return request("http://localhost:3002")
-    .get(url)
+  return request(url)
+    .get("")
     .set("Authorization", `Bearer ${token}`)
     .expect(200)
     .then((response) => {
