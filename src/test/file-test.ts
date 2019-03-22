@@ -174,6 +174,11 @@ test("Test public files", async (t) => {
   t.equal(createdPublicFile.id, foundPublicFile.id);
   t.equal(createdPublicFile.url, foundPublicFile.url);
 
+  const createdImage3 = await createFile(token);
+  await updatePublicFile(token, createdPublicFile.id!, createdImage3.url);
+  const findUpdatedPublicFile = await findPublicFile(token, createdPublicFile.id!);
+  t.equal(findUpdatedPublicFile.url, createdImage3.url);
+
   await deletePublicFile(token, createdPublicFile.id!);
   await deletePublicFile(token, createdPublicFile2.id!);
 
