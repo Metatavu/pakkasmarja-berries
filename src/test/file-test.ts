@@ -141,7 +141,7 @@ const listPublicFiles = (token: string): Promise<PublicFile[]> => {
  */
 const deletePublicFile = (token: string, id: string) => {
   return request("http://localhost:3002")
-    .delete(`/rest/v1/publicFiles/${id}`)
+    .delete(`/rest/v1/products/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(204);
