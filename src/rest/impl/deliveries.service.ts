@@ -223,8 +223,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const deliveryPlaceId = req.query.deliveryPlaceId || null;
     const timeBefore = req.query.timeBefore || null;
     const timeAfter = req.query.timeAfter || null;
-    const firstResult = req.query.firstResult || 0;
-    const maxResults = req.query.maxResults || 5;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 5;
 
     const databaseDeliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceId);
     const databaseDeliveryPlaceId = databaseDeliveryPlace ? databaseDeliveryPlace.id : null;
