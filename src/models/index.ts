@@ -2560,11 +2560,11 @@ export class Models {
    * All parameters are optional and ignored if not given
    *  
    * @param itemGroupId itemGroupId
-   * @param itemGroupType itemGroupType
+   * @param itemGroupCategory itemGroupCategory
    * @param contractUserId contractUserId
    * @return where clause
    */
-  private createListProductsWhere(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string | null) {
+  private createListProductsWhere(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string | null) {
     const where: any = {};
 
     if (itemGroupId) {
@@ -2575,13 +2575,13 @@ export class Models {
       where.userId = contractUserId;
     }
 
-    if (itemGroupType) {
+    if (itemGroupCategory) {
       const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
         attributes: ["id"],
-        where: { type: itemGroupType }
+        where: { category: itemGroupCategory }
       }).slice(0, -1);
 
-      where.itemGroupType = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
+      where.itemGroupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
     }
 
     return where;
@@ -2735,15 +2735,21 @@ export class Models {
       where.userId = userId;
     }
 
-    if (timeBefore) {
-      where.timeBefore = {
+    if (timeBefore && !timeAfter) {
+      where.time = {
         $lte: timeBefore
       };
     }
 
-    if (timeAfter) {
-      where.timeAfter = {
+    if (timeAfter && !timeBefore) {
+      where.time = {
         $gte: timeAfter
+      };
+    }
+
+    if (timeAfter && timeBefore) {
+      where.time = {
+        $between: [timeAfter, timeBefore]
       };
     }
 
@@ -2764,7 +2770,7 @@ export class Models {
     if (itemGroupId) {
       const itemGroupSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Products", {
         attributes: ["id"],
-        where: { id: itemGroupId }
+        where: { itemGroupId: itemGroupId }
       }).slice(0, -1);
 
       where.productId = { [Sequelize.Op.in]: this.sequelize.literal(`(${itemGroupSQL})`) };
