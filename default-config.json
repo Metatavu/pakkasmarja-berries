@@ -81,5 +81,9 @@
   },
   "migrations": {
     "lock-file": "/tmp/pm-migrations.lock"
+  },
+  "cache": {
+    "enabled": true,
+    "expire-time": 60000
   }
 }
