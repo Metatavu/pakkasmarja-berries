@@ -9,5 +9,4 @@ keycloak.log
 .nyc_output
 coverage
 *~
-config.json
-default-config.json
+/config*.json
