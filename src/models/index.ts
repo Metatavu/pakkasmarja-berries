@@ -398,7 +398,7 @@ export class Models {
     
     this.defineModel("ItemGroup", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      sapId: { type: Sequelize.STRING(191), allowNull: false },
+      sapId: { type: Sequelize.STRING(191), allowNull: true },
       externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
       name: { type: Sequelize.STRING(191), allowNull: false },
       category: { type: Sequelize.STRING(191), allowNull: false },
@@ -1246,7 +1246,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for created item group
    */
-  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<ItemGroupModel> {
+  createItemGroup(sapId: string | null, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.create({
       sapId: sapId,
       name: name,

@@ -38,7 +38,7 @@ export default class Migration {
             return this.releaseMigrationLock().then(() => {
               return migrations;
             });
-          });
+          })
         } else {
           return this.waitMigrationLock()
             .then(() => {
