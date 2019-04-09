@@ -95,7 +95,7 @@ export default class ApplicationRoles {
   }
 
   /**
-   * Role that allows users to create item group prices
+   * Role that allows users to create item groups
    */
   static get CREATE_ITEM_GROUPS() {
     return "create-item-groups";
