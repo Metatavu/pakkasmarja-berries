@@ -11,6 +11,51 @@ import ApplicationRoles from "../application-roles";
  */
 export default class ItemGroupsServiceImpl extends ItemGroupsService {
   
+  /**
+   * @inheritdoc
+   */
+  async createItemGroup(req: Request, res: Response) {
+    const name = req.body.name;
+    const displayName = req.body.displayName;
+    const category = req.body.category;
+    const minimumProfitEstimation = req.body.minimumProfitEstimation;
+    const prerequisiteContractItemGroupId = req.body.prerequisiteContractItemGroupId;
+
+    if (!this.hasRealmRole(req, ApplicationRoles.CREATE_ITEM_GROUPS)) {
+      this.sendForbidden(res, "You  do not have permission to create item groups");
+      return;
+    }
+
+    const databasePrerequisiteContractItemGroup = await models.findItemGroupByExternalId(prerequisiteContractItemGroupId);
+    if (prerequisiteContractItemGroupId && !databasePrerequisiteContractItemGroup) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    if (!name) {
+      this.sendBadRequest(res, "Missing required body parameter name");
+      return;
+    }
+
+    if (!category) {
+      this.sendBadRequest(res, "Missing required body parameter category");
+      return;
+    }
+
+    if (!minimumProfitEstimation) {
+      this.sendBadRequest(res, "Missing required body parameter minimumProfitEstimation");
+      return;
+    }
+
+    const createdItemGroup = await models.createItemGroup(null, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
+    
+    const type = `${(new Date()).getFullYear()}`;  
+    const documentTemplate = await models.createDocumentTemplate("Insert Contents", null, null);
+    await models.createItemGroupDocumentTemplate(type, createdItemGroup.id, documentTemplate.id); 
+    
+    res.status(200).send(await this.translateDatabaseItemGroup(createdItemGroup));
+  }
+
   async findItemGroup(req: Request, res: Response) {
     const itemGroupId = req.params.id;
     if (!itemGroupId) {
@@ -347,7 +392,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    await models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header || null, payload.footer || null);
+    await models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header || null, payload.footer || null);
 
     const updatedDocumentTemplate = await models.findDocumentTemplateById(databaseItemGroupDocumentTemplate.documentTemplateId);
     if (!updatedDocumentTemplate) {
@@ -371,7 +416,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
     const result: ItemGroup = {
       "id": itemGroup.externalId,
       "name": itemGroup.name,
-      "displayName": itemGroup.displayName || null,
+      "displayName": itemGroup.displayName || null,
       "category": category,
       "minimumProfitEstimation": itemGroup.minimumProfitEstimation,
       "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
@@ -393,8 +438,8 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       "itemGroupId": databaseItemGroup.externalId,
       "type": databaseItemGroupDocumentTemplate.type,
       "contents": databaseDocumentTemplate.contents,
-      "header": databaseDocumentTemplate.header || null,
-      "footer": databaseDocumentTemplate.footer || null
+      "header": databaseDocumentTemplate.header || null,
+      "footer": databaseDocumentTemplate.footer || null
     };
 
     return result;

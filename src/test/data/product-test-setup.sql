@@ -1,3 +1,4 @@
+DELETE FROM ItemGroups;
 INSERT INTO 
     ItemGroups (id, externalId, sapId, name, displayName, category, minimumProfitEstimation, createdAt, updatedAt)
 VALUES 

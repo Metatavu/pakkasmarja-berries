@@ -238,7 +238,7 @@ test("Test sync contact", async (t) => {
       await Promise.all([
         auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]),
         users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
-        database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
+        database.executeFiles(testDataDir, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
       ]);
 
       t.deepEqual(response.body, contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"]);

@@ -132,6 +132,14 @@ test("Lists news article", async (t) => {
 
   const foundArticles = await listNewsArticles(token);
 
+  foundArticles.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
+  createdArticles.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+
   t.deepEqual(createdArticles, foundArticles);
 
   await Promise.all(createdArticles.map((createdArticle) => {
