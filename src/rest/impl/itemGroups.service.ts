@@ -28,7 +28,6 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
 
     const databasePrerequisiteContractItemGroup = await models.findItemGroupByExternalId(prerequisiteContractItemGroupId);
     if (prerequisiteContractItemGroupId && !databasePrerequisiteContractItemGroup) {
-      console.log(prerequisiteContractItemGroupId);
       this.sendNotFound(res);
       return;
     }
