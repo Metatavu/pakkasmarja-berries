@@ -69,7 +69,7 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  public async getTokenUser1(roles?: string | string[]) {
+  public async getTokenUser1(roles?: string | string[]) {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser1Id();
@@ -85,7 +85,7 @@ export default new class Auth {
    * @param {Array} roles list of roles to be removed 
    * @returns {Promise} promise for removed roles
    */
-  async removeUser1Roles(roles?: string | string[]) {
+  async removeUser1Roles(roles?: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser1Id();
     return this.removeRealmRolesToUser(adminToken, userId, roles ? Array.isArray(roles) ? roles : [roles] : []);
@@ -96,7 +96,7 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  async getTokenUser2(roles?: string | string[]) {
+  async getTokenUser2(roles?: string | string[]) {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser2Id();
@@ -112,7 +112,7 @@ export default new class Auth {
    * @param {Array} roles list of roles to be removed  
    * @returns {Promise} promise for removed roles
    */
-  async removeUser2Roles(roles: string | string[]) {
+  async removeUser2Roles(roles: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser2Id();
     return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
@@ -211,7 +211,7 @@ export default new class Auth {
    * @returns {Promise} promise for added roles 
    */
   async createRoles() {
-    const roles = ["list-all-contacts","delete-week-delivery-predictions","update-other-contacts","update-other-week-delivery-predictions","list-all-week-delivery-predictions","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations"];
+    const roles = ["list-all-contacts","delete-week-delivery-predictions","update-other-contacts","update-other-week-delivery-predictions","list-all-week-delivery-predictions","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","create-item-groups","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations"];
     const client = await this.getClient();
     
     return Promise.all(roles.map((role) => {

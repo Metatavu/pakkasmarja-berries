@@ -13,6 +13,7 @@ export default abstract class ItemGroupsService extends AbstractService {
   constructor(app: Application, keycloak: Keycloak) {
     super();
 
+    app.post(`/rest/v1${this.toPath('/itemGroups')}`, [ keycloak.protect() ], this.catchAsync(this.createItemGroup.bind(this)));
     app.post(`/rest/v1${this.toPath('/itemGroups/${encodeURIComponent(String(itemGroupId))}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.createItemGroupPrice.bind(this)));
     app.delete(`/rest/v1${this.toPath('/itemGroups/${encodeURIComponent(String(itemGroupId))}/prices/${encodeURIComponent(String(priceId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteItemGroupPrice.bind(this)));
     app.get(`/rest/v1${this.toPath('/itemGroups/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findItemGroup.bind(this)));
@@ -24,6 +25,15 @@ export default abstract class ItemGroupsService extends AbstractService {
     app.put(`/rest/v1${this.toPath('/itemGroups/${encodeURIComponent(String(itemGroupId))}/documentTemplates/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateItemGroupDocumentTemplate.bind(this)));
     app.put(`/rest/v1${this.toPath('/itemGroups/${encodeURIComponent(String(itemGroupId))}/prices/${encodeURIComponent(String(priceId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateItemGroupPrice.bind(this)));
   }
+
+
+  /**
+   * Creates item group
+   * @summary Creates item group
+   * Accepted parameters:
+    * - (body) ItemGroup body - Payload
+  */
+  public abstract createItemGroup(req: Request, res: Response): Promise<void>;
 
 
   /**
