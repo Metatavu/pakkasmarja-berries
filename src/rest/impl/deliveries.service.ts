@@ -5,6 +5,7 @@ import DeliveriesService from "../api/deliveries.service";
 import { Delivery, DeliveryNote } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
+import PurchaseMessageBuilder from "src/sap/purchase-builder";
 
 /**
  * Implementation for Deliveries REST service
@@ -319,6 +320,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
     const databaseDelivery = await models.findDeliveryById(deliveryId);
 
+    if (databaseDelivery.status === "DONE") {
+      await this.buildPurchaseXML(databaseDelivery, this.getLoggedUserId(req));
+    }
+
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
   }
 
@@ -351,6 +356,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const databaseDeliveryNote = await models.findDeliveryNoteById(deliveryNoteId);
 
     res.status(200).send(await this.translateDatabaseDeliveryNote(databaseDeliveryNote));
+  }
+
+  /**
+   * Build purchase XML
+   */
+  private async buildPurchaseXML(delivery: DeliveryModel, receiverUserId: string) {
+    const builder = new PurchaseMessageBuilder();
+
+    
   }
 
   /**

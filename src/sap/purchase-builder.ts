@@ -20,6 +20,8 @@ export interface PurchaseReceiptLine {
   Price: string,
   UnitPrice: string,
   FreeText: string,
+  WarehouseCode: string,
+  U_PFZ_REF: string,
 }
 
 /**
@@ -34,12 +36,12 @@ export interface PurchaseReceipt {
  * Interface describing transer header 
  */
 export interface TransferHeader {
-  DocDate: number,
-  CardCode: number,
-  Comments: string,
-  WarehouseCode: string,
-  FromWarehouseCode: string
-  SalesPersonCode: number,
+  DocDate: number;
+  CardCode: number;
+  Comments: string;
+  WarehouseCode: string;
+  FromWarehouseCode: string;
+  SalesPersonCode: string;
 }
 
 /**
@@ -47,7 +49,7 @@ export interface TransferHeader {
  */
 export interface TransferLineBinAllocation {
   BinAbsEntry: number,
-  Quantity: string,
+  Quantity: number,
   BinActionType: "batToWarehouse" | "batFromWarehouse",
 }
 
@@ -56,7 +58,7 @@ export interface TransferLineBinAllocation {
  */
 export interface TransferLine {
   ItemCode: number,
-  Quantity: string,
+  Quantity: number,
   BinAllocations: TransferLineBinAllocation[]
 }
 
@@ -90,7 +92,7 @@ export default class PurchaseMessageBuilder {
       Comments: "",
       CardCode: 0,
       FromWarehouseCode: "0",
-      SalesPersonCode: 0,
+      SalesPersonCode: "",
       WarehouseCode: "0"
     },
     Lines: [ ]
@@ -175,8 +177,10 @@ export default class PurchaseMessageBuilder {
       line.ele("ItemCode", purchaseReceiptLine.ItemCode);
       line.ele("Quantity", purchaseReceiptLine.Quantity);
       line.ele("Price", purchaseReceiptLine.Price);
-      line.ele("UnitPrice", purchaseReceiptLine.UnitPrice);
       line.ele("FreeText", purchaseReceiptLine.FreeText);
+      line.ele("UnitPrice", purchaseReceiptLine.UnitPrice);
+      line.ele("WarehouseCode", this.PurchaseReceipt.Header.WarehouseCode);
+      line.ele("U_PFZ_REF", this.PurchaseReceipt.Header.WarehouseCode);
     });
   }
 
