@@ -120,8 +120,8 @@ export default class ProductsServiceImpl extends ProductsService {
     const itemGroupId = req.query.itemGroupId || null;
     const itemGroupType = req.query.itemGroupType || null;
     const contractUserId = req.query.contractUserId || null;
-    const firstResult = req.query.firstResult || 0;
-    const maxResults = req.query.maxResults || 5;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 5;
 
     const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;

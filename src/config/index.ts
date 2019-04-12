@@ -166,6 +166,7 @@ export interface SAP {
   "item-group-display-names": SAPItemGroupDisplayNames;
   "item-group-prerequisites": SAPItemGroupPrerequisites;
   "item-group-minimum-profit-estimation": SAPItemGroupMinimumProfitEstimation;
+  "xml-fileupload-path": string;
 }
 
 export interface VismaSign {

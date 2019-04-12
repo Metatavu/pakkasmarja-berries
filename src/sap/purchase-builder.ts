@@ -4,22 +4,21 @@ import * as xmlbuilder from "xmlbuilder";
  * Interface describing purchase receipt header 
  */
 export interface PurchaseReceiptHeader {
-  DocDate: number,
-  CardCode: number,
+  DocDate: string,
+  CardCode: string,
   Comments: string,
   WarehouseCode: string,
-  SalesPersonCode: number,
+  SalesPersonCode: string,
 }
 
 /**
  * Interface describing purchase receipt header 
  */
 export interface PurchaseReceiptLine {
-  ItemCode: number,
-  Quantity: string,
-  Price: string,
-  UnitPrice: string,
-  FreeText: string,
+  ItemCode: string,
+  Quantity: number,
+  Price: number,
+  UnitPrice: number,
   WarehouseCode: string,
   U_PFZ_REF: string,
 }
@@ -36,8 +35,8 @@ export interface PurchaseReceipt {
  * Interface describing transer header 
  */
 export interface TransferHeader {
-  DocDate: number;
-  CardCode: number;
+  DocDate: string;
+  CardCode: string;
   Comments: string;
   WarehouseCode: string;
   FromWarehouseCode: string;
@@ -57,7 +56,7 @@ export interface TransferLineBinAllocation {
  * Interface describing purchase receipt header 
  */
 export interface TransferLine {
-  ItemCode: number,
+  ItemCode: string,
   Quantity: number,
   BinAllocations: TransferLineBinAllocation[]
 }
@@ -77,23 +76,23 @@ export default class PurchaseMessageBuilder {
 
   private PurchaseReceipt: PurchaseReceipt = {
     Header: {
-      CardCode: 0,
+      DocDate: "",
+      CardCode: "",
       Comments: "",
-      DocDate: 20200101,
-      SalesPersonCode: 0,
-      WarehouseCode: "0"
+      WarehouseCode: "",
+      SalesPersonCode: "",
     },
     Lines: []
   };
 
   private Transfer: Transfer = {
     Header: {
-      DocDate: 20200101,
+      DocDate: "20200101",
       Comments: "",
-      CardCode: 0,
-      FromWarehouseCode: "0",
+      CardCode: "",
+      FromWarehouseCode: "",
       SalesPersonCode: "",
-      WarehouseCode: "0"
+      WarehouseCode: ""
     },
     Lines: [ ]
   };
@@ -177,7 +176,6 @@ export default class PurchaseMessageBuilder {
       line.ele("ItemCode", purchaseReceiptLine.ItemCode);
       line.ele("Quantity", purchaseReceiptLine.Quantity);
       line.ele("Price", purchaseReceiptLine.Price);
-      line.ele("FreeText", purchaseReceiptLine.FreeText);
       line.ele("UnitPrice", purchaseReceiptLine.UnitPrice);
       line.ele("WarehouseCode", this.PurchaseReceipt.Header.WarehouseCode);
       line.ele("U_PFZ_REF", this.PurchaseReceipt.Header.WarehouseCode);
