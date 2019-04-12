@@ -1,10 +1,15 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
-import models, { DeliveryModel, DeliveryNoteModel } from "../../models";
+import models, { DeliveryModel, DeliveryNoteModel, ProductModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
-import { Delivery, DeliveryNote } from "../model/models";
+import { Delivery, DeliveryNote, Contact } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
+import PurchaseMessageBuilder from "../../sap/purchase-builder";
+import moment = require("moment");
+import userManagement from "../../user-management";
+import { config } from "../../config";
+import * as fs from "fs";
 
 /**
  * Implementation for Deliveries REST service
@@ -223,8 +228,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const deliveryPlaceId = req.query.deliveryPlaceId || null;
     const timeBefore = req.query.timeBefore || null;
     const timeAfter = req.query.timeAfter || null;
-    const firstResult = req.query.firstResult || 0;
-    const maxResults = req.query.maxResults || 5;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 5;
 
     const databaseDeliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceId);
     const databaseDeliveryPlaceId = databaseDeliveryPlace ? databaseDeliveryPlace.id : null;
@@ -319,6 +324,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
     const databaseDelivery = await models.findDeliveryById(deliveryId);
 
+    if (databaseDelivery.status === "DONE") {
+      await this.buildPurchaseXML(databaseDelivery, this.getLoggedUserId(req));
+    }
+
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
   }
 
@@ -354,6 +363,77 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   }
 
   /**
+   * Build purchase XML
+   * 
+   * @param delivery delivery
+   * @param receivingUserId receivingUserId
+   */
+  private async buildPurchaseXML(delivery: DeliveryModel, receivingUserId: string) {
+    const builder = new PurchaseMessageBuilder();
+
+    const date: string = moment(delivery.time).format("YYYYMMDD");
+    const deliveryContact: Contact = await userManagement.findUser(delivery.userId);
+    const receivingContact: Contact = await userManagement.findUser(receivingUserId);
+    const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, "sapId");
+    const receivingContactSapId = userManagement.getSingleAttribute(receivingContact, "sapId");
+    const product: ProductModel = await models.findProductById(delivery.productId);
+    const itemGroup = await models.findItemGroupById(product.itemGroupId);
+    const itemCode: string = itemGroup.name.split("/")[0];
+    const notes = await this.getNotesString(delivery.id);
+    const latestPrice = await this.getLatestItemGroupPrice(itemGroup.id);
+
+    builder.setPurchaseReceiptHeader({
+      DocDate: date,
+      CardCode: deliveryContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      Comments: notes,
+      WarehouseCode: "01",
+      SalesPersonCode: receivingContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+    });
+
+    builder.setTransferHeader({
+      CardCode: deliveryContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      DocDate: date,
+      Comments: notes,
+      WarehouseCode: "100",
+      FromWarehouseCode: "100",
+      SalesPersonCode: receivingContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+    });
+
+    builder.addPurchaseReceiptLine({
+      ItemCode: itemCode,
+      Quantity: delivery.amount,
+      Price: latestPrice,
+      UnitPrice: latestPrice,
+      WarehouseCode: "100",
+      U_PFZ_REF: ""
+    });
+
+    builder.addTransferLine({
+      ItemCode: itemCode,
+      Quantity: delivery.amount,
+      BinAllocations: [
+        {
+          BinAbsEntry: 2,
+          BinActionType: "batToWarehouse",
+          Quantity: 0
+        }, {
+          BinAbsEntry: 3,
+          BinActionType: "batFromWarehouse",
+          Quantity: 0
+        }
+      ]
+    });
+
+    const xml = builder.buildXML();
+    const filePath = `${config().sap["xml-fileupload-path"]}/${delivery.id ? delivery.id : Date.now().toString()}.xml`;
+
+    fs.writeFile(filePath, xml, (err: any) => {
+      if (err) throw(err);
+      console.log(`Done writing ${filePath}`);
+    });
+  }
+
+  /**
    * Translates database delivery into REST entity
    * 
    * @param delivery delivery 
@@ -374,6 +454,49 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     };
 
     return result;
+  }
+
+  /**
+   * Get latest item group price
+   * 
+   * @param itemGroupId itemGroupId
+   * @return price
+   */
+  private async getLatestItemGroupPrice(itemGroupId: number) {
+    const year = new Date().getFullYear();
+    const prices = await models.listItemGroupPrices(itemGroupId, year);
+
+    const sorted = prices.sort((a, b) => {
+      const aDate = a.createdAt;
+      const bDate = b.createdAt;
+      
+      return bDate.getTime() - aDate.getTime()
+    });
+
+    if (sorted[0].price) {
+      return parseInt(sorted[0].price);
+    }
+
+    return 0;
+  }
+
+  /**
+   * Get notes
+   * 
+   * @param deliveryId deliveryId
+   * @return notes
+   */
+  private async getNotesString(deliveryId: string | null) {
+    if (!deliveryId) {
+      return "";
+    }
+
+    const deliveryNotes = await models.listDeliveryNotes(deliveryId);
+    const notes = deliveryNotes.map((deliveryNote) => {
+      return deliveryNote.text;
+    });
+    
+    return notes.join(" ; ");
   }
 
   /**
