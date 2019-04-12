@@ -4,16 +4,17 @@
 			<DocDate>20190222</DocDate>
 			<CardCode>301024</CardCode>
 			<Comments></Comments>
-			<WarehouseCode>01</WarehouseCode>
+			<WarehouseCode>10</WarehouseCode>
 			<SalesPersonCode>3</SalesPersonCode>
 		</Header>
         <Lines>
             <Line>
 				<ItemCode>304111</ItemCode>
-                <Quantity>1320.000</Quantity>
-                <Price>3.200</Price>
-				<UnitPrice>3.200</UnitPrice>
-				<FreeText></FreeText>
+                <Quantity>100</Quantity>
+                <Price>300</Price>
+				<UnitPrice>3</UnitPrice>
+				<WarehouseCode>10</WarehouseCode>
+				<U_PFZ_REF></U_PFZ_REF>
             </Line>
         </Lines>
     </PurchaseReceipt>

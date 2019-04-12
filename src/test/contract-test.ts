@@ -306,7 +306,6 @@ test("Test finding contract - malformed id", async () => {
 
 test("Test contract pdf", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
-  
   return request("http://localhost:3002")
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)

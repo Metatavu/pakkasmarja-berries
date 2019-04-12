@@ -220,7 +220,7 @@ export interface OperationReportItemModel {
  * Interface for week delivery prediction
  */
 export interface WeekDeliveryPredictionModel { 
-  id: string | null;
+  id: string | null;
   itemGroupId: number;
   userId: string;
   amount: number;
@@ -233,7 +233,7 @@ export interface WeekDeliveryPredictionModel {
  * Interface for product
  */
 export interface ProductModel { 
-  id: string | null;
+  id: string | null;
   itemGroupId: number;
   name: string;
   units: number;
@@ -247,7 +247,7 @@ export interface ProductModel {
  * Interface for delivery
  */
 export interface DeliveryModel { 
-  id: string | null;
+  id: string | null;
   productId: string;
   userId: string;
   time: Date;
@@ -264,7 +264,7 @@ export interface DeliveryModel {
  * Interface for delivery note
  */
 export interface DeliveryNoteModel { 
-  id: string | null;
+  id: string | null;
   deliveryId: string;
   text: string | null;
   image: string | null;
@@ -276,7 +276,7 @@ export interface DeliveryNoteModel {
  * Interface for public file
  */
 export interface PublicFileModel { 
-  id: string | null;
+  id: string | null;
   url: string
 }
 
@@ -398,7 +398,7 @@ export class Models {
     
     this.defineModel("ItemGroup", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      sapId: { type: Sequelize.STRING(191), allowNull: false },
+      sapId: { type: Sequelize.STRING(191), allowNull: true },
       externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
       name: { type: Sequelize.STRING(191), allowNull: false },
       category: { type: Sequelize.STRING(191), allowNull: false },
@@ -625,13 +625,13 @@ export class Models {
       const optional = attribute.allowNull === true;
       let type = "string";
 
-      if (["TEXT", "LONGTEXT", "LONGBLOB", "CHAR(36) BINARY", "VARCHAR(191)"].indexOf(attributeType) != -1) {
+      if (["TEXT", "LONGTEXT", "LONGBLOB", "CHAR(36) BINARY", "VARCHAR(191)"].indexOf(attributeType) != -1) {
         type = "string";
-      } else if (["BIGINT", "INTEGER", "DOUBLE PRECISION"].indexOf(attributeType) != -1) {
+      } else if (["BIGINT", "INTEGER", "DOUBLE PRECISION"].indexOf(attributeType) != -1) {
         type = "number";
-      } else if (["TINYINT(1)"].indexOf(attributeType) != -1) {
+      } else if (["TINYINT(1)"].indexOf(attributeType) != -1) {
         type = "boolean";
-      } else if (["DATETIME"].indexOf(attributeType) != -1) {
+      } else if (["DATETIME"].indexOf(attributeType) != -1) {
         type = "Date";
       } else {
         type = '"' + attributeType + '" == UNKNOWN!';
@@ -687,7 +687,7 @@ export class Models {
    * @param imageUrl chat group image url 
    * @returns Promise for created chat group  
    */
-  public createChatGroup(type: "CHAT" | "QUESTION", title: string, imageUrl: string | null): PromiseLike<ChatGroupModel> {
+  public createChatGroup(type: "CHAT" | "QUESTION", title: string, imageUrl: string | null): PromiseLike<ChatGroupModel> {
     return this.ChatGroup.create({
       type: type,
       title: title,
@@ -713,7 +713,7 @@ export class Models {
    * @param maxResults max results
    * @returns promise for chat groups
    */
-  public listChatGroups( type: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
+  public listChatGroups( type: string | null, firstResult?: number, maxResults?: number): PromiseLike<ChatGroupModel[]> {
     const where: any = {};
 
     if (type) {
@@ -735,11 +735,11 @@ export class Models {
    * @param title title
    * @param imageUrl image url
    */
-  public updateChatGroup(id: number, title: string, type: string, imageUrl: string | null): PromiseLike<[number, any]> {
+  public updateChatGroup(id: number, title: string, type: string, imageUrl: string | null): PromiseLike<[number, any]> {
     return this.ChatGroup.update({
       title: title,
       type: type,
-      imageUrl: imageUrl || undefined
+      imageUrl: imageUrl || undefined
     }, {
       where: {
         id: id
@@ -770,7 +770,7 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  public createThread(groupId: number, ownerId: string | null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
+  public createThread(groupId: number, ownerId: string | null, title: string|null, description: string|null, type: string, imageUrl: string|null, answerType: string, pollAllowOther: boolean, expiresAt: Date|null): PromiseLike<ThreadModel> {
     return this.Thread.create({
       title: title,
       description: description,
@@ -803,7 +803,7 @@ export class Models {
    * @param maxResults max results
    * @returns promise for threads
    */
-  public listThreads(groupIds: number[] | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
+  public listThreads(groupIds: number[] | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
     const where: any = {};
 
     if (groupIds) {
@@ -831,7 +831,7 @@ export class Models {
    * @param {Boolean} pollAllowOther whether polls should allow other answers or not
    * @param {Date} expiresAt expires
    */
-  public updateThread(id: number, ownerId: string | null, title: string, description: string | null, imageUrl: string | null, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date | null) {
+  public updateThread(id: number, ownerId: string | null, title: string, description: string | null, imageUrl: string | null, silentUpdate: boolean, answerType: string, pollAllowOther: boolean, expiresAt: Date | null) {
     return this.sequelize.models.Thread.update({
       title: title,
       ownerId: ownerId,
@@ -904,7 +904,7 @@ export class Models {
    * @param {String} userId contract's user id
    * @return {Object} last message posted into a thread by user or null if not found
    */
-  public findLastMessageByThreadIdAndUserId(threadId: number, userId: string): PromiseLike<MessageModel | null> {
+  public findLastMessageByThreadIdAndUserId(threadId: number, userId: string): PromiseLike<MessageModel | null> {
     return this.Message.findOne({ 
       where: { 
         threadId: threadId,
@@ -941,12 +941,12 @@ export class Models {
    * @param maxResults max results
    * @return promise for messages
    */
-  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
+  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
     if (!threadId) {
       return Bluebird.resolve([]);
     }
 
-    const where: { [key: string]: any } = {
+    const where: { [key: string]: any } = {
       threadId : threadId
     };
 
@@ -1019,7 +1019,7 @@ export class Models {
    * @param imageUrl image URL
    * @returns promise for news article
    */
-  createNewsArticle(title: string, contents: string, imageUrl: string | null): PromiseLike<NewsArticleModel> {
+  createNewsArticle(title: string, contents: string, imageUrl: string | null): PromiseLike<NewsArticleModel> {
     return this.sequelize.models.NewsArticle.create({
       title: title,
       contents: contents,
@@ -1033,7 +1033,7 @@ export class Models {
    * @param id news article id
    * @returns promise for news article or null if not found
    */
-  findNewsArticleById(id: number): PromiseLike<NewsArticleModel | null> {
+  findNewsArticleById(id: number): PromiseLike<NewsArticleModel | null> {
     return this.sequelize.models.NewsArticle.findOne({ where: { id : id } });
   }
   
@@ -1058,7 +1058,7 @@ export class Models {
    * @param silentUpdate silent update
    * @returns promise for update
    */
-  updateNewsArticle(id: number, title: string, contents: string, imageUrl: string | null, silentUpdate: boolean): PromiseLike<[number, any]> {
+  updateNewsArticle(id: number, title: string, contents: string, imageUrl: string | null, silentUpdate: boolean): PromiseLike<[number, any]> {
     return this.sequelize.models.NewsArticle.update({
       title: title,
       contents: contents,
@@ -1102,7 +1102,7 @@ export class Models {
    * @param id public file id
    * @returns promise for public file or null if not found
    */
-  findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
+  findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
     return this.PublicFile.findOne({ where: { id : id } });
   }
   
@@ -1246,7 +1246,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for created item group
    */
-  createItemGroup(sapId: string, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<ItemGroupModel> {
+  createItemGroup(sapId: string | null, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.create({
       sapId: sapId,
       name: name,
@@ -1268,7 +1268,7 @@ export class Models {
    * @param {int} prerequisiteContractItemGroupId prerequisiteContractItemGroupId
    * @return {Promise} promise for updated item group
    */
-  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<[number, any]> {
+  updateItemGroup(id: number, name: string, displayName: string, category: string, minimumProfitEstimation: number, prerequisiteContractItemGroupId: number | null): Bluebird<[number, any]> {
     return this.sequelize.models.ItemGroup.update({
       name: name,
       displayName: displayName,
@@ -1400,8 +1400,8 @@ export class Models {
 
     return this.sequelize.models.ItemGroupPrice.findAll({ 
       where: where,
-      offset: firstResult || undefined, 
-      limit: maxResults || undefined,
+      offset: firstResult || undefined, 
+      limit: maxResults || undefined,
       order: [[ orderBy || "createdAt", orderDir || "DESC" ] ]
     });
   }
@@ -1740,7 +1740,7 @@ export class Models {
    * @param {int} maxResults max results
    * @return {Promise} promise for contracts
    */
-  public listContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null, firstResult?: number, maxResults?: number): Bluebird<ContractModel[]> {
+  public listContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null, firstResult?: number, maxResults?: number): Bluebird<ContractModel[]> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
     return this.sequelize.models.Contract.findAll({ 
@@ -1796,7 +1796,7 @@ export class Models {
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
-  public countContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null): Bluebird<number> {
+  public countContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null): Bluebird<number> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
     return this.sequelize.models.Contract.count({ 
@@ -1816,7 +1816,7 @@ export class Models {
    * @param {String} status status
    * @return {Object} where clause
    */
-  private createListContractsWhere(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null) {
+  private createListContractsWhere(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null) {
     const where: any = {};
 
     if (userId) {
@@ -2129,7 +2129,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReports(orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
+  listOperationReports(orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
     return this.sequelize.models.OperationReport.findAll({ offset: firstResult, limit: maxResults, order: [ [ orderBy || "createdAt", orderDir || "DESC" ] ] });
   }
 
@@ -2143,7 +2143,7 @@ export class Models {
    * @param maxResults maximum number of results
    * @returns {Promise} Promise for OperationReports
    */
-  listOperationReportsByType(type: string, orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
+  listOperationReportsByType(type: string, orderBy: string | null, orderDir: string | null, firstResult?: number, maxResults?: number): PromiseLike<OperationReportModel[]> {
     return this.sequelize.models.OperationReport.findAll({ where: { type: type }, offset: firstResult, limit: maxResults, order: [[orderBy || "createdAt", orderDir || "DESC" ]] });
   }
 
@@ -2177,7 +2177,7 @@ export class Models {
    * @param {Boolean} success success
    * @returns {Promise} Promise for OperationReportItem
    */
-  createOperationReportItem(operationReportId: number, message: string | null, completed: boolean, success: boolean): PromiseLike<OperationReportItemModel> {
+  createOperationReportItem(operationReportId: number, message: string | null, completed: boolean, success: boolean): PromiseLike<OperationReportItemModel> {
     return this.sequelize.models.OperationReportItem.create({
       operationReportId: operationReportId,
       message: message,
@@ -2228,7 +2228,7 @@ export class Models {
    * @param {Boolean} success success
    * @returns {Promise} Promise for ContractDocument
    */
-  updateOperationReportItem(id: number, message: string | null, completed: boolean, success: boolean): PromiseLike<[number, any]> {
+  updateOperationReportItem(id: number, message: string | null, completed: boolean, success: boolean): PromiseLike<[number, any]> {
     return this.sequelize.models.OperationReportItem.update({
       message: message,
       completed: completed,
@@ -2404,7 +2404,7 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of week delivery predictions
    */
-  public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
+  public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
     const where = this.createListWeekDeliveryPredictionsWhere(itemGroupId, itemGroupType, userId, weekNumber, year);
 
     return this.WeekDeliveryPrediction.findAll({ 
@@ -2426,7 +2426,7 @@ export class Models {
    * @param year  
    * @return where clause
    */
-  private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
+  private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
     const where: any = {};
 
     if (itemGroupId) {
@@ -2544,7 +2544,7 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of week delivery predictions
    */
-  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
     const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
 
     return this.Product.findAll({ 

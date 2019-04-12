@@ -177,8 +177,8 @@ export default class PurchaseMessageBuilder {
       line.ele("Quantity", purchaseReceiptLine.Quantity);
       line.ele("Price", purchaseReceiptLine.Price);
       line.ele("UnitPrice", purchaseReceiptLine.UnitPrice);
-      line.ele("WarehouseCode", this.PurchaseReceipt.Header.WarehouseCode);
-      line.ele("U_PFZ_REF", this.PurchaseReceipt.Header.WarehouseCode);
+      line.ele("WarehouseCode", purchaseReceiptLine.WarehouseCode);
+      line.ele("U_PFZ_REF", purchaseReceiptLine.U_PFZ_REF);
     });
   }
 

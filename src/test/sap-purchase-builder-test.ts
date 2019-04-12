@@ -13,7 +13,7 @@ test("Test SAP purchase builder", async (t) => {
     DocDate: "20190222",
     CardCode: "301024",
     Comments: "",
-    WarehouseCode: "01",
+    WarehouseCode: "10",
     SalesPersonCode: "3"
   });
 
@@ -28,9 +28,9 @@ test("Test SAP purchase builder", async (t) => {
 
   builder.addPurchaseReceiptLine({
     ItemCode: "304111",
-    Quantity: 1322,
-    Price: 3.2,
-    UnitPrice: 3.2,
+    Quantity: 100,
+    Price: 300,
+    UnitPrice: 3,
     WarehouseCode: "10",
     U_PFZ_REF: ""
   });

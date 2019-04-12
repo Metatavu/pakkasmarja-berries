@@ -1,6 +1,6 @@
 /nbproject
 node_modules
-/config.json
+/config*.json
 .sass-cache
 webapp
 keycloak-3.*
