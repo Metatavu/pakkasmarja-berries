@@ -206,4 +206,11 @@ export default class ApplicationRoles {
     return "list-other-deliveries";
   }
 
+  /**
+   * Role that allows managing product prices
+   */
+  static get MANAGE_PRODUCT_PRICES() {
+    return "manage-product-prices";
+  }
+
 }

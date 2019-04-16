@@ -73,9 +73,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     const price = req.body.price;
-    const quality = req.body.quality;
+    const qualityId = req.body.qualityId;
 
-    const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
+    const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id);
     res.status(200).send(await this.translateDatabaseDelivery(result));
   }
 
@@ -319,9 +319,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     const price = req.body.price;
-    const quality = req.body.quality;
+    const qualityId = req.body.qualityId;
 
-    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, quality, databaseDeliveryPlace.id);
+    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id);
     const databaseDelivery = await models.findDeliveryById(deliveryId);
 
     if (databaseDelivery.status === "DONE") {
@@ -449,7 +449,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       "status": delivery.status,
       "amount": delivery.amount,
       "price": delivery.price,
-      "quality": delivery.quality,
+      "qualityId": delivery.qualityId,
       "deliveryPlaceId": deliveryPlace.externalId
     };
 

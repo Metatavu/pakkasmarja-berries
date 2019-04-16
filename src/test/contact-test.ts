@@ -24,7 +24,7 @@ test("Test listing contacts", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
 
-      t.equal(response.body.length, 4);
+      t.equal(response.body.length, 5);
       const actualResponse: any[] = response.body;
 
       actualResponse.sort((a, b) => {

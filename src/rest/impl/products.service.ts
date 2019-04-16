@@ -118,7 +118,7 @@ export default class ProductsServiceImpl extends ProductsService {
    */
   public async listProducts(req: Request, res: Response) {
     const itemGroupId = req.query.itemGroupId || null;
-    const itemGroupType = req.query.itemGroupType || null;
+    const itemGroupCategory = req.query.itemGroupCategory || null;
     const contractUserId = req.query.contractUserId || null;
     const firstResult = parseInt(req.query.firstResult) || 0;
     const maxResults = parseInt(req.query.maxResults) || 5;
@@ -132,7 +132,7 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const products: ProductModel[] = await models.listProducts(databaseItemGroupId, itemGroupType, contractUserId, firstResult, maxResults);
+    const products: ProductModel[] = await models.listProducts(databaseItemGroupId, itemGroupCategory, contractUserId, firstResult, maxResults);
     res.status(200).send(await Promise.all(products.map((product) => {
       return this.translateDatabaseProduct(product);
     })));
