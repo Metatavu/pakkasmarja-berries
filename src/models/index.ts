@@ -1,7 +1,7 @@
 import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
 import * as _ from "lodash";
-import { DeliveryStatus, DeliveryQuality, ItemGroupCategory } from "src/rest/model/models";
+import { DeliveryStatus, ItemGroupCategory } from "src/rest/model/models";
 
 export interface SessionModel {
   id: string,
@@ -254,7 +254,7 @@ export interface DeliveryModel {
   status: DeliveryStatus;
   amount: number;
   price: string | null;
-  quality: DeliveryQuality | null;
+  qualityId: string | null;
   deliveryPlaceId: number;
   createdAt: Date;
   updatedAt: Date;
@@ -280,6 +280,28 @@ export interface PublicFileModel {
   url: string
 }
 
+/**
+ * Interface for product price
+ */
+export interface ProductPriceModel {
+  id: string | null;
+  productId: string;
+  unit: string;
+  price: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Interface for delivery quality
+ */
+export interface DeliveryQualityModel {
+  id: string | null;
+  itemGroupCategory: string;
+  name: string;
+  priceBonus: number;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -293,6 +315,8 @@ export class Models {
   private Delivery: Sequelize.Model<any, DeliveryModel>;
   private DeliveryNote: Sequelize.Model<any, DeliveryNoteModel>;
   private PublicFile: Sequelize.Model<any, PublicFileModel>;
+  private ProductPrice: Sequelize.Model<any, ProductPriceModel>;
+  private DeliveryQuality: Sequelize.Model<any, DeliveryQualityModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -579,7 +603,7 @@ export class Models {
       status: { type: Sequelize.STRING(191), allowNull: false },
       amount: { type: Sequelize.INTEGER, allowNull: false },
       price: { type: Sequelize.STRING(191), allowNull: true },
-      quality: { type: Sequelize.STRING(191), allowNull: true },
+      qualityId: { type: Sequelize.UUID, allowNull: true },
       deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
     });
 
@@ -593,6 +617,13 @@ export class Models {
     this.PublicFile = this.defineModel("PublicFile", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       url: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.ProductPrice = this.defineModel("ProductPrice", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      productId: { type: Sequelize.UUID, allowNull: false, references: { model: "Products", key: "id" } },
+      unit: { type: Sequelize.STRING(191), allowNull: false },
+      price: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -2538,14 +2569,14 @@ export class Models {
    * Lists products
    * 
    * @param itemGroupId itemGroupId 
-   * @param itemGroupType itemGroupType
+   * @param itemGroupCategory itemGroupCategory
    * @param contractUserId contractUserId
    * @param firstResult 
    * @param maxResults 
    * @return Promise that resolves list of week delivery predictions
    */
-  public listProducts(itemGroupId: number | null, itemGroupType: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
-    const where = this.createListProductsWhere(itemGroupId, itemGroupType, contractUserId);
+  public listProducts(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+    const where = this.createListProductsWhere(itemGroupId, itemGroupCategory, contractUserId);
 
     return this.Product.findAll({ 
       where: where, 
@@ -2560,7 +2591,7 @@ export class Models {
    * All parameters are optional and ignored if not given
    *  
    * @param itemGroupId itemGroupId
-   * @param itemGroupType itemGroupType
+   * @param itemGroupCategory itemGroupCategory
    * @param contractUserId contractUserId
    * @return where clause
    */
@@ -2599,11 +2630,11 @@ export class Models {
    * @param status status
    * @param amount amount
    * @param price price
-   * @param quality quality
+   * @param qualityId qualityId
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, quality: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
     return this.Delivery.create({
       id: id,
       productId: productId,
@@ -2612,7 +2643,7 @@ export class Models {
       status: status,
       amount: amount,
       price: price,
-      quality: quality,
+      qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId
     } as any);
   }
@@ -2627,11 +2658,11 @@ export class Models {
    * @param status status
    * @param amount amount
    * @param price price
-   * @param quality quality
+   * @param qualityId qualityId
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, price: string | null, quality: DeliveryQuality | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
@@ -2639,7 +2670,7 @@ export class Models {
       status: status,
       amount: amount,
       price: price,
-      quality: quality,
+      qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId
     }, {
       where: {
@@ -2877,6 +2908,122 @@ export class Models {
     }
 
     return where;
+  }
+
+  // Product prices
+
+  /**
+   * Creates product price
+   * 
+   * @param id id 
+   * @param productId productId
+   * @param unit unit
+   * @param price price
+   * @returns promise for public file
+   */
+  createProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<ProductPriceModel> {
+    return this.ProductPrice.create({
+      id: id,
+      productId: productId,
+      unit: unit,
+      price: price
+    } as any);
+  }
+
+  /**
+   * Deletes product price
+   * 
+   * @param id id 
+   * @returns promise for public file
+   */
+  deleteProductPrice(id: string): PromiseLike<number> {
+    return this.ProductPrice.destroy({
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Finds product price
+   * 
+   * @param id id 
+   * @returns promise for public file
+   */
+  findProductPrice(id: string): PromiseLike<ProductPriceModel> {
+    return this.ProductPrice.findOne({
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Updates product price
+   * 
+   * @param id id 
+   * @param productId productId
+   * @param unit unit
+   * @param price price
+   * @returns promise for public file
+   */
+  updateProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<[number, any]> {
+    return this.ProductPrice.update({
+      productId: productId,
+      unit: unit,
+      price: price,
+    }, {
+      where: {
+        id: id
+      }
+    } as any);
+  }
+
+  /**
+   * Lists product prices
+   * 
+   * @param productId productId
+   * @param sort sort
+   * @param firstResult 
+   * @param maxResults 
+   * @return Promise that resolves list of deliveries
+   */
+  public listProductPrices(productId: string, sort: "CREATED_AT_ASC", firstResult?: number, maxResults?: number): Bluebird<ProductPriceModel[]> {
+    let where: any = {};
+    let order: any;
+
+    where.productId = productId;
+
+    switch (sort) {
+      case "CREATED_AT_ASC":
+        order = [['createdAt', 'ASC']];
+        break;
+    }
+
+    return this.ProductPrice.findAll({ 
+      where: where, 
+      order: order,
+      offset: firstResult, 
+      limit: maxResults
+    });
+  }
+
+  // Delivery qualities
+
+  /**
+   * Lists delivery qualities
+   * 
+   * @param itemGroupCategory itemGroupCategory
+   * @return Promise that resolves list of delivery qualities
+   */
+  public listDeliveryQualities(itemGroupCategory: string): Bluebird<DeliveryQualityModel[]> {
+    let where: any = {};
+
+    where.itemGroupCategory = itemGroupCategory;
+
+    return this.DeliveryQuality.findAll({ 
+      where: where,
+    });
   }
 
 }

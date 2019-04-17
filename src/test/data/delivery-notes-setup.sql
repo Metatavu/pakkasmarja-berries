@@ -16,6 +16,6 @@ VALUES
   (1010, 'bad02318-1a44-11e8-87a4-c7808d590a07', '567', 'Test Place 1', NOW(), NOW());
 
 INSERT INTO 
-  Deliveries (id, productId, userId, time, status, amount, price, quality, deliveryPlaceId, createdAt, updatedAt)
+  Deliveries (id, productId, userId, time, status, amount, price, qualityId, deliveryPlaceId, createdAt, updatedAt)
 VALUES
-  ('bad02318-1a44-11e8-87a4-c7808d590a08', 'b1590990-4bbb-11e9-8646-d663bd873d93', '6f1cd486-107e-404c-a73f-50cc1fdabdd6', NOW(), 'PLANNED', 5, '16KG', 'NORMAL', 1010, NOW(), NOW())
+  ('bad02318-1a44-11e8-87a4-c7808d590a08', 'b1590990-4bbb-11e9-8646-d663bd873d93', '6f1cd486-107e-404c-a73f-50cc1fdabdd6', NOW(), 'PLANNED', 5, '16KG', NULL, 1010, NOW(), NOW())

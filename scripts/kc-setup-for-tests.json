@@ -8503,6 +8503,13 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
+    }, {
+      "id" : "d074e0a4-603f-11e9-8647-d663bd873d93",
+      "name" : "manage-product-prices",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
     } ],
     "client" : {
       "delete me" : [ ],
@@ -8768,7 +8775,7 @@
     } ],
     "disableableCredentialTypes" : [ "password" ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "update-other-contacts", "update-item-group-document-templates", "update-item-group-prices", "list-all-contracts", "update-contract-document-templates", "update-other-contracts", "uma_authorization", "delete-item-group-prices", "create-operations", "list-all-contacts", "create-contract", "create-item-group-prices", "list-contract-document-templates", "list-item-group-document-templates", "offline_access", "create-contract-document-templates", "list-operation-reports" ],
+    "realmRoles" : [ "update-other-contacts", "update-item-group-document-templates", "update-item-group-prices", "list-all-contracts", "update-contract-document-templates", "update-other-contracts", "uma_authorization", "delete-item-group-prices", "create-operations", "list-all-contacts", "create-contract", "create-item-group-prices", "list-contract-document-templates", "list-item-group-document-templates", "offline_access", "create-contract-document-templates", "list-operation-reports", "manage-product-prices" ],
     "clientRoles" : {
       "realm-management" : [ "realm-admin" ],
       "account" : [ "manage-account", "view-profile" ]

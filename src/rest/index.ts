@@ -8,10 +8,12 @@ import ContactsServiceImpl from './impl/contacts.service';
 import ContractsServiceImpl from './impl/contracts.service';
 import DeliveriesServiceImpl from './impl/deliveries.service';
 import DeliveryPlacesServiceImpl from './impl/deliveryPlaces.service';
+import DeliveryQualitiesServiceImpl from './impl/deliveryQualities.service';
 import ItemGroupsServiceImpl from './impl/itemGroups.service';
 import NewsArticlesServiceImpl from './impl/newsArticles.service';
 import OperationReportsServiceImpl from './impl/operationReports.service';
 import OperationsServiceImpl from './impl/operations.service';
+import ProductPricesServiceImpl from './impl/productPrices.service';
 import ProductsServiceImpl from './impl/products.service';
 import PublicFilesServiceImpl from './impl/publicFiles.service';
 import SignAuthenticationServicesServiceImpl from './impl/signAuthenticationServices.service';
@@ -41,6 +43,8 @@ export default class Api {
     
       new DeliveryPlacesServiceImpl(app, keycloak);
     
+      new DeliveryQualitiesServiceImpl(app, keycloak);
+    
       new ItemGroupsServiceImpl(app, keycloak);
     
       new NewsArticlesServiceImpl(app, keycloak);
@@ -48,6 +52,8 @@ export default class Api {
       new OperationReportsServiceImpl(app, keycloak);
     
       new OperationsServiceImpl(app, keycloak);
+    
+      new ProductPricesServiceImpl(app, keycloak);
     
       new ProductsServiceImpl(app, keycloak);
     
