@@ -28,6 +28,7 @@ export * from './operation';
 export * from './operationReport';
 export * from './operationReportItem';
 export * from './product';
+export * from './productPrice';
 export * from './publicFile';
 export * from './signAuthenticationService';
 export * from './weekDeliveryPrediction';

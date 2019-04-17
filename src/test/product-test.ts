@@ -1,7 +1,7 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
-import { Product } from "../rest/model/models";
+import { Product, ProductPrice } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
 
@@ -19,6 +19,34 @@ const createProduct = (token: string): Promise<Product> => {
 
   return request("http://localhost:3002")
     .post("/rest/v1/products")
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Creates product price
+ * 
+ * @param token token
+ * @param product product
+ * @returns promise for product
+ */
+const createProductPrice = async (token: string, product: Product) => {
+  const payload: ProductPrice = {
+    id: null,
+    productId: product.id || "",
+    unit: "€ / kg",
+    price: "100",
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+
+  return request("http://localhost:3002")
+    .post(`/rest/v1/products/${product.id}/prices`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .send(payload)
@@ -246,4 +274,322 @@ test("Delete product - Forbidden", async (t) => {
   } finally {
     await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
   }
+});
+
+test("Create product price", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+    t.equal(createdProductPrice.unit, "€ / kg");
+    t.equal(createdProductPrice.price, "100");
+    t.equal(createdProductPrice.productId, createdProduct.id);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Delete product price", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    await request("http://localhost:3002")
+      .delete(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(204);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Find product price", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    const foundPrice = await request("http://localhost:3002")
+      .get(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then((response) => {
+        return response.body;
+      });
+    
+    t.notEqual(foundPrice, null);
+    t.notEqual(foundPrice.id, null);
+    t.equal(foundPrice.unit, "€ / kg");
+    t.equal(foundPrice.price, "100");
+    t.equal(foundPrice.productId, createdProduct.id);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("List product prices", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    let prices = await request("http://localhost:3002")
+      .get(`/rest/v1/products/${createdProduct.id}/prices?sort=CREATED_AT_ASC`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then((response) => {
+        return response.body;
+      });
+    
+    t.notEqual(prices, null);
+    t.equals(prices.length, 1);
+
+    await createProductPrice(token, createdProduct);
+
+    prices = await request("http://localhost:3002")
+      .get(`/rest/v1/products/${createdProduct.id}/prices?sort=CREATED_AT_ASC`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then((response) => {
+        return response.body;
+      });
+    
+    t.notEqual(prices, null);
+    t.equals(prices.length, 2);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("List product prices - 400 - no sort", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    await request("http://localhost:3002")
+      .get(`/rest/v1/products/${createdProduct.id}/prices`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(400)
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("List product prices - 400 - no product id", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    await request("http://localhost:3002")
+      .get(`/rest/v1/products/${undefined}/prices`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(400)
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Update product price", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    let createdProductPrice = await createProductPrice(token, createdProduct);
+    createdProductPrice.price = "200";
+    createdProductPrice.unit = "$ / lb";
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    const updatedProductPrice = await request("http://localhost:3002")
+      .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(createdProductPrice)
+      .expect(200)
+      .then((response) => {
+        return response.body;
+      });
+    
+    t.equal(updatedProductPrice.unit, "$ / lb");
+    t.equal(updatedProductPrice.price, "200");
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Update product price - 404 - wrong product id", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    await request("http://localhost:3002")
+      .put(`/rest/v1/products/fake-uuid/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(createdProductPrice)
+      .expect(404);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Update product price - 404 - wrong product price id", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    await request("http://localhost:3002")
+      .put(`/rest/v1/products/${createdProduct.id}/prices/fake-uuid`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(createdProductPrice)
+      .expect(404);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Update product price - 400 - no price", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    const updatedProductPrice = {
+      id: createdProductPrice.id,
+      unit: "€",
+      productId: createdProduct.id
+    };
+
+    await request("http://localhost:3002")
+      .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(updatedProductPrice)
+      .expect(400);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
+});
+
+test("Update product price - 400 - no unit", async (t) => {
+  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
+
+  try {
+    const createdProduct = await createProduct(token);
+    t.notEqual(createdProduct, null);
+    t.notEqual(createdProduct.id, null);
+
+    const createdProductPrice = await createProductPrice(token, createdProduct);
+    t.notEqual(createdProductPrice, null);
+    t.notEqual(createdProductPrice.id, null);
+
+    const updatedProductPrice = {
+      id: createdProductPrice.id,
+      productId: createdProduct.id,
+      price: "200"
+    };
+
+    await request("http://localhost:3002")
+      .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(updatedProductPrice)
+      .expect(400);
+  } finally {
+    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
 });

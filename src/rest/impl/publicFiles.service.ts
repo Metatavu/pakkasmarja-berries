@@ -56,8 +56,8 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
    * @inheritdoc
    */
   public async listPublicFiles(req: Request, res: Response): Promise<void> {
-    const firstResult = req.query.firstResult || 0;
-    const maxResults = req.query.maxResults || 20;
+    const firstResult = parseInt(req.query.firstResult) || 0;
+    const maxResults = parseInt(req.query.maxResults) || 20;
     const publicFiles = await models.listPublicFiles(firstResult, maxResults);
     res.status(200).send(publicFiles.map((publicFile) => this.translatePublicFile(publicFile)));
   }
