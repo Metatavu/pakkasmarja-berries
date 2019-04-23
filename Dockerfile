@@ -1,6 +1,6 @@
 FROM node:dubnium
 RUN apt update
-RUN apt install redis-server -y
+RUN apt install redis-server sshfs -y
 WORKDIR /opt/wkhtmltopdf
 RUN curl -sSL "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz"|tar -xvJ
 WORKDIR /usr/src/pakkasmarja
