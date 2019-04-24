@@ -97,7 +97,7 @@ process.on("unhandledRejection", (error) => {
   app.use(express.static(path.join(__dirname, "../webapp")));
   app.use(express.static(path.join(__dirname, "../public")));
   app.use(i18n.init);
-  app.set("views", path.join(__dirname, "views"));
+  app.set("views", path.join(__dirname, "../views"));
   app.set("view engine", "pug"); 
   
   new Api(app, keycloak);

@@ -46,6 +46,8 @@ export default class SignRoutes {
       }
     }
 
-    res.status(200).end();
+    res.render("signcallback", {
+      success: success
+    });
   }
 };
