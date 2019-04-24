@@ -9,11 +9,12 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
+import { OperationType } from './operationType';
 
 
 export interface OperationReport { 
     id: string  | null;
-    type: string  | null;
+    type: OperationType  | null;
     started: Date  | null;
     pendingCount: number  | null;
     failedCount: number  | null;
@@ -22,7 +23,7 @@ export interface OperationReport {
 
 export interface OperationReportOpt { 
     id?: string;
-    type?: string;
+    type?: OperationType;
     started?: Date;
     pendingCount?: number;
     failedCount?: number;

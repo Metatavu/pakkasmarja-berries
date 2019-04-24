@@ -9,14 +9,15 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
+import { OperationType } from './operationType';
 
 
 export interface Operation { 
-    type: string  | null;
+    type: OperationType  | null;
     operationReportId: string  | null;
 }    
 
 export interface OperationOpt { 
-    type?: string;
+    type?: OperationType;
     operationReportId?: string;
 }

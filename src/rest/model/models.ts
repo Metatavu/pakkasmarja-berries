@@ -27,6 +27,7 @@ export * from './notImplemented';
 export * from './operation';
 export * from './operationReport';
 export * from './operationReportItem';
+export * from './operationType';
 export * from './product';
 export * from './productPrice';
 export * from './publicFile';

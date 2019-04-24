@@ -20,6 +20,7 @@ export interface ChatThread {
     answerType: ChatThread.AnswerTypeEnum ;
     pollAllowOther: boolean  | null;
     expiresAt: Date  | null;
+    readonly lastMessageCreated: Date  | null;
 }    
 
 export interface ChatThreadOpt { 
@@ -31,6 +32,7 @@ export interface ChatThreadOpt {
     answerType?: ChatThread.AnswerTypeEnum;
     pollAllowOther?: boolean;
     expiresAt?: Date;
+    readonly lastMessageCreated?: Date;
 }
 export namespace ChatThread {
     export type AnswerTypeEnum = 'TEXT' | 'POLL';
