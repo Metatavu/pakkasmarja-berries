@@ -5,7 +5,7 @@
   "time": "2019-03-21T09:37:52.000Z",
   "status": "PROPOSAL",
   "amount": 100,
-  "price": "1000",
+  "price": null,
   "qualityId": "bad02318-1a44-11e8-87a4-c7808d590bbb",
   "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07"
 }, {
@@ -13,9 +13,9 @@
   "productId": "b1590dd2-4bbb-11e9-8646-d663bd873d93",
   "userId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
   "time": "2019-03-21T09:37:52.000Z",
-  "status": "PLANNED",
+  "status": "DONE",
   "amount": 110,
-  "price": "999",
+  "price": "110",
   "qualityId": "bad02318-1a44-11e8-87a4-c7808d590bbb",
   "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07"
 }]
