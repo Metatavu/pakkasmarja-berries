@@ -1,7 +1,7 @@
 import OperationReportsService from "../api/operationReports.service";
 import * as Keycloak from "keycloak-connect";
 import { Response, Request, Application } from "express";
-import { OperationReport, OperationReportItem } from "../model/models";
+import { OperationReport, OperationReportItem, OperationType } from "../model/models";
 import models, { OperationReportModel, OperationReportItemModel } from "../../models";
 import ApplicationRoles from "../application-roles";
 
@@ -120,10 +120,11 @@ export default class OperationReportsServiceImpl extends OperationReportsService
     const pendingCount = await models.countOperationReportItemsByOperationIdCompleted(operationReport.id, false);
     const failedCount = await models.countOperationReportItemsByOperationIdCompletedAndSuccess(operationReport.id, true, false);
     const successCount = await models.countOperationReportItemsByOperationIdCompletedAndSuccess(operationReport.id, true, true);
+
     const result: OperationReport = {
       "id": operationReport.externalId,
       "started": operationReport.createdAt,
-      "type": operationReport.type,
+      "type": operationReport.type as OperationType,
       "pendingCount": pendingCount,
       "failedCount": failedCount,
       "successCount": successCount

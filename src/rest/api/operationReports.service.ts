@@ -41,7 +41,7 @@ export default abstract class OperationReportsService extends AbstractService {
    * Lists operation reports
    * @summary List operation reports
    * Accepted parameters:
-    * - (query) string type - filter by type
+    * - (query) OperationType type - filter by type
     * - (query) string sortBy - sort by (CREATED)
     * - (query) string sortDir - sort direction (ASC, DESC)
     * - (query) number firstResult - Offset of first result. Defaults to 0

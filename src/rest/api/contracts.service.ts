@@ -45,6 +45,7 @@ export default abstract class ContractsService extends AbstractService {
     * - (path) string type - document type
     * - (query) string ssn - Social security number
     * - (query) string authService - Used auth service name
+    * - (query) string redirectUrl - Redirect after succesfull signing
   */
   public abstract createContractDocumentSignRequest(req: Request, res: Response): Promise<void>;
 
