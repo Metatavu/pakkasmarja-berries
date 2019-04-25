@@ -336,7 +336,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;  
     }
 
-    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, delivery.price, qualityId, databaseDeliveryPlace.id);
     const databaseDelivery = await models.findDeliveryById(deliveryId);
 
     if (status === "DONE" && deliveryQuality) {
@@ -354,12 +353,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const unitPrice = parseFloat(productPrice);
       const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
-      const priceWithBonus = unitPriceWithBonus * databaseDelivery.amount;
-      const price = unitPrice * databaseDelivery.amount;
 
-      await models.updateDeliveryPrice(deliveryId, price.toString());
-      
-      if (!unitPrice || !price) {
+      if (!unitPrice || !unitPriceWithBonus) {
         this.sendInternalServerError(res, "Failed to resolve price");
         return;
       }
@@ -380,7 +375,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, priceWithBonus, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+    } else {
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
     }
 
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
@@ -429,7 +427,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param sapSalesPersonCode Receiving person code
    * @return promise for success
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, price: number, unitPrice: number, deliveryContactSapId: string, sapSalesPersonCode: string) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPrice: number, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
@@ -445,6 +443,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       SalesPersonCode: sapSalesPersonCode,
     });
 
+    
     builder.setTransferHeader({
       CardCode: deliveryContactSapId,
       DocDate: date,
@@ -457,7 +456,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     builder.addPurchaseReceiptLine({
       ItemCode: sapItemCode,
       Quantity: delivery.amount,
-      Price: price,
+      Price: unitPriceWithBonus,
       UnitPrice: unitPrice,
       WarehouseCode: warehouseCode,
       U_PFZ_REF: this.compressUUID(delivery.id!)
@@ -502,7 +501,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       "time": delivery.time,
       "status": delivery.status,
       "amount": delivery.amount,
-      "price": delivery.price,
+      "price": delivery.unitPriceWithBonus ? (delivery.unitPriceWithBonus * delivery.amount).toFixed(3) : null,
       "qualityId": delivery.qualityId,
       "deliveryPlaceId": deliveryPlace.externalId
     };

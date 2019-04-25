@@ -254,7 +254,8 @@ export interface DeliveryModel {
   time: Date;
   status: DeliveryStatus;
   amount: number;
-  price: string | null;
+  unitPrice: number | null;
+  unitPriceWithBonus: number | null;
   qualityId: string | null;
   deliveryPlaceId: number;
   createdAt: Date;
@@ -604,7 +605,8 @@ export class Models {
       time: { type: Sequelize.DATE, allowNull: false },
       status: { type: Sequelize.STRING(191), allowNull: false },
       amount: { type: Sequelize.INTEGER, allowNull: false },
-      price: { type: Sequelize.STRING(191), allowNull: true },
+      unitPrice: { type: Sequelize.DOUBLE, allowNull: true },
+      unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
       deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
     });
@@ -2675,33 +2677,17 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
       time: time,
       status: status,
       amount: amount,
-      price: price,
+      unitPrice: unitPrice,
+      unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId
-    }, {
-      where: {
-        id: id
-      }
-    } as any);
-  }
-
-  /**
-   * Update Delivery price
-   * 
-   * @param price price
-   * 
-   * @return promise on updated delivery
-   */
-  public updateDeliveryPrice(id: string, price: string | null): PromiseLike<[number, any]> {
-    return this.Delivery.update({
-      price: price
     }, {
       where: {
         id: id
