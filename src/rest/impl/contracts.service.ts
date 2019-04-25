@@ -15,7 +15,7 @@ import * as Mustache from "mustache";
 import * as moment from "moment";
 import slugify from "slugify";
 import { Stream } from "stream";
-import userManagement from "../../user-management";
+import userManagement, { UserProperty } from "../../user-management";
 import pushNotifications from "../../push-notifications";
 import signature from "../../signature";
 import excel from "../../excel";
@@ -915,8 +915,8 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
     const itemGroup = await models.findItemGroupById(contract.itemGroupId);
 
-    const supplierId = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID);
-    const companyName = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
+    const supplierId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
+    const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
     const itemGroupName = itemGroup ? itemGroup.name : null;
     const contractQuantity = contract.contractQuantity;
     const placeName = deliveryPlace ? deliveryPlace.name : null;
@@ -967,8 +967,8 @@ export default class ContractsServiceImpl extends ContractsService {
       }
 
       const year = (new Date()).getFullYear();
-      const companyName = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
-      const taxCode = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE);
+      const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
+      const taxCode = userManagement.getSingleAttribute(user, UserProperty.TAX_CODE);
       const prices = await models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
       const deliveryPlace = contract.deliveryPlaceId ? await models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
       const businessCode = taxCode ? this.getBusinessCode(taxCode) : null;
@@ -1088,7 +1088,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return null;
     }
 
-    return userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
+    return userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
   }
 
   /**
