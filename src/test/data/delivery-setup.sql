@@ -5,10 +5,10 @@ VALUES
   (2005, 'a9d71b20-4a09-11e9-8646-d663bd873d93', '112233', '234567/Test Group 2', null, 'FRESH', 0, NOW(), NOW());
 
 INSERT INTO
-  Products (id, itemGroupId, name, units, unitSize, unitName, createdAt, updatedAt)
+  Products (id, itemGroupId, name, units, unitSize, unitName, sapItemCode, createdAt, updatedAt)
 VALUES
-  ('b1590990-4bbb-11e9-8646-d663bd873d93', 1005, 'Product 1', 100, 10, 'KG', NOW(), NOW()),
-  ('b1590dd2-4bbb-11e9-8646-d663bd873d93', 2005, 'Product 2', 120, 20, 'KG', NOW(), NOW());
+  ('b1590990-4bbb-11e9-8646-d663bd873d93', 1005, 'Product 1', 100, 10, 'KG', 'SAP1', NOW(), NOW()),
+  ('b1590dd2-4bbb-11e9-8646-d663bd873d93', 2005, 'Product 2', 120, 20, 'KG', 'SAP2', NOW(), NOW());
 
 INSERT INTO 
     DeliveryPlaces (externalId, sapId, name, createdAt, updatedAt)
