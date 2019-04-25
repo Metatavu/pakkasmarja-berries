@@ -1,7 +1,7 @@
 import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
 import * as _ from "lodash";
-import { DeliveryStatus, ItemGroupCategory } from "src/rest/model/models";
+import { DeliveryStatus, ItemGroupCategory } from "../rest/model/models";
 
 export interface SessionModel {
   id: string,
@@ -239,6 +239,7 @@ export interface ProductModel {
   units: number;
   unitSize: number;
   unitName: string;
+  sapItemCode: string,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -592,7 +593,8 @@ export class Models {
       name: { type: Sequelize.STRING(191), allowNull: false },
       units: { type: Sequelize.INTEGER, allowNull: false },
       unitSize: { type: Sequelize.INTEGER, allowNull: false },
-      unitName: { type: Sequelize.STRING(191), allowNull: false }
+      unitName: { type: Sequelize.STRING(191), allowNull: false },
+      sapItemCode: { type: Sequelize.STRING(191), allowNull: false }
     });
 
     this.Delivery = this.defineModel("Delivery", {
@@ -624,6 +626,13 @@ export class Models {
       productId: { type: Sequelize.UUID, allowNull: false, references: { model: "Products", key: "id" } },
       unit: { type: Sequelize.STRING(191), allowNull: false },
       price: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.DeliveryQuality = this.defineModel("DeliveryQuality", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      itemGroupCategory: { type: Sequelize.STRING(191), allowNull: false },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 }
     });
   }
 
@@ -2499,16 +2508,18 @@ export class Models {
    * @param units units
    * @param unitSize unitSize
    * @param unitName unitName
+   * @param sapItemCode SAP ItemCode
    * @return promise on created product
    */
-  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<ProductModel> {
     return this.Product.create({
       id: id,
       itemGroupId: itemGroupId,
       name: name,
       units: units,
       unitSize: unitSize,
-      unitName: unitName
+      unitName: unitName,
+      sapItemCode: sapItemCode
     } as any);
   }
 
@@ -2521,15 +2532,17 @@ export class Models {
    * @param units units
    * @param unitSize unitSize
    * @param unitName unitName
+   * @param sapItemCode SAP ItemCode
    * @return promise on created product
    */
-  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<[number, any]> {
     return this.Product.update({
       itemGroupId: itemGroupId,
       name: name,
       units: units,
       unitSize: unitSize,
-      unitName: unitName
+      unitName: unitName,
+      sapItemCode: sapItemCode
     }, {
       where: {
         id: id
@@ -2672,6 +2685,23 @@ export class Models {
       price: price,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId
+    }, {
+      where: {
+        id: id
+      }
+    } as any);
+  }
+
+  /**
+   * Update Delivery price
+   * 
+   * @param price price
+   * 
+   * @return promise on updated delivery
+   */
+  public updateDeliveryPrice(id: string, price: string | null): PromiseLike<[number, any]> {
+    return this.Delivery.update({
+      price: price
     }, {
       where: {
         id: id
@@ -2950,12 +2980,28 @@ export class Models {
    * @param id id 
    * @returns promise for public file
    */
-  findProductPrice(id: string): PromiseLike<ProductPriceModel> {
+  public findProductPrice(id: string): PromiseLike<ProductPriceModel> {
     return this.ProductPrice.findOne({
       where: {
         id: id
       }
     });
+  }
+
+  /**
+   * Finds latest created price by for a product id
+   * 
+   * @param productId product id
+   * @return latest created price by for a product or null if not found
+   */
+  public findLatestProductPrice(productId: string): PromiseLike<ProductPriceModel | null> {
+    return this.ProductPrice.findOne({
+      where: {
+        productId: productId
+      },
+      limit: 1,
+      order: [['createdAt', 'DESC']]
+    })
   }
 
   /**
@@ -2967,7 +3013,7 @@ export class Models {
    * @param price price
    * @returns promise for public file
    */
-  updateProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<[number, any]> {
+  public updateProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<[number, any]> {
     return this.ProductPrice.update({
       productId: productId,
       unit: unit,
@@ -3011,12 +3057,26 @@ export class Models {
   // Delivery qualities
 
   /**
+   * Finds delivery quality
+   * 
+   * @param id id 
+   * @returns promise for delivery quality
+   */
+  public findDeliveryQuality(id: string): PromiseLike<DeliveryQualityModel> {
+    return this.DeliveryQuality.findOne({
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
    * Lists delivery qualities
    * 
    * @param itemGroupCategory itemGroupCategory
    * @return Promise that resolves list of delivery qualities
    */
-  public listDeliveryQualities(itemGroupCategory: string): Bluebird<DeliveryQualityModel[]> {
+  public listDeliveryQualities(itemGroupCategory: string): PromiseLike<DeliveryQualityModel[]> {
     let where: any = {};
 
     where.itemGroupCategory = itemGroupCategory;
