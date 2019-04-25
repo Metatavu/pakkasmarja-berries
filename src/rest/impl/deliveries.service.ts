@@ -336,10 +336,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;  
     }
 
-    const databaseDelivery = await models.findDeliveryById(deliveryId);
+    let databaseDelivery = null;
 
     if (status === "DONE" && deliveryQuality) {
-      const product: ProductModel = await models.findProductById(databaseDelivery.productId);
+      const product: ProductModel = await models.findProductById(productId);
       if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
@@ -375,10 +375,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      databaseDelivery = await models.findDeliveryById(deliveryId);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
+      databaseDelivery = await models.findDeliveryById(deliveryId);
     }
 
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
