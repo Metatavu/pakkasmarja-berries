@@ -15,7 +15,8 @@
     "status": "APPROVED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "677e99fd-b854-479f-afa6-74f295052770",
@@ -33,7 +34,8 @@
     "status": "APPROVED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "677e99fd-b854-479f-afa6-74f295052770",
@@ -51,7 +53,8 @@
     "status": "APPROVED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "677e99fd-b854-479f-afa6-74f295052770",
@@ -69,7 +72,8 @@
     "status": "APPROVED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
@@ -87,7 +91,8 @@
     "status": "TERMINATED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
@@ -105,7 +110,8 @@
     "status": "TERMINATED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "677e99fd-b854-479f-afa6-74f295052770",
@@ -123,7 +129,8 @@
     "status": "TERMINATED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   },
   {
     "contactId": "677e99fd-b854-479f-afa6-74f295052770",
@@ -141,6 +148,7 @@
     "status": "TERMINATED",
     "remarks": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   }
 ]
