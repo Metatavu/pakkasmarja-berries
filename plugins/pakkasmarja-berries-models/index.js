@@ -236,6 +236,7 @@
         status: { type: Sequelize.STRING(191), allowNull: false },
         areaDetails: "LONGTEXT",
         deliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
+        proposedDeliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
         remarks: Sequelize.TEXT,
         deliveryPlaceComment: Sequelize.TEXT,
         quantityComment: Sequelize.TEXT,
@@ -1392,6 +1393,7 @@
      * @param {String} status status
      * @param {String} areaDetails area details JSON
      * @param {Boolean} deliverAll deliver all
+     * @param {Boolean} proposedDeliverAll proposed deliver all
      * @param {String} remarks remarks
      * @param {String} deliveryPlaceComment delivery place comment
      * @param {String} quantityComment quantity comment
@@ -1400,7 +1402,7 @@
      * @returns {Promise} promise for new contract
      */
     createContract(userId, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
-      startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
+      startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
 
       return this.Contract.create({
         userId: userId,
@@ -1419,6 +1421,7 @@
         status: status,
         areaDetails: areaDetails, 
         deliverAll: deliverAll,
+        proposedDeliverAll: proposedDeliverAll,
         remarks: remarks,
         deliveryPlaceComment: deliveryPlaceComment,
         quantityComment: quantityComment,
@@ -1501,6 +1504,7 @@
      * @param {String} status status
      * @param {String} areaDetails area details JSON
      * @param {Boolean} deliverAll deliver all
+     * @param {Boolean} proposedDeliverAll proposed deliver all
      * @param {String} remarks remarks
      * @param {String} deliveryPlaceComment delivery place comment
      * @param {String} quantityComment quantity comment
@@ -1509,7 +1513,7 @@
      * @returns {Promise} promise for update
      */
     updateContract(id, year, deliveryPlaceId, proposedDeliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
-      startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
+      startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment) {
 
       return this.Contract.update({
         year: year,
@@ -1527,6 +1531,7 @@
         status: status,
         areaDetails: areaDetails, 
         deliverAll: deliverAll,
+        proposedDeliverAll: proposedDeliverAll,
         remarks: remarks,
         deliveryPlaceComment: deliveryPlaceComment,
         quantityComment: quantityComment,

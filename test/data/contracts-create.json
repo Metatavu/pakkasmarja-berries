@@ -20,5 +20,6 @@
   "areaDetails": [{
     "name": "Create Test", "size": 2, "species": "something created", "profitEstimation": 5
   }],
-  "deliverAll": false
+  "deliverAll": false,
+  "proposedDeliverAll": false
  }

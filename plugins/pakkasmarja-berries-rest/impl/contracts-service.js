@@ -97,6 +97,7 @@
       const termDate = contract.termDate;
       const areaDetails = contract.areaDetails;
       const deliverAll = contract.deliverAll;
+      const proposedDeliverAll = contract.proposedDeliverAll;
       const status = contract.status;
       const remarks = contract.remarks;
       const year = contract.year;
@@ -120,6 +121,7 @@
         status, 
         areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
+        proposedDeliverAll,
         remarks, 
         deliveryPlaceComment, 
         quantityComment, 
@@ -246,6 +248,7 @@
       const proposedQuantity = updateContract.proposedQuantity;
       const areaDetails = updateContract.areaDetails;
       const deliverAll = updateContract.deliverAll;
+      const proposedDeliverAll = updateContract.proposedDeliverAll;
       const deliveryPlaceComment = updateContract.deliveryPlaceComment;
       const quantityComment = updateContract.quantityComment;
       const rejectComment = updateContract.rejectComment;
@@ -296,6 +299,7 @@
         status, 
         areaDetails ? JSON.stringify(areaDetails) : null,
         deliverAll,
+        proposedDeliverAll,
         remarks, 
         deliveryPlaceComment, 
         quantityComment, 
@@ -783,6 +787,7 @@
         "status": contract.status,
         "areaDetails": areaDetails || [],
         "deliverAll": contract.deliverAll,
+        "proposedDeliverAll": contract.proposedDeliverAll,
         "remarks": contract.remarks,
         "year": contract.year,
         "deliveryPlaceComment": contract.deliveryPlaceComment,
