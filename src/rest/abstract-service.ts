@@ -269,6 +269,8 @@ export default class AbstractService {
       "message": message || "Bad Request"
     };
 
+    this.baseLogger.warn(`Bad request with message ${message || "Bad Request"}`);
+
     res.status(400).send(response);
   }
 
@@ -297,8 +299,10 @@ export default class AbstractService {
     const message = error instanceof Error ? (error as Error).message : error;
     const response: InternalServerError = {
       "code": 500,
-      "message": message || "Bad Request"
+      "message": message || "Internal Server Error"
     };
+
+    this.baseLogger.warn(`Internal Server Error with message ${message || "Internal Server Error"}`);
 
     res.status(500).send(response);
   }

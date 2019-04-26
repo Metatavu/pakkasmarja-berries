@@ -14,6 +14,25 @@ import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresen
 import { URLSearchParams }  from "url";
 import fetch from "node-fetch";
 
+export enum UserProperty {
+  SAP_ID = "sapId",
+  SAP_SALES_PERSON_CODE = "sapSalesPersonCode",
+  COMPANY_NAME = "yritys",
+  BIC = "BIC",
+  IBAN = "IBAN",
+  TAX_CODE = "verotunniste",
+  VAT_LIABLE = "arvonlisäverovelvollisuus",
+  AUDIT = "auditointi",
+  PHONE_1 = "Puhelin 1",
+  PHONE_2 = "Puhelin 2",
+  POSTAL_CODE_1 = "Postinro",
+  POSTAL_CODE_2 = "tilan postinro",
+  STREET_1 = "Postiosoite",
+  STREET_2 = "Tilan osoite",
+  CITY_1 = "Kaupunki",
+  CITY_2 = "Tilan kaupunki"
+}
+
 export default new class UserManagement {
 
   private client: any;
@@ -62,7 +81,7 @@ export default new class UserManagement {
    * @param {String} name attribute name 
    * @param {String} value attribute value 
    */
-  findUserByProperty(name: string, value: string): Promise<any> {
+  public findUserByProperty(name: UserProperty, value: string): Promise<any> {
     let page  = 0;
     let size = 25;
     const maxPages = 50;
@@ -120,7 +139,7 @@ export default new class UserManagement {
    * @param {Integer} first first result
    * @param {Integer} maxResults maxResults
    */
-  listUserByPropertyPaged(name: string, value: string, first: number, maxResults: number) {
+  public listUserByPropertyPaged(name: UserProperty, value: string, first: number, maxResults: number) {
     return this.listUsers({
       first: first,
       max: maxResults
@@ -606,7 +625,7 @@ export default new class UserManagement {
    * @param {String[]} names attribute name or names
    * @return {String} attribute value or null if not found
    */
-  getSingleAttribute(user: any, names: string|string[]): string|null {
+  public getSingleAttribute(user: any, names: UserProperty|UserProperty[]): string|null {
     const attributes = user.attributes || {};
     const nameAttr = _.isArray(names) ? names : [ names ];
     for (let i = 0; i < nameAttr.length; i++) {
@@ -628,7 +647,7 @@ export default new class UserManagement {
    * @param {String} name name of the attribute
    * @param {String} value value
    */
-  setSingleAttribute(user: any, name: string, value?: string|null) {
+  public setSingleAttribute(user: any, name: UserProperty, value?: string|null) {
     if (!user.attributes) {
       user.attributes = {};
     }
@@ -718,65 +737,5 @@ export default new class UserManagement {
 
     return clients[0].id!;
   }  
-  
-  get ATTRIBUTE_SAP_ID() {
-    return "sapId";
-  }
-  
-  get ATTRIBUTE_COMPANY_NAME() {
-    return "yritys";
-  }
-  
-  get ATTRIBUTE_BIC() {
-    return "BIC";
-  }
-  
-  get ATTRIBUTE_IBAN() {
-    return "IBAN";
-  }
-  
-  get ATTRIBUTE_TAX_CODE() {
-    return "verotunniste";
-  }
-  
-  get ATTRIBUTE_VAT_LIABLE() {
-    return "arvonlisäverovelvollisuus";
-  }
-  
-  get ATTRIBUTE_AUDIT() {
-    return "auditointi";
-  }
-  
-  get ATTRIBUTE_PHONE_1() {
-    return "Puhelin 1";
-  }
-  
-  get ATTRIBUTE_PHONE_2() {
-    return "Puhelin 2";
-  }
-  
-  get ATTRIBUTE_POSTAL_CODE_1() {
-    return "Postinro";
-  }
-  
-  get ATTRIBUTE_POSTAL_CODE_2() {
-    return "tilan postinro";
-  }
-  
-  get ATTRIBUTE_STREET_1() {
-    return "Postiosoite";
-  }
-  
-  get ATTRIBUTE_STREET_2() {
-    return "Tilan osoite";
-  }
-  
-  get ATTRIBUTE_CITY_1() {
-    return "Kaupunki";
-  }
-  
-  get ATTRIBUTE_CITY_2() {
-    return "Tilan kaupunki";
-  }
   
 };

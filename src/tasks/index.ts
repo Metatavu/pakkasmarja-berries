@@ -7,7 +7,7 @@ import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
 import { SAPExportBusinessPartner, SAPExportItemGroup, SAPExportDeliveryPlace, SAPExportContract, SAPExport, SAPExportRoot } from "../sap/export"; 
 import signature from "../signature";
-import userManagement from "../user-management";
+import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -277,7 +277,7 @@ export default new class TaskQueue {
         return;
       }
       
-      let user = await userManagement.findUserByProperty(userManagement.ATTRIBUTE_SAP_ID, sapId);
+      let user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapId);
       if (!user) {
         user = await userManagement.findUserByEmail(email);
       }
@@ -291,21 +291,21 @@ export default new class TaskQueue {
         return;
       }
       
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID, sapId);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_1, phone1);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_2, phone2);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME, companyName);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_BIC, bic);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_IBAN, iban);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE, taxCode);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE, vatLiable);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT, audit);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_CITY_1, billCity);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_POSTAL_CODE_1, billZip);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_STREET_1, billStreet);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_CITY_2, shipCity);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_POSTAL_CODE_2, shipZip);
-      userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_STREET_2, shipStreet);
+      userManagement.setSingleAttribute(user, UserProperty.SAP_ID, sapId);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phone1);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phone2);
+      userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, companyName);
+      userManagement.setSingleAttribute(user, UserProperty.BIC, bic);
+      userManagement.setSingleAttribute(user, UserProperty.IBAN, iban);
+      userManagement.setSingleAttribute(user, UserProperty.TAX_CODE, taxCode);
+      userManagement.setSingleAttribute(user, UserProperty.VAT_LIABLE, vatLiable);
+      userManagement.setSingleAttribute(user, UserProperty.AUDIT, audit);
+      userManagement.setSingleAttribute(user, UserProperty.CITY_1, billCity);
+      userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_1, billZip);
+      userManagement.setSingleAttribute(user, UserProperty.STREET_1, billStreet);
+      userManagement.setSingleAttribute(user, UserProperty.CITY_2, shipCity);
+      userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_2, shipZip);
+      userManagement.setSingleAttribute(user, UserProperty.STREET_2, shipStreet);
 
       await userManagement.updateUser(user);
 
@@ -370,7 +370,7 @@ export default new class TaskQueue {
         return failTask(`Contract ${contract.id} SAP creation failed because SAP item group id could not be resolved`);
       }
       
-      const userSapId = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID);
+      const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
       if (!userSapId) {
         return failTask(`Contract ${contract.id} SAP creation failed because user SAP id could not be resolved`);
       }
@@ -667,7 +667,7 @@ export default new class TaskQueue {
         return;
       }
 
-      const user = await userManagement.findUserByProperty(userManagement.ATTRIBUTE_SAP_ID, sapUserId);
+      const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapUserId);
       if (!user) {
         callback({
           message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,

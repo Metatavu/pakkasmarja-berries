@@ -43,31 +43,39 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const name = req.body.name;
+    const payload: Product = req.body; 
+
+    const name = payload.name;
     if (!name) {
       this.sendBadRequest(res, "Missing required param name");
       return;
     }
 
-    const units = req.body.units;
+    const units = payload.units;
     if (!units) {
       this.sendBadRequest(res, "Missing required param units");
       return;
     }
 
-    const unitSize = req.body.unitSize;
+    const unitSize = payload.unitSize;
     if (!unitSize) {
       this.sendBadRequest(res, "Missing required param unitSize");
       return;
     }
 
-    const unitName = req.body.unitName;
+    const unitName = payload.unitName;
     if (!unitName) {
       this.sendBadRequest(res, "Missing required param unitName");
       return;
     }
 
-    const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName);
+    const sapItemCode = payload.sapItemCode;
+    if (!sapItemCode) {
+      this.sendBadRequest(res, "Missing required param sapItemCode");
+      return;
+    }
+
+    const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode);
     res.status(200).send(await this.translateDatabaseProduct(createdProduct));
   } 
   
@@ -166,31 +174,38 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const name = req.body.name;
+    const payload: Product = req.body; 
+    const name = payload.name;
     if (!name) {
       this.sendBadRequest(res, "Missing required param name");
       return;
     }
 
-    const units = req.body.units;
+    const units = payload.units;
     if (!units) {
       this.sendBadRequest(res, "Missing required param units");
       return;
     }
 
-    const unitSize = req.body.unitSize;
+    const unitSize = payload.unitSize;
     if (!unitSize) {
       this.sendBadRequest(res, "Missing required param unitSize");
       return;
     }
 
-    const unitName = req.body.unitName;
+    const unitName = payload.unitName;
     if (!unitName) {
       this.sendBadRequest(res, "Missing required param unitName");
       return;
     }
 
-    await models.updateProduct(productId, databaseItemGroup.id, name, units, unitSize, unitName);
+    const sapItemCode = payload.sapItemCode;
+    if (!sapItemCode) {
+      this.sendBadRequest(res, "Missing required param sapItemCode");
+      return;
+    }
+
+    await models.updateProduct(productId, databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode);
 
     const product = await models.findProductById(productId);
     if (!product) {
@@ -214,7 +229,8 @@ export default class ProductsServiceImpl extends ProductsService {
       "name": product.name,
       "units": product.units,
       "unitSize": product.unitSize,
-      "unitName": product.unitName
+      "unitName": product.unitName,
+      "sapItemCode": product.sapItemCode
     };
 
     return result;

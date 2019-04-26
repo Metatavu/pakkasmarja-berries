@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import { Response, Request } from "express";
 import ContactsService from "../api/contacts.service";
 import ApplicationRoles from "../application-roles";
-import userManagement from "../../user-management";
+import userManagement, { UserProperty } from "../../user-management";
 import mailer from "../../mailer";
 import { Contact, Address } from "../model/models";
 import { config } from "../../config";
@@ -149,20 +149,20 @@ export default class ContactsServiceImpl extends ContactsService {
     const changes: string[] = [];
 
     const trackedAttributes = [
-      userManagement.ATTRIBUTE_COMPANY_NAME, 
-      userManagement.ATTRIBUTE_BIC, 
-      userManagement.ATTRIBUTE_IBAN, 
-      userManagement.ATTRIBUTE_TAX_CODE, 
-      userManagement.ATTRIBUTE_VAT_LIABLE, 
-      userManagement.ATTRIBUTE_AUDIT,
-      userManagement.ATTRIBUTE_POSTAL_CODE_1,
-      userManagement.ATTRIBUTE_POSTAL_CODE_2,
-      userManagement.ATTRIBUTE_STREET_1,
-      userManagement.ATTRIBUTE_STREET_2,
-      userManagement.ATTRIBUTE_PHONE_1,
-      userManagement.ATTRIBUTE_PHONE_2,
-      userManagement.ATTRIBUTE_CITY_1,
-      userManagement.ATTRIBUTE_CITY_2
+      UserProperty.COMPANY_NAME, 
+      UserProperty.BIC, 
+      UserProperty.IBAN, 
+      UserProperty.TAX_CODE, 
+      UserProperty.VAT_LIABLE, 
+      UserProperty.AUDIT,
+      UserProperty.POSTAL_CODE_1,
+      UserProperty.POSTAL_CODE_2,
+      UserProperty.STREET_1,
+      UserProperty.STREET_2,
+      UserProperty.PHONE_1,
+      UserProperty.PHONE_2,
+      UserProperty.CITY_1,
+      UserProperty.CITY_2
     ];
 
     const trackedProperties = [
@@ -210,7 +210,7 @@ export default class ContactsServiceImpl extends ContactsService {
    */
   translateKeycloakUser(user: any) {
     try {
-      const userVatLiable: string | null = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE);
+      const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
       let vatLiable: Contact.VatLiableEnum | null = null;
 
       if ("true" == userVatLiable) {
@@ -223,18 +223,18 @@ export default class ContactsServiceImpl extends ContactsService {
 
       const result: Contact = {
         'id': user.id,
-        "sapId": userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID) ||null,
+        "sapId": userManagement.getSingleAttribute(user, UserProperty.SAP_ID) ||null,
         'firstName': user.firstName,
         'lastName': user.lastName,
-        'companyName': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME) || null,
+        'companyName': userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
         'phoneNumbers': this.resolveKeycloakUserPhones(user),
         'email': user.email,
         'addresses': this.resolveKeycloakUserAddresses(user),
-        'BIC': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_BIC) || null,
-        'IBAN': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_IBAN) || null,
-        'taxCode': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE) || null,
+        'BIC': userManagement.getSingleAttribute(user, UserProperty.BIC) || null,
+        'IBAN': userManagement.getSingleAttribute(user, UserProperty.IBAN) || null,
+        'taxCode': userManagement.getSingleAttribute(user, UserProperty.TAX_CODE) || null,
         'vatLiable': vatLiable,
-        'audit': userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT) || null,
+        'audit': userManagement.getSingleAttribute(user, UserProperty.AUDIT) || null,
         "avatarUrl": userManagement.getUserImage(user),
         "displayName": userManagement.getUserDisplayName(user)
       };
@@ -263,21 +263,21 @@ export default class ContactsServiceImpl extends ContactsService {
     const phoneNumbers: string[] = contact.phoneNumbers || [];
     const addresses: Address[] = contact.addresses || [];
     
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME, contact.companyName);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME, contact.companyName);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_BIC, contact.BIC);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_IBAN, contact.IBAN);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE, contact.taxCode);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_VAT_LIABLE, contact.vatLiable);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_AUDIT, contact.audit);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_1, phoneNumbers.length > 0 ? phoneNumbers[0] : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_2, phoneNumbers.length > 1 ? phoneNumbers[1] : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_POSTAL_CODE_1, addresses.length > 0 ? addresses[0].postalCode : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_STREET_1, addresses.length > 0 ? addresses[0].streetAddress : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_CITY_1, addresses.length > 0 ? addresses[0].city : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_POSTAL_CODE_2, addresses.length > 1 ? addresses[1].postalCode : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_STREET_2, addresses.length > 1 ? addresses[1].streetAddress : null);
-    userManagement.setSingleAttribute(user, userManagement.ATTRIBUTE_CITY_2, addresses.length > 1 ? addresses[1].city : null);
+    userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, contact.companyName);
+    userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, contact.companyName);
+    userManagement.setSingleAttribute(user, UserProperty.BIC, contact.BIC);
+    userManagement.setSingleAttribute(user, UserProperty.IBAN, contact.IBAN);
+    userManagement.setSingleAttribute(user, UserProperty.TAX_CODE, contact.taxCode);
+    userManagement.setSingleAttribute(user, UserProperty.VAT_LIABLE, contact.vatLiable);
+    userManagement.setSingleAttribute(user, UserProperty.AUDIT, contact.audit);
+    userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phoneNumbers.length > 0 ? phoneNumbers[0] : null);
+    userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phoneNumbers.length > 1 ? phoneNumbers[1] : null);
+    userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_1, addresses.length > 0 ? addresses[0].postalCode : null);
+    userManagement.setSingleAttribute(user, UserProperty.STREET_1, addresses.length > 0 ? addresses[0].streetAddress : null);
+    userManagement.setSingleAttribute(user, UserProperty.CITY_1, addresses.length > 0 ? addresses[0].city : null);
+    userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_2, addresses.length > 1 ? addresses[1].postalCode : null);
+    userManagement.setSingleAttribute(user, UserProperty.STREET_2, addresses.length > 1 ? addresses[1].streetAddress : null);
+    userManagement.setSingleAttribute(user, UserProperty.CITY_2, addresses.length > 1 ? addresses[1].city : null);
     
     return user;
   }
@@ -291,8 +291,8 @@ export default class ContactsServiceImpl extends ContactsService {
   resolveKeycloakUserPhones(user: any) {
     const result = [];
     if (user && user.attributes) {
-      const phoneNumber1 = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_1);
-      const phoneNumber2 = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_PHONE_2);
+      const phoneNumber1 = userManagement.getSingleAttribute(user, UserProperty.PHONE_1);
+      const phoneNumber2 = userManagement.getSingleAttribute(user, UserProperty.PHONE_2);
       
       if (phoneNumber1) {
         result.push(phoneNumber1);
@@ -315,9 +315,9 @@ export default class ContactsServiceImpl extends ContactsService {
   resolveKeycloakUserAddresses(user: any): Address[] {
     const result: Address[] = [];
     if (user && user.attributes) {
-      const postalCode1 = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_POSTAL_CODE_1);
-      const streetAddress1 = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_STREET_1);
-      const city1 = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_CITY_1);
+      const postalCode1 = userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_1);
+      const streetAddress1 = userManagement.getSingleAttribute(user, UserProperty.STREET_1);
+      const city1 = userManagement.getSingleAttribute(user, UserProperty.CITY_1);
 
       if (postalCode1 && streetAddress1) {
         const address: Address = {
