@@ -242,6 +242,7 @@
       let signDate = updateContract.signDate;
       let termDate = updateContract.termDate;
       let remarks = updateContract.remarks;
+      let deliverAll = updateContract.deliverAll;
  
       // May be edited by users that own the contract
       const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
