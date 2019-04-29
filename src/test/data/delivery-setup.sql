@@ -22,6 +22,6 @@ VALUES
   ('bad02318-1a44-11e8-87a4-c7808d590a07', '567', 'Test Place 1', NOW(), NOW());
 
 INSERT INTO 
-    DeliveryQualities (id, itemGroupCategory, name, priceBonus, createdAt, updatedAt)
+    DeliveryQualities (id, itemGroupCategory, name, priceBonus, color, createdAt, updatedAt)
 VALUES 
-  ('bad02318-1a44-11e8-87a4-c7808d590bbb','FRESH', 'Great', 10, NOW(), NOW());
+  ('bad02318-1a44-11e8-87a4-c7808d590bbb','FRESH', 'Great', 10, '#000000', NOW(), NOW());
