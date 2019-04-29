@@ -247,7 +247,6 @@
       const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
       const proposedQuantity = updateContract.proposedQuantity;
       const areaDetails = updateContract.areaDetails;
-      const deliverAll = updateContract.deliverAll;
       const proposedDeliverAll = updateContract.proposedDeliverAll;
       const deliveryPlaceComment = updateContract.deliveryPlaceComment;
       const quantityComment = updateContract.quantityComment;
@@ -268,11 +267,12 @@
         signDate = databaseContract.signDate;
         termDate = databaseContract.termDate;
         remarks = databaseContract.remarks;
+        deliverAll = databaseContract.deliverAll;
 
         if (updateContract.status === "REJECTED") {
           status = "REJECTED";
         } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
-          if (contractQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId) {
+          if (contractQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId && deliverAll === proposedDeliverAll) {
             status = "DRAFT";
           } else {
             status = "ON_HOLD";
