@@ -42,7 +42,8 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
       id: deliveryQuality.id,
       itemGroupCategory: deliveryQuality.itemGroupCategory,
       name: deliveryQuality.name,
-      priceBonus: deliveryQuality.priceBonus
+      priceBonus: deliveryQuality.priceBonus,
+      color: deliveryQuality.color
     };
 
     return result;

@@ -14,9 +14,10 @@ import { ItemGroupCategory } from './itemGroupCategory';
 
 export interface DeliveryQuality { 
     id: string  | null;
-    itemGroupCategory: ItemGroupCategory  | null;
-    name: string  | null;
-    priceBonus: number  | null;
+    itemGroupCategory: ItemGroupCategory ;
+    name: string ;
+    priceBonus: number ;
+    color: string ;
 }    
 
 export interface DeliveryQualityOpt { 
@@ -24,4 +25,5 @@ export interface DeliveryQualityOpt {
     itemGroupCategory?: ItemGroupCategory;
     name?: string;
     priceBonus?: number;
+    color?: string;
 }

@@ -303,6 +303,7 @@ export interface DeliveryQualityModel {
   itemGroupCategory: string;
   name: string;
   priceBonus: number;
+  color: string;
 }
 
 const PRINT_MODEL_INTERFACES = false;
@@ -636,7 +637,8 @@ export class Models {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       itemGroupCategory: { type: Sequelize.STRING(191), allowNull: false },
       name: { type: Sequelize.STRING(191), allowNull: false },
-      priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 }
+      priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 },
+      color: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
