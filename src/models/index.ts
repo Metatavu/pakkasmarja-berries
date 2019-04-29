@@ -151,6 +151,7 @@ export interface ContractModel {
   status: string,
   areaDetails: string,
   deliverAll: boolean,
+  proposedDeliverAll: boolean,
   remarks: string,
   deliveryPlaceComment: string,
   quantityComment: string,
@@ -489,6 +490,7 @@ export class Models {
       status: { type: Sequelize.STRING(191), allowNull: false },
       areaDetails: { type: "LONGTEXT" },
       deliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
+      proposedDeliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
       remarks: { type: Sequelize.TEXT },
       deliveryPlaceComment: { type: Sequelize.TEXT  },
       quantityComment: { type: Sequelize.TEXT  },
@@ -1572,33 +1574,35 @@ export class Models {
   /**
    * Create new contract
    * 
-   * @param {String} userId contract's user id
-   * @param {int} year year
-   * @param {int} deliveryPlaceId delivery place id
-   * @param {int} proposedDeliveryPlaceId proposed delivery place id
-   * @param {int} itemGroupId item group id
-   * @param {String} sapId sap id
-   * @param {int} contractQuantity contract quantity
-   * @param {int} deliveredQuantity delivered quantity
-   * @param {int} proposedQuantity proposed quantity
-   * @param {Date} startDate start date
-   * @param {Date} endDate end date 
-   * @param {Date} signDate sign date
-   * @param {Date} termDate term date
-   * @param {String} status status
-   * @param {String} areaDetails area details JSON
-   * @param {Boolean} deliverAll deliver all
-   * @param {String} remarks remarks
-   * @param {String} deliveryPlaceComment delivery place comment
-   * @param {String} quantityComment quantity comment
-   * @param {String} rejectComment reject  comment
+   * @param userId contract's user id
+   * @param year year
+   * @param deliveryPlaceId delivery place id
+   * @param proposedDeliveryPlaceId proposed delivery place id
+   * @param itemGroupId item group id
+   * @param sapId sap id
+   * @param contractQuantity contract quantity
+   * @param deliveredQuantity delivered quantity
+   * @param proposedQuantity proposed quantity
+   * @param startDate start date
+   * @param endDate end date 
+   * @param signDate sign date
+   * @param termDate term date
+   * @param status status
+   * @param areaDetails area details JSON
+   * @param deliverAll deliver all
+   * @param proposedDeliverAll proposed deliver all
+   * @param remarks remarks
+   * @param deliveryPlaceComment delivery place comment
+   * @param quantityComment quantity comment
+   * @param rejectComment reject  comment
    * 
    * @returns {Promise} promise for new contract
    */
   public createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
     itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
-    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<ContractModel> {
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+    quantityComment: string|null, rejectComment: string|null): PromiseLike<ContractModel> {
 
     return this.sequelize.models.Contract.create({
       userId: userId,
@@ -1617,6 +1621,7 @@ export class Models {
       status: status,
       areaDetails: areaDetails, 
       deliverAll: deliverAll,
+      proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
       deliveryPlaceComment: deliveryPlaceComment,
       quantityComment: quantityComment,
@@ -1681,35 +1686,36 @@ export class Models {
   /**
    * Updates a contract 
    * 
-   * @param {int} id contract id
-   * @param {String} userId contract's user id
-   * @param {int} year year
-   * @param {int} deliveryPlaceId delivery place id
-   * @param {String} sapId SAP id
-   * @param {int} proposedDeliveryPlaceId proposed delivery place id
-   * @param {int} itemGroupId item group id
-   * @param {String} sapId sap id
-   * @param {int} contractQuantity contract quantity
-   * @param {int} deliveredQuantity delivered quantity
-   * @param {int} proposedQuantity proposed quantity
-   * @param {Date} startDate start date
-   * @param {Date} endDate end date 
-   * @param {Date} signDate sign date
-   * @param {Date} termDate term date
-   * @param {String} status status
-   * @param {String} areaDetails area details JSON
-   * @param {Boolean} deliverAll deliver all
-   * @param {String} remarks remarks
-   * @param {String} deliveryPlaceComment delivery place comment
-   * @param {String} quantityComment quantity comment
-   * @param {String} rejectComment reject  comment
+   * @param id contract id
+   * @param userId contract's user id
+   * @param year year
+   * @param deliveryPlaceId delivery place id
+   * @param sapId SAP id
+   * @param proposedDeliveryPlaceId proposed delivery place id
+   * @param itemGroupId item group id
+   * @param sapId sap id
+   * @param contractQuantity contract quantity
+   * @param deliveredQuantity delivered quantity
+   * @param proposedQuantity proposed quantity
+   * @param startDate start date
+   * @param endDate end date 
+   * @param signDate sign date
+   * @param termDate term date
+   * @param status status
+   * @param areaDetails area details JSON
+   * @param deliverAll deliver all
+   * @param remarks remarks
+   * @param deliveryPlaceComment delivery place comment
+   * @param quantityComment quantity comment
+   * @param rejectComment reject  comment
    * 
    * @returns {Promise} promise for update
    */
   public updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
     itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
-    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+    quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
 
     return this.sequelize.models.Contract.update({
       year: year,
@@ -1727,6 +1733,7 @@ export class Models {
       status: status,
       areaDetails: areaDetails, 
       deliverAll: deliverAll,
+      proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
       deliveryPlaceComment: deliveryPlaceComment,
       quantityComment: quantityComment,

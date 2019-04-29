@@ -65,7 +65,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const contract = _.isObject(req.body) ? req.body : null;
+    const contract: Contract = _.isObject(req.body) ? req.body : null;
     if (!contract) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -105,6 +105,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlaceComment = contract.deliveryPlaceComment;
     const quantityComment = contract.quantityComment;
     const rejectComment = contract.rejectComment;
+    const proposedDeliverAll = contract.proposedDeliverAll;
 
     const databaseContract = await models.createContract(userId, 
       year,
@@ -122,6 +123,7 @@ export default class ContractsServiceImpl extends ContractsService {
       status, 
       areaDetails ? JSON.stringify(areaDetails) : "",
       deliverAll,
+      proposedDeliverAll,
       remarks, 
       deliveryPlaceComment, 
       quantityComment, 
@@ -248,6 +250,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const proposedQuantity = updateContract.proposedQuantity;
     const areaDetails = updateContract.areaDetails;
     const deliverAll = updateContract.deliverAll;
+    const proposedDeliverAll = updateContract.proposedDeliverAll; 
     const deliveryPlaceComment = updateContract.deliveryPlaceComment;
     const quantityComment = updateContract.quantityComment;
     const rejectComment = updateContract.rejectComment;
@@ -298,6 +301,7 @@ export default class ContractsServiceImpl extends ContractsService {
       status, 
       areaDetails ? JSON.stringify(areaDetails) : "",
       deliverAll,
+      proposedDeliverAll,
       remarks || null, 
       deliveryPlaceComment || null, 
       quantityComment || null, 
@@ -813,6 +817,7 @@ export default class ContractsServiceImpl extends ContractsService {
       "status": status,
       "areaDetails": areaDetails || [],
       "deliverAll": contract.deliverAll,
+      "proposedDeliverAll": contract.proposedDeliverAll,
       "remarks": contract.remarks,
       "year": contract.year,
       "deliveryPlaceComment": contract.deliveryPlaceComment,

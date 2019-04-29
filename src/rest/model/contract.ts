@@ -16,10 +16,10 @@ export interface Contract {
     id: string  | null;
     sapId: string  | null;
     contactId: string  | null;
-    deliveryPlaceId: string  | null;
+    deliveryPlaceId: string ;
     proposedDeliveryPlaceId: string  | null;
     deliveryPlaceComment: string  | null;
-    itemGroupId: string  | null;
+    itemGroupId: string ;
     year: number ;
     contractQuantity: number  | null;
     deliveredQuantity: number  | null;
@@ -32,6 +32,7 @@ export interface Contract {
     rejectComment: string  | null;
     areaDetails: Array<AreaDetail>  | null;
     deliverAll: boolean ;
+    proposedDeliverAll: boolean ;
     status: Contract.StatusEnum ;
     remarks: string  | null;
 }    
@@ -56,6 +57,7 @@ export interface ContractOpt {
     rejectComment?: string;
     areaDetails?: Array<AreaDetail>;
     deliverAll?: boolean;
+    proposedDeliverAll?: boolean;
     status?: Contract.StatusEnum;
     remarks?: string;
 }
