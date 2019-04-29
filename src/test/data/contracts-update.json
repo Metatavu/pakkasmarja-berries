@@ -22,7 +22,8 @@
     "areaDetails": [{
       "name": "Updated Test", "size": 234, "species": "something updated", "profitEstimation": 2345
     }],
-    "deliverAll": true
+    "deliverAll": true,
+    "proposedDeliverAll": true
   }
 }
 

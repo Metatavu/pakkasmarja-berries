@@ -693,11 +693,12 @@ export default new class TaskQueue {
       let rejectComment = null;
       let areaDetails = null;
       let deliverAll = false;
+      let proposedDeliverAll = false;
 
       const contract = await models.findContractBySapId(sapId);
       if (!contract) {
         await models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
-          startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+          startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
         callback(null, {
           message: `Created new contract from SAP ${sapId}`,
@@ -730,6 +731,7 @@ export default new class TaskQueue {
           status, 
           areaDetails, 
           deliverAll, 
+          proposedDeliverAll,
           remarks, 
           deliveryPlaceComment, 
           quantityComment,
