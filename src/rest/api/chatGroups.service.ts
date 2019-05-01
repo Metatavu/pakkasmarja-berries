@@ -14,10 +14,14 @@ export default abstract class ChatGroupsService extends AbstractService {
     super();
 
     app.post(`/rest/v1${this.toPath('/chatGroups')}`, [ keycloak.protect() ], this.catchAsync(this.createChatGroup.bind(this)));
+    app.post(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}/groupPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.createChatGroupPermissions.bind(this)));
     app.delete(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteChatGroup.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatGroup.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatGroupPermissions.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}/groupPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.listChatGroupPermissions.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatGroups')}`, [ keycloak.protect() ], this.catchAsync(this.listChatGroups.bind(this)));
     app.put(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatGroup.bind(this)));
+    app.put(`/rest/v1${this.toPath('/chatGroups/${encodeURIComponent(String(chatGroupId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatGroupPermissions.bind(this)));
   }
 
 
@@ -28,6 +32,16 @@ export default abstract class ChatGroupsService extends AbstractService {
     * - (body) ChatThread body - Payload
   */
   public abstract createChatGroup(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Creates new chat group group permission
+   * @summary Creates new chat group group permission
+   * Accepted parameters:
+    * - (body) ChatGroupGroupPermission body - Payload
+    * - (path) number chatGroupId - Chat group id
+  */
+  public abstract createChatGroupPermissions(req: Request, res: Response): Promise<void>;
 
 
   /**
@@ -49,6 +63,25 @@ export default abstract class ChatGroupsService extends AbstractService {
 
 
   /**
+   * Find chat group group permission
+   * @summary Find chat group group permission
+   * Accepted parameters:
+    * - (path) number chatGroupId - Chat group id
+    * - (path) string permissionId - Permission id
+  */
+  public abstract findChatGroupPermissions(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Returns list of chat group group permissions
+   * @summary Returns list of chat group group permissions
+   * Accepted parameters:
+    * - (path) number chatGroupId - Chat group id
+  */
+  public abstract listChatGroupPermissions(req: Request, res: Response): Promise<void>;
+
+
+  /**
    * Returns list of chat groups
    * @summary Returns list of chat groups
    * Accepted parameters:
@@ -65,5 +98,16 @@ export default abstract class ChatGroupsService extends AbstractService {
     * - (path) number chatGroupId - Chat group id
   */
   public abstract updateChatGroup(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Updates chat group group permission
+   * @summary Update chat group group permission
+   * Accepted parameters:
+    * - (body) ChatGroupGroupPermission body - Payload
+    * - (path) number chatGroupId - Chat group id
+    * - (path) string permissionId - Permission id
+  */
+  public abstract updateChatGroupPermissions(req: Request, res: Response): Promise<void>;
 
 }
