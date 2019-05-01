@@ -56,10 +56,33 @@ export default new class Auth {
    * 
    * @return {Promise} promise for results
    */
-  public getAdminToken() {
+  public async getAdminToken(roles?: string | string[]) {
+    if (roles) {
+      const adminToken = await this.getAdminCliToken();
+      const userId = this.getAdminId();
+      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+    }
+
     return this.getToken("admin", "test");
   }
 
+  /**
+   * Removes specified roles from admin
+   * 
+   * @param {Array} roles list of roles to be removed  
+   * @returns {Promise} promise for removed roles
+   */
+  async removeAdminRoles(roles: string | string[]) {
+    const adminToken = await this.getAdminCliToken();
+    const userId = this.getAdminId();
+    return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+  }
+
+  /**
+   * Returns token for admin cli access
+   * 
+   * @returns promise for token
+   */
   public getAdminCliToken() {
     return this.getClientToken("admin", "test", "admin-cli");
   }
@@ -119,11 +142,20 @@ export default new class Auth {
   }
 
   /**
+   * Returns admin id
+   * 
+   * @return {String} user id
+   */
+  public getAdminId() {
+    return "3feb85af-3ddb-4d3d-a97f-a879a32037a1";
+  }
+
+  /**
    * Returns user 1 id
    * 
    * @return {String} user id
    */
-  getUser1Id() {
+  public getUser1Id() {
     return "6f1cd486-107e-404c-a73f-50cc1fdabdd6";
   }
 
@@ -132,7 +164,7 @@ export default new class Auth {
    * 
    * @return {String} user id
    */
-  getUser2Id() {
+  public getUser2Id() {
     return "677e99fd-b854-479f-afa6-74f295052770";
   }
 

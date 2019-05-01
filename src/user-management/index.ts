@@ -13,6 +13,11 @@ import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentati
 import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 import { URLSearchParams }  from "url";
 import fetch from "node-fetch";
+import ScopeRepresentation from "keycloak-admin/lib/defs/scopeRepresentation";
+import { ApplicationScope } from "src/rest/application-scopes";
+import RolePolicyRepresentation from "keycloak-admin/lib/defs/rolePolicyRepresentation";
+import RoleDefinition from "keycloak-admin/lib/defs/roleDefinition";
+import RoleRepresentation from "keycloak-admin/lib/defs/roleRepresentation";
 
 export enum UserProperty {
   SAP_ID = "sapId",
@@ -211,35 +216,33 @@ export default new class UserManagement {
     }));
   }
   
-  listUserGroupIds(realm: string, userId: string): Promise<number[]> {
-    return new Promise((resolve, reject) => {
-      this.listUserGroups(realm, userId)
-        .then((userGroup: any) => {
-          resolve(_.uniq(_.map(userGroup, "id")));
-        })
-        .catch(reject);
+  /**
+   * Find group from the Keycloak
+   * 
+   * @param userGroupId user group id
+   */
+  public async findGroup(userGroupId: string): Promise<GroupRepresentation> {
+    const client = await this.getClient();
+    return client.groups.findOne({
+      realm: config().keycloak.admin.realm,
+      id: userGroupId
     });
   }
-  
-  listUserGroups(realm: string, userId: string) {
-    return new Promise((resolve, reject) => {
-      this.getClient()
-        .then((client: any) => {
-          client.users.groups.find(realm, userId)
-            .then(resolve)
-            .catch(reject);
-        })
-        .catch(reject);
-    });
-  }
-  
+
   /**
    * Lists Groups from the Keycloak
+   * 
+   * @param first first result index
+   * @param max max results
+   * @param search search string
    */
-  public async listGroups() {
+  public async listGroups(first?: number, max?: number, search?: string): Promise<GroupRepresentation[]> {
     const client = await this.getClient();
     return client.groups.find({
-      realm: config().keycloak.admin.realm
+      realm: config().keycloak.admin.realm,
+      first: first,
+      max: max,
+      search: search
     });
   }
 
@@ -249,7 +252,7 @@ export default new class UserManagement {
    * @param uri URI
    * @return Promise for found resource or null if not found
    */
-  public async findResourceByUri(uri: string) {
+  public async findResourceByUri(uri: string): Promise<ResourceRepresentation | null> {
     const client = await this.getClient();
     const results = await client.clients.listAuthzResources({
       id: await this.getRestClientInternalId(),
@@ -316,6 +319,42 @@ export default new class UserManagement {
    * @param name name
    * @return Promise for found policy or null if not found
    */
+  public async findRolePolicyByName(name: string) {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzRolePolicies({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      name: name,
+      max: 1
+    });
+
+    return results.length ? results[0] : null;
+  }
+
+  /**
+   * Finds role by name
+   * 
+   * @param name name
+   * @return Promise for found role or null if not found
+   */
+  public async findRealmRole(name: string): Promise<RoleRepresentation | undefined> {
+    const client = await this.getClient();
+
+    const roles = await client.roles.find({
+      realm: config().keycloak.admin.realm
+    } as any);
+    
+    return roles.find((role) => {
+      return role.name == name;
+    });
+  }
+
+  /**
+   * Finds authz group policy by name
+   * 
+   * @param name name
+   * @return Promise for found policy or null if not found
+   */
   public async findUserPolicyByName(name: string) {
     const client = await this.getClient();
     const results = await client.clients.listAuthzUserPolicies({
@@ -332,10 +371,10 @@ export default new class UserManagement {
    * Creates authz group policy
    * 
    * @param name name
-   * @param groupIds display name
+   * @param groupIds group ids
    * @return Promise created policy
    */
-  public async createGroupPolicy(name: string, groupIds: string[]) {
+  public async createGroupPolicy(name: string, groupIds: string[]): Promise<GroupPolicyRepresentation> {
     const client = await this.getClient();
     const policy: GroupPolicyRepresentation = {
       name: name,
@@ -350,6 +389,35 @@ export default new class UserManagement {
     };
 
     return client.clients.createAuthzGroupPolicy({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      policy: policy
+    });
+  }
+
+  /**
+   * Creates authz role policy
+   * 
+   * @param name name
+   * @param roleIds role ids
+   * @return Promise created policy
+   */
+  public async createRolePolicy(name: string, roleIds: string[]): Promise<GroupPolicyRepresentation> {
+    const client = await this.getClient();
+    const policy: RolePolicyRepresentation = {
+      name: name,
+      logic: Logic.POSITIVE,
+      roles: roleIds.map((roleId) => {
+        const result: RoleDefinition = {
+          id: roleId,
+          required: true
+        }
+
+        return result;
+      })
+    };
+
+    return client.clients.createAuthzRolePolicy({
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       policy: policy
@@ -380,15 +448,13 @@ export default new class UserManagement {
     });
   }
 
-  
-
   /**
    * Finds authz permission by name
    * 
    * @param name name
    * @return Promise for found permission or null if not found
    */
-  public async findPermissionByName(name: string) {
+  public async findPermissionByName(name: string): Promise<PolicyRepresentation | null> {
     const client = await this.getClient();
     const results = await client.clients.listAuthzPermissions({
       id: await this.getRestClientInternalId(),
@@ -409,12 +475,12 @@ export default new class UserManagement {
    * @param policyIds policy ids
    * @return Promise created permission
    */
-  public async createScopePermission(name: string, resourceIds: string[], scopes: string[], policyIds: string[]) {
+  public async createScopePermission(name: string, resourceIds: string[], scopes: string[], policyIds: string[], decisionStrategy: DecisionStrategy) {
     const client = await this.getClient();
     const permission: PolicyRepresentation = {
       "type":"scope",
       "logic": Logic.POSITIVE,
-      "decisionStrategy": DecisionStrategy.UNANIMOUS,
+      "decisionStrategy": decisionStrategy,
       "name": name,
       "resources": resourceIds,
       "scopes": scopes,
@@ -428,6 +494,33 @@ export default new class UserManagement {
     });
   }
 
+  /**
+   * Creates authz scope permission
+   * 
+   * @param permissionId permission id
+   * @param permission new permission
+   * @return Promise updated permission
+   */
+  public async updateScopePermission(permissionId: string, permission: PolicyRepresentation) {
+    const client = await this.getClient();
+    
+    return client.clients.updateAuthzScopePermission({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      permission: permission,
+      permissionId: permissionId
+    });
+  }
+
+  public async listAuthzPermissionAssociatedPolicies(permissionId: string) {
+    const client = await this.getClient();
+    return client.clients.listAuthzPermissionAssociatedPolicies({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm,
+      permissionId: permissionId
+    });
+  }
+  
   /**
    * Checks whether given access token has required scopes
    * 
