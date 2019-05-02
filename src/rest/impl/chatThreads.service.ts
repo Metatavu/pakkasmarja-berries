@@ -5,16 +5,234 @@ import { Request, Response } from "express";
 import ApplicationRoles from "../application-roles";
 import models, { ThreadModel, ThreadPredefinedTextModel, ChatGroupModel } from "../../models";
 import excel from "../../excel";
-import { ChatThread, ChatGroupType } from "../model/models";
-import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../application-scopes";
+import { ChatThread, ChatGroupType, ChatThreadGroupPermission, ChatThreadPermissionScope } from "../model/models";
+import { CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE, ApplicationScope, CHAT_GROUP_TRAVERSE } from "../application-scopes";
 import { Promise } from "bluebird";
 import mqtt from "../../mqtt";
 import userManagement from "../../user-management";
+import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
+import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
+import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
+import { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
+
+const CHAT_THREAD_SCOPES: ApplicationScope[] = ["chat-thread:access"];
 
 /**
  * Threads REST service
  */
 export default class ChatThreadsServiceImpl extends ChatThreadsService {
+
+  /**
+   * @inheritdoc
+   */
+  public async createChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+    const chatThreadId = parseInt(req.params.chatThreadId);
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
+    if (!chatGroup) {
+      this.sendBadRequest(res, "Invalid chat group id");
+      return;
+    }
+
+    if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    const body: ChatThreadGroupPermission = req.body;
+
+    const userGroupId = body.userGroupId;
+    if (!userGroupId) {
+      this.sendInternalServerError(res, "Missing userGroupId");
+      return;
+    }
+
+    const userGroup = await userManagement.findGroup(userGroupId);
+    if (!userGroup || !userGroup.id) {
+      this.sendInternalServerError(res, "Could not find user group");
+      return;
+    }
+
+    const scope = this.translatePermissionScope(body.scope);
+    if (!scope) {
+      this.sendBadRequest(res, `Invalid scope ${body.scope}`);
+      return;
+    }
+
+    const resource = await this.createChatThreadResource(chatThread);
+    await this.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
+    await this.setUserGroupChatThreadScope(chatThread, userGroup, scope);
+
+    const result: ChatThreadGroupPermission = {
+      chatThreadId: chatThread.id,
+      userGroupId: userGroup.id,
+      id: this.getChatThreadGroupPermissionId(chatThread, userGroup.id),
+      scope: body.scope
+    };
+
+    res.status(200).send(result);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async findChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+    const chatThreadId = parseInt(req.params.chatThreadId);
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.id);
+    if (!chatGroup) {
+      this.sendBadRequest(res, "Invalid chat group id");
+      return;
+    }
+
+    if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
+      this.sendForbidden(res);
+      return;
+    }
+    
+    const chatThreadPermissionId = req.params.permissionId;
+    const userGroupId = this.getThreadPermissionIdUserGroupId(chatThreadPermissionId);
+    if (!userGroupId) {
+      this.sendInternalServerError(res, "Failed to extract userGroupId");
+      return;
+    }
+
+    const userGroup = await userManagement.findGroup(userGroupId);
+    if (!userGroup || !userGroup.id) {
+      this.sendInternalServerError(res, "Could not find user group");
+      return;
+    }
+
+    const scope = this.translateApplicationScope(await this.getUserGroupChatThreadScope(chatThread, userGroup));
+    if (!scope) {
+      this.sendNotFound(res);
+      return;      
+    }
+
+    const result: ChatThreadGroupPermission = {
+      chatThreadId: chatThread.id,
+      userGroupId: userGroup.id,
+      id: this.getChatThreadGroupPermissionId(chatThread, userGroup.id),
+      scope: scope
+    };
+
+    res.status(200).send(result);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async listChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+    const chatThreadId = parseInt(req.params.chatThreadId);
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
+    if (!chatGroup) {
+      this.sendBadRequest(res, "Invalid chat group id");
+      return;
+    }
+
+    if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    const userGroups = await userManagement.listGroups(0, 999);
+    
+    const result = (await Promise.all(userGroups.map(async (userGroup) => {      
+      const scope = this.translateApplicationScope(await this.getUserGroupChatThreadScope(chatThread, userGroup));
+      if (!scope) {
+        return null;
+      }
+
+      const result: ChatThreadGroupPermission = {
+        chatThreadId: chatThread.id,
+        userGroupId: userGroup.id!,
+        id: this.getChatThreadGroupPermissionId(chatThread, userGroup.id!),
+        scope: scope
+      };
+  
+      return result;
+    })))
+    .filter((permission) => {
+      return permission;
+    });
+    
+    res.status(200).send(result);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async updateChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+    const chatThreadId = parseInt(req.params.chatThreadId);
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
+    if (!chatGroup) {
+      this.sendBadRequest(res, "Invalid chat group id");
+      return;
+    }
+
+    if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    const body: ChatThreadGroupPermission = req.body;
+    const chatThreadPermissionId = req.params.permissionId;
+
+    const userGroupId = this.getThreadPermissionIdUserGroupId(chatThreadPermissionId);
+    if (!userGroupId) {
+      this.sendInternalServerError(res, "Failed to extract userGroupId");
+      return;
+    }
+
+    const userGroup = await userManagement.findGroup(userGroupId);
+    if (!userGroup || !userGroup.id) {
+      this.sendInternalServerError(res, "Could not find user group");
+      return;
+    }
+    
+    const scope = this.translatePermissionScope(body.scope);
+    if (!scope) {
+      this.sendBadRequest(res, `Invalid scope ${body.scope}`);
+      return;
+    }
+
+    await this.setUserGroupChatThreadScope(chatThread, userGroup, scope);
+
+    const result: ChatThreadGroupPermission = {
+      chatThreadId: chatThread.id,
+      userGroupId: userGroup.id,
+      id: this.getChatThreadGroupPermissionId(chatThread, userGroup.id),
+      scope: body.scope
+    };
+
+    res.status(200).send(result);
+  }
 
   /**
    * @inheritdoc
@@ -112,6 +330,10 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
         return false;
       }
 
+      if (this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE])) {
+        return true;
+      }
+
       return this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
     }));
 
@@ -200,6 +422,177 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   }
 
   /**
+   * Resolves a scope for given user group in given chat group 
+   * 
+   * @param chatGroup chat group
+   * @param userGroup user group
+   * @returns scope for given user group in given chat group
+   */
+  private async getUserGroupChatThreadScope(chatThread: ThreadModel, userGroup: GroupRepresentation): Promise<ApplicationScope | null> {
+    const groupPolicy = await this.resolveGroupPolicy(userGroup.id!);
+    if (!groupPolicy) {
+      return null;
+    }
+
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+      if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy)) {
+        return CHAT_THREAD_SCOPES[i];
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Sets a scope for given user group into given chat group
+   * 
+   * @param chatGroup chat group
+   * @param userGroup user group
+   * @param scope scope
+   */
+  private async setUserGroupChatThreadScope(chatThread: ThreadModel, userGroup: GroupRepresentation, scope: ApplicationScope): Promise<null> {
+    const groupPolicy = await this.resolveGroupPolicy(userGroup.id!);
+    if (!groupPolicy) {
+      return null;
+    }
+
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+      if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy)) {
+        if (scope != CHAT_THREAD_SCOPES[i]) {
+          await this.removeChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy);
+        }
+      } else {
+        if (scope == CHAT_THREAD_SCOPES[i]) {
+          await this.addChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Adds a policy to chat thread scope permission
+   * 
+   * @param chatThread chat thread
+   * @param scope scope
+   * @param groupPolicy policy
+   */
+  private async addChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, groupPolicy: GroupPolicyRepresentation) {
+    const permission = await userManagement.findPermissionByName(this.getPermissionName(chatThread, scope));
+    if (!permission || !permission.id) {
+      throw new Error(`Failed to find permission ${this.getPermissionName(chatThread, scope)}`);
+    }
+
+    const policyIds = await this.getChatThreadPermissionPolicyIds(chatThread, scope);
+    permission.policies = policyIds.concat([groupPolicy.id!]);
+    
+    return await userManagement.updateScopePermission(permission.id, permission);
+  }
+
+  /**
+   * Removes a policy from chat thread scope permission
+   * 
+   * @param chatThread chat thread
+   * @param scope scope
+   * @param groupPolicy policy
+   */
+  private async removeChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, groupPolicy: GroupPolicyRepresentation) {
+    return this.removePermissionPolicy(this.getPermissionName(chatThread, scope), groupPolicy);
+  }
+
+  /**
+   * Returns whether given policy is is associated with chat thread permission  
+   * 
+   * @param chatThread chat thread
+   * @param scope scope
+   * @param groupPolicy group policy
+   * @returns whether given policy is is associated with chat thread permission
+   */
+  private async hasChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, groupPolicy: GroupPolicyRepresentation) {
+    const policyIds = await this.getChatThreadPermissionPolicyIds(chatThread, scope);
+    return policyIds.includes(groupPolicy.id!);
+  }
+
+  /**
+   * Returns associated permission policy ids for chat thread 
+   * 
+   * @param chatThread chat thread
+   * @param scope scope
+   * @return associated permission policy ids
+   */
+  private async getChatThreadPermissionPolicyIds(chatThread: ThreadModel, scope: ApplicationScope): Promise<string[]> {
+    return this.getPermissionNamePolicyIds(this.getPermissionName(chatThread, scope));
+  }
+
+  /**
+   * Extracts user group id from thread permission id 
+   * 
+   * @param groupPermissionId thread permission id 
+   * @return user group id
+   */
+  private getThreadPermissionIdUserGroupId(threadPermissionId: string): string | null {
+    const match = /(chat-thread.[0-9]{1,}-user-group-)([a-z0-9-]*)/.exec(threadPermissionId);
+    return match ? match[2] || null : null;
+  }
+
+  /**
+   * Creates resource for a thread resource
+   * 
+   * @param chatGroup chat thread
+   * @return created resource
+   */
+  private async createChatThreadResource(chatThread: ThreadModel) {
+    const resourceName = this.getChatThreadResourceName(chatThread);
+    const resourceUri = this.getChatThreadUri(chatThread.id);
+    return await this.createGroupResource(resourceName, resourceUri, "chat-group", [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+  }
+
+  /**
+   * Creates chat thread permission
+   * 
+   * @param chatThread chat thread
+   * @param resource resource
+   * @param scope scope
+   * @param policyIds policy ids
+   */
+  private createChatThreadPermission(chatThread: ThreadModel, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
+    return userManagement.createScopePermission(this.getPermissionName(chatThread, scope), [ resource.id || (resource as any)._id ], [ scope ], policyIds, DecisionStrategy.AFFIRMATIVE);
+  }
+
+  /**
+   * Returns chat thread permission id
+   * 
+   * @param chatThreadId chat thread id
+   * @param userGroupId user group id
+   * @return chat group permission id
+   */
+  private getChatThreadGroupPermissionId(chatThread: ThreadModel, userGroupId: string) {
+    return `chat-thread-${chatThread.id}-user-group-${userGroupId}`;
+  }
+
+  /**
+   * Returns chat thread scope permission's name
+   * 
+   * @param chatThread chat thread
+   * @param scope scope
+   * @return chat thread scope permission's name
+   */
+  private getPermissionName(chatThread: ThreadModel, scope: ApplicationScope) {
+    return `${scope}-${chatThread.id}`;
+  }
+
+  /**
+   * Returns chat thread's URI
+   * 
+   * @param id chat thread id
+   * @return chat thread's URI
+   */
+  private getChatThreadUri(id: number) {
+    return `/rest/v1/chatThreads/${id}`;
+  }
+
+  /**
    * Returns thread summary report as xlsx
    * 
    * @param {http.ClientRequest} req client request object
@@ -263,6 +656,45 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     res.setHeader("Content-disposition", `attachment; filename=${filename}`);
     res.status(200).send(excel.buildXLSX(name, columnHeaders, rows));
+  }
+
+
+  /**
+   * Translates application scope into REST scope
+   * 
+   * @param scope scope to be translated
+   * @returns translated scope
+   */
+  private translatePermissionScope(scope: ChatThreadPermissionScope | null): ApplicationScope | null {
+    if (!scope) {
+      return null;
+    }
+
+    switch (scope) {
+      case "ACCESS":
+        return "chat-thread:access";
+    }
+
+    return null;
+  }
+
+  /**
+   * Translates application scope into REST scope
+   * 
+   * @param scope scope to be translated
+   * @returns translated scope
+   */
+  private translateApplicationScope(scope: ApplicationScope | null): ChatThreadPermissionScope | null {
+    if (!scope) {
+      return null;
+    }
+
+    switch (scope) {
+      case "chat-thread:access":
+        return "ACCESS";
+    }
+
+    return null;
   }
 
   /**

@@ -16,7 +16,7 @@ export interface ChatGroupGroupPermission {
     readonly id: string  | null;
     chatGroupId: number ;
     userGroupId: string ;
-    scope: ChatGroupPermissionScope ;
+    scope: ChatGroupPermissionScope  | null;
 }    
 
 export interface ChatGroupGroupPermissionOpt { 

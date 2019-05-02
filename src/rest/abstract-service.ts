@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import { Response, Request } from "express";
 import { BadRequest } from './model/badRequest';
 import { NotFound } from './model/notFound';
@@ -179,6 +180,82 @@ export default class AbstractService {
    */
   protected getChatThreadResourceName(chatThread: ThreadModel) {
     return `chat-thread-${chatThread.id}`;
+  }
+
+  /**
+   * Returns associated permission policy ids for given permission 
+   * 
+   * @param permissionName name of permission
+   * @return associated permission policy ids
+   */
+  protected async getPermissionNamePolicyIds(permissionName: string): Promise<string[]> {
+    return this.getPermissionPolicyIds(await userManagement.findPermissionByName(permissionName));
+  }
+
+  /**
+   * Returns whether group policy is associated with given permission
+   * 
+   * @param permission permission
+   * @param groupPolicy group policy
+   * @return whether group policy is associated with given permission
+   */
+  protected async hasPermissionPolicy(permission: PolicyRepresentation, groupPolicy: GroupPolicyRepresentation): Promise<boolean> {
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    return policyIds.includes(groupPolicy.id!);
+  }
+
+  /**
+   * Returns associated permission policy ids for given permission 
+   * 
+   * @param permissionName name of permission
+   * @return associated permission policy ids
+   */
+  protected async getPermissionPolicyIds(permission: PolicyRepresentation | null): Promise<string[]> {
+    if (!permission) {
+      return [];
+    }
+
+    const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
+    
+    return policies.map((policy) => {
+      return policy.id!;
+    });
+  }
+
+  /**
+   * Adds a policy to scope permission
+   * 
+   * @param permissionName name of permission
+   * @param groupPolicy policy
+   */
+  protected async addPermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (!permission || !permission.id) {
+      return;
+    }
+
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    permission.policies = policyIds.concat([groupPolicy.id!]);
+    
+    return await userManagement.updateScopePermission(permission.id, permission);
+  }
+
+  /**
+   * Removes a policy from chat group scope permission
+   * 
+   * @param permissionName name of permission
+   * @param groupPolicy policy
+   */
+  protected async removePermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (!permission || !permission.id) {
+      return;
+    }
+
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    permission.policies = _.without(policyIds, groupPolicy.id! );
+
+    return await userManagement.updateScopePermission(permission.id, permission);
   }
 
   /**

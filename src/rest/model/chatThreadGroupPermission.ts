@@ -13,15 +13,15 @@ import { ChatThreadPermissionScope } from './chatThreadPermissionScope';
 
 
 export interface ChatThreadGroupPermission { 
-    id: string  | null;
-    chatThreadId: number  | null;
-    groupId: string  | null;
+    readonly id: string  | null;
+    chatThreadId: number ;
+    userGroupId: string ;
     scope: ChatThreadPermissionScope  | null;
 }    
 
 export interface ChatThreadGroupPermissionOpt { 
-    id?: string;
+    readonly id?: string;
     chatThreadId?: number;
-    groupId?: string;
+    userGroupId?: string;
     scope?: ChatThreadPermissionScope;
 }

@@ -159,7 +159,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
   /**
    * @inheritdoc
    */
-  public async createChatGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async createChatGroupGroupPermissions(req: Request, res: Response): Promise<void> {
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
       this.sendForbidden(res, "You do not have permission to create chat groups");
       return;
@@ -185,7 +185,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
     
-    const scope = this.translateGroupPermissionScope(body.scope);
+    const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
       return;
@@ -206,7 +206,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
   /**
    * @inheritdoc
    */
-  public async listChatGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async listChatGroupGroupPermissions(req: Request, res: Response): Promise<void> {
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
       this.sendForbidden(res, "You do not have permission to create chat groups");
       return;
@@ -246,7 +246,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
   /**
    * @inheritdoc
    */
-  public async findChatGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async findChatGroupGroupPermissions(req: Request, res: Response): Promise<void> {
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
       this.sendForbidden(res, "You do not have permission to create chat groups");
       return;
@@ -291,7 +291,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
   /**
    * @inheritdoc
    */
-  public async updateChatGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async updateChatGroupGroupPermissions(req: Request, res: Response): Promise<void> {
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
       this.sendForbidden(res, "You do not have permission to create chat groups");
       return;
@@ -318,7 +318,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
     
-    const scope = this.translateGroupPermissionScope(body.scope);
+    const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
       return;
@@ -413,15 +413,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @param groupPolicy policy
    */
   private async removeChatGroupPermissionPolicy(chatGroup: ChatGroupModel, scope: ApplicationScope, groupPolicy: GroupPolicyRepresentation) {
-    const permission = await userManagement.findPermissionByName(this.getPermissionName(chatGroup, scope));
-    if (!permission || !permission.id) {
-      return;
-    }
-
-    const policyIds = await this.getChatGroupPermissionPolicyIds(chatGroup, scope);
-    permission.policies = _.without(policyIds, groupPolicy.id! );
-
-    return await userManagement.updateScopePermission(permission.id, permission);
+    return this.removePermissionPolicy(this.getPermissionName(chatGroup, scope), groupPolicy);
   }
 
   /**
@@ -445,16 +437,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @return associated permission policy ids
    */
   private async getChatGroupPermissionPolicyIds(chatGroup: ChatGroupModel, scope: ApplicationScope): Promise<string[]> {
-    const permission = await userManagement.findPermissionByName(this.getPermissionName(chatGroup, scope));
-    if (!permission) {
-      return [];
-    }
-
-    const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
-    
-    return policies.map((policy) => {
-      return policy.id!;
-    });
+    return this.getPermissionNamePolicyIds(this.getPermissionName(chatGroup, scope));
   }
 
   /**
@@ -569,7 +552,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @param scope scope to be translated
    * @returns translated scope
    */
-  private translateGroupPermissionScope(scope: ChatGroupPermissionScope): ApplicationScope | null {
+  private translatePermissionScope(scope: ChatGroupPermissionScope | null): ApplicationScope | null {
     if (!scope) {
       return null;
     }
