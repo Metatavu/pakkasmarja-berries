@@ -15,14 +15,18 @@ export default abstract class ChatThreadsService extends AbstractService {
 
     app.post(`/rest/v1${this.toPath('/chatThreads')}`, [ keycloak.protect() ], this.catchAsync(this.createChatThread.bind(this)));
     app.post(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.createChatThreadGroupPermissions.bind(this)));
+    app.post(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/userPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.createChatThreadUserPermission.bind(this)));
     app.delete(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteChatThread.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatThread.bind(this)));
-    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatThreadGroupPermissions.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatThreadGroupPermission.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/userPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatThreadUserPermission.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(threadId))}/reports/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getChatThreadReport.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.listChatThreadGroupPermissions.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/userPermissions')}`, [ keycloak.protect() ], this.catchAsync(this.listChatThreadUserPermissions.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads')}`, [ keycloak.protect() ], this.catchAsync(this.listChatThreads.bind(this)));
     app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatThread.bind(this)));
-    app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatThreadGroupPermissions.bind(this)));
+    app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/groupPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatThreadGroupPermission.bind(this)));
+    app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/userPermissions/${encodeURIComponent(String(permissionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatThreadUserPermission.bind(this)));
   }
 
 
@@ -43,6 +47,16 @@ export default abstract class ChatThreadsService extends AbstractService {
     * - (path) number chatThreadId - Chat thread id
   */
   public abstract createChatThreadGroupPermissions(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Creates new chat thread user permission
+   * @summary Creates new chat thread user permission
+   * Accepted parameters:
+    * - (body) ChatThreadUserPermission body - Payload
+    * - (path) number chatThreadId - Chat thread id
+  */
+  public abstract createChatThreadUserPermission(req: Request, res: Response): Promise<void>;
 
 
   /**
@@ -70,7 +84,17 @@ export default abstract class ChatThreadsService extends AbstractService {
     * - (path) number chatThreadId - Chat thread id
     * - (path) string permissionId - Permission id
   */
-  public abstract findChatThreadGroupPermissions(req: Request, res: Response): Promise<void>;
+  public abstract findChatThreadGroupPermission(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Find chat thread user permission
+   * @summary Find chat thread user permission
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread id
+    * - (path) string permissionId - Permission id
+  */
+  public abstract findChatThreadUserPermission(req: Request, res: Response): Promise<void>;
 
 
   /**
@@ -91,6 +115,15 @@ export default abstract class ChatThreadsService extends AbstractService {
     * - (path) number chatThreadId - Chat thread id
   */
   public abstract listChatThreadGroupPermissions(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Returns list of chat thread user permissions
+   * @summary Returns list of chat thread user permissions
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread id
+  */
+  public abstract listChatThreadUserPermissions(req: Request, res: Response): Promise<void>;
 
 
   /**
@@ -120,6 +153,17 @@ export default abstract class ChatThreadsService extends AbstractService {
     * - (path) number chatThreadId - Chat thread id
     * - (path) string permissionId - Permission id
   */
-  public abstract updateChatThreadGroupPermissions(req: Request, res: Response): Promise<void>;
+  public abstract updateChatThreadGroupPermission(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Updates chat thread user permission
+   * @summary Update chat thread user permission
+   * Accepted parameters:
+    * - (body) ChatThreadUserPermission body - Payload
+    * - (path) number chatThreadId - Chat thread id
+    * - (path) string permissionId - Permission id
+  */
+  public abstract updateChatThreadUserPermission(req: Request, res: Response): Promise<void>;
 
 }

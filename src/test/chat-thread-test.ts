@@ -1,7 +1,7 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
-import { ChatGroup, ChatGroupType, ChatThread, ChatThreadGroupPermission, ChatGroupPermissionScope, ChatThreadPermissionScope, UserGroup, ChatGroupGroupPermission } from "../rest/model/models";
+import { ChatGroup, ChatGroupType, ChatThread, ChatThreadGroupPermission, ChatGroupPermissionScope, ChatThreadPermissionScope, UserGroup, ChatGroupGroupPermission, ChatThreadUserPermission } from "../rest/model/models";
 import mqtt from "./mqtt";
 import ApplicationRoles from "../rest/application-roles";
 
@@ -335,6 +335,154 @@ const listChatThreadGroupPermissions = (token: string, chatThreadId: number, exp
       return response.body;
     });  
 }
+
+/**
+ * Creates chat user user permission
+ * 
+ * @param token token
+ * @param title title
+ * @param type type
+ * @returns promise for chat user
+ */
+const createChatThreadUserPermission = (token: string, chatThreadId: number, userId: string, scope: ChatThreadPermissionScope): Promise<ChatThreadUserPermission> => {
+  const payload: ChatThreadUserPermission = {
+    id: null,
+    chatThreadId: chatThreadId,
+    userId: userId,
+    scope: scope
+  };
+
+  return request("http://localhost:3002")
+    .post(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Update chat user user permission
+ * 
+ * @param token token
+ * @param chatUserId chatUserId
+ * @param payload payload
+ * @returns promise for updated permission
+ */
+const updateChatThreadUserPermission = (token: string, chatThreadId: number, payload: ChatThreadUserPermission): Promise<ChatThreadUserPermission> => {
+  return request("http://localhost:3002")
+    .put(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${payload.id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Finds chat user user permission
+ * 
+ * @param token token
+ * @param chatUserId chatUserId
+ * @param payload payload
+ * @returns promise for updated permission
+ */
+const findChatThreadUserPermission = (token: string, chatThreadId: number, id: string): Promise<ChatThreadUserPermission> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * List chat user user permissions
+ * 
+ * @param token token
+ * @param id chat user id
+ * @param expectStatus 
+ * @returns promise for chat user user permissions
+ */
+const listChatThreadUserPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadUserPermission[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(expectStatus || 200)
+    .then((response) => {
+      return response.body;
+    });  
+}
+
+test("Test thread user permission create", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
+  const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
+  
+  const createdPermission = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+  const foundPermissions = await listChatThreadUserPermissions(token, createdChatThread.id!);
+
+  t.deepEquals(foundPermissions, [createdPermission]);
+
+  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Test thread user permission list", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
+  const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
+
+  const createdPermission1 = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+
+  const foundPermissions = await listChatThreadUserPermissions(token, createdChatThread.id!);
+
+  t.equal(foundPermissions.length, 1);
+  t.deepEquals(foundPermissions, [ createdPermission1 ]);
+
+  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Test thread user permission update", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  
+  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
+  const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
+
+  const createdPermission = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+  t.equal(createdPermission.scope, "ACCESS");
+
+  const updatedPermission: ChatThreadUserPermission = await updateChatThreadUserPermission(token, createdChatThread.id!, { ... createdPermission, scope: "ACCESS" });
+  t.equal(updatedPermission.scope, "ACCESS");
+
+  const foundPermission: ChatThreadUserPermission = await findChatThreadUserPermission(token, createdChatThread.id!, createdPermission.id!);
+  t.equal(foundPermission.scope, "ACCESS");
+
+  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatThreads(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
 
 test("Test thread group permission create", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);

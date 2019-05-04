@@ -5,7 +5,6 @@ export * from './chatGroup';
 export * from './chatGroupGroupPermission';
 export * from './chatGroupPermissionScope';
 export * from './chatGroupType';
-export * from './chatGroupUserPermission';
 export * from './chatMessage';
 export * from './chatThread';
 export * from './chatThreadGroupPermission';

@@ -13,14 +13,14 @@ import { ChatThreadPermissionScope } from './chatThreadPermissionScope';
 
 
 export interface ChatThreadUserPermission { 
-    id: string  | null;
-    chatThreadId: number  | null;
-    userId: string  | null;
+    readonly id: string  | null;
+    chatThreadId: number ;
+    userId: string ;
     scope: ChatThreadPermissionScope  | null;
 }    
 
 export interface ChatThreadUserPermissionOpt { 
-    id?: string;
+    readonly id?: string;
     chatThreadId?: number;
     userId?: string;
     scope?: ChatThreadPermissionScope;

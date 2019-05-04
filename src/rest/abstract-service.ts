@@ -13,6 +13,7 @@ import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/
 import { ChatGroupModel, ThreadModel } from "src/models";
 import moment = require("moment");
 import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
+import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 
 /**
  * Abstract base class for all REST services
@@ -42,7 +43,7 @@ export default class AbstractService {
   }
 
   /**
-   * Finds or creates group policies for given group ids
+   * Finds or creates group policies for given group id
    * 
    * @param userGroupId user group id
    * @returns promise for group policy
@@ -55,6 +56,22 @@ export default class AbstractService {
     }
 
     return userManagement.createGroupPolicy(policyName, [ userGroupId ]);
+  }
+
+  /**
+   * Finds or creates user policies for given user id
+   * 
+   * @param user user id
+   * @returns promise for user policy
+   */
+  protected async resolveUserPolicy(userId: string): Promise<UserPolicyRepresentation> {
+    const policyName = `user-${userId}`;
+    const policy = await userManagement.findUserPolicyByName(policyName);
+    if (policy) {
+      return policy;
+    }
+
+    return userManagement.createUserPolicy(policyName, [ userId ]);
   }
 
   /**
