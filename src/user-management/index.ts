@@ -350,6 +350,23 @@ export default new class UserManagement {
   }
 
   /**
+   * Creates new realm role
+   * 
+   * @param name name
+   * @return Promise for created role
+   */
+  public async createRealmRole(name: string): Promise<RoleRepresentation | undefined> {
+    const client = await this.getClient();
+    
+    await client.roles.create({
+      name: name,
+      realm: config().keycloak.admin.realm
+    });
+
+    return this.findRealmRole(name);
+  }
+
+  /**
    * Finds authz group policy by name
    * 
    * @param name name

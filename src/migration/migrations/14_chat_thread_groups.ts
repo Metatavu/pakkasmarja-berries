@@ -463,19 +463,12 @@ const migrateRoleChatGroups = async (query: Sequelize.QueryInterface, role: stri
     logger.info(`Migrate chat group for thread #${threadId} ${i + 1} / ${chatThreadRoles.length}`);
 
     if (!threadGroupds[threadId]) {
-      logger.info("No group, creating");
-
       const threadTitle = await getThreadTitle(query, threadId);
       const chatGroupId = await insertChatGroup(query, "chat", threadTitle);
-
-      console.log("Created group ", chatGroupId);
-
       await updateThreadGroupId(query, threadId, chatGroupId);
       const resource = await createThreadResource(threadId);  
       await permissionController.createChatThreadPermissions(threadId, resource!);
       threadGroupds[threadId] = chatGroupId;
-    } else {
-      logger.info("Groupi group!");      
     }
 
     const userGroup = await userManagement.findGroup(userGroupId);
