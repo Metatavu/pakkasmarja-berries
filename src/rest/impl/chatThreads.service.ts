@@ -93,7 +93,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const chatGroup = await models.findChatGroup(chatThread.id);
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
     if (!chatGroup) {
       this.sendBadRequest(res, "Invalid chat group id");
       return;
