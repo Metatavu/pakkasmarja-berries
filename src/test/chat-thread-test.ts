@@ -464,7 +464,7 @@ test("Test thread user permission list", async (t) => {
 test("Test thread user permission update", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   
-  const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
+  const createdChatGroup = await createChatGroup(token, "Group title (Test thread user permission update)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
   const createdPermission = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");

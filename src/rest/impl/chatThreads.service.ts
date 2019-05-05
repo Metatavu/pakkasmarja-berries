@@ -458,7 +458,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const chatGroupId = payload.groupId;
     const chatGroup = await models.findChatGroup(chatGroupId);
     if (!chatGroup) {
-      this.sendBadRequest(res, "Invalid chat group id");
+      this.sendBadRequest(res, `Invalid chat group id ${chatGroupId} specified when creating new thread`);
       return;
     }
 
