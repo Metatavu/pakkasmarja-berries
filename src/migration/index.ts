@@ -2,10 +2,12 @@ import * as fs from "fs";
 import * as Umzug from "umzug"; 
 import * as Sequelize from "sequelize";
 import { config } from "../config";
+import { getLogger, Logger } from "log4js";
 
 export default class Migration {
 
   private sequelize: Sequelize.Sequelize;
+  private logger: Logger = getLogger();
 
   constructor(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -22,6 +24,9 @@ export default class Migration {
         if (locked) {
           const umzug = new Umzug({
             storage: "sequelize",
+            logging: (message: string) => {
+              this.logger.info(message);
+            },
             storageOptions: {
               sequelize: this.sequelize
             },

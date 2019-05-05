@@ -6,7 +6,7 @@
 
   module.exports = {
 
-    up: async (query, Sequelize) => {
+    up: async () => {
       const role = await userManagement.findRealmRole("create-chat-groups");
       if (role) {
         const existing = await userManagement.findRolePolicyByName("chat-admin");
