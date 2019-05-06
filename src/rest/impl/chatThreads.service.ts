@@ -276,8 +276,6 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const resource = await this.createChatThreadResource(chatThread);
-    await this.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
     await this.setUserChatThreadScope(chatThread, user, scope);
 
     const result: ChatThreadUserPermission = {
