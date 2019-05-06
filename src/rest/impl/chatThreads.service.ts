@@ -67,8 +67,6 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const resource = await this.createChatThreadResource(chatThread);
-    await this.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
     await this.setUserGroupChatThreadScope(chatThread, userGroup, scope);
 
     const result: ChatThreadGroupPermission = {
@@ -469,6 +467,9 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     const ownerId = this.getLoggedUserId(req);
     const thread = await models.createThread(chatGroup.id, ownerId, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    const resource = await this.createChatThreadResource(thread);    
+    await this.createChatThreadPermission(thread, resource, "chat-thread:access", []);
+
     res.status(200).send(await this.translateChatThread(thread, chatGroup));
 
     mqtt.publish("chatthreads", {
