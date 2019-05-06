@@ -4,6 +4,7 @@ import UserGroupsService from "../api/userGroups.service";
 import { UserGroup } from "../model/models";
 import userManagement from "../../user-management";
 import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
+import ApplicationRoles from "../application-roles";
 
 /**
  * Chat Groups REST service
@@ -14,7 +15,10 @@ export default class UserGroupsServiceImpl extends UserGroupsService {
    * @inheritdoc
    */
   public async listUserGroups(req: Request, res: Response): Promise<void> {
-    // TODO: Permissions
+    if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CHAT_GROUPS)) {
+      this.sendForbidden(res, "You do not have permission to list user groups");
+      return;
+    }
 
     const userGroups = await userManagement.listGroups();
 
