@@ -501,6 +501,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     }
 
     models.deleteThread(thread.id);
+    await this.deletePermission(this.getPermissionName(thread, "chat-thread:access"));
 
     res.status(204).send();
 
