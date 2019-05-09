@@ -1,9 +1,10 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
-import { ChatGroup, ChatGroupType } from "../rest/model/models";
+import { ChatGroup, ChatGroupType, ChatGroupPermissionScope, UserGroup } from "../rest/model/models";
 import mqtt from "./mqtt";
 import ApplicationRoles from "../rest/application-roles";
+import { ChatGroupGroupPermission } from "../rest/model/chatGroupGroupPermission";
 
 /**
  * Sorts list by id
@@ -17,6 +18,23 @@ const sorted = (list: any[]) => {
   });
   
   return list;
+}
+
+/**
+ * Lists chat groups
+ * 
+ * @param token token
+ * @returns promise for chat groups
+ */
+const listUserGroups = (token: string): Promise<UserGroup[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/userGroups`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then((response) => {
+      return sorted(response.body);
+    });  
 }
 
 /**
@@ -126,6 +144,158 @@ const deleteChatGroup = async (token: string, id: number) => {
     .expect(204);
 }
 
+/**
+ * Creates chat group group permission
+ * 
+ * @param token token
+ * @param title title
+ * @param type type
+ * @returns promise for chat group
+ */
+const createChatGroupGroupPermission = (token: string, chatGroupId: number, userGroupId: string, scope: ChatGroupPermissionScope): Promise<ChatGroupGroupPermission> => {
+  const payload: ChatGroupGroupPermission = {
+    id: null,
+    chatGroupId: chatGroupId,
+    userGroupId: userGroupId,
+    scope: scope
+  };
+
+  return request("http://localhost:3002")
+    .post(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Update chat group group permission
+ * 
+ * @param token token
+ * @param chatGroupId chatGroupId
+ * @param payload payload
+ * @returns promise for updated permission
+ */
+const updateChatGroupGroupPermission = (token: string, chatGroupId: number, payload: ChatGroupGroupPermission): Promise<ChatGroupGroupPermission> => {
+  return request("http://localhost:3002")
+    .put(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${payload.id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * Finds chat group group permission
+ * 
+ * @param token token
+ * @param chatGroupId chatGroupId
+ * @param payload payload
+ * @returns promise for updated permission
+ */
+const findChatGroupGroupPermission = (token: string, chatGroupId: number, id: string): Promise<ChatGroupGroupPermission> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then((response) => {
+      return response.body;
+    });
+}
+
+/**
+ * List chat group group permissions
+ * 
+ * @param token token
+ * @param id chat group id
+ * @param expectStatus 
+ * @returns promise for chat group group permissions
+ */
+const listChatGroupGroupPermissions = (token: string, id: number, expectStatus?: number): Promise<ChatGroupGroupPermission[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/chatGroups/${id}/groupPermissions`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(expectStatus || 200)
+    .then((response) => {
+      return response.body;
+    });  
+}
+
+test("Test group permission create", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const userGroups = await listUserGroups(token);
+  
+  const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
+  t.notEqual(createdChatGroup, null);
+  t.notEqual(createdChatGroup.id, null);
+
+  const createdPermission = await createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[0].id!, "MANAGE");
+  const foundPermissions = await listChatGroupGroupPermissions(token, createdChatGroup.id!);
+
+  t.deepEquals(foundPermissions, [createdPermission]);
+
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Test group permission list", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const userGroups = await listUserGroups(token);
+
+  const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
+  t.notEqual(createdChatGroup, null);
+  t.notEqual(createdChatGroup.id, null);
+
+  const createdPermission1 = await createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[0].id!, "MANAGE");
+  const createdPermission2 = await createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[1].id!, "ACCESS");
+  const createdPermission3 = await createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[2].id!, "TRAVERSE");
+
+  const foundPermissions = await listChatGroupGroupPermissions(token, createdChatGroup.id!);
+
+  t.equal(foundPermissions.length, 3);
+  t.deepEquals(foundPermissions, [createdPermission1, createdPermission2, createdPermission3]);
+
+  await deleteChatGroup(token, createdChatGroup.id!);
+  t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Test group permission update", async (t) => {
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const userGroups = await listUserGroups(token);
+
+  const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
+  t.notEqual(createdChatGroup, null);
+  t.notEqual(createdChatGroup.id, null);
+
+  const createdPermission: ChatGroupGroupPermission = await createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[0].id!, "MANAGE");
+  t.equal(createdPermission.scope, "MANAGE");
+
+  const updatedPermission: ChatGroupGroupPermission = await updateChatGroupGroupPermission(token, createdChatGroup.id!, { ... createdPermission, scope: "ACCESS" });
+  t.equal(updatedPermission.scope, "ACCESS");
+
+  const foundPermission: ChatGroupGroupPermission = await findChatGroupGroupPermission(token, createdChatGroup.id!, createdPermission.id!);
+  t.equal(foundPermission.scope, "ACCESS");
+
+  await deleteChatGroup(token, createdChatGroup.id!);
+
+  t.equal((await listChatGroups(token)).length, 0);
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
 test("Create chat group", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
   
@@ -205,17 +375,38 @@ test("Lists chat group", async (t) => {
 });
 
 test("Lists chat group permissions", async (t) => {
-  const token1 = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  const token2 = await auth.getTokenUser2([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  const token = await auth.getAdminToken([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  const userGroups = await listUserGroups(token);
+
+  const userGroup1 = userGroups.find((userGroup) => {
+    return userGroup.name == "testgroup1";
+  });
+
+  t.notEqual(userGroup1, null);
+
+  const userGroup2 = userGroups.find((userGroup) => {
+    return userGroup.name == "testgroup2";
+  });
+
+  t.notEqual(userGroup2, null);
+
+  const token1 = await auth.getTokenUser1([]);
+  const token2 = await auth.getTokenUser2([]);
 
   const createdGroups1 = sorted(await Promise.all([
-    createChatGroup(token1, "Group 1", "CHAT"),
-    createChatGroup(token1, "Group 2", "CHAT"),
+    createChatGroup(token, "Group 1", "CHAT"),
+    createChatGroup(token, "Group 2", "CHAT"),
   ]));
 
+  await createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "ACCESS");
+  await createChatGroupGroupPermission(token, createdGroups1[1].id!, userGroup1!.id!, "ACCESS");
+
   const createdGroups2 = sorted(await Promise.all([
-    createChatGroup(token2, "Group 3", "CHAT"),
+    createChatGroup(token, "Group 3", "CHAT"),
   ]));
+
+  await createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "ACCESS");
 
   const foundGroups1 = await listChatGroups(token1);
   const foundGroups2 = await listChatGroups(token2);
@@ -224,18 +415,17 @@ test("Lists chat group permissions", async (t) => {
   t.deepEqual(createdGroups2, foundGroups2);
 
   await Promise.all(createdGroups1.map((createdGroup) => {
-    return deleteChatGroup(token1, createdGroup.id!);
+    return deleteChatGroup(token, createdGroup.id!);
   }));
 
   await Promise.all(createdGroups2.map((createdGroup) => {
-    return deleteChatGroup(token2, createdGroup.id!);
+    return deleteChatGroup(token, createdGroup.id!);
   }));
 
   t.equal((await listChatGroups(token1)).length, 0);
   t.equal((await listChatGroups(token2)).length, 0);
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  await auth.removeUser2Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeAdminRoles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
 test("Deletes chat group", async (t) => {

@@ -33,6 +33,9 @@ export default new class TaskQueue {
    */
   constructor () {
     this.logger = getLogger();
+  }
+
+  public start() {
     this.contractDocumentStatusQueue = this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
     this.contractDocumentStatusBatchQueue = this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
     this.sapContactUpdateQueue = this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
