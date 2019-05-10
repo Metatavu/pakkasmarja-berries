@@ -62,15 +62,6 @@ export interface ThreadPredefinedTextModel {
   updatedAt: Date
 }
 
-export interface ThreadUserGroupRoleModel {
-  id: number,
-  threadId: number,
-  userGroupId: string,
-  role: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-
 export interface MessageModel {
   id: number,
   threadId: number,
@@ -382,19 +373,6 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       text: { type: Sequelize.STRING(191), allowNull: false }
-    });
-    
-    this.defineModel("ThreadUserGroupRole", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
-      userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
-      role: { type: Sequelize.STRING(191), allowNull: false  }
-    }, {
-      indexes: [{
-        name: "UN_THREADUSERGROUPROLE_THREADID_USERGROUPID",
-        unique: true,
-        fields: ["threadId", "userGroupId"]
-      }]
     });
     
     this.Message = this.defineModel("Message", {
