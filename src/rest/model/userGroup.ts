@@ -11,22 +11,12 @@
  */
 
 
-export interface Product { 
+export interface UserGroup { 
     id: string  | null;
-    itemGroupId: string ;
-    name: string ;
-    units: number ;
-    unitSize: number ;
-    unitName: string ;
-    sapItemCode: string ;
+    name: string  | null;
 }    
 
-export interface ProductOpt { 
+export interface UserGroupOpt { 
     id?: string;
-    itemGroupId?: string;
     name?: string;
-    units?: number;
-    unitSize?: number;
-    unitName?: string;
-    sapItemCode?: string;
 }

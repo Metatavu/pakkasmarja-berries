@@ -15,7 +15,7 @@ import * as Mustache from "mustache";
 import * as moment from "moment";
 import slugify from "slugify";
 import { Stream } from "stream";
-import userManagement from "../../user-management";
+import userManagement, { UserProperty } from "../../user-management";
 import pushNotifications from "../../push-notifications";
 import signature from "../../signature";
 import excel from "../../excel";
@@ -65,7 +65,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const contract = _.isObject(req.body) ? req.body : null;
+    const contract: Contract = _.isObject(req.body) ? req.body : null;
     if (!contract) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -105,6 +105,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlaceComment = contract.deliveryPlaceComment;
     const quantityComment = contract.quantityComment;
     const rejectComment = contract.rejectComment;
+    const proposedDeliverAll = contract.proposedDeliverAll;
 
     const databaseContract = await models.createContract(userId, 
       year,
@@ -122,6 +123,7 @@ export default class ContractsServiceImpl extends ContractsService {
       status, 
       areaDetails ? JSON.stringify(areaDetails) : "",
       deliverAll,
+      proposedDeliverAll,
       remarks, 
       deliveryPlaceComment, 
       quantityComment, 
@@ -242,12 +244,13 @@ export default class ContractsServiceImpl extends ContractsService {
     let signDate = updateContract.signDate;
     let termDate = updateContract.termDate;
     let remarks = updateContract.remarks;
+    let deliverAll = updateContract.deliverAll;
 
     // May be edited by users that own the contract
     const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
     const proposedQuantity = updateContract.proposedQuantity;
     const areaDetails = updateContract.areaDetails;
-    const deliverAll = updateContract.deliverAll;
+    const proposedDeliverAll = updateContract.proposedDeliverAll; 
     const deliveryPlaceComment = updateContract.deliveryPlaceComment;
     const quantityComment = updateContract.quantityComment;
     const rejectComment = updateContract.rejectComment;
@@ -267,11 +270,12 @@ export default class ContractsServiceImpl extends ContractsService {
       signDate = databaseContract.signDate;
       termDate = databaseContract.termDate;
       remarks = databaseContract.remarks;
+      deliverAll = databaseContract.deliverAll;
 
       if (updateContract.status === "REJECTED") {
         status = "REJECTED";
       } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
-        if (contractQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId) {
+        if (contractQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId && deliverAll === proposedDeliverAll) {
           status = "DRAFT";
         } else {
           status = "ON_HOLD";
@@ -298,6 +302,7 @@ export default class ContractsServiceImpl extends ContractsService {
       status, 
       areaDetails ? JSON.stringify(areaDetails) : "",
       deliverAll,
+      proposedDeliverAll,
       remarks || null, 
       deliveryPlaceComment || null, 
       quantityComment || null, 
@@ -745,11 +750,12 @@ export default class ContractsServiceImpl extends ContractsService {
       }
     }
 
+    const redirectUrl = req.query.redirectUrl ? encodeURIComponent(req.query.redirectUrl) : "";
     const vismaSignDocumentId = await signature.createDocument(document.documentName);
     await models.createContractDocument(type, contract.id, vismaSignDocumentId);
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
     const appUrl = `${req.protocol}://${req.get("host")}`;
-    const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}`;
+    const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}&redirectUrl=${redirectUrl}`;
     const fulfillResult = await signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
 
     const result: ContractDocumentSignRequest = {redirectUrl: fulfillResult.location };
@@ -812,6 +818,7 @@ export default class ContractsServiceImpl extends ContractsService {
       "status": status,
       "areaDetails": areaDetails || [],
       "deliverAll": contract.deliverAll,
+      "proposedDeliverAll": contract.proposedDeliverAll,
       "remarks": contract.remarks,
       "year": contract.year,
       "deliveryPlaceComment": contract.deliveryPlaceComment,
@@ -914,8 +921,8 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
     const itemGroup = await models.findItemGroupById(contract.itemGroupId);
 
-    const supplierId = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_SAP_ID);
-    const companyName = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
+    const supplierId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
+    const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
     const itemGroupName = itemGroup ? itemGroup.name : null;
     const contractQuantity = contract.contractQuantity;
     const placeName = deliveryPlace ? deliveryPlace.name : null;
@@ -966,8 +973,8 @@ export default class ContractsServiceImpl extends ContractsService {
       }
 
       const year = (new Date()).getFullYear();
-      const companyName = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
-      const taxCode = userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_TAX_CODE);
+      const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
+      const taxCode = userManagement.getSingleAttribute(user, UserProperty.TAX_CODE);
       const prices = await models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
       const deliveryPlace = contract.deliveryPlaceId ? await models.findDeliveryPlaceById(contract.deliveryPlaceId) : null;
       const businessCode = taxCode ? this.getBusinessCode(taxCode) : null;
@@ -1087,7 +1094,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return null;
     }
 
-    return userManagement.getSingleAttribute(user, userManagement.ATTRIBUTE_COMPANY_NAME);
+    return userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
   }
 
   /**

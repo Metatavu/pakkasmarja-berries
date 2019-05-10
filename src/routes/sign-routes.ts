@@ -24,6 +24,8 @@ export default class SignRoutes {
    */
   private async getSignCallback(req: Request, res: Response) {
     const vismaSignDocumentId = req.query.vismaSignId;
+    const redirectUrl = req.query.redirectUrl;
+    
     let success = false;
     if (vismaSignDocumentId) {
       try {
@@ -45,7 +47,14 @@ export default class SignRoutes {
         console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
       }
     }
+    
+    if (redirectUrl) {
+      res.redirect(redirectUrl);
+    } else {
+      res.render("signcallback", {
+        success: success
+      });
+    }
 
-    res.status(200).end();
   }
 };

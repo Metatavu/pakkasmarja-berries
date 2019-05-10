@@ -19,6 +19,7 @@ import { config } from "./config";
 import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
 import mqtt from "./mqtt";
 import FileRoutes from "./routes/file-routes";
+import taskQueue from "./tasks";
 
 log4jsConfigure({
   appenders: { console: { type: 'console' } },
@@ -97,7 +98,7 @@ process.on("unhandledRejection", (error) => {
   app.use(express.static(path.join(__dirname, "../webapp")));
   app.use(express.static(path.join(__dirname, "../public")));
   app.use(i18n.init);
-  app.set("views", path.join(__dirname, "views"));
+  app.set("views", path.join(__dirname, "../views"));
   app.set("view engine", "pug"); 
   
   new Api(app, keycloak);
@@ -105,7 +106,8 @@ process.on("unhandledRejection", (error) => {
   new MqttRoutes(app, keycloak);
   new SignRoutes(app);
   new FileRoutes(app, keycloak);
-
+  
   mqtt.connect();
+  taskQueue.start();
 
 })();

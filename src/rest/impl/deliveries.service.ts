@@ -1,13 +1,13 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
-import models, { DeliveryModel, DeliveryNoteModel, ProductModel } from "../../models";
+import models, { DeliveryModel, DeliveryNoteModel, ProductModel, DeliveryPlaceModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
 import { Delivery, DeliveryNote, Contact } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
 import PurchaseMessageBuilder from "../../sap/purchase-builder";
 import moment = require("moment");
-import userManagement from "../../user-management";
+import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
 import * as fs from "fs";
 
@@ -276,6 +276,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
+    const delivery = await models.findDeliveryById(deliveryId);
+    if (!delivery) {
+      this.sendNotFound(res);
+      return;
+    }
+
     const productId = req.body.productId;
     if (!productId) {
       this.sendBadRequest(res, "Missing required body param productId");
@@ -318,14 +324,63 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const price = req.body.price;
     const qualityId = req.body.qualityId;
+    const deliveryQuality = qualityId ? await models.findDeliveryQuality(qualityId) : null;
+    if (qualityId && !deliveryQuality) {
+      this.sendBadRequest(res, "Invalid qualityId");
+      return;
+    }
 
-    await models.updateDelivery(deliveryId, productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id);
-    const databaseDelivery = await models.findDeliveryById(deliveryId);
+    if (status === "DONE" && !deliveryQuality) {
+      this.sendBadRequest(res, "Missing qualityId");
+      return;  
+    }
 
-    if (databaseDelivery.status === "DONE") {
-      await this.buildPurchaseXML(databaseDelivery, this.getLoggedUserId(req));
+    let databaseDelivery = null;
+
+    if (status === "DONE" && deliveryQuality) {
+      const product: ProductModel = await models.findProductById(productId);
+      if (!product || !product.id) {
+        this.sendInternalServerError(res, "Failed to resolve product");
+        return;
+      }
+      
+      const productPrice = await this.getCurrentProductPrice(product.id);
+      if (!productPrice) {
+        this.sendInternalServerError(res, "Failed to resolve price");
+        return;
+      }
+
+      const unitPrice = parseFloat(productPrice);
+      const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
+
+      if (!unitPrice || !unitPriceWithBonus) {
+        this.sendInternalServerError(res, "Failed to resolve price");
+        return;
+      }
+
+      const receivingUserId = this.getLoggedUserId(req);
+      const deliveryContact: Contact = await userManagement.findUser(delivery.userId);
+      const receivingContact: Contact = await userManagement.findUser(receivingUserId);
+      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
+      const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
+ 
+      if (!deliveryContactSapId) {
+        this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
+        return;  
+      }
+
+      if (!sapSalesPersonCode) {
+        this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
+        return;  
+      }
+
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      databaseDelivery = await models.findDeliveryById(deliveryId);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
+    } else {
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
+      databaseDelivery = await models.findDeliveryById(deliveryId);
     }
 
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
@@ -366,71 +421,71 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * Build purchase XML
    * 
    * @param delivery delivery
-   * @param receivingUserId receivingUserId
+   * @param product product
+   * @param deliveryPlace delivery place
+   * @param price total price of delivery
+   * @param unitPrice unit price for single sale unit
+   * @param deliveryContactSapId CardCode of the Supplier
+   * @param sapSalesPersonCode Receiving person code
+   * @return promise for success
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, receivingUserId: string) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPrice: number, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
-    const deliveryContact: Contact = await userManagement.findUser(delivery.userId);
-    const receivingContact: Contact = await userManagement.findUser(receivingUserId);
-    const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, "sapId");
-    const receivingContactSapId = userManagement.getSingleAttribute(receivingContact, "sapId");
-    const product: ProductModel = await models.findProductById(delivery.productId);
-    const itemGroup = await models.findItemGroupById(product.itemGroupId);
-    const itemCode: string = itemGroup.name.split("/")[0];
     const notes = await this.getNotesString(delivery.id);
-    const latestPrice = await this.getLatestItemGroupPrice(itemGroup.id);
+    const sapItemCode = product.sapItemCode;
+    const warehouseCode = deliveryPlace.sapId;
 
     builder.setPurchaseReceiptHeader({
       DocDate: date,
-      CardCode: deliveryContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      CardCode: deliveryContactSapId,
       Comments: notes,
-      WarehouseCode: "01",
-      SalesPersonCode: receivingContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      WarehouseCode: warehouseCode,
+      SalesPersonCode: sapSalesPersonCode,
     });
 
+    
     builder.setTransferHeader({
-      CardCode: deliveryContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      CardCode: deliveryContactSapId,
       DocDate: date,
       Comments: notes,
-      WarehouseCode: "100",
-      FromWarehouseCode: "100",
-      SalesPersonCode: receivingContactSapId || `Missing sapId on user ${deliveryContact.id}`,
+      WarehouseCode: warehouseCode,
+      FromWarehouseCode: warehouseCode,
+      SalesPersonCode: sapSalesPersonCode,
     });
 
     builder.addPurchaseReceiptLine({
-      ItemCode: itemCode,
+      ItemCode: sapItemCode,
       Quantity: delivery.amount,
-      Price: latestPrice,
-      UnitPrice: latestPrice,
-      WarehouseCode: "100",
-      U_PFZ_REF: ""
-    });
-
-    builder.addTransferLine({
-      ItemCode: itemCode,
-      Quantity: delivery.amount,
-      BinAllocations: [
-        {
-          BinAbsEntry: 2,
-          BinActionType: "batToWarehouse",
-          Quantity: 0
-        }, {
-          BinAbsEntry: 3,
-          BinActionType: "batFromWarehouse",
-          Quantity: 0
-        }
-      ]
+      Price: unitPriceWithBonus,
+      UnitPrice: unitPrice,
+      WarehouseCode: warehouseCode,
+      U_PFZ_REF: this.compressUUID(delivery.id!)
     });
 
     const xml = builder.buildXML();
     const filePath = `${config().sap["xml-fileupload-path"]}/${delivery.id ? delivery.id : Date.now().toString()}.xml`;
 
-    fs.writeFile(filePath, xml, (err: any) => {
-      if (err) throw(err);
-      console.log(`Done writing ${filePath}`);
+    return new Promise((resolve, reject) => {
+      fs.writeFile(filePath, xml, (err: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
+  }
+
+  /**
+   * Compresses uuid by stripping minus signs from the string
+   * 
+   * @param uuid uuid
+   * @returns compressed uuid
+   */
+  private compressUUID(uuid: string): string {
+    return uuid.replace(/\-/g, '');
   }
 
   /**
@@ -448,7 +503,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       "time": delivery.time,
       "status": delivery.status,
       "amount": delivery.amount,
-      "price": delivery.price,
+      "price": delivery.unitPriceWithBonus ? (delivery.unitPriceWithBonus * delivery.amount).toFixed(3) : null,
       "qualityId": delivery.qualityId,
       "deliveryPlaceId": deliveryPlace.externalId
     };
@@ -457,27 +512,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   }
 
   /**
-   * Get latest item group price
+   * Returns current price for a product
    * 
-   * @param itemGroupId itemGroupId
-   * @return price
+   * @param productId product id
+   * @return product price or null if not found
    */
-  private async getLatestItemGroupPrice(itemGroupId: number) {
-    const year = new Date().getFullYear();
-    const prices = await models.listItemGroupPrices(itemGroupId, year);
-
-    const sorted = prices.sort((a, b) => {
-      const aDate = a.createdAt;
-      const bDate = b.createdAt;
-      
-      return bDate.getTime() - aDate.getTime()
-    });
-
-    if (sorted[0].price) {
-      return parseInt(sorted[0].price);
+  private async getCurrentProductPrice(productId: string): Promise<string | null> {
+    const price = await models.findLatestProductPrice(productId);
+    if (!price) {
+      return null;
     }
 
-    return 0;
+    return price.price;
   }
 
   /**

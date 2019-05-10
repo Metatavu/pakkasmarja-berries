@@ -100,7 +100,8 @@
     },
     "item-group-minimum-profit-estimation": {
       "234": 500
-    }
+    },
+    "xml-fileupload-path": "/tmp/sapxml"
   },
   "uploadDirectory": "/tmp/",
   "contacts": {

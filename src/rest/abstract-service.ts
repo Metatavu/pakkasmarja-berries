@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import { Response, Request } from "express";
 import { BadRequest } from './model/badRequest';
 import { NotFound } from './model/notFound';
@@ -8,9 +9,11 @@ import { getLogger, Logger } from "log4js";
 import userManagement from "../user-management";
 import { ApplicationScope, CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_THREAD_ACCESS } from "./application-scopes";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
-import PolicyRepresentation from "keycloak-admin/lib/defs/policyRepresentation";
+import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
 import { ChatGroupModel, ThreadModel } from "src/models";
 import moment = require("moment");
+import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
+import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 
 /**
  * Abstract base class for all REST services
@@ -37,6 +40,38 @@ export default class AbstractService {
     }
     
     return await this.createScopePermission(permissionName, resource, scopes, policy);
+  }
+
+  /**
+   * Finds or creates group policies for given group id
+   * 
+   * @param userGroupId user group id
+   * @returns promise for group policy
+   */
+  protected async resolveGroupPolicy(userGroupId: string): Promise<GroupPolicyRepresentation> {
+    const policyName = `user-group-${userGroupId}`;
+    const policy = await userManagement.findGroupPolicyByName(policyName);
+    if (policy) {
+      return policy;
+    }
+
+    return userManagement.createGroupPolicy(policyName, [ userGroupId ]);
+  }
+
+  /**
+   * Finds or creates user policies for given user id
+   * 
+   * @param user user id
+   * @returns promise for user policy
+   */
+  protected async resolveUserPolicy(userId: string): Promise<UserPolicyRepresentation> {
+    const policyName = `user-${userId}`;
+    const policy = await userManagement.findUserPolicyByName(policyName);
+    if (policy) {
+      return policy;
+    }
+
+    return userManagement.createUserPolicy(policyName, [ userId ]);
   }
 
   /**
@@ -85,7 +120,7 @@ export default class AbstractService {
    * @return created permission
    */
   protected async createScopePermission(name: string, resource: ResourceRepresentation, scopes: ApplicationScope[], policy: PolicyRepresentation) {
-    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ]);
+    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ], DecisionStrategy.AFFIRMATIVE);
   }
 
   /**
@@ -165,6 +200,82 @@ export default class AbstractService {
   }
 
   /**
+   * Returns associated permission policy ids for given permission 
+   * 
+   * @param permissionName name of permission
+   * @return associated permission policy ids
+   */
+  protected async getPermissionNamePolicyIds(permissionName: string): Promise<string[]> {
+    return this.getPermissionPolicyIds(await userManagement.findPermissionByName(permissionName));
+  }
+
+  /**
+   * Returns whether group policy is associated with given permission
+   * 
+   * @param permission permission
+   * @param groupPolicy group policy
+   * @return whether group policy is associated with given permission
+   */
+  protected async hasPermissionPolicy(permission: PolicyRepresentation, groupPolicy: GroupPolicyRepresentation): Promise<boolean> {
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    return policyIds.includes(groupPolicy.id!);
+  }
+
+  /**
+   * Returns associated permission policy ids for given permission 
+   * 
+   * @param permissionName name of permission
+   * @return associated permission policy ids
+   */
+  protected async getPermissionPolicyIds(permission: PolicyRepresentation | null): Promise<string[]> {
+    if (!permission) {
+      return [];
+    }
+
+    const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
+    
+    return policies.map((policy) => {
+      return policy.id!;
+    });
+  }
+
+  /**
+   * Adds a policy to scope permission
+   * 
+   * @param permissionName name of permission
+   * @param groupPolicy policy
+   */
+  protected async addPermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (!permission || !permission.id) {
+      return;
+    }
+
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    permission.policies = policyIds.concat([groupPolicy.id!]);
+    
+    return await userManagement.updateScopePermission(permission.id, permission);
+  }
+
+  /**
+   * Removes a policy from chat group scope permission
+   * 
+   * @param permissionName name of permission
+   * @param groupPolicy policy
+   */
+  protected async removePermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
+    const permission = await userManagement.findPermissionByName(permissionName);
+    if (!permission || !permission.id) {
+      return;
+    }
+
+    const policyIds = await this.getPermissionPolicyIds(permission);
+    permission.policies = _.without(policyIds, groupPolicy.id! );
+
+    return await userManagement.updateScopePermission(permission.id, permission);
+  }
+
+  /**
    * Returns resource name for a group
    * 
    * @param chatGroup chat group
@@ -180,7 +291,7 @@ export default class AbstractService {
    * @param {object} req express request
    * @returns access token
    */
-  getAccessToken(req: Request) {
+  protected getAccessToken(req: Request) {
     const kauth = (req as any).kauth;
     if (kauth && kauth.grant && kauth.grant.access_token) {
       return kauth.grant.access_token;
@@ -195,7 +306,7 @@ export default class AbstractService {
    * @param {object} req express request
    * @returns user id
    */
-  getLoggedUserId(req: Request) {
+  protected getLoggedUserId(req: Request) {
     const accessToken = this.getAccessToken(req);
     return accessToken && accessToken.content ? accessToken.content.sub : null;
   }
@@ -206,7 +317,7 @@ export default class AbstractService {
    * @param {object} req express request
    * @param {String} role realm role 
    */
-  hasRealmRole(req: Request, role: string) {
+  protected hasRealmRole(req: Request, role: string) {
     const accessToken = this.getAccessToken(req);
     return accessToken.hasRealmRole(role);
   }
@@ -217,7 +328,7 @@ export default class AbstractService {
    * @param {function} handler handler function
    * @return {Function} decorated handler function
    */
-  catchAsync(handler: (req: Request, res: Response) => void) {
+  protected catchAsync(handler: (req: Request, res: Response) => void) {
     return (req: Request, res: Response) => {
       try {
         return Promise.resolve(handler(req, res)).catch((err) => {
@@ -237,7 +348,7 @@ export default class AbstractService {
    * @param {String} path swagger path
    * @return {String} route path
    */
-  toPath(path: string) {
+  protected toPath(path: string) {
     return path.replace(/\$\{encodeURIComponent\(String\((.*?)\)\)\}/g, (match, param) => { 
       return `:${param}`;
     });
@@ -248,7 +359,7 @@ export default class AbstractService {
    * 
    * @param {http.ServerResponse} res server response object
    */
-  sendNotFound(res: Response, message?: string) {
+  protected sendNotFound(res: Response, message?: string) {
     const response: NotFound = {
       "code": 404,
       "message": message || "Not found"
@@ -263,13 +374,32 @@ export default class AbstractService {
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
-  sendBadRequest(res: Response, message?: string) {
+  protected sendBadRequest(res: Response, message?: string) {
     const response: BadRequest = {
       "code": 400,
       "message": message || "Bad Request"
     };
 
+    this.baseLogger.warn(`Bad request with message ${message || "Bad Request"}`);
+
     res.status(400).send(response);
+  }
+
+  /**
+   * Responds with 409 - conflict
+   * 
+   * @param {http.ServerResponse} res server response object
+   * @param {String} message (optional)
+   */
+  protected sendConflict(res: Response, message?: string) {
+    const response: BadRequest = {
+      "code": 409,
+      "message": message || "Conflict"
+    };
+
+    this.baseLogger.warn(`Conflict with message ${message || "Conflict"}`);
+
+    res.status(409).send(response);
   }
 
   /**
@@ -278,7 +408,7 @@ export default class AbstractService {
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
-  sendForbidden(res: Response, message?: string) {
+  protected sendForbidden(res: Response, message?: string) {
     const response: Forbidden = {
       "code": 403,
       "message": message || "Forbidden"
@@ -293,12 +423,14 @@ export default class AbstractService {
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
-  sendInternalServerError(res: Response, error? : string|Error) {
+  protected sendInternalServerError(res: Response, error? : string|Error) {
     const message = error instanceof Error ? (error as Error).message : error;
     const response: InternalServerError = {
       "code": 500,
-      "message": message || "Bad Request"
+      "message": message || "Internal Server Error"
     };
+
+    this.baseLogger.warn(`Internal Server Error with message ${message || "Internal Server Error"}`);
 
     res.status(500).send(response);
   }
@@ -309,7 +441,7 @@ export default class AbstractService {
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
-  sendNotImplemented(res: Response, message?: string) {
+  protected sendNotImplemented(res: Response, message?: string) {
     const response: NotImplemented = {
       "code": 501,
       "message": message || "Not implemented yet"
@@ -321,7 +453,7 @@ export default class AbstractService {
   /**
    * Returns content type without parameters
    */
-  getBareContentType(contentType?: string) {
+  protected getBareContentType(contentType?: string) {
     if (!contentType) {
       return null;
     }

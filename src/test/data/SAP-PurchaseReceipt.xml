@@ -10,9 +10,9 @@
         <Lines>
             <Line>
 				<ItemCode>304111</ItemCode>
-                <Quantity>100</Quantity>
-                <Price>300</Price>
-				<UnitPrice>3</UnitPrice>
+                <Quantity>100.000</Quantity>
+                <Price>300.000</Price>
+				<UnitPrice>3.000</UnitPrice>
 				<WarehouseCode>10</WarehouseCode>
 				<U_PFZ_REF></U_PFZ_REF>
             </Line>

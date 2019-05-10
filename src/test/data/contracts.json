@@ -22,7 +22,8 @@
     "areaDetails": [{
       "name": "Test", "size": 123, "species": "something", "profitEstimation": 1234
     }],
-    "deliverAll": true
+    "deliverAll": true,
+    "proposedDeliverAll": true
   },
   "3950f496-0fba-11e8-9611-0b2da5ab56ce": {
     "id": "3950f496-0fba-11e8-9611-0b2da5ab56ce",
@@ -45,6 +46,7 @@
     "quantityComment": null,
     "rejectComment": null,
     "areaDetails": [],
-    "deliverAll": false
+    "deliverAll": false,
+    "proposedDeliverAll": false
   }
 }

@@ -1,7 +1,7 @@
 import * as Bluebird from "bluebird";
 import * as Sequelize from "sequelize";
 import * as _ from "lodash";
-import { DeliveryStatus, ItemGroupCategory } from "src/rest/model/models";
+import { DeliveryStatus, ItemGroupCategory } from "../rest/model/models";
 
 export interface SessionModel {
   id: string,
@@ -151,6 +151,7 @@ export interface ContractModel {
   status: string,
   areaDetails: string,
   deliverAll: boolean,
+  proposedDeliverAll: boolean,
   remarks: string,
   deliveryPlaceComment: string,
   quantityComment: string,
@@ -239,6 +240,7 @@ export interface ProductModel {
   units: number;
   unitSize: number;
   unitName: string;
+  sapItemCode: string,
   createdAt: Date;
   updatedAt: Date;
 }
@@ -253,7 +255,8 @@ export interface DeliveryModel {
   time: Date;
   status: DeliveryStatus;
   amount: number;
-  price: string | null;
+  unitPrice: number | null;
+  unitPriceWithBonus: number | null;
   qualityId: string | null;
   deliveryPlaceId: number;
   createdAt: Date;
@@ -300,6 +303,7 @@ export interface DeliveryQualityModel {
   itemGroupCategory: string;
   name: string;
   priceBonus: number;
+  color: string;
 }
 
 const PRINT_MODEL_INTERFACES = false;
@@ -487,6 +491,7 @@ export class Models {
       status: { type: Sequelize.STRING(191), allowNull: false },
       areaDetails: { type: "LONGTEXT" },
       deliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
+      proposedDeliverAll: { type: Sequelize.BOOLEAN, allowNull: false },
       remarks: { type: Sequelize.TEXT },
       deliveryPlaceComment: { type: Sequelize.TEXT  },
       quantityComment: { type: Sequelize.TEXT  },
@@ -592,7 +597,8 @@ export class Models {
       name: { type: Sequelize.STRING(191), allowNull: false },
       units: { type: Sequelize.INTEGER, allowNull: false },
       unitSize: { type: Sequelize.INTEGER, allowNull: false },
-      unitName: { type: Sequelize.STRING(191), allowNull: false }
+      unitName: { type: Sequelize.STRING(191), allowNull: false },
+      sapItemCode: { type: Sequelize.STRING(191), allowNull: false }
     });
 
     this.Delivery = this.defineModel("Delivery", {
@@ -602,7 +608,8 @@ export class Models {
       time: { type: Sequelize.DATE, allowNull: false },
       status: { type: Sequelize.STRING(191), allowNull: false },
       amount: { type: Sequelize.INTEGER, allowNull: false },
-      price: { type: Sequelize.STRING(191), allowNull: true },
+      unitPrice: { type: Sequelize.DOUBLE, allowNull: true },
+      unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
       deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
     });
@@ -624,6 +631,14 @@ export class Models {
       productId: { type: Sequelize.UUID, allowNull: false, references: { model: "Products", key: "id" } },
       unit: { type: Sequelize.STRING(191), allowNull: false },
       price: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.DeliveryQuality = this.defineModel("DeliveryQuality", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      itemGroupCategory: { type: Sequelize.STRING(191), allowNull: false },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 },
+      color: { type: Sequelize.STRING(191), allowNull: false }
     });
   }
 
@@ -1561,33 +1576,35 @@ export class Models {
   /**
    * Create new contract
    * 
-   * @param {String} userId contract's user id
-   * @param {int} year year
-   * @param {int} deliveryPlaceId delivery place id
-   * @param {int} proposedDeliveryPlaceId proposed delivery place id
-   * @param {int} itemGroupId item group id
-   * @param {String} sapId sap id
-   * @param {int} contractQuantity contract quantity
-   * @param {int} deliveredQuantity delivered quantity
-   * @param {int} proposedQuantity proposed quantity
-   * @param {Date} startDate start date
-   * @param {Date} endDate end date 
-   * @param {Date} signDate sign date
-   * @param {Date} termDate term date
-   * @param {String} status status
-   * @param {String} areaDetails area details JSON
-   * @param {Boolean} deliverAll deliver all
-   * @param {String} remarks remarks
-   * @param {String} deliveryPlaceComment delivery place comment
-   * @param {String} quantityComment quantity comment
-   * @param {String} rejectComment reject  comment
+   * @param userId contract's user id
+   * @param year year
+   * @param deliveryPlaceId delivery place id
+   * @param proposedDeliveryPlaceId proposed delivery place id
+   * @param itemGroupId item group id
+   * @param sapId sap id
+   * @param contractQuantity contract quantity
+   * @param deliveredQuantity delivered quantity
+   * @param proposedQuantity proposed quantity
+   * @param startDate start date
+   * @param endDate end date 
+   * @param signDate sign date
+   * @param termDate term date
+   * @param status status
+   * @param areaDetails area details JSON
+   * @param deliverAll deliver all
+   * @param proposedDeliverAll proposed deliver all
+   * @param remarks remarks
+   * @param deliveryPlaceComment delivery place comment
+   * @param quantityComment quantity comment
+   * @param rejectComment reject  comment
    * 
    * @returns {Promise} promise for new contract
    */
   public createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
     itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
-    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<ContractModel> {
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+    quantityComment: string|null, rejectComment: string|null): PromiseLike<ContractModel> {
 
     return this.sequelize.models.Contract.create({
       userId: userId,
@@ -1606,6 +1623,7 @@ export class Models {
       status: status,
       areaDetails: areaDetails, 
       deliverAll: deliverAll,
+      proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
       deliveryPlaceComment: deliveryPlaceComment,
       quantityComment: quantityComment,
@@ -1670,35 +1688,36 @@ export class Models {
   /**
    * Updates a contract 
    * 
-   * @param {int} id contract id
-   * @param {String} userId contract's user id
-   * @param {int} year year
-   * @param {int} deliveryPlaceId delivery place id
-   * @param {String} sapId SAP id
-   * @param {int} proposedDeliveryPlaceId proposed delivery place id
-   * @param {int} itemGroupId item group id
-   * @param {String} sapId sap id
-   * @param {int} contractQuantity contract quantity
-   * @param {int} deliveredQuantity delivered quantity
-   * @param {int} proposedQuantity proposed quantity
-   * @param {Date} startDate start date
-   * @param {Date} endDate end date 
-   * @param {Date} signDate sign date
-   * @param {Date} termDate term date
-   * @param {String} status status
-   * @param {String} areaDetails area details JSON
-   * @param {Boolean} deliverAll deliver all
-   * @param {String} remarks remarks
-   * @param {String} deliveryPlaceComment delivery place comment
-   * @param {String} quantityComment quantity comment
-   * @param {String} rejectComment reject  comment
+   * @param id contract id
+   * @param userId contract's user id
+   * @param year year
+   * @param deliveryPlaceId delivery place id
+   * @param sapId SAP id
+   * @param proposedDeliveryPlaceId proposed delivery place id
+   * @param itemGroupId item group id
+   * @param sapId sap id
+   * @param contractQuantity contract quantity
+   * @param deliveredQuantity delivered quantity
+   * @param proposedQuantity proposed quantity
+   * @param startDate start date
+   * @param endDate end date 
+   * @param signDate sign date
+   * @param termDate term date
+   * @param status status
+   * @param areaDetails area details JSON
+   * @param deliverAll deliver all
+   * @param remarks remarks
+   * @param deliveryPlaceComment delivery place comment
+   * @param quantityComment quantity comment
+   * @param rejectComment reject  comment
    * 
    * @returns {Promise} promise for update
    */
   public updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
     itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, deliverAll: boolean, 
-    remarks: string|null, deliveryPlaceComment: string|null, quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+    quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
 
     return this.sequelize.models.Contract.update({
       year: year,
@@ -1716,6 +1735,7 @@ export class Models {
       status: status,
       areaDetails: areaDetails, 
       deliverAll: deliverAll,
+      proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
       deliveryPlaceComment: deliveryPlaceComment,
       quantityComment: quantityComment,
@@ -2499,16 +2519,18 @@ export class Models {
    * @param units units
    * @param unitSize unitSize
    * @param unitName unitName
+   * @param sapItemCode SAP ItemCode
    * @return promise on created product
    */
-  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<ProductModel> {
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<ProductModel> {
     return this.Product.create({
       id: id,
       itemGroupId: itemGroupId,
       name: name,
       units: units,
       unitSize: unitSize,
-      unitName: unitName
+      unitName: unitName,
+      sapItemCode: sapItemCode
     } as any);
   }
 
@@ -2521,15 +2543,17 @@ export class Models {
    * @param units units
    * @param unitSize unitSize
    * @param unitName unitName
+   * @param sapItemCode SAP ItemCode
    * @return promise on created product
    */
-  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string): PromiseLike<[number, any]> {
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<[number, any]> {
     return this.Product.update({
       itemGroupId: itemGroupId,
       name: name,
       units: units,
       unitSize: unitSize,
-      unitName: unitName
+      unitName: unitName,
+      sapItemCode: sapItemCode
     }, {
       where: {
         id: id
@@ -2662,14 +2686,15 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
       time: time,
       status: status,
       amount: amount,
-      price: price,
+      unitPrice: unitPrice,
+      unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId
     }, {
@@ -2950,12 +2975,28 @@ export class Models {
    * @param id id 
    * @returns promise for public file
    */
-  findProductPrice(id: string): PromiseLike<ProductPriceModel> {
+  public findProductPrice(id: string): PromiseLike<ProductPriceModel> {
     return this.ProductPrice.findOne({
       where: {
         id: id
       }
     });
+  }
+
+  /**
+   * Finds latest created price by for a product id
+   * 
+   * @param productId product id
+   * @return latest created price by for a product or null if not found
+   */
+  public findLatestProductPrice(productId: string): PromiseLike<ProductPriceModel | null> {
+    return this.ProductPrice.findOne({
+      where: {
+        productId: productId
+      },
+      limit: 1,
+      order: [['createdAt', 'DESC']]
+    })
   }
 
   /**
@@ -2967,7 +3008,7 @@ export class Models {
    * @param price price
    * @returns promise for public file
    */
-  updateProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<[number, any]> {
+  public updateProductPrice(id: string, productId: string, unit: string, price: string): PromiseLike<[number, any]> {
     return this.ProductPrice.update({
       productId: productId,
       unit: unit,
@@ -3011,12 +3052,26 @@ export class Models {
   // Delivery qualities
 
   /**
+   * Finds delivery quality
+   * 
+   * @param id id 
+   * @returns promise for delivery quality
+   */
+  public findDeliveryQuality(id: string): PromiseLike<DeliveryQualityModel> {
+    return this.DeliveryQuality.findOne({
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
    * Lists delivery qualities
    * 
    * @param itemGroupCategory itemGroupCategory
    * @return Promise that resolves list of delivery qualities
    */
-  public listDeliveryQualities(itemGroupCategory: string): Bluebird<DeliveryQualityModel[]> {
+  public listDeliveryQualities(itemGroupCategory: string): PromiseLike<DeliveryQualityModel[]> {
     let where: any = {};
 
     where.itemGroupCategory = itemGroupCategory;

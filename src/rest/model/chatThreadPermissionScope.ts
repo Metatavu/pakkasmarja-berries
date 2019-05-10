@@ -9,15 +9,10 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
-import { OperationType } from './operationType';
 
 
-export interface Operation { 
-    type: OperationType  | null;
-    operationReportId: string  | null;
-}    
+export type ChatThreadPermissionScope = 'ACCESS';
 
-export interface OperationOpt { 
-    type?: OperationType;
-    operationReportId?: string;
-}
+export const ChatThreadPermissionScope = {
+    ACCESS: 'ACCESS' as ChatThreadPermissionScope
+};
