@@ -322,7 +322,7 @@
     
     getUserImage(user) {
       const shasum = crypto.createHash("sha1");
-      shasum.update(user.email.toLowerCase());
+      shasum.update((user.email || "").toLowerCase());
       const hash = shasum.digest("hex");
       return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
     }
