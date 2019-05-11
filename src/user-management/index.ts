@@ -13,8 +13,6 @@ import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentati
 import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 import { URLSearchParams }  from "url";
 import fetch from "node-fetch";
-import ScopeRepresentation from "keycloak-admin/lib/defs/scopeRepresentation";
-import { ApplicationScope } from "src/rest/application-scopes";
 import RolePolicyRepresentation from "keycloak-admin/lib/defs/rolePolicyRepresentation";
 import RoleDefinition from "keycloak-admin/lib/defs/roleDefinition";
 import RoleRepresentation from "keycloak-admin/lib/defs/roleRepresentation";
@@ -116,6 +114,29 @@ export default new class UserManagement {
         reject(e);
       }
     });
+  }
+
+  /**
+   * Lists all users from Keycloak
+   * 
+   * @return users
+   */
+  public async listAllUsers(): Promise<UserRepresentation[]> {
+    let first = 0;
+    const max = 50;
+    let result: UserRepresentation[] = [];
+    let paged: UserRepresentation[] = [];
+    
+    do {
+      paged = await this.listUsers({
+        first: first,
+        max: max
+      });
+
+      result = result.concat(paged);
+    } while (paged.length >= max - 1);
+
+    return result;
   }
 
   /**
@@ -654,7 +675,7 @@ export default new class UserManagement {
    * @param user user
    * @returns display name for an user
    */
-  public getUserDisplayName(user: UserRepresentation) {
+  public getUserDisplayName(user: UserRepresentation): string | null {
     if (!user) {
       return null;
     }

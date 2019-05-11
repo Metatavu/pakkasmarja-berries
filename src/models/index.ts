@@ -362,7 +362,7 @@ export class Models {
       type: { type: Sequelize.STRING(191), allowNull: false },
       ownerId: { type: Sequelize.STRING(191), allowNull: true },
       groupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ChatGroup, key: "id" } },
-      imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
+      imageUrl: { type: Sequelize.STRING(191) },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
       answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
       pollAllowOther: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
@@ -820,6 +820,21 @@ export class Models {
   }
 
   /**
+   * Finds single thread by chat group id and owner id 
+   * 
+   * @param groupId chatGroupId
+   * @returns Promise for found thread or null if not found  
+   */
+  public findThreadByGroupIdAndOwnerId(groupId: number, ownerId: string): PromiseLike<ThreadModel> {
+    return this.Thread.findOne({ 
+      where: { 
+        groupId : groupId, 
+        ownerId: ownerId 
+      } 
+    });
+  }
+
+  /**
    * Lists threads
    * 
    * @param groupIds filter by group ids
@@ -870,6 +885,22 @@ export class Models {
         id: id
       },
       silent: silentUpdate ? silentUpdate : false
+    });
+  }
+
+  /**
+   * Updates thread title
+   * 
+   * @param id thread id 
+   * @param title title
+   */
+  public updateThreadTitle(id: number, title: string) {
+    return this.sequelize.models.Thread.update({
+      title: title,
+    }, {
+      where: {
+        id: id
+      }
     });
   }
 
