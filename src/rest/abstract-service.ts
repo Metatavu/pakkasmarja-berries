@@ -67,6 +67,7 @@ export default class AbstractService {
     
     for (let i = 0; i < scopes.length; i++) {
       if (userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token)) {
+        console.log("permission granted", resourceName, scopes[i]);
         return true;
       }
     }
