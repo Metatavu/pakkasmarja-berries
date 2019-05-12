@@ -66,7 +66,7 @@ export default new class TaskQueue {
   private createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
     const queuesConfig: any = config().tasks.queues;
 
-    const options = queuesConfig || {};
+    const options = (queuesConfig || {})[name] || {};
     const queue: Queue = new Queue(fn, options);
 
     queue.use(new SQLStore({
