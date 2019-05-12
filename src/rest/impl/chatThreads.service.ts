@@ -534,12 +534,16 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const groupId = req.query.groupId;
     const groupType: ChatGroupType = req.query.groupType;
     const allChatGroups = groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType);
-    const chatGroups = await Promise.all(Promise.filter(allChatGroups, (chatGroup) => {
+    const chatGroups = await Promise.all(Promise.filter(allChatGroups, async (chatGroup) => {
       if (!chatGroup) {
         return false;
       }
 
-      return this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+      const result = await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+
+      console.log("Permission", chatGroup.id, result);
+
+      return result;
     }));
 
     const chatGroupMap = _.keyBy(chatGroups, "id");

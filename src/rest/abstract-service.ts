@@ -10,7 +10,7 @@ import moment = require("moment");
 import chatGroupPermissionController from "../user-management/chat-group-permission-controller";
 import userManagement from "../user-management";
 import { ThreadModel, ChatGroupModel } from "../models";
-import { CHAT_GROUP_MANAGE, ApplicationScope, CHAT_THREAD_ACCESS, CHAT_GROUP_ACCESS } from "./application-scopes";
+import { CHAT_GROUP_MANAGE, ApplicationScope, CHAT_THREAD_ACCESS, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE } from "./application-scopes";
 import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
 
 /**
@@ -64,9 +64,14 @@ export default class AbstractService {
    */
   public async hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]): Promise<boolean> {
     const accessToken = (req as any).kauth.grant.access_token;
+
+    console.log("Checking permission", resourceName, scopes);
     
     for (let i = 0; i < scopes.length; i++) {
       const result: boolean = await userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token);
+
+      console.log("Checking permission result", scopes[i], result);
+
       if (result) {
         return true;
       }
