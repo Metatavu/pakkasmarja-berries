@@ -1,5 +1,5 @@
 import { QueryInterface } from "sequelize";
-import fetch, { Headers } from "node-fetch";
+import fetch from "node-fetch";
 import { config } from "../../config";
 import * as fs from "fs";
 import * as uuid from "uuid4";
