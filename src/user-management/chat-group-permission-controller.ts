@@ -3,7 +3,7 @@ import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentati
 import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
 import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 import { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
-import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, ApplicationScope } from "../rest/application-scopes";
+import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, ApplicationScope, CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 import { ChatGroupModel } from "../models";
 import AbstractPermissionController from "./abstract-permission-controller";
 
@@ -70,7 +70,7 @@ export default new class ChatGroupPermissionController extends AbstractPermissio
   public async createChatGroupResource(chatGroup: ChatGroupModel) {
     const resourceName = this.getChatGroupResourceName(chatGroup);
     const resourceUri = this.getChatGroupUri(chatGroup.id);
-    return await this.createGroupResource(resourceName, resourceUri, "chat-group", [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
+    return await this.createGroupResource(resourceName, resourceUri, "chat-group", [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
   }
 
   /**
