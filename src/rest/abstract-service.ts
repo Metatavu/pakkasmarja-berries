@@ -62,12 +62,12 @@ export default class AbstractService {
    * @param scopes required scopes
    * @return Promise for whether user has permission to resource or not 
    */
-  public hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]) {
+  public async hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]): Promise<boolean> {
     const accessToken = (req as any).kauth.grant.access_token;
     
     for (let i = 0; i < scopes.length; i++) {
-      if (userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token)) {
-        console.log("permission granted", resourceName, scopes[i]);
+      const result: boolean = await userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token);
+      if (result) {
         return true;
       }
     }

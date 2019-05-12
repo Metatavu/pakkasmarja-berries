@@ -539,11 +539,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
         return false;
       }
 
-      if (this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE])) {
-        return true;
-      }
-
-      return this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS]);
+      return this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS]);
     }));
 
     const chatGroupMap = _.keyBy(chatGroups, "id");
