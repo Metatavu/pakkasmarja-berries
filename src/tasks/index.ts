@@ -63,7 +63,7 @@ export default new class TaskQueue {
    * @param {String} name name
    * @param {Function} fn fn
    */
-  createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
+  private createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
     const queuesConfig: any = config().tasks.queues;
 
     const options = queuesConfig || {};
@@ -827,8 +827,11 @@ export default new class TaskQueue {
    * @param callback callback
    */
   private async checkQuestionGroupUsersThreadsTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    await this.checkQuestionGroupUsersThreads();
-    callback();
+    try {
+      await this.checkQuestionGroupUsersThreads();
+    } finally {
+      callback(null);
+    }
   }
 
   /**
