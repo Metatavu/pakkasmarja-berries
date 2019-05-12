@@ -545,8 +545,10 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const chatGroupMap = _.keyBy(chatGroups, "id");
     const chatGroupIds = _.map(chatGroups, "id");
 
+    console.log("List from groups", chatGroupIds);
+
     const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds), async (thread) => {
-      return this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
+      return await this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
     }));
 
     res.status(200).send(await Promise.all(threads.map((thread) => {
