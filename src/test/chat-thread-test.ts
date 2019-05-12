@@ -670,13 +670,15 @@ test("Lists chat thread permissions", async (t) => {
   const token2 = await auth.getTokenUser2([]);
 
   const createdGroups1 = await Promise.all([
-    createChatGroup(token, "Group 1", "CHAT")
+    await createChatGroup(token, "Group 1", "CHAT")
   ]);
 
   const createdGroups2 = await Promise.all([
-    createChatGroup(token, "Group 2", "CHAT"),
-    createChatGroup(token, "Group 3", "QUESTION")
+    await createChatGroup(token, "Group 2", "CHAT"),
+    await createChatGroup(token, "Group 3", "QUESTION")
   ]);
+
+  console.log("createdGroups1", createdGroups1);
 
   const createdChatThreads1 = await Promise.all([
     await createChatThread(token, createdGroups1[0].id!, "Thread 1.1"),
