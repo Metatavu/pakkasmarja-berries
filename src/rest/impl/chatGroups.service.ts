@@ -95,7 +95,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return;
     }
 
-    if (!(await this.hasResourcePermission(req, chatGroupPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE]))) {
+    if (!(await this.hasResourcePermission(req, chatGroupPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE]))) {
       this.sendForbidden(res);
       return;
     }
