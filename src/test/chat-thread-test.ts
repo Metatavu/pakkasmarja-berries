@@ -666,9 +666,6 @@ test("Lists chat thread permissions", async (t) => {
 
   t.notEqual(userGroup2, null);
 
-  const token1 = await auth.getTokenUser1([]);
-  const token2 = await auth.getTokenUser2([]);
-
   const createdGroups1 = await Promise.all([
     await createChatGroup(token, "Group 1", "CHAT")
   ]);
@@ -699,6 +696,9 @@ test("Lists chat thread permissions", async (t) => {
   await createChatThreadGroupPermission(token, createdChatThreads2[0].id!, userGroup2!.id!, "ACCESS");
   await createChatThreadGroupPermission(token, createdChatThreads2[1].id!, userGroup2!.id!, "ACCESS");
   await createChatThreadGroupPermission(token, createdChatThreads2[2].id!, userGroup2!.id!, "ACCESS");
+
+  const token1 = await auth.getTokenUser1([]);
+  const token2 = await auth.getTokenUser2([]);
 
   t.deepEqual(await listChatThreads(token1), createdChatThreads1);
   t.deepEqual(await listChatThreads(token2), createdChatThreads2);
