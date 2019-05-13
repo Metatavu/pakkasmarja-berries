@@ -4,6 +4,8 @@ import ApplicationRoles from "../application-roles";
 import { NewsArticle } from "../model/models";
 import models, { NewsArticleModel } from "../../models";
 import mqtt from "../../mqtt";
+import userManagement from "../../user-management";
+import * as uuid from "uuid4";
 
 /**
  * Implementation for NewsArticles REST service
@@ -27,6 +29,8 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       "operation": "CREATED",
       "id": databaseNewsArticle.id
     });
+
+    this.sendNotifications(databaseNewsArticle);
   }
 
   /**
@@ -117,6 +121,23 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
     });
 
     res.status(200).send(await this.translateDatabaseNewsArticle(databaseNewsArticle));
+  }
+
+  /**
+   * Sends notifications about created news to users
+   * 
+   * @param newsArticle newsArticle
+   */
+  private async sendNotifications(newsArticle: NewsArticle) {
+    const path = `news-${newsArticle.id}`;
+
+    const users = await userManagement.listAllUsers();
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      await models.createUnread(uuid(), path, user.id!);
+    }
+
   }
 
   /**

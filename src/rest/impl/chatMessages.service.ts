@@ -1,5 +1,6 @@
 import * as _ from "lodash";
 import * as moment from "moment";
+import * as uuid from "uuid4";
 import ChatMessagesService from "../api/chatMessages.service";
 import { Request, Response } from "express";
 import models, { MessageModel, ThreadModel, ChatGroupModel } from "../../models";
@@ -8,7 +9,6 @@ import mqtt from "../../mqtt";
 import chatThreadPermissionController from "../../user-management/chat-thread-permission-controller";
 import userManagement from "../../user-management";
 import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
-import uuid = require("uuid");
 
 /**
  * Messages REST service
