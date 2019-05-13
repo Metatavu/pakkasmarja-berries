@@ -411,8 +411,8 @@ test("Lists chat group permissions", async (t) => {
   const foundGroups1 = await listChatGroups(token1);
   const foundGroups2 = await listChatGroups(token2);
 
-  t.deepEqual(createdGroups1, foundGroups1);
-  t.deepEqual(createdGroups2, foundGroups2);
+  t.deepEqual(foundGroups1, createdGroups1);
+  t.deepEqual(foundGroups2, createdGroups2);
 
   await Promise.all(createdGroups1.map((createdGroup) => {
     return deleteChatGroup(token, createdGroup.id!);

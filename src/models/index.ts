@@ -62,15 +62,6 @@ export interface ThreadPredefinedTextModel {
   updatedAt: Date
 }
 
-export interface ThreadUserGroupRoleModel {
-  id: number,
-  threadId: number,
-  userGroupId: string,
-  role: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-
 export interface MessageModel {
   id: number,
   threadId: number,
@@ -371,7 +362,7 @@ export class Models {
       type: { type: Sequelize.STRING(191), allowNull: false },
       ownerId: { type: Sequelize.STRING(191), allowNull: true },
       groupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ChatGroup, key: "id" } },
-      imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
+      imageUrl: { type: Sequelize.STRING(191) },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
       answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
       pollAllowOther: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
@@ -382,19 +373,6 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       text: { type: Sequelize.STRING(191), allowNull: false }
-    });
-    
-    this.defineModel("ThreadUserGroupRole", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
-      userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
-      role: { type: Sequelize.STRING(191), allowNull: false  }
-    }, {
-      indexes: [{
-        name: "UN_THREADUSERGROUPROLE_THREADID_USERGROUPID",
-        unique: true,
-        fields: ["threadId", "userGroupId"]
-      }]
     });
     
     this.Message = this.defineModel("Message", {
@@ -842,6 +820,21 @@ export class Models {
   }
 
   /**
+   * Finds single thread by chat group id and owner id 
+   * 
+   * @param groupId chatGroupId
+   * @returns Promise for found thread or null if not found  
+   */
+  public findThreadByGroupIdAndOwnerId(groupId: number, ownerId: string): PromiseLike<ThreadModel> {
+    return this.Thread.findOne({ 
+      where: { 
+        groupId : groupId, 
+        ownerId: ownerId 
+      } 
+    });
+  }
+
+  /**
    * Lists threads
    * 
    * @param groupIds filter by group ids
@@ -892,6 +885,22 @@ export class Models {
         id: id
       },
       silent: silentUpdate ? silentUpdate : false
+    });
+  }
+
+  /**
+   * Updates thread title
+   * 
+   * @param id thread id 
+   * @param title title
+   */
+  public updateThreadTitle(id: number, title: string) {
+    return this.sequelize.models.Thread.update({
+      title: title,
+    }, {
+      where: {
+        id: id
+      }
     });
   }
 

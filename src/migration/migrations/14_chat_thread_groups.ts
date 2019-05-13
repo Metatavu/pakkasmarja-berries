@@ -9,6 +9,7 @@ import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepres
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
+import { ThreadModel } from "src/models";
 
 const logger: Logger = getLogger();
 
@@ -328,8 +329,8 @@ const getQuestionGroupThreadUsers = async (query: Sequelize.QueryInterface): Pro
  * @param type type
  * @param name name
  */
-const insertChatGroup = async (query: Sequelize.QueryInterface, type: string, name: string) => {
-  return (await query.sequelize.query(`INSERT INTO ChatGroups (type, title, createdAt, updatedAt) VALUES ('${type}', '${name}', NOW(), NOW())`))[0];
+const insertChatGroup = async (query: Sequelize.QueryInterface, type: string, name: string, imageUrl: string) => {
+  return (await query.sequelize.query(`INSERT INTO ChatGroups (type, title, imageUrl, createdAt, updatedAt) VALUES ('${type}', '${name}', '${imageUrl}', NOW(), NOW())`))[0];
 };
 
 /**
@@ -339,8 +340,19 @@ const insertChatGroup = async (query: Sequelize.QueryInterface, type: string, na
  * @param threadId thread id
  * @param groupId group id
  */
-const updateThreadGroupId = async (query: Sequelize.QueryInterface, threadId: number, groupId: string) => {
+const updateThreadGroupId = async (query: Sequelize.QueryInterface, threadId: number, groupId: number) => {
   return (await query.sequelize.query(`UPDATE Threads SET groupId = ${groupId} WHERE id = ${threadId}`));
+};
+
+/**
+ * Updates owner id for a chat thread
+ * 
+ * @param query query interface 
+ * @param threadId thread id
+ * @param ownerId owner id
+ */
+const updateThreadOwnerId = async (query: Sequelize.QueryInterface, threadId: number, ownerId: string) => {
+  return (await query.sequelize.query(`UPDATE Threads SET ownerId = '${ownerId}' WHERE id = ${threadId}`));
 };
 
 /**
@@ -350,8 +362,9 @@ const updateThreadGroupId = async (query: Sequelize.QueryInterface, threadId: nu
  * @param threadId thread id
  * @returns thread's title
  */
-const getThreadTitle = async (query: Sequelize.QueryInterface, threadId: number): Promise<string> => {
-  return (await query.sequelize.query(`SELECT title FROM Threads WHERE id = ${threadId}`))[0];
+const getThread = async (query: Sequelize.QueryInterface, threadId: number): Promise<ThreadModel> => {
+  const result = await query.sequelize.query(`SELECT title FROM Threads WHERE id = ${threadId}`);
+  return result[0][0];
 };
 
 /**
@@ -438,7 +451,9 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
   }
 
   for (let j = 0; j < questionGroupUsers.length; j++) {
-    logger.info(`Migrating chat user ${j + 1} / ${questionGroupUsers.length}`);
+    const questionGroupId = questionGroupUsers[j].questionGroupId;
+
+    logger.info(`Migrating group ${questionGroupId} chat user ${j + 1} / ${questionGroupUsers.length}`);
 
     const userId = questionGroupUsers[j].userId;
     const chatThreadId = questionGroupUsers[j].threadId;
@@ -446,6 +461,8 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
     
     if (user) {
       await permissionController.setUserChatThreadScope(chatThreadId, user, "chat-thread:access");
+      await updateThreadOwnerId(query, chatThreadId, user.id);
+      await updateThreadGroupId(query, chatThreadId, questionGroupId);
     }
   }
 
@@ -463,11 +480,17 @@ const migrateRoleChatGroups = async (query: Sequelize.QueryInterface, role: stri
     logger.info(`Migrate chat group for thread #${threadId} ${i + 1} / ${chatThreadRoles.length}`);
 
     if (!threadGroupds[threadId]) {
-      const threadTitle = await getThreadTitle(query, threadId);
-      const chatGroupId = await insertChatGroup(query, "chat", threadTitle);
+      const thread = await getThread(query, threadId);
+      const chatGroupId = await insertChatGroup(query, "CHAT", thread.title, thread.imageUrl);
+      
       await updateThreadGroupId(query, threadId, chatGroupId);
-      const resource = await createThreadResource(threadId);  
-      await permissionController.createChatThreadPermissions(threadId, resource!);
+      
+      const threadResource = await createThreadResource(threadId);
+      const groupResource = await createGroupResource(chatGroupId);
+
+      await permissionController.createChatGroupPermissions(chatGroupId, groupResource);
+      await permissionController.createChatThreadPermissions(threadId, threadResource!);
+
       threadGroupds[threadId] = chatGroupId;
     }
 

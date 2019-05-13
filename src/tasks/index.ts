@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as fs from "fs";
 import { getLogger, Logger } from "log4js";
-import models, { ContractModel } from "../models";
+import models, { ContractModel, ChatGroupModel } from "../models";
 import * as Queue from "better-queue"; 
 import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
@@ -9,6 +9,9 @@ import { SAPExportBusinessPartner, SAPExportItemGroup, SAPExportDeliveryPlace, S
 import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
+import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
+
 /**
  * Task queue functionalities for Pakkasmarja Berries
  */
@@ -23,6 +26,7 @@ export default new class TaskQueue {
   private sapContractUpdateQueue: Queue;
   private sapContractSapIdSyncQueue: Queue;
   private sapContractDeliveredQuantityUpdateQueue: Queue;
+  private questionGroupThreadsQueue: Queue;
 
   /**
    * Constructor
@@ -44,6 +48,10 @@ export default new class TaskQueue {
     this.sapContractUpdateQueue = this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
     this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
     this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
+    this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
+
+    this.enqueueQuestionGroupUsersThreadsTask();
+
     // FIXME!
     // this.enqueueContractDeliveredQuantityUpdateQueue();
     // this.enqueueContractDocumentStatusBatchQueue();
@@ -55,10 +63,10 @@ export default new class TaskQueue {
    * @param {String} name name
    * @param {Function} fn fn
    */
-  createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
+  private createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
     const queuesConfig: any = config().tasks.queues;
 
-    const options = queuesConfig || {};
+    const options = (queuesConfig || {})[name] || {};
     const queue: Queue = new Queue(fn, options);
 
     queue.use(new SQLStore({
@@ -115,7 +123,7 @@ export default new class TaskQueue {
   enqueueContractDeliveredQuantityUpdateQueue() {
     this.sapContractDeliveredQuantityUpdateQueue.push({id: 1});
   }
-  
+
   /**
    * Enqueues SAP contact update task
    * 
@@ -803,6 +811,83 @@ export default new class TaskQueue {
     }
 
     return false;
+  }
+
+  /**
+   * Adds task to sapContractDeliveredQuantityUpdateQueue
+   */
+  private enqueueQuestionGroupUsersThreadsTask() {
+    this.questionGroupThreadsQueue.push({id: 1});
+  }
+  
+  /**
+   * Task engine task for checking question group user threads
+   * 
+   * @param data data
+   * @param callback callback
+   */
+  private async checkQuestionGroupUsersThreadsTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+    try {
+      await this.checkQuestionGroupUsersThreads();
+    } finally {
+      callback(null);
+    }
+  }
+
+  /**
+   * Checks question group user threads
+   */
+  private async checkQuestionGroupUsersThreads() {
+    this.logger.info("Checking question group user threads...");
+
+    const users = await userManagement.listUsers();
+    const questionGroups = await models.listChatGroups("QUESTION");
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      for (let j = 0; j < questionGroups.length; j++) {
+        await this.checkUserQuestionGroupThread(questionGroups[j], user);
+      }
+    }
+
+    this.logger.info("Done checking question group user threads.");
+
+    this.enqueueQuestionGroupUsersThreadsTask();
+  }
+
+  /**
+   * Ensures that user has proper thread in given question chat group
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   */
+  private checkUserQuestionGroupThread = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
+    let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
+    const title = userManagement.getUserDisplayName(user) || "";
+
+    if (!chatThread) {
+      this.logger.info(`Creating new question group ${chatGroup.id} thread for user ${user.id}`);
+      chatThread = await models.createThread(chatGroup.id, user.id || null, title, null, "question", null, "TEXT", false, null);
+    } else {
+      await models.updateThreadTitle(chatThread.id, title);
+    }
+    
+    let resource = await chatThreadPermissionController.findChatThreadResource(chatThread);
+    if (!resource) {
+      this.logger.info(`Creating new resource for chat thread ${chatThread.id}`);
+      resource = await chatThreadPermissionController.createChatThreadResource(chatThread);
+    }
+
+    let accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
+    if (!accessPermission) {
+      this.logger.info(`Creating new access permission for chat thread ${chatThread.id}`);
+      await chatThreadPermissionController.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
+    }
+
+    const scope = await chatThreadPermissionController.getUserChatThreadScope(chatThread, user);
+    if (scope !== "chat-thread:access") {
+      await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, "chat-thread:access");
+    }
   }
 
   /**
