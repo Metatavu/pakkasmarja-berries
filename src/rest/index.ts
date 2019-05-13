@@ -17,6 +17,7 @@ import ProductPricesServiceImpl from './impl/productPrices.service';
 import ProductsServiceImpl from './impl/products.service';
 import PublicFilesServiceImpl from './impl/publicFiles.service';
 import SignAuthenticationServicesServiceImpl from './impl/signAuthenticationServices.service';
+import UnreadsServiceImpl from './impl/unreads.service';
 import UserGroupsServiceImpl from './impl/userGroups.service';
 import WeekDeliveryPredictionsServiceImpl from './impl/weekDeliveryPredictions.service';
 
@@ -61,6 +62,8 @@ export default class Api {
       new PublicFilesServiceImpl(app, keycloak);
     
       new SignAuthenticationServicesServiceImpl(app, keycloak);
+    
+      new UnreadsServiceImpl(app, keycloak);
     
       new UserGroupsServiceImpl(app, keycloak);
     

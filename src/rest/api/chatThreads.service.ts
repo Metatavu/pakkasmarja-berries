@@ -140,6 +140,7 @@ export default abstract class ChatThreadsService extends AbstractService {
    * Update chat thread
    * @summary Update chat thread
    * Accepted parameters:
+    * - (body) ChatThread body - Payload
     * - (path) number chatThreadId - Chat thread id
   */
   public abstract updateChatThread(req: Request, res: Response): Promise<void>;

@@ -461,7 +461,7 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
     
     if (user) {
       await permissionController.setUserChatThreadScope(chatThreadId, user, "chat-thread:access");
-      await updateThreadOwnerId(query, chatThreadId, user.id);
+      await updateThreadOwnerId(query, chatThreadId, user.id!);
       await updateThreadGroupId(query, chatThreadId, questionGroupId);
     }
   }
