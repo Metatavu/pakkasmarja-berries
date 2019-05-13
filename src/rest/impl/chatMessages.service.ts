@@ -2,9 +2,13 @@ import * as _ from "lodash";
 import * as moment from "moment";
 import ChatMessagesService from "../api/chatMessages.service";
 import { Request, Response } from "express";
-import models, { MessageModel } from "../../models";
+import models, { MessageModel, ThreadModel, ChatGroupModel } from "../../models";
 import { ChatMessage } from "../model/models";
 import mqtt from "../../mqtt";
+import chatThreadPermissionController from "../../user-management/chat-thread-permission-controller";
+import userManagement from "../../user-management";
+import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
+import uuid = require("uuid");
 
 /**
  * Messages REST service
@@ -17,6 +21,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   public async createChatMessage(req: Request, res: Response): Promise<void> {
     const chatThreadId = req.params.chatThreadId;
     const payload: ChatMessage = req.body;
+    const loggedUserId = this.getLoggedUserId(req);
 
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
@@ -37,6 +42,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     
     const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents, payload.image);
     res.status(200).send(this.translateChatMessage(message));
+
+    this.sendNotifications(loggedUserId, chatGroup, thread, message);
 
     mqtt.publish("chatmessages", {
       "operation": "CREATED",
@@ -221,5 +228,29 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     return result;
   }
 
+  /**
+   * Sends notifications about created message to users with permissions to the message
+   * 
+   * @param message message
+   */
+  private async sendNotifications(loggedUserId: string, chatGroup: ChatGroupModel, chatThread: ThreadModel, message: MessageModel) {
+    const permissionNames: string[] = [
+      chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:manage")
+    ];
+
+    const permissions = await userManagement.findPermissionsByNames(permissionNames);
+    const permittedUsers = await userManagement.listPermissionsUsers(permissions);
+    const path = `chat-${chatGroup.id}-${chatThread.id}-${message.id}`;
+
+    for (let i = 0; i < permittedUsers.length; i++) {
+      const permittedUser = permittedUsers[i];
+      if (permittedUser.id != loggedUserId) {
+        await models.createUnread(uuid(), path, permittedUser.id!);
+      }
+    }
+
+  }
 
 }

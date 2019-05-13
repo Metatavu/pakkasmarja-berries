@@ -10,6 +10,7 @@ import moment = require("moment");
 import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
 import * as fs from "fs";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Implementation for Deliveries REST service
@@ -360,8 +361,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const receivingUserId = this.getLoggedUserId(req);
-      const deliveryContact: Contact = await userManagement.findUser(delivery.userId);
-      const receivingContact: Contact = await userManagement.findUser(receivingUserId);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
+      if (!deliveryContact) {
+        this.sendInternalServerError(res, "Failed to deliveryContact");
+        return;
+      }
+
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      if (!receivingContact) {
+        this.sendInternalServerError(res, "Failed to receivingContact");
+        return;
+      }
+
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
  
