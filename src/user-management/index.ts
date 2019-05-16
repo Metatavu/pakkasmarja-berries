@@ -13,11 +13,10 @@ import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentati
 import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 import { URLSearchParams }  from "url";
 import fetch from "node-fetch";
-import ScopeRepresentation from "keycloak-admin/lib/defs/scopeRepresentation";
-import { ApplicationScope } from "src/rest/application-scopes";
 import RolePolicyRepresentation from "keycloak-admin/lib/defs/rolePolicyRepresentation";
 import RoleDefinition from "keycloak-admin/lib/defs/roleDefinition";
 import RoleRepresentation from "keycloak-admin/lib/defs/roleRepresentation";
+import { Promise } from "bluebird";
 
 export enum UserProperty {
   SAP_ID = "sapId",
@@ -36,6 +35,12 @@ export enum UserProperty {
   STREET_2 = "Tilan osoite",
   CITY_1 = "Kaupunki",
   CITY_2 = "Tilan kaupunki"
+}
+
+interface PolicyResolveResult {
+  groupPolicyNames: string[];
+  userPolicyNames: string[];
+  rolePolicyNames: string[];
 }
 
 export default new class UserManagement {
@@ -62,7 +67,7 @@ export default new class UserManagement {
    * @param {String} id user id
    * @return {Promise} promise for a user or null if not found
    */
-  public async findUser(id: string) {
+  public async findUser(id: string): Promise<UserRepresentation | null> {
     if (!id) {
       return null;
     }
@@ -86,36 +91,50 @@ export default new class UserManagement {
    * @param {String} name attribute name 
    * @param {String} value attribute value 
    */
-  public findUserByProperty(name: UserProperty, value: string): Promise<any> {
+  public async findUserByProperty(name: UserProperty, value: string): Promise<any> {
     let page  = 0;
     let size = 25;
     const maxPages = 50;
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        while (page < maxPages) {
-          const result = await this.listUserByPropertyPaged(name, value, page * size, size);
-          if (result.count === 0) {
-            resolve(null);
-            return;
-          } else {
-            if (result.users.length === 1) {
-              resolve(result.users[0]);
-              return;
-            } else if (result.users.length > 1) {
-              reject(`Found ${result.users.length} users with attribute ${name} === ${value}`);
-              return;
-            } else {
-              page++; 
-            }
-          }
+    while (page < maxPages) {
+      const result = await this.listUserByPropertyPaged(name, value, page * size, size);
+      if (result.count === 0) {
+        return null;
+      } else {
+        if (result.users.length === 1) {
+          return result.users[0];
+        } else if (result.users.length > 1) {
+          throw new Error(`Found ${result.users.length} users with attribute ${name} === ${value}`);
+        } else {
+          page++; 
         }
-
-        reject(`Max page count ${maxPages} exceeded`);
-      } catch (e) {
-        reject(e);
       }
-    });
+    }
+
+    throw new Error(`Max page count ${maxPages} exceeded`);
+  }
+
+  /**
+   * Lists all users from Keycloak
+   * 
+   * @return users
+   */
+  public async listAllUsers(): Promise<UserRepresentation[]> {
+    let first = 0;
+    const max = 50;
+    let result: UserRepresentation[] = [];
+    let paged: UserRepresentation[] = [];
+    
+    do {
+      paged = await this.listUsers({
+        first: first,
+        max: max
+      });
+
+      result = result.concat(paged);
+    } while (paged.length >= max - 1);
+
+    return result;
   }
 
   /**
@@ -301,7 +320,7 @@ export default new class UserManagement {
    * @param name name
    * @return Promise for found policy or null if not found
    */
-  public async findGroupPolicyByName(name: string) {
+  public async findGroupPolicyByName(name: string): Promise<GroupPolicyRepresentation | null> {
     const client = await this.getClient();
     const results = await client.clients.listAuthzGroupPolicies({
       id: await this.getRestClientInternalId(),
@@ -466,6 +485,20 @@ export default new class UserManagement {
   }
 
   /**
+   * Finds authz permissions by names
+   * 
+   * @param names names
+   * @return Promise for found permissions
+   */
+  public async findPermissionsByNames(names: string[]): Promise<PolicyRepresentation[]> {
+    const permissionPromises: Promise<PolicyRepresentation | null>[] = names.map((name: string) => {
+      return this.findPermissionByName(name);
+    });
+
+    return await Promise.all(Promise.filter(permissionPromises, (permission) => !!permission)) as PolicyRepresentation[];
+  }
+
+  /**
    * Finds authz permission by name
    * 
    * @param name name
@@ -529,7 +562,100 @@ export default new class UserManagement {
     });
   }
 
-  public async listAuthzPermissionAssociatedPolicies(permissionId: string) {
+  /**
+   * Lists users for given permision
+   * 
+   * @param permissions permissions
+   * @returns users for given permision
+   */
+  public async listPermissionsUsers(permissions: PolicyRepresentation[]) {
+    const client = await this.getClient();
+    
+    const policyResolve: PolicyResolveResult = {
+      groupPolicyNames: [],
+      rolePolicyNames: [],
+      userPolicyNames: []
+    };
+
+    for (let i = 0; i < permissions.length; i++) {
+      const permission = permissions[i];
+      const policies = await this.listAuthzPermissionAssociatedPolicies(permission.id!);  
+      await this.resolvePolicyTypes(policies, policyResolve);
+    }
+    
+    const roleIds: string[] = _.uniq(_.flatMap(await Promise.all(policyResolve.rolePolicyNames
+      .map((name) => {
+        return this.findRolePolicyByName(name);
+      }))
+      .filter((policy) => {
+        return !!policy;
+      })
+      .map((policy) => {
+        return policy!.roles || [];
+      }))
+      .map((role) => {
+        return role.id;
+      }));
+    const roles = await client.roles.find({
+      realm: config().keycloak.admin.realm
+    } as any);
+
+    const roleMap = _.keyBy(roles, "id");
+    const roleNames = (await Promise.all(roleIds
+      .map((roleId) => {
+        return roleMap[roleId];
+      })))
+      .map((role) => {
+        return role.name!;
+      });
+
+    const userGroupIds: string[] = _.uniq(_.flatMap(await Promise.all(policyResolve.groupPolicyNames
+      .map((name) => {
+        return this.findGroupPolicyByName(name);
+      }))
+      .filter((policy) => {
+        return !!policy;
+      })
+      .map((policy) => {
+        return policy!.groups || [];
+      }))
+      .map((group) => {
+        return group.id!
+      }));
+
+    const userGroupUsers = await this.listUserGroupsUsers(userGroupIds);
+    const roleUsers = await this.listRolesUsers(roleNames);
+
+    const result = _.uniqBy(userGroupUsers.concat(roleUsers), "id");
+    const foundUserIds = result.map((user) => {
+      return user.id!;
+    });
+
+    const userIds: string[] = _.uniq(_.flatMap(await Promise.all(policyResolve.userPolicyNames
+      .map((name) => {
+        return this.findUserPolicyByName(name);
+      }))
+      .filter((policy) => {
+        return !!policy;
+      })
+      .map((policy) => {
+        return policy!.users || [];
+      })))
+      .filter((userId) => {
+        return !foundUserIds.includes(userId);
+      });
+
+    for (let i = 0; i < userIds.length; i++) {
+      const user = await this.findUser(userIds[i]);
+      if (user) {
+        result.push(user);
+      }
+    }
+    
+    return result; 
+  }
+
+  public async listAuthzPermissionAssociatedPolicies(permissionId: string): Promise<PolicyRepresentation[]> {
     const client = await this.getClient();
     return client.clients.listAuthzPermissionAssociatedPolicies({
       id: await this.getRestClientInternalId(),
@@ -587,74 +713,102 @@ export default new class UserManagement {
       permissionId: permissionId
     });
   }
-  
-  listGroupsMemberIds(realm: string, groupIds: string[]) {     
-    return new Promise((resolve, reject) => {
-      this.listGroupsMembers(realm, groupIds)
-        .then((members: any[]) => {
-          resolve(_.uniq(_.map(members, "id")));
-        })
-        .catch(reject);
-    });
-  }
-  
-  listGroupsMembers(realm: string, groupIds: string[]) {
-    return new Promise((resolve, reject) => {
-      const promises = _.map(groupIds, (groupId) => {
-        return this.listGroupMembers(realm, groupId);
-      });
 
-      Promise.all(promises)
-        .then((results) => {
-          resolve(_.compact(_.flatten(results)));
-        })
-        .catch(reject);
+  /**
+   * Lists user group users
+   * 
+   * @param userGroupId user group id
+   * @return user group users
+   */
+  public async listUserGroupUsers(userGroupId: string): Promise<UserRepresentation[]> {
+    const client = await this.getClient();
+    const result = await client.groups.listMembers({
+      id: userGroupId,
+      realm: config().keycloak.admin.realm
     });
-  }
-  
-  listGroupMembers(realm: string, groupId: string) {
-    return new Promise((resolve) => {
-      this.getClient()
-        .then((client: any) => {
-          client.groups.members.find(realm, groupId)
-            .then(resolve)
-            .catch((err: Error) => {
-              resolve([]);
-            });
-        })
-        .catch();
-    });
-  }
-  
-  getUserMap(userIds: string[]) {
-    return new Promise((resolve, reject) => {
-      const userPromises = _.map(userIds, (userId) => {
-        return this.findUser(userId);
-      });
 
-      Promise.all(userPromises)
-        .then((users) => {
-          const result = {};
-  
-          users.forEach((user) => {
-            if (user) {
-              result[user.id] = user; 
-            }
-          });
-          
-          resolve(result);
-        })
-        .catch(reject);
+    return result;
+  }
+
+  /**
+   * Lists user group users
+   * 
+   * @param userGroupId user group id
+   * @return user group users
+   */
+  public async listUserGroupsUsers(userGroupIds: string[]): Promise<UserRepresentation[]> {
+    return _.uniqBy(_.flatMap(await Promise.all(userGroupIds.map((userGroupId) => {
+      return this.listUserGroupUsers(userGroupId);
+    }))), "id");
+  }
+
+  /**
+   * Lists users with specified role
+   * 
+   * @param roleName role name
+   * @return users with specified role
+   */
+  public async listRoleUsers(roleName: string): Promise<UserRepresentation[]> {
+    const client = await this.getClient();
+
+    return client.roles.listRoleUsers({
+      roleName: roleName,
+      realm: config().keycloak.admin.realm
     });
   }
-  
+
+  /**
+   * Lists users with specified role
+   * 
+   * @param roleName role name
+   * @return users with specified role
+   */
+  public async listRolesUsers(roleNames: string[]): Promise<UserRepresentation[]> {
+    return _.uniqBy(_.flatMap(await Promise.all(roleNames.map((roleName) => {
+      return this.listRoleUsers(roleName);
+    }))), "id");
+  }
+
+  /**
+   * Categorizes policy by types for given list of policies
+   * 
+   * @param policies policies
+   * @param result categoried policies
+   */
+  private async resolvePolicyTypes(policies: PolicyRepresentation[], result: PolicyResolveResult) {
+    for (let i = 0; i < policies.length; i++) {
+      const policy = policies[i];
+      if (!policy.name) {
+        continue;
+      }
+
+      switch (policy.type) {
+        case "group":
+          if (!result.groupPolicyNames.includes(policy.name)) {
+            result.groupPolicyNames.push(policy.name);
+          }
+        break;
+        case "user":
+          if (!result.userPolicyNames.includes(policy.name)) {
+            result.userPolicyNames.push(policy.name);
+          }
+        break;
+        case "role":
+          if (!result.rolePolicyNames.includes(policy.name)) {
+            result.rolePolicyNames.push(policy.name);
+          }
+        break;
+      }
+    }
+  }
+
   /**
    * Returns display name for an user
    * 
    * @param user user
    * @returns display name for an user
    */
-  public getUserDisplayName(user: UserRepresentation) {
+  public getUserDisplayName(user: UserRepresentation | null): string | null {
     if (!user) {
       return null;
     }

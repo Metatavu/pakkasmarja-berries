@@ -6,14 +6,12 @@ import { Forbidden } from './model/forbidden';
 import { InternalServerError } from './model/internalServerError';
 import { NotImplemented } from "./model/models";
 import { getLogger, Logger } from "log4js";
-import userManagement from "../user-management";
-import { ApplicationScope, CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_THREAD_ACCESS } from "./application-scopes";
-import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
-import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
-import { ChatGroupModel, ThreadModel } from "src/models";
 import moment = require("moment");
-import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
-import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
+import chatGroupPermissionController from "../user-management/chat-group-permission-controller";
+import userManagement from "../user-management";
+import { ThreadModel, ChatGroupModel } from "../models";
+import { CHAT_GROUP_MANAGE, ApplicationScope, CHAT_THREAD_ACCESS, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE } from "./application-scopes";
+import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
 
 /**
  * Abstract base class for all REST services
@@ -21,138 +19,20 @@ import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresen
 export default class AbstractService {
 
   private baseLogger: Logger = getLogger();
-
+  
   /**
-   * Grants user an owner permission to given resource
-   * 
-   * @param userId user id
-   * @param resourceType resource type
-   * @param resourceName resource name
-   * @param resourceUri resource URI
-   * @param permissionName permission's name
-   */
-  protected async addOwnerPermission(userId: string, resourceType: string, resourceName: string, resourceUri: string, permissionName: string, scopes: ApplicationScope[]) {
-    const resource = await this.createGroupResource(resourceName, resourceUri, resourceType, scopes);
-    const policy = await this.createUserPolicy(userId);
-    const permission = await userManagement.findPermissionByName(permissionName);
-    if (permission) {
-      await userManagement.deletePermission(permission.id!);
-    }
-    
-    return await this.createScopePermission(permissionName, resource, scopes, policy);
-  }
-
-  /**
-   * Finds or creates group policies for given group id
-   * 
-   * @param userGroupId user group id
-   * @returns promise for group policy
-   */
-  protected async resolveGroupPolicy(userGroupId: string): Promise<GroupPolicyRepresentation> {
-    const policyName = `user-group-${userGroupId}`;
-    const policy = await userManagement.findGroupPolicyByName(policyName);
-    if (policy) {
-      return policy;
-    }
-
-    return userManagement.createGroupPolicy(policyName, [ userGroupId ]);
-  }
-
-  /**
-   * Finds or creates user policies for given user id
-   * 
-   * @param user user id
-   * @returns promise for user policy
-   */
-  protected async resolveUserPolicy(userId: string): Promise<UserPolicyRepresentation> {
-    const policyName = `user-${userId}`;
-    const policy = await userManagement.findUserPolicyByName(policyName);
-    if (policy) {
-      return policy;
-    }
-
-    return userManagement.createUserPolicy(policyName, [ userId ]);
-  }
-
-  /**
-   * Deletes a permission
-   * 
-   * @param name permission name
-   * @return promise for deletion
-   */
-  protected async deletePermission(name: string) {
-    const permission = await userManagement.findPermissionByName(name);
-    if (permission && permission.id) {
-      this.deletePermissionById(permission.id);
-    }
-  }
-
-  /**
-   * Deletes a permission
-   * 
-   * @param permissionId permission id
-   * @return promise for deletion
-   */
-  protected deletePermissionById(permissionId: string) {
-    return userManagement.deletePermission(permissionId);
-  }
-
-  /**
-   * Checks whether given access token has required scopes
+   * Returns whether logged user has manage permission to given thread
    * 
    * @param req request
-   * @param resourceName resource name 
-   * @param scopes required scopes
-   * @return Promise for whether user has permission to resource or not 
+   * @param thread thread
+   * @param chatGroup chat group
    */
-  protected hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]) {
-    const accessToken = (req as any).kauth.grant.access_token;    
-    return userManagement.hasResourcePermission(resourceName, scopes, accessToken.token);
-  }
-
-  /**
-   * Creates scope permission
-   * 
-   * @param name name
-   * @param resource resource
-   * @param scopes scopes
-   * @param policy policy
-   * @return created permission
-   */
-  protected async createScopePermission(name: string, resource: ResourceRepresentation, scopes: ApplicationScope[], policy: PolicyRepresentation) {
-    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ], DecisionStrategy.AFFIRMATIVE);
-  }
-
-  /**
-   * Finds or creates an user policy
-   * 
-   * @param userId user id
-   * @returns promise for user policy
-   */
-  protected async createUserPolicy(userId: string) {
-    const name = `user-${userId}`;
-    
-    let result = await userManagement.findUserPolicyByName(name);
-    if (!result) {
-      result = await userManagement.createUserPolicy(name, [ userId ]);
+  protected async isThreadManagePermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
+    if (await this.hasResourcePermission(req, chatGroupPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE])) {
+      return true;
     }
 
-    return result;
-  }
-
-  /**
-   * Finds or creates new group resource into the Keycloak
-   * 
-   * @param id group id 
-   * @returns promise for group resource
-   */
-  protected async createGroupResource (name: string, uri: string, type: string, scopes: ApplicationScope[]): Promise<ResourceRepresentation> {
-    let resource = await userManagement.findResourceByUri(uri);        
-    if (!resource) {
-      resource = await userManagement.createResource(name, name, uri, type, scopes);
-    } 
-
-    return resource!;
+    return false;
   }
 
   /**
@@ -163,11 +43,11 @@ export default class AbstractService {
    * @param chatGroup chat group
    */
   protected async isThreadAccessPermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
-    if (await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS])) {
+    if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS])) {
       return true;
     }
 
-    if (await this.hasResourcePermission(req, this.getChatThreadResourceName(thread), [CHAT_THREAD_ACCESS])) {
+    if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatThreadResourceName(thread), [CHAT_THREAD_ACCESS])) {
       return true;
     }
 
@@ -175,116 +55,25 @@ export default class AbstractService {
   }
 
   /**
-   * Returns whether logged user has manage permission to given thread
+   * Checks whether given access token has required scopes
    * 
    * @param req request
-   * @param thread thread
-   * @param chatGroup chat group
+   * @param resourceName resource name 
+   * @param scopes required scopes
+   * @return Promise for whether user has permission to resource or not 
    */
-  protected async isThreadManagePermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
-    if (await this.hasResourcePermission(req, this.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE])) {
-      return true;
+  public async hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]): Promise<boolean> {
+    const accessToken = (req as any).kauth.grant.access_token;
+    for (let i = 0; i < scopes.length; i++) {
+      const result: boolean = await userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token);
+      if (result) {
+        return true;
+      }
     }
 
     return false;
   }
 
-  /**
-   * Returns resource name for a thread
-   * 
-   * @param chatThread chat thread
-   * @return resource name for a thread
-   */
-  protected getChatThreadResourceName(chatThread: ThreadModel) {
-    return `chat-thread-${chatThread.id}`;
-  }
-
-  /**
-   * Returns associated permission policy ids for given permission 
-   * 
-   * @param permissionName name of permission
-   * @return associated permission policy ids
-   */
-  protected async getPermissionNamePolicyIds(permissionName: string): Promise<string[]> {
-    return this.getPermissionPolicyIds(await userManagement.findPermissionByName(permissionName));
-  }
-
-  /**
-   * Returns whether group policy is associated with given permission
-   * 
-   * @param permission permission
-   * @param groupPolicy group policy
-   * @return whether group policy is associated with given permission
-   */
-  protected async hasPermissionPolicy(permission: PolicyRepresentation, groupPolicy: GroupPolicyRepresentation): Promise<boolean> {
-    const policyIds = await this.getPermissionPolicyIds(permission);
-    return policyIds.includes(groupPolicy.id!);
-  }
-
-  /**
-   * Returns associated permission policy ids for given permission 
-   * 
-   * @param permissionName name of permission
-   * @return associated permission policy ids
-   */
-  protected async getPermissionPolicyIds(permission: PolicyRepresentation | null): Promise<string[]> {
-    if (!permission) {
-      return [];
-    }
-
-    const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
-    
-    return policies.map((policy) => {
-      return policy.id!;
-    });
-  }
-
-  /**
-   * Adds a policy to scope permission
-   * 
-   * @param permissionName name of permission
-   * @param groupPolicy policy
-   */
-  protected async addPermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
-    const permission = await userManagement.findPermissionByName(permissionName);
-    if (!permission || !permission.id) {
-      return;
-    }
-
-    const policyIds = await this.getPermissionPolicyIds(permission);
-    permission.policies = policyIds.concat([groupPolicy.id!]);
-    
-    return await userManagement.updateScopePermission(permission.id, permission);
-  }
-
-  /**
-   * Removes a policy from chat group scope permission
-   * 
-   * @param permissionName name of permission
-   * @param groupPolicy policy
-   */
-  protected async removePermissionPolicy(permissionName: string, groupPolicy: GroupPolicyRepresentation) {
-    const permission = await userManagement.findPermissionByName(permissionName);
-    if (!permission || !permission.id) {
-      return;
-    }
-
-    const policyIds = await this.getPermissionPolicyIds(permission);
-    permission.policies = _.without(policyIds, groupPolicy.id! );
-
-    return await userManagement.updateScopePermission(permission.id, permission);
-  }
-
-  /**
-   * Returns resource name for a group
-   * 
-   * @param chatGroup chat group
-   * @return resource name for a group
-   */
-  protected getChatGroupResourceName(chatGroup: ChatGroupModel) {
-    return `chat-group-${chatGroup.id}`;
-  }
-  
   /**
    * Gets accesstoken from request
    * 

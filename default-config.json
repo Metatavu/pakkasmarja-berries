@@ -16,6 +16,11 @@
   "tasks": {
     "tableName": "tasks",
     "queues": {
+      "questionGroupThreadsQueue": {
+        "concurrent": 1,
+        "afterProcessDelay": 1800000,
+        "maxTimeout": 20000
+      },
       "contractDocumentStatus": {
         "concurrent": 1,
         "afterProcessDelay": 5000,

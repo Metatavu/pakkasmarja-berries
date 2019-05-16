@@ -62,15 +62,6 @@ export interface ThreadPredefinedTextModel {
   updatedAt: Date
 }
 
-export interface ThreadUserGroupRoleModel {
-  id: number,
-  threadId: number,
-  userGroupId: string,
-  role: string,
-  createdAt: Date,
-  updatedAt: Date
-}
-
 export interface MessageModel {
   id: number,
   threadId: number,
@@ -306,6 +297,17 @@ export interface DeliveryQualityModel {
   color: string;
 }
 
+/**
+ * Interface for unread
+ */
+export interface UnreadModel { 
+  id: string | null;
+  path: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -321,6 +323,7 @@ export class Models {
   private PublicFile: Sequelize.Model<any, PublicFileModel>;
   private ProductPrice: Sequelize.Model<any, ProductPriceModel>;
   private DeliveryQuality: Sequelize.Model<any, DeliveryQualityModel>;
+  private Unread: Sequelize.Model<any, UnreadModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -371,7 +374,7 @@ export class Models {
       type: { type: Sequelize.STRING(191), allowNull: false },
       ownerId: { type: Sequelize.STRING(191), allowNull: true },
       groupId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.ChatGroup, key: "id" } },
-      imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } },
+      imageUrl: { type: Sequelize.STRING(191) },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
       answerType: { type: Sequelize.STRING(191), allowNull: false, defaultValue: "TEXT" },
       pollAllowOther: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
@@ -382,19 +385,6 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       text: { type: Sequelize.STRING(191), allowNull: false }
-    });
-    
-    this.defineModel("ThreadUserGroupRole", {
-      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
-      threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
-      userGroupId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 }  },
-      role: { type: Sequelize.STRING(191), allowNull: false  }
-    }, {
-      indexes: [{
-        name: "UN_THREADUSERGROUPROLE_THREADID_USERGROUPID",
-        unique: true,
-        fields: ["threadId", "userGroupId"]
-      }]
     });
     
     this.Message = this.defineModel("Message", {
@@ -640,6 +630,13 @@ export class Models {
       priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 },
       color: { type: Sequelize.STRING(191), allowNull: false }
     });
+
+    this.Unread = this.defineModel("Unread", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
+      path: { type: Sequelize.STRING(191), allowNull: false },
+      userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
+    });
+    
   }
 
   /**
@@ -649,7 +646,7 @@ export class Models {
    * @param {Object} attributes model attributes
    * @param {Object} options model options
    */
-  defineModel(name: string, attributes: any, options?: any): Sequelize.Model<any, any> {
+  private defineModel(name: string, attributes: any, options?: any): Sequelize.Model<any, any> {
     const result = this.sequelize.define(name, attributes, Object.assign(options || {}, {
       charset: "utf8mb4",
       dialectOptions: {
@@ -842,6 +839,21 @@ export class Models {
   }
 
   /**
+   * Finds single thread by chat group id and owner id 
+   * 
+   * @param groupId chatGroupId
+   * @returns Promise for found thread or null if not found  
+   */
+  public findThreadByGroupIdAndOwnerId(groupId: number, ownerId: string): PromiseLike<ThreadModel> {
+    return this.Thread.findOne({ 
+      where: { 
+        groupId : groupId, 
+        ownerId: ownerId 
+      } 
+    });
+  }
+
+  /**
    * Lists threads
    * 
    * @param groupIds filter by group ids
@@ -892,6 +904,22 @@ export class Models {
         id: id
       },
       silent: silentUpdate ? silentUpdate : false
+    });
+  }
+
+  /**
+   * Updates thread title
+   * 
+   * @param id thread id 
+   * @param title title
+   */
+  public updateThreadTitle(id: number, title: string) {
+    return this.sequelize.models.Thread.update({
+      title: title,
+    }, {
+      where: {
+        id: id
+      }
     });
   }
 
@@ -3078,6 +3106,71 @@ export class Models {
 
     return this.DeliveryQuality.findAll({ 
       where: where,
+    });
+  }
+
+  // Unread
+
+  /**
+   * Creates new unread
+   * 
+   * @param id id
+   * @param path path
+   * @param userId user id
+   * @returns promise for created unread
+   */
+  public createUnread(id: string, path: string, userId: string): PromiseLike<UnreadModel> {
+    return this.Unread.create({
+      id: id,
+      path: path,
+      userId: userId
+    } as any);
+  }
+
+  /**
+   * Finds unread
+   * 
+   * @param id id 
+   * @returns promise for delivery quality
+   */
+  public findUnreadById(id: string): PromiseLike<UnreadModel> {
+    return this.Unread.findOne({
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Lists unreads by path like and user id
+   * 
+   * @param path path like
+   * @param userId user id 
+   * @returns promise for unreads
+   */
+  public listUnreadsByPathLikeAndUserId(path: string, userId: string): PromiseLike<UnreadModel[]> {
+    const where: any = {
+      userId: userId
+    }
+    
+    where.path = { [Sequelize.Op.like]: path };
+
+    return this.Unread.findAll({
+      where: where
+    });
+  }
+
+  /**
+   * Deletes unread
+   * 
+   * @param id id 
+   * @returns promise for deletion
+   */
+  public deleteUnread(id: string): PromiseLike<number> {
+    return this.Unread.destroy({
+      where: {
+        id: id
+      }
     });
   }
 

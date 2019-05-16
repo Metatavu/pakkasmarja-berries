@@ -1,7 +1,8 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
+import chatPermissions from "./chat-permissions";
 import auth from "./auth";
-import { ChatGroup, ChatGroupType, ChatThread, ChatThreadGroupPermission, ChatGroupPermissionScope, ChatThreadPermissionScope, UserGroup, ChatGroupGroupPermission, ChatThreadUserPermission } from "../rest/model/models";
+import { ChatGroup, ChatGroupType, ChatThread, ChatThreadGroupPermission, UserGroup, ChatThreadUserPermission } from "../rest/model/models";
 import mqtt from "./mqtt";
 import ApplicationRoles from "../rest/application-roles";
 
@@ -224,211 +225,14 @@ const deleteChatThread = async (token: string, threadId: number) => {
     .expect(204);
 }
 
-/**
- * Creates chat group group permission
- * 
- * @param token token
- * @param title title
- * @param type type
- * @returns promise for chat group
- */
-const createChatGroupGroupPermission = (token: string, chatGroupId: number, userGroupId: string, scope: ChatGroupPermissionScope): Promise<ChatGroupGroupPermission> => {
-  const payload: ChatGroupGroupPermission = {
-    id: null,
-    chatGroupId: chatGroupId,
-    userGroupId: userGroupId,
-    scope: scope
-  };
-
-  return request("http://localhost:3002")
-    .post(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * Creates chat group group permission
- * 
- * @param token token
- * @param title title
- * @param type type
- * @returns promise for chat group
- */
-const createChatThreadGroupPermission = (token: string, chatThreadId: number, userGroupId: string, scope: ChatThreadPermissionScope): Promise<ChatThreadGroupPermission> => {
-  const payload: ChatThreadGroupPermission = {
-    id: null,
-    chatThreadId: chatThreadId,
-    userGroupId: userGroupId,
-    scope: scope
-  };
-
-  return request("http://localhost:3002")
-    .post(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * Update chat group group permission
- * 
- * @param token token
- * @param chatGroupId chatGroupId
- * @param payload payload
- * @returns promise for updated permission
- */
-const updateChatThreadGroupPermission = (token: string, chatThreadId: number, payload: ChatThreadGroupPermission): Promise<ChatThreadGroupPermission> => {
-  return request("http://localhost:3002")
-    .put(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions/${payload.id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * Finds chat group group permission
- * 
- * @param token token
- * @param chatGroupId chatGroupId
- * @param payload payload
- * @returns promise for updated permission
- */
-const findChatThreadGroupPermission = (token: string, chatThreadId: number, id: string): Promise<ChatThreadGroupPermission> => {
-  return request("http://localhost:3002")
-    .get(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions/${id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * List chat group group permissions
- * 
- * @param token token
- * @param id chat group id
- * @param expectStatus 
- * @returns promise for chat group group permissions
- */
-const listChatThreadGroupPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadGroupPermission[]> => {
-  return request("http://localhost:3002")
-    .get(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .expect(expectStatus || 200)
-    .then((response) => {
-      return response.body;
-    });  
-}
-
-/**
- * Creates chat user user permission
- * 
- * @param token token
- * @param title title
- * @param type type
- * @returns promise for chat user
- */
-const createChatThreadUserPermission = (token: string, chatThreadId: number, userId: string, scope: ChatThreadPermissionScope): Promise<ChatThreadUserPermission> => {
-  const payload: ChatThreadUserPermission = {
-    id: null,
-    chatThreadId: chatThreadId,
-    userId: userId,
-    scope: scope
-  };
-
-  return request("http://localhost:3002")
-    .post(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * Update chat user user permission
- * 
- * @param token token
- * @param chatUserId chatUserId
- * @param payload payload
- * @returns promise for updated permission
- */
-const updateChatThreadUserPermission = (token: string, chatThreadId: number, payload: ChatThreadUserPermission): Promise<ChatThreadUserPermission> => {
-  return request("http://localhost:3002")
-    .put(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${payload.id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .send(payload)
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * Finds chat user user permission
- * 
- * @param token token
- * @param chatUserId chatUserId
- * @param payload payload
- * @returns promise for updated permission
- */
-const findChatThreadUserPermission = (token: string, chatThreadId: number, id: string): Promise<ChatThreadUserPermission> => {
-  return request("http://localhost:3002")
-    .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${id}`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .expect(200)
-    .then((response) => {
-      return response.body;
-    });
-}
-
-/**
- * List chat user user permissions
- * 
- * @param token token
- * @param id chat user id
- * @param expectStatus 
- * @returns promise for chat user user permissions
- */
-const listChatThreadUserPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadUserPermission[]> => {
-  return request("http://localhost:3002")
-    .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
-    .set("Authorization", `Bearer ${token}`)
-    .set("Accept", "application/json")
-    .expect(expectStatus || 200)
-    .then((response) => {
-      return response.body;
-    });  
-}
-
 test("Test thread user permission create", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
   
-  const createdPermission = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
-  const foundPermissions = await listChatThreadUserPermissions(token, createdChatThread.id!);
+  const createdPermission = await chatPermissions.createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+  const foundPermissions = await chatPermissions.listChatThreadUserPermissions(token, createdChatThread.id!);
 
   t.deepEquals(foundPermissions, [createdPermission]);
 
@@ -446,9 +250,9 @@ test("Test thread user permission list", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-  const createdPermission1 = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+  const createdPermission1 = await chatPermissions.createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
 
-  const foundPermissions = await listChatThreadUserPermissions(token, createdChatThread.id!);
+  const foundPermissions = await chatPermissions.listChatThreadUserPermissions(token, createdChatThread.id!);
 
   t.equal(foundPermissions.length, 1);
   t.deepEquals(foundPermissions, [ createdPermission1 ]);
@@ -467,13 +271,13 @@ test("Test thread user permission update", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Test thread user permission update)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-  const createdPermission = await createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
+  const createdPermission = await chatPermissions.createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
   t.equal(createdPermission.scope, "ACCESS");
 
-  const updatedPermission: ChatThreadUserPermission = await updateChatThreadUserPermission(token, createdChatThread.id!, { ... createdPermission, scope: "ACCESS" });
+  const updatedPermission: ChatThreadUserPermission = await chatPermissions.updateChatThreadUserPermission(token, createdChatThread.id!, { ... createdPermission, scope: "ACCESS" });
   t.equal(updatedPermission.scope, "ACCESS");
 
-  const foundPermission: ChatThreadUserPermission = await findChatThreadUserPermission(token, createdChatThread.id!, createdPermission.id!);
+  const foundPermission: ChatThreadUserPermission = await chatPermissions.findChatThreadUserPermission(token, createdChatThread.id!, createdPermission.id!);
   t.equal(foundPermission.scope, "ACCESS");
 
   await deleteChatThread(token, createdChatThread.id!);    
@@ -491,8 +295,8 @@ test("Test thread group permission create", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-  const createdPermission = await createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
-  const foundPermissions = await listChatThreadGroupPermissions(token, createdChatThread.id!);
+  const createdPermission = await chatPermissions.createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
+  const foundPermissions = await chatPermissions.listChatThreadGroupPermissions(token, createdChatThread.id!);
 
   t.deepEquals(foundPermissions, [createdPermission]);
 
@@ -511,9 +315,9 @@ test("Test thread group permission list", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-  const createdPermission1 = await createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
+  const createdPermission1 = await chatPermissions.createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
 
-  const foundPermissions = await listChatThreadGroupPermissions(token, createdChatThread.id!);
+  const foundPermissions = await chatPermissions.listChatThreadGroupPermissions(token, createdChatThread.id!);
 
   t.equal(foundPermissions.length, 1);
   t.deepEquals(foundPermissions, [ createdPermission1 ]);
@@ -533,13 +337,13 @@ test("Test thread group permission update", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
-  const createdPermission = await createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
+  const createdPermission = await chatPermissions.createChatThreadGroupPermission(token, createdChatThread.id!, userGroups[0].id!, "ACCESS");
   t.equal(createdPermission.scope, "ACCESS");
 
-  const updatedPermission: ChatThreadGroupPermission = await updateChatThreadGroupPermission(token, createdChatThread.id!, { ... createdPermission, scope: "ACCESS" });
+  const updatedPermission: ChatThreadGroupPermission = await chatPermissions.updateChatThreadGroupPermission(token, createdChatThread.id!, { ... createdPermission, scope: "ACCESS" });
   t.equal(updatedPermission.scope, "ACCESS");
 
-  const foundPermission: ChatThreadGroupPermission = await findChatThreadGroupPermission(token, createdChatThread.id!, createdPermission.id!);
+  const foundPermission: ChatThreadGroupPermission = await chatPermissions.findChatThreadGroupPermission(token, createdChatThread.id!, createdPermission.id!);
   t.equal(foundPermission.scope, "ACCESS");
 
   await deleteChatThread(token, createdChatThread.id!);    
@@ -666,16 +470,13 @@ test("Lists chat thread permissions", async (t) => {
 
   t.notEqual(userGroup2, null);
 
-  const token1 = await auth.getTokenUser1([]);
-  const token2 = await auth.getTokenUser2([]);
-
   const createdGroups1 = await Promise.all([
-    createChatGroup(token, "Group 1", "CHAT")
+    await createChatGroup(token, "Group 1", "CHAT")
   ]);
 
   const createdGroups2 = await Promise.all([
-    createChatGroup(token, "Group 2", "CHAT"),
-    createChatGroup(token, "Group 3", "QUESTION")
+    await createChatGroup(token, "Group 2", "CHAT"),
+    await createChatGroup(token, "Group 3", "QUESTION")
   ]);
 
   const createdChatThreads1 = await Promise.all([
@@ -689,14 +490,17 @@ test("Lists chat thread permissions", async (t) => {
     await createChatThread(token, createdGroups2[1].id!, "Thread 3.1")
   ]); 
   
-  await createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "TRAVERSE");
-  await createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "TRAVERSE");
-  await createChatGroupGroupPermission(token, createdGroups2[1].id!, userGroup2!.id!, "TRAVERSE");
-  await createChatThreadGroupPermission(token, createdChatThreads1[0].id!, userGroup1!.id!, "ACCESS");
-  await createChatThreadGroupPermission(token, createdChatThreads1[1].id!, userGroup1!.id!, "ACCESS");
-  await createChatThreadGroupPermission(token, createdChatThreads2[0].id!, userGroup2!.id!, "ACCESS");
-  await createChatThreadGroupPermission(token, createdChatThreads2[1].id!, userGroup2!.id!, "ACCESS");
-  await createChatThreadGroupPermission(token, createdChatThreads2[2].id!, userGroup2!.id!, "ACCESS");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "TRAVERSE");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "TRAVERSE");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[1].id!, userGroup2!.id!, "TRAVERSE");
+  await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads1[0].id!, userGroup1!.id!, "ACCESS");
+  await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads1[1].id!, userGroup1!.id!, "ACCESS");
+  await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads2[0].id!, userGroup2!.id!, "ACCESS");
+  await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads2[1].id!, userGroup2!.id!, "ACCESS");
+  await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads2[2].id!, userGroup2!.id!, "ACCESS");
+
+  const token1 = await auth.getTokenUser1([]);
+  const token2 = await auth.getTokenUser2([]);
 
   t.deepEqual(await listChatThreads(token1), createdChatThreads1);
   t.deepEqual(await listChatThreads(token2), createdChatThreads2);

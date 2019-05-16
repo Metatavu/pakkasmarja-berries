@@ -1,10 +1,59 @@
 import * as test from "blue-tape"; 
 import * as request from "supertest";
+import chatPermissions from "./chat-permissions";
 import auth from "./auth";
-import { ChatGroup, ChatGroupType, ChatThread, ChatMessage } from "../rest/model/models";
+import { ChatGroup, ChatGroupType, ChatThread, ChatMessage, UserGroup, Unread } from "../rest/model/models";
 import mqtt from "./mqtt";
 import database from "./database";
 import ApplicationRoles from "../rest/application-roles";
+
+/**
+ * Sorts list by id
+ * 
+ * @param list list
+ * @return sorted list
+ */
+const sorted = (list: any[]) => {
+  list.sort((a, b) => {
+    return a.id! - b.id!;
+  });
+  
+  return list;
+}
+
+/**
+ * Lists chat groups
+ * 
+ * @param token token
+ * @returns promise for chat groups
+ */
+const listUserGroups = (token: string): Promise<UserGroup[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/userGroups`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then((response) => {
+      return sorted(response.body);
+    });  
+}
+
+/**
+ * Lists unreads
+ * 
+ * @param token token
+ * @returns promise for unreads
+ */
+const listUnreads = (token: string, pathPrefix: string): Promise<Unread[]> => {
+  return request("http://localhost:3002")
+    .get(`/rest/v1/unreads?pathPrefix=${pathPrefix}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then((response) => {
+      return sorted(response.body);
+    });  
+}
 
 /**
  * Creates chat group
@@ -256,6 +305,14 @@ const getDate = (year: number, month: number, date: number) => {
   return result;
 }
 
+const waitAsync = (timeout: number) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, timeout);
+  });
+}
+
 test("Create chat message", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   
@@ -415,4 +472,72 @@ test("Deletes chat message", async (t) => {
   }
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Create chat message unreads", async (t) => {
+  const token = await auth.getAdminToken([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  const token1 = await auth.getTokenUser1([]);
+  const token2 = await auth.getTokenUser2([]);
+
+  const userGroups = await listUserGroups(token);
+
+  const userGroup1 = userGroups.find((userGroup) => {
+    return userGroup.name == "testgroup1";
+  });
+
+  t.notEqual(userGroup1, null);
+
+  const userGroup2 = userGroups.find((userGroup) => {
+    return userGroup.name == "testgroup2";
+  });
+
+  t.notEqual(userGroup2, null);
+
+  const chatGroup1 = await createChatGroup(token, "Group 1", "CHAT");
+  const chatGroup2 = await createChatGroup(token, "Group 2", "CHAT");
+  const chatThread1 = await createChatThread(token, chatGroup1.id!, "Thread 1");
+  const chatThread2 = await createChatThread(token, chatGroup2.id!, "Thread 2");
+
+  await chatPermissions.createChatThreadUserPermission(token, chatThread1.id!, auth.getUser1Id(), "ACCESS");
+  await chatPermissions.createChatThreadGroupPermission(token, chatThread1.id!, userGroup1!.id!, "ACCESS");
+  await chatPermissions.createChatGroupGroupPermission(token, chatGroup1.id!, userGroup2!.id!, "MANAGE");
+  await chatPermissions.createChatGroupGroupPermission(token, chatGroup2.id!, userGroup1!.id!, "ACCESS");
+  
+  const chatMessage1 = await createChatMessage(token, chatThread1.id!, "Message!");
+  const chatMessage2 = await createChatMessage(token1, chatThread2.id!, "Message!");
+
+  await waitAsync(2000);
+
+  const adminGroupd1Unreads = await listUnreads(token, `chat-${chatGroup1.id}`); 
+  const adminGroupd2Unreads = await listUnreads(token, `chat-${chatGroup2.id}`); 
+  const user1Group1Unreads = await listUnreads(token1, `chat-${chatGroup1.id}`);
+  const user2Group1Unreads = await listUnreads(token2, `chat-${chatGroup1.id}`);
+  const user1Group2Unreads = await listUnreads(token1, `chat-${chatGroup2.id}`);
+  const user2Group2Unreads = await listUnreads(token2, `chat-${chatGroup2.id}`);
+
+  // No unreads for admin into chat group 1 (posted by admin)
+  t.equals(adminGroupd1Unreads.length, 0);
+
+  // One unread for admin in chat group 2 (posted by user 1)
+  t.equals(adminGroupd2Unreads.length, 1);
+  t.equals(adminGroupd2Unreads[0].path,  `chat-${chatGroup2.id}-${chatThread2.id}-${chatMessage2.id}`);
+
+  // One unread for user 1 & user 2 in group 1
+  t.equals(user1Group1Unreads.length, 1);
+  t.equals(user2Group1Unreads.length, 1);
+  t.equals(user1Group1Unreads[0].path, `chat-${chatGroup1.id}-${chatThread1.id}-${chatMessage1.id}`);
+  t.equals(user2Group1Unreads[0].path, `chat-${chatGroup1.id}-${chatThread1.id}-${chatMessage1.id}`);
+  
+  // No unreads for user 1 or user 2 in group 2
+  t.equals(user1Group2Unreads.length, 0);
+  t.equals(user2Group2Unreads.length, 0);
+
+  await deleteChatMessage(token1, chatThread2.id!, chatMessage2.id!);
+  await deleteChatMessage(token, chatThread1.id!, chatMessage1.id!);
+  await deleteChatThread(token, chatThread2.id!);
+  await deleteChatThread(token, chatThread1.id!);
+  await deleteChatGroup(token, chatGroup2.id!);
+  await deleteChatGroup(token, chatGroup1.id!);
+
+  await auth.removeAdminRoles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
