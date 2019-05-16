@@ -30,6 +30,8 @@ export interface Mqtt {
   topic: string,
   topicPrefix: string,
   topicPostfix: string
+  username?: string,
+  password?: string
 }
 
 export interface ContractDocumentStatus {
