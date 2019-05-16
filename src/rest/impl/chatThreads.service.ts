@@ -11,6 +11,7 @@ import { Promise } from "bluebird";
 import mqtt from "../../mqtt";
 import userManagement from "../../user-management";
 import chatThreadPermissionController from "../../user-management/chat-thread-permission-controller";
+import * as i18n from "i18n";
 
 /**
  * Threads REST service
