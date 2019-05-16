@@ -456,10 +456,26 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
+    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
+
     const ownerId = this.getLoggedUserId(req);
-    const thread = await models.createThread(chatGroup.id, ownerId, payload.title, payload.description, chatGroup.type, payload.imageUrl, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    const thread = await models.createThread(
+      chatGroup.id,
+      ownerId,
+      payload.title,
+      payload.description,
+      chatGroup.type,
+      payload.imageUrl,
+      payload.answerType,
+      allowOther,
+      payload.expiresAt);
+
     const resource = await chatThreadPermissionController.createChatThreadResource(thread);    
     await chatThreadPermissionController.createChatThreadPermission(thread, resource, "chat-thread:access", []);
+    const createPollPredefinedTextPromises = (payload.pollPredefinedTexts || []).map((predefinedText) => {
+      return models.createThreadPredefinedText(thread.id, predefinedText);
+    });
+    await Promise.all(createPollPredefinedTextPromises);
 
     res.status(200).send(await this.translateChatThread(thread, chatGroup));
 
@@ -584,7 +600,40 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    await models.updateThread(thread.id, thread.ownerId || null, payload.title, payload.description, payload.imageUrl, true, payload.answerType, payload.pollAllowOther || true, payload.expiresAt);
+    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
+
+    await models.updateThread(
+      thread.id,
+      thread.ownerId || null,
+      payload.title,
+      payload.description,
+      payload.imageUrl,
+      true,
+      payload.answerType,
+      allowOther,
+      payload.expiresAt);
+
+    const predefinedTextObjects = await models.listThreadPredefinedTextsByThreadId(thread.id);
+    const existingPredefinedTexts = predefinedTextObjects.map((predefinedTextObject) => {
+      return predefinedTextObject.text;
+    });
+
+    const payloadPredefinedTexts = payload.pollPredefinedTexts || [];
+    for (let i = 0; i < payloadPredefinedTexts.length; i++) {
+      const payloadPredefinedText = payloadPredefinedTexts[i];
+      const existingIndex = existingPredefinedTexts.indexOf(payloadPredefinedText);
+
+      if (existingIndex > -1) {
+        existingPredefinedTexts.splice(existingIndex, 1);
+      } else {
+        await models.createThreadPredefinedText(thread.id, payloadPredefinedText);
+      }
+    }
+
+    for (let i = 0; i < existingPredefinedTexts.length; i++) {
+      const existingText = existingPredefinedTexts[i];
+      await models.deleteThreadPredefinedTextByThreadIdAndText(thread.id, existingText);
+    }
 
     res.status(200).send(await this.translateChatThread(await models.findThread(chatThreadId), chatGroup));
 
@@ -755,12 +804,18 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       ? userManagement.getUserDisplayName(await userManagement.findUser(databaseChatThread.ownerId)) 
       : databaseChatThread.title;
 
+    const predefinedTextObjects = await models.listThreadPredefinedTextsByThreadId(databaseChatThread.id);
+    const predefinedTexts = predefinedTextObjects.map((predefinedTextObject) => {
+      return predefinedTextObject.text;
+    });
+
     const result: ChatThread = {
       id: databaseChatThread.id,
       title: title || "",
       description: databaseChatThread.description,
       imageUrl: databaseChatThread.imageUrl,
       groupId: databaseChatThread.groupId,
+      pollPredefinedTexts: predefinedTexts,
       answerType: answerType,
       expiresAt: databaseChatThread.expiresAt || null,
       pollAllowOther: databaseChatThread.pollAllowOther
