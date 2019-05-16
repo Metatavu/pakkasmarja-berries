@@ -30,7 +30,7 @@ export default abstract class ChatGroupsService extends AbstractService {
    * Creates new chat group
    * @summary Creates new chat group
    * Accepted parameters:
-    * - (body) ChatGroup body - Payload
+    * - (body) ChatThread body - Payload
   */
   public abstract createChatGroup(req: Request, res: Response): Promise<void>;
 

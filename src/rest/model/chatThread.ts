@@ -19,6 +19,7 @@ export interface ChatThread {
     imageUrl: string  | null;
     answerType: ChatThread.AnswerTypeEnum ;
     pollAllowOther: boolean  | null;
+    pollPredefinedTexts: Array<string>  | null;
     expiresAt: Date  | null;
 }    
 
@@ -30,6 +31,7 @@ export interface ChatThreadOpt {
     imageUrl?: string;
     answerType?: ChatThread.AnswerTypeEnum;
     pollAllowOther?: boolean;
+    pollPredefinedTexts?: Array<string>;
     expiresAt?: Date;
 }
 export namespace ChatThread {
