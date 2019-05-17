@@ -8,7 +8,7 @@ module.exports = {
   up: async (query: QueryInterface) => {
     const role = await userManagement.findRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
     if (!role) {
-      userManagement.createRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
+      await userManagement.createRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
     }
 
     await query.createTable("DataSheets", {
