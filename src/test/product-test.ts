@@ -402,31 +402,6 @@ test("List product prices", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
 });
 
-test("List product prices - 400 - no sort", async (t) => {
-  await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
-
-  try {
-    const createdProduct = await createProduct(token);
-    t.notEqual(createdProduct, null);
-    t.notEqual(createdProduct.id, null);
-
-    const createdProductPrice = await createProductPrice(token, createdProduct);
-    t.notEqual(createdProductPrice, null);
-    t.notEqual(createdProductPrice.id, null);
-
-    await request("http://localhost:3002")
-      .get(`/rest/v1/products/${createdProduct.id}/prices`)
-      .set("Authorization", `Bearer ${token}`)
-      .set("Accept", "application/json")
-      .expect(400)
-  } finally {
-    await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
-  }
-
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_PRODUCTS]);
-});
-
 test("List product prices - 400 - no product id", async (t) => {
   await database.executeFiles(testDataDir, ["product-test-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
