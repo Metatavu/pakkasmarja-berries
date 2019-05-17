@@ -120,7 +120,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
       return;
     }
 
-    const productPrices: ProductPriceModel[] = await models.listProductPrices(productId, sort || "CREATED_AT_ASC", firstResult, maxResults);
+    const productPrices: ProductPriceModel[] = await models.listProductPrices(productId, sort || "CREATED_AT_DESC", firstResult, maxResults);
 
     res.status(200).send(await Promise.all(productPrices.map((productPrice) => {
       return this.translateDatabaseProductPrice(productPrice);

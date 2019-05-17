@@ -3057,7 +3057,7 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of deliveries
    */
-  public listProductPrices(productId: string, sort: string, firstResult?: number, maxResults?: number): Bluebird<ProductPriceModel[]> {
+  public listProductPrices(productId: string, sort: "CREATED_AT_ASC" | "CREATED_AT_DESC", firstResult?: number, maxResults?: number): Bluebird<ProductPriceModel[]> {
     let where: any = {};
     let order: any;
 
