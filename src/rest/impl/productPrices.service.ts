@@ -114,12 +114,8 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
       return;
     }
 
-    if (!sort) {
-      this.sendBadRequest(res, "Missing required query param sort");
-      return;
-    }
 
-    const productPrices: ProductPriceModel[] = await models.listProductPrices(productId, sort, firstResult, maxResults);
+    const productPrices: ProductPriceModel[] = await models.listProductPrices(productId, sort || "CREATED_AT_ASC", firstResult, maxResults);
 
     res.status(200).send(await Promise.all(productPrices.map((productPrice) => {
       return this.translateDatabaseProductPrice(productPrice);
