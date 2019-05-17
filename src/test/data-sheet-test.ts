@@ -123,6 +123,8 @@ test("Create data sheet", async (t) => {
   t.equal(createdDataSheet.name, "sheet-name");
   t.deepEquals(createdDataSheet.data,  data);
   await deleteDataSheet(token, createdDataSheet.id!);
+  
+  await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
 test("Update data sheet", async (t) => {
@@ -158,6 +160,8 @@ test("Update data sheet", async (t) => {
   t.deepEqual(foundDataSheet, updatedDataSheet);
 
   await deleteDataSheet(token, createdDataSheet.id!);
+  
+  await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
 test("Finds data sheet", async (t) => {
@@ -175,6 +179,8 @@ test("Finds data sheet", async (t) => {
   
   t.deepEqual(foundDataSheet, createdDataSheet);
   await deleteDataSheet(token, createdDataSheet.id!);
+
+  await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
 test("Lists data sheet", async (t) => {
@@ -201,6 +207,8 @@ test("Lists data sheet", async (t) => {
   await Promise.all(createdDataSheets.map((createdDataSheet) => {
     return deleteDataSheet(token, createdDataSheet.id!);
   }));
+
+  await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
 test("Deletes data sheet", async (t) => {
@@ -217,4 +225,6 @@ test("Deletes data sheet", async (t) => {
   await findDataSheet(token, createdDataSheet.id!, 200);
   await deleteDataSheet(token, createdDataSheet.id!);
   await findDataSheet(token, createdDataSheet.id!, 404);
+  
+  await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
