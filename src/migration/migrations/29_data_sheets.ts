@@ -6,10 +6,7 @@ import ApplicationRoles from "../../rest/application-roles";
 module.exports = {
 
   up: async (query: QueryInterface) => {
-    const role = await userManagement.findRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
-    if (!role) {
-      await userManagement.createRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
-    }
+    await userManagement.createRealmRole(ApplicationRoles.MANAGE_DATA_SHEETS);
 
     await query.createTable("DataSheets", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false },
