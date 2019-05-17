@@ -113,8 +113,8 @@ test("Create data sheet", async (t) => {
 
   const name = "sheet-name";
   const data: string[][] = [
-    ["1"], ["2"]
-    ["2"], ["4"]
+    ["1", "2"],
+    ["2", "4"]
   ];
   
   const createdDataSheet = await createDataSheet(token, name, data);
@@ -132,8 +132,8 @@ test("Update data sheet", async (t) => {
 
   const name = "sheet-name";
   const data: string[][] = [
-    ["1"], ["2"]
-    ["2"], ["4"]
+    ["1", "2"],
+    ["2", "4"]
   ];
   
   const createdDataSheet = await createDataSheet(token, name, data);
@@ -144,8 +144,8 @@ test("Update data sheet", async (t) => {
 
   const updateName = "update-name";
   const updateData: string[][] = [
-    ["6"], ["7"]
-    ["2"], ["4"]
+    ["6", "7"],
+    ["2", "4"]
   ];
 
   const updatedDataSheet = await updateDataSheet(token, createdDataSheet.id!, updateName, updateData);
@@ -169,8 +169,8 @@ test("Finds data sheet", async (t) => {
 
   const name = "sheet-name";
   const data: string[][] = [
-    ["1"], ["2"]
-    ["2"], ["4"]
+    ["1", "2"],
+    ["2", "4"]
   ];
 
   const createdDataSheet = await createDataSheet(token, name, data);
@@ -216,8 +216,8 @@ test("Deletes data sheet", async (t) => {
   
   const name = "sheet-name";
   const data: string[][] = [
-    ["1"], ["2"]
-    ["2"], ["4"]
+    ["1", "2"],
+    ["2", "4"]
   ];
 
   const createdDataSheet = await createDataSheet(token, name, data);
