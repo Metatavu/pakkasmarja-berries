@@ -141,7 +141,6 @@ test("Update data sheet", async (t) => {
   t.notEqual(createdDataSheet.id, null);
   t.equal(createdDataSheet.name, "sheet-name");
   t.deepEquals(createdDataSheet.data, data);
-  await deleteDataSheet(token, createdDataSheet.id!);
 
   const updateName = "update-name";
   const updateData: string[][] = [
