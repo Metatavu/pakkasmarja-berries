@@ -1011,11 +1011,12 @@ export class Models {
    * @param threadId thread id
    * @param createdBefore created before
    * @param createdAfter created after
+   * @param userId user id parameter
    * @param firstResult first result
    * @param maxResults max results
    * @return promise for messages
    */
-  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
+  public listMessages(threadId: number, createdBefore: Date | null,  createdAfter: Date | null, userId?: string, firstResult?: number, maxResults?: number): PromiseLike<MessageModel[]> {
     if (!threadId) {
       return Bluebird.resolve([]);
     }
@@ -1036,6 +1037,10 @@ export class Models {
       where.createdAt = {
         [Sequelize.Op.lt]: createdBefore
       };
+    }
+
+    if (userId) {
+      where.userId = userId;
     }
 
     return this.sequelize.models.Message.findAll({ 
