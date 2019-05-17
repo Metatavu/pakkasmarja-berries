@@ -140,7 +140,8 @@ test("Update data sheet", async (t) => {
   t.notEqual(createdDataSheet, null);
   t.notEqual(createdDataSheet.id, null);
   t.equal(createdDataSheet.name, "sheet-name");
-  t.deepEquals(createdDataSheet.data,  data);
+  t.deepEquals(createdDataSheet.data, data);
+  await deleteDataSheet(token, createdDataSheet.id!);
 
   const updateName = "update-name";
   const updateData: string[][] = [
@@ -207,6 +208,11 @@ test("Lists data sheet", async (t) => {
   await Promise.all(createdDataSheets.map((createdDataSheet) => {
     return deleteDataSheet(token, createdDataSheet.id!);
   }));
+
+
+  for (let i = 0; i < createdDataSheets.length; i++) {
+    await deleteDataSheet(token, createdDataSheets[i].id!);
+  }
 
   await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
