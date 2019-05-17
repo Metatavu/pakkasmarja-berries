@@ -82,9 +82,9 @@ const findDataSheet = (token: string, id: string, expectStatus?: number): Promis
  * @param token token
  * @returns promise for data sheets
  */
-const listDataSheets = (token: string): Promise<DataSheet[]> => {
+const listDataSheets = (token: string, name: string): Promise<DataSheet[]> => {
   return request("http://localhost:3002")
-    .get(`/rest/v1/dataSheets`)
+    .get(`/rest/v1/dataSheets?name=${name}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(200)
@@ -192,17 +192,9 @@ test("Lists data sheet", async (t) => {
     createDataSheet(token, "sheet-3", []),
   ]);
 
-  const foundDataSheets = await listDataSheets(token);
+  const foundDataSheets = await listDataSheets(token, "sheet-2");
 
-  foundDataSheets.sort((a, b) => {
-    return a.id!.localeCompare(b.id!);
-  });
-
-  createdDataSheets.sort((a, b) => {
-    return a.id!.localeCompare(b.id!);
-  });
-
-  t.deepEqual(createdDataSheets, foundDataSheets);
+  t.deepEqual(foundDataSheets, [ createdDataSheets[1] ]);
 
   await Promise.all(createdDataSheets.map((createdDataSheet) => {
     return deleteDataSheet(token, createdDataSheet.id!);
