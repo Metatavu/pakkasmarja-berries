@@ -1,7 +1,7 @@
 import * as Sequelize from "sequelize";
 import { QueryInterface } from "sequelize";
 import userManagement from "../../user-management";
-import ApplicationRoles from "src/rest/application-roles";
+import ApplicationRoles from "../../rest/application-roles";
 
 module.exports = {
 
