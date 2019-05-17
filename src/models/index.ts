@@ -308,6 +308,17 @@ export interface UnreadModel {
   updatedAt: Date;
 }
 
+/**
+ * Interface for unread
+ */
+export interface DataSheetModel { 
+  id: string | null;
+  name: string;
+  data: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const PRINT_MODEL_INTERFACES = false;
 
 export class Models { 
@@ -324,6 +335,7 @@ export class Models {
   private ProductPrice: Sequelize.Model<any, ProductPriceModel>;
   private DeliveryQuality: Sequelize.Model<any, DeliveryQualityModel>;
   private Unread: Sequelize.Model<any, UnreadModel>;
+  private DataSheet: Sequelize.Model<any, DataSheetModel>;
 
   public init(sequelize: Sequelize.Sequelize) {
     this.sequelize = sequelize;
@@ -635,6 +647,12 @@ export class Models {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       path: { type: Sequelize.STRING(191), allowNull: false },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
+    });
+
+    this.DataSheet = this.defineModel("DataSheet", {
+      id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 }  },
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      data: { type: "LONGTEXT", allowNull: false }
     });
     
   }
@@ -1168,7 +1186,7 @@ export class Models {
    * @param url url 
    * @returns promise for public file
    */
-  createPublicFile(id: string, url: string): PromiseLike<PublicFileModel> {
+  public createPublicFile(id: string, url: string): PromiseLike<PublicFileModel> {
     return this.PublicFile.create({
       id: id,
       url: url
@@ -1181,7 +1199,7 @@ export class Models {
    * @param id public file id
    * @returns promise for public file or null if not found
    */
-  findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
+  public findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
     return this.PublicFile.findOne({ where: { id : id } });
   }
   
@@ -1192,7 +1210,7 @@ export class Models {
    * @param maxResults max results
    * @returns promise for public files
    */
-  listPublicFiles(firstResult?: number, maxResults?: number): PromiseLike<PublicFileModel[]> {
+  public listPublicFiles(firstResult?: number, maxResults?: number): PromiseLike<PublicFileModel[]> {
     return this.PublicFile.findAll({ offset: firstResult, limit: maxResults });
   }
   
@@ -1203,7 +1221,7 @@ export class Models {
    * @param url url 
    * @returns promise for update
    */
-  updatePublicFile(id: number, url: string): PromiseLike<[number, any]> {
+  public updatePublicFile(id: number, url: string): PromiseLike<[number, any]> {
     return this.PublicFile.update({
       url: url
     }, {
@@ -1219,7 +1237,7 @@ export class Models {
    * @param id public file id
    * @returns promise for delete
    */
-  deletePublicFile(id: number): PromiseLike<number> {
+  public deletePublicFile(id: number): PromiseLike<number> {
     return this.PublicFile.destroy({ where: {id: id} });
   }
 
@@ -3180,6 +3198,74 @@ export class Models {
         id: id
       }
     });
+  }
+  
+  // data sheets
+  
+  /**
+   * Creates data sheet
+   * 
+   * @param url url 
+   * @returns promise for data sheet
+   */
+  public createDataSheet(id: string, name: string, data: string): PromiseLike<DataSheetModel> {
+    return this.DataSheet.create({
+      id: id,
+      name: name,
+      data: data
+    } as any);
+  }
+  
+  /**
+   * Finds a data sheet
+   * 
+   * @param id data sheet id
+   * @returns promise for data sheet or null if not found
+   */
+  public findDataSheetById(id: number): PromiseLike<DataSheetModel | null> {
+    return this.DataSheet.findOne({ where: { id : id } });
+  }
+  
+  /**
+   * Lists data sheets by name
+   * 
+   * @param name name
+   * @returns promise for data sheets
+   */
+  public listDataSheetsByName(name: string): PromiseLike<DataSheetModel[]> {
+    return this.DataSheet.findAll({ 
+      where: {
+        name: name
+      }
+    });
+  }
+  
+  /**
+   * Updates data sheet
+   * 
+   * @param id data sheet id
+   * @param url url 
+   * @returns promise for update
+   */
+  public updateDataSheet(id: number, name: string, data: string): PromiseLike<[number, any]> {
+    return this.DataSheet.update({
+      data: data,
+      name: name
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+  
+  /**
+   * Deletes a data sheet
+   * 
+   * @param id data sheet id
+   * @returns promise for delete
+   */
+  public deleteDataSheet(id: number): PromiseLike<number> {
+    return this.DataSheet.destroy({ where: {id: id} });
   }
 
 }
