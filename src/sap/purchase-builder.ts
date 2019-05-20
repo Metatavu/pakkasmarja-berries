@@ -57,7 +57,7 @@ export interface TransferLineBinAllocation {
  */
 export interface TransferLine {
   ItemCode: string,
-  Quantity: number,
+  Quantity?: number,
   BinAllocations: TransferLineBinAllocation[]
 }
 

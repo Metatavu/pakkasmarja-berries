@@ -17,6 +17,8 @@ export * from './contractDocumentTemplate';
 export * from './credentials';
 export * from './dataSheet';
 export * from './delivery';
+export * from './deliveryLoan';
+export * from './deliveryLoanItem';
 export * from './deliveryNote';
 export * from './deliveryPlace';
 export * from './deliveryQuality';
