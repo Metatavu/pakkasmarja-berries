@@ -58,7 +58,6 @@ export default abstract class ChatMessagesService extends AbstractService {
     * - (path) number chatThreadId - Chat thread
     * - (query) string createdBefore - Messages created before given time
     * - (query) string createdAfter - Messages created after given time
-    * - (query) string userId - Messages created by given user
     * - (query) number firstResult - Offset of first result. Defaults to 0
     * - (query) number maxResults - Max results. Defaults to 5
   */
