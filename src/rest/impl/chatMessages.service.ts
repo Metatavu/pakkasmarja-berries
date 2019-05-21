@@ -152,7 +152,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
 
     const createdBefore = req.query.createdBefore ? moment(req.query.createdBefore).toDate() : null;
     const createdAfter = req.query.createdAfter ? moment(req.query.createdAfter).toDate() : null;
-    const userId = thread.type === "POLL" ? this.getLoggedUserId(req) : req.query.userId || null;
+    const userId = thread.answerType === "POLL" ? this.getLoggedUserId(req) : req.query.userId || null;
     const firstResult = parseInt(req.query.firstResult) || 0;
     const maxResults = parseInt(req.query.maxResults) || 5;
 
