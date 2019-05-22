@@ -390,7 +390,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || []);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || []);
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
@@ -443,7 +443,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param loans
    * @return promise for success
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPrice: number, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[]) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[]) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
@@ -463,8 +463,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     builder.addPurchaseReceiptLine({
       ItemCode: sapItemCode,
       Quantity: delivery.amount,
-      Price: unitPriceWithBonus,
-      UnitPrice: unitPrice,
+      UnitPrice: unitPriceWithBonus,
       WarehouseCode: warehouseCode,
       U_PFZ_REF: this.compressUUID(delivery.id!)
     });
@@ -480,30 +479,52 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     loans.forEach((loan) => {
       const itemCode: string = config().sap.loanProductIds[loan.item];
-      const binAllocations: TransferLineBinAllocation[] = [];
 
       if (loan.returned > 0) {
+        const binAllocations: TransferLineBinAllocation[] = [];
         binAllocations.push({
           BinAbsEntry: 2,
           Quantity: loan.returned,
           BinActionType: "batToWarehouse"
         });
+        binAllocations.push({
+          BinAbsEntry: 3,
+          Quantity: loan.returned,
+          BinActionType: "batFromWarehouse"
+        });
+
+        const line: TransferLine = {
+          ItemCode: itemCode,
+          Quantity: loan.returned,
+          BinAllocations: binAllocations
+        };
+  
+        builder.addTransferLine(line);
       }
 
       if (loan.loaned > 0) {
+        const binAllocations: TransferLineBinAllocation[] = [];
         binAllocations.push({
           BinAbsEntry: 3,
           Quantity: loan.loaned,
+          BinActionType: "batToWarehouse"
+        });
+        binAllocations.push({
+          BinAbsEntry: 2,
+          Quantity: loan.loaned,
           BinActionType: "batFromWarehouse"
         });
+
+        const line: TransferLine = {
+          ItemCode: itemCode,
+          Quantity: loan.loaned,
+          BinAllocations: binAllocations
+        };
+  
+        builder.addTransferLine(line);
       }
 
-      const line: TransferLine = {
-        ItemCode: itemCode,
-        BinAllocations: binAllocations
-      };
 
-      builder.addTransferLine(line);
     });
 
     const xml = builder.buildXML();
