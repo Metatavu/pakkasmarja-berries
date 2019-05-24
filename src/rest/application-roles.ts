@@ -213,4 +213,11 @@ export default class ApplicationRoles {
     return "manage-product-prices";
   }
 
+  /**
+   * Role that allows managing data sheets
+   */
+  static get MANAGE_DATA_SHEETS() {
+    return "manage-data-sheets";
+  }
+
 }

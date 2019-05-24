@@ -2,10 +2,10 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import models, { DeliveryModel, DeliveryNoteModel, ProductModel, DeliveryPlaceModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
-import { Delivery, DeliveryNote, Contact } from "../model/models";
+import { Delivery, DeliveryNote, DeliveryLoan } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
-import PurchaseMessageBuilder from "../../sap/purchase-builder";
+import PurchaseMessageBuilder, { TransferLine, TransferLineBinAllocation } from "../../sap/purchase-builder";
 import moment = require("moment");
 import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
@@ -283,37 +283,39 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const productId = req.body.productId;
+    const payload: Delivery = req.body;
+
+    const productId = payload.productId;
     if (!productId) {
       this.sendBadRequest(res, "Missing required body param productId");
       return;
     }
 
-    const userId = req.body.userId;
+    const userId = payload.userId;
     if (!userId) {
       this.sendBadRequest(res, "Missing required body param userId");
       return;
     }
 
-    const time = req.body.time;
+    const time = payload.time;
     if (!time) {
       this.sendBadRequest(res, "Missing required body param time");
       return;
     }
 
-    const status = req.body.status;
+    const status = payload.status;
     if (!status) {
       this.sendBadRequest(res, "Missing required body param status");
       return;
     }
 
-    const amount = req.body.amount;
+    const amount = payload.amount;
     if (!amount) {
       this.sendBadRequest(res, "Missing required body param amount");
       return;
     }
 
-    const deliveryPlaceId = req.body.deliveryPlaceId;
+    const deliveryPlaceId = payload.deliveryPlaceId;
     if (!deliveryPlaceId) {
       this.sendBadRequest(res, "Missing required body param deliveryPlaceId");
       return;
@@ -325,7 +327,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const qualityId = req.body.qualityId;
+    const qualityId = payload.qualityId;
     const deliveryQuality = qualityId ? await models.findDeliveryQuality(qualityId) : null;
     if (qualityId && !deliveryQuality) {
       this.sendBadRequest(res, "Invalid qualityId");
@@ -388,7 +390,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPrice, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || []);
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
@@ -438,15 +440,17 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param unitPrice unit price for single sale unit
    * @param deliveryContactSapId CardCode of the Supplier
    * @param sapSalesPersonCode Receiving person code
+   * @param loans
    * @return promise for success
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPrice: number, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[]) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
     const notes = await this.getNotesString(delivery.id);
     const sapItemCode = product.sapItemCode;
     const warehouseCode = deliveryPlace.sapId;
+    const loanWarehouse = "100";
 
     builder.setPurchaseReceiptHeader({
       DocDate: date,
@@ -456,23 +460,71 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       SalesPersonCode: sapSalesPersonCode,
     });
 
-    
+    builder.addPurchaseReceiptLine({
+      ItemCode: sapItemCode,
+      Quantity: delivery.amount,
+      UnitPrice: unitPriceWithBonus,
+      WarehouseCode: warehouseCode,
+      U_PFZ_REF: this.compressUUID(delivery.id!)
+    });
+
     builder.setTransferHeader({
       CardCode: deliveryContactSapId,
       DocDate: date,
       Comments: notes,
-      WarehouseCode: warehouseCode,
-      FromWarehouseCode: warehouseCode,
+      WarehouseCode: loanWarehouse,
+      FromWarehouseCode: loanWarehouse,
       SalesPersonCode: sapSalesPersonCode,
     });
 
-    builder.addPurchaseReceiptLine({
-      ItemCode: sapItemCode,
-      Quantity: delivery.amount,
-      Price: unitPriceWithBonus,
-      UnitPrice: unitPrice,
-      WarehouseCode: warehouseCode,
-      U_PFZ_REF: this.compressUUID(delivery.id!)
+    loans.forEach((loan) => {
+      const itemCode: string = config().sap.loanProductIds[loan.item];
+
+      if (loan.returned > 0) {
+        const binAllocations: TransferLineBinAllocation[] = [];
+        binAllocations.push({
+          BinAbsEntry: 2,
+          Quantity: loan.returned,
+          BinActionType: "batToWarehouse"
+        });
+        binAllocations.push({
+          BinAbsEntry: 3,
+          Quantity: loan.returned,
+          BinActionType: "batFromWarehouse"
+        });
+
+        const line: TransferLine = {
+          ItemCode: itemCode,
+          Quantity: loan.returned,
+          BinAllocations: binAllocations
+        };
+  
+        builder.addTransferLine(line);
+      }
+
+      if (loan.loaned > 0) {
+        const binAllocations: TransferLineBinAllocation[] = [];
+        binAllocations.push({
+          BinAbsEntry: 3,
+          Quantity: loan.loaned,
+          BinActionType: "batToWarehouse"
+        });
+        binAllocations.push({
+          BinAbsEntry: 2,
+          Quantity: loan.loaned,
+          BinActionType: "batFromWarehouse"
+        });
+
+        const line: TransferLine = {
+          ItemCode: itemCode,
+          Quantity: loan.loaned,
+          BinAllocations: binAllocations
+        };
+  
+        builder.addTransferLine(line);
+      }
+
+
     });
 
     const xml = builder.buildXML();
@@ -516,7 +568,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       "amount": delivery.amount,
       "price": delivery.unitPriceWithBonus ? (delivery.unitPriceWithBonus * delivery.amount).toFixed(3) : null,
       "qualityId": delivery.qualityId,
-      "deliveryPlaceId": deliveryPlace.externalId
+      "deliveryPlaceId": deliveryPlace.externalId,
+      "loans": []
     };
 
     return result;

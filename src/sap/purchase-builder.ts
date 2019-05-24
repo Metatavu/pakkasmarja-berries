@@ -17,7 +17,6 @@ export interface PurchaseReceiptHeader {
 export interface PurchaseReceiptLine {
   ItemCode: string,
   Quantity: number,
-  Price: number,
   UnitPrice: number,
   WarehouseCode: string,
   U_PFZ_REF: string,
@@ -175,7 +174,6 @@ export default class PurchaseMessageBuilder {
       const line = lines.ele("Line");
       line.ele("ItemCode", purchaseReceiptLine.ItemCode);
       line.ele("Quantity", purchaseReceiptLine.Quantity.toFixed(3));
-      line.ele("Price", purchaseReceiptLine.Price.toFixed(3));
       line.ele("UnitPrice", purchaseReceiptLine.UnitPrice.toFixed(3));
       line.ele("WarehouseCode", purchaseReceiptLine.WarehouseCode);
       line.ele("U_PFZ_REF", purchaseReceiptLine.U_PFZ_REF);

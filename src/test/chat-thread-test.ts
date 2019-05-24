@@ -84,7 +84,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
  * @param imageUrl image url
  * @param expiresAt expires at
  */
-const createChatThread = (token: string, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date): Promise<ChatGroup> => {
+const createChatThread = (token: string, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date, predefinedTexts?: string[]): Promise<ChatGroup> => {
   const payload: ChatThread = {
     id: null,
     answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
@@ -93,6 +93,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
     groupId: groupId,
     imageUrl: imageUrl || null,
     pollAllowOther: true,
+    pollPredefinedTexts: predefinedTexts || [],
     title: title
   };
 
@@ -172,7 +173,7 @@ const listChatThreads = (token: string, groupId?: number, groupType?: ChatGroupT
  * @param expiresAt expires at
  * @returns promise for chat group
  */
-const updateChatThread = (token: string, id: number, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date): Promise<ChatThread> => {
+const updateChatThread = (token: string, id: number, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date, predefinedTexts?: string[]): Promise<ChatThread> => {
   const payload: ChatThread = {
     id: null,
     answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
@@ -181,6 +182,7 @@ const updateChatThread = (token: string, id: number, groupId: number, title: str
     groupId: groupId,
     imageUrl: imageUrl || null,
     pollAllowOther: true,
+    pollPredefinedTexts: predefinedTexts || [],
     title: title
   };
 

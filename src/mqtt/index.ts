@@ -146,7 +146,9 @@ export default new class Mqtt {
       const options: IClientOptions = { 
         host: config().mqtt.host,
         port: config().mqtt.port,
-        keepalive: 30 
+        keepalive: 30,
+        username: config().mqtt.username,
+        password: config().mqtt.password
       };
 
       this.client = mqtt.connect(url, options);

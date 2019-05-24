@@ -93,7 +93,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
  * @param imageUrl image url
  * @param expiresAt expires at
  */
-const createChatThread = (token: string, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date): Promise<ChatGroup> => {
+const createChatThread = (token: string, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date, pollPredefinedTexts?: string[]): Promise<ChatGroup> => {
   const payload: ChatThread = {
     id: null,
     answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
@@ -102,6 +102,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
     groupId: groupId,
     imageUrl: imageUrl || null,
     pollAllowOther: true,
+    pollPredefinedTexts: pollPredefinedTexts || [],
     title: title
   };
 

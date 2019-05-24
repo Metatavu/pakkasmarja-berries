@@ -30,6 +30,8 @@ export interface Mqtt {
   topic: string,
   topicPrefix: string,
   topicPostfix: string
+  username?: string,
+  password?: string
 }
 
 export interface ContractDocumentStatus {
@@ -160,6 +162,11 @@ export interface SAPItemGroupMinimumProfitEstimation {
   [key: string]: number
 }
 
+export interface SAPLoanProducts {
+  GRAY_BOX: string,
+  RED_BOX: string
+}
+
 export interface SAP {
   "import-files": SAPImportFile[];
   "item-group-categories": SAPItemGroupCategories;
@@ -167,6 +174,7 @@ export interface SAP {
   "item-group-prerequisites": SAPItemGroupPrerequisites;
   "item-group-minimum-profit-estimation": SAPItemGroupMinimumProfitEstimation;
   "xml-fileupload-path": string;
+  "loanProductIds": SAPLoanProducts
 }
 
 export interface VismaSign {
