@@ -550,6 +550,8 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   public async listChatThreads(req: Request, res: Response): Promise<void> {
     const groupId = req.query.groupId;
     const groupType: ChatGroupType = req.query.groupType;
+    const ownerId: string | undefined = req.query.ownerId;
+
     const allChatGroups = groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType);
     const chatGroups = await Promise.all(Promise.filter(allChatGroups, async (chatGroup) => {
       if (!chatGroup) {
@@ -558,17 +560,13 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
       const result = await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
 
-      console.log("Permission", chatGroup.id, result);
-
       return result;
     }));
 
     const chatGroupMap = _.keyBy(chatGroups, "id");
     const chatGroupIds = _.map(chatGroups, "id");
 
-    console.log("List from groups", chatGroupIds);
-
-    const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds), async (thread) => {
+    const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds, ownerId), async (thread) => {
       return await this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
     }));
 
