@@ -53,12 +53,7 @@ export default class UnreadsServiceImpl extends UnreadsService {
       return;
     }
 
-    if (!pathPrefix) {
-      this.sendBadRequest(res, "pathPrefix is required");
-      return;
-    }
-
-    const unreads = await models.listUnreadsByPathLikeAndUserId(`${pathPrefix}%`, userId);
+    const unreads = pathPrefix ? await models.listUnreadsByPathLikeAndUserId(`${pathPrefix}%`, userId) : await models.listUnreadsByUserId(userId);
 
     res.send(unreads.map((unread) => {
       return this.translateUnread(unread);

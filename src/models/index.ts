@@ -3192,6 +3192,22 @@ export class Models {
   }
 
   /**
+   * Lists unreads by user id
+   * 
+   * @param path path like
+   * @returns promise for unreads
+   */
+  public listUnreadsByUserId(userId: string): PromiseLike<UnreadModel[]> {
+    const where: any = {
+      userId: userId
+    }
+    
+    return this.Unread.findAll({
+      where: where
+    });
+  }
+
+  /**
    * Deletes unread
    * 
    * @param id id 
