@@ -43,7 +43,9 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents, payload.image);
     res.status(200).send(this.translateChatMessage(message));
 
-    this.sendNotifications(loggedUserId, chatGroup, thread, message);
+    if (thread.answerType !== "POLL") {
+      this.sendNotifications(loggedUserId, chatGroup, thread, message);
+    }
 
     mqtt.publish("chatmessages", {
       "operation": "CREATED",

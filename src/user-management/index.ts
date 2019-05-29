@@ -132,7 +132,9 @@ export default new class UserManagement {
       });
 
       result = result.concat(paged);
-    } while (paged.length >= max - 1);
+
+      first += max;
+    } while (first < 1000 && paged.length >= max - 1);
 
     return result;
   }

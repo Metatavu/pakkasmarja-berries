@@ -30,7 +30,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       "id": databaseNewsArticle.id
     });
 
-    this.sendNotifications(databaseNewsArticle);
+    await this.sendNotifications(databaseNewsArticle);
   }
 
   /**
@@ -130,14 +130,12 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
    */
   private async sendNotifications(newsArticle: NewsArticle) {
     const path = `news-${newsArticle.id}`;
-
     const users = await userManagement.listAllUsers();
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
       await models.createUnread(uuid(), path, user.id!);
     }
-
   }
 
   /**
