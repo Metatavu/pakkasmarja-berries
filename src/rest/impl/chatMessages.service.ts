@@ -9,6 +9,7 @@ import mqtt from "../../mqtt";
 import chatThreadPermissionController from "../../user-management/chat-thread-permission-controller";
 import userManagement from "../../user-management";
 import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
+import pushNotifications from "../../push-notifications";
 
 /**
  * Messages REST service
@@ -245,14 +246,42 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const permissions = await userManagement.findPermissionsByNames(permissionNames);
     const permittedUsers = await userManagement.listPermissionsUsers(permissions);
     const path = `chat-${chatGroup.id}-${chatThread.id}-${message.id}`;
+    const pushNotificationTitle = chatGroup.type == "QUESTION" ? "Uusi viesti kysymysryhmässä" : "Uusi viesti";
+    const pushNotificationBody = chatGroup.type == "QUESTION" ? chatGroup.title : `Uusi viesti keskustelussa ${chatThread.title}`;
+    const pushNotificationSetting = chatGroup.type == "QUESTION" ? 'question-push-notifications' : 'conversation-push-notifications';
+
+    const unreadPromises = [];
+    const pushPromises = [];
 
     for (let i = 0; i < permittedUsers.length; i++) {
       const permittedUser = permittedUsers[i];
       if (permittedUser.id != loggedUserId) {
-        await models.createUnread(uuid(), path, permittedUser.id!);
+        unreadPromises.push(models.createUnread(uuid(), path, permittedUser.id!));
+        pushPromises.push(this.sendPushNotification(permittedUser.id!, pushNotificationTitle, pushNotificationBody, pushNotificationSetting));
       }
     }
 
+    await Promise.all(unreadPromises);
+    await Promise.all(pushPromises);
+  }
+
+  /**
+   * Sends push notification to given user
+   * 
+   * @param userId user id
+   * @param title title
+   * @param body body
+   * @param promise
+   */
+  private sendPushNotification = async (userId: string, title: string, body: string, settingKey: string) => {
+    const userSetting = await models.findUserSettingsByUserIdAndKey(userId, settingKey);
+    if (!userSetting) {
+      pushNotifications.sendPushNotification(userId, title, body, true);
+    } else {
+      if (userSetting.settingValue !== 'disabled') {
+        pushNotifications.sendPushNotification(userId, title, body, userSetting.settingValue !== 'silent');
+      }
+    }
   }
 
 }

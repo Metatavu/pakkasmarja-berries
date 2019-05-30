@@ -14,7 +14,7 @@ export default new class PushNotifications {
     this.fcm = new FCM(config().firebase["server-key"]);
   }
   
-  sendPushNotification(to: string, title: string, body: string, sound: boolean) {
+  public sendPushNotification(to: string, title: string, body: string, sound: boolean) {
     const mode = config().mode;
     if (mode !== "PRODUCTION") {
       if (mode === "TEST") {
@@ -50,7 +50,7 @@ export default new class PushNotifications {
     };
     
     const message = {
-      to: `/topics/${to}`,
+      to: `/topics/v3-${to}`,
       notification: notificationSettings
     };
     
