@@ -232,8 +232,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const firstResult = parseInt(req.query.firstResult) || 0;
     const maxResults = parseInt(req.query.maxResults) || 5;
 
-    const databaseDeliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceId);
-    const databaseDeliveryPlaceId = databaseDeliveryPlace ? databaseDeliveryPlace.id : null;
+    let databaseDeliveryPlaceId = null;
+    if (deliveryPlaceId) {
+      const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId);
+      if (!databaseDeliveryPlace) {
+        this.sendBadRequest(res, "Malformed delivery place id");
+        return;
+      }
+      databaseDeliveryPlaceId = databaseDeliveryPlace ? databaseDeliveryPlace.id : null;
+    }
 
     const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;

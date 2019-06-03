@@ -6,6 +6,7 @@ import models, { NewsArticleModel } from "../../models";
 import mqtt from "../../mqtt";
 import userManagement from "../../user-management";
 import * as uuid from "uuid4";
+import pushNotifications from "../../push-notifications";
 
 /**
  * Implementation for NewsArticles REST service
@@ -30,7 +31,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       "id": databaseNewsArticle.id
     });
 
-    this.sendNotifications(databaseNewsArticle);
+    await this.sendNotifications(databaseNewsArticle);
   }
 
   /**
@@ -130,14 +131,38 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
    */
   private async sendNotifications(newsArticle: NewsArticle) {
     const path = `news-${newsArticle.id}`;
-
     const users = await userManagement.listAllUsers();
+    const title = newsArticle.title;
+    const unreadPromises = [];
+    const pushPromises = [];
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
-      await models.createUnread(uuid(), path, user.id!);
+      unreadPromises.push(models.createUnread(uuid(), path, user.id!));
+      pushPromises.push(this.sendPushNotification(user.id!, 'Uusi ajankohtainen julkaistu.', title));
     }
 
+    await Promise.all(unreadPromises);
+    await Promise.all(pushPromises);
+  }
+
+  /**
+   * Sends push notification to given user
+   * 
+   * @param userId user id
+   * @param title title
+   * @param body body
+   * @param promise
+   */
+  private sendPushNotification = async (userId: string, title: string, body: string) => {
+    const userSetting = await models.findUserSettingsByUserIdAndKey(userId, 'news-push-notification');
+    if (!userSetting) {
+      pushNotifications.sendPushNotification(userId, title, body, true);
+    } else {
+      if (userSetting.settingValue !== 'disabled') {
+        pushNotifications.sendPushNotification(userId, title, body, userSetting.settingValue !== 'silent');
+      }
+    }
   }
 
   /**

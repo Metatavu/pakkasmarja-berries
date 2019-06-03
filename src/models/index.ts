@@ -875,21 +875,26 @@ export class Models {
    * Lists threads
    * 
    * @param groupIds filter by group ids
+   * @param ownerId owner id (optional)
    * @param firstResult first result
    * @param maxResults max results
    * @returns promise for threads
    */
-  public listThreads(groupIds: number[] | null, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
+  public listThreads(groupIds: number[] | null, ownerId?: string, firstResult?: number, maxResults?: number): PromiseLike<ThreadModel[]> {
     const where: any = {};
 
     if (groupIds) {
       where.groupId = { [Sequelize.Op.in]: groupIds };
     }
 
+    if (ownerId) {
+      where.ownerId = ownerId;
+    }
+
     return this.Thread.findAll({ 
       where: where, 
       offset: firstResult, 
-      limit: maxResults, 
+      limit: maxResults,       
       order: [ [ "id", "ASC" ] ]
     });
   }
@@ -3181,6 +3186,22 @@ export class Models {
     
     where.path = { [Sequelize.Op.like]: path };
 
+    return this.Unread.findAll({
+      where: where
+    });
+  }
+
+  /**
+   * Lists unreads by user id
+   * 
+   * @param path path like
+   * @returns promise for unreads
+   */
+  public listUnreadsByUserId(userId: string): PromiseLike<UnreadModel[]> {
+    const where: any = {
+      userId: userId
+    }
+    
     return this.Unread.findAll({
       where: where
     });

@@ -550,28 +550,37 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   public async listChatThreads(req: Request, res: Response): Promise<void> {
     const groupId = req.query.groupId;
     const groupType: ChatGroupType = req.query.groupType;
-    const allChatGroups = groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType);
-    const chatGroups = await Promise.all(Promise.filter(allChatGroups, async (chatGroup) => {
-      if (!chatGroup) {
-        return false;
+    const ownerId: string | undefined = req.query.ownerId;
+
+    const allChatGroups = await Promise.all(groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType));
+
+    const traverseGroups = [];
+    const accessGroups = [];
+
+    for (let i = 0; i < allChatGroups.length; i++) {
+      const chatGroup = allChatGroups[i];
+
+      if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE])) {
+        accessGroups.push(chatGroup);
+      } else if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE])) {
+        traverseGroups.push(chatGroup);
       }
+    }
 
-      const result = await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_TRAVERSE, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE]);
-
-      console.log("Permission", chatGroup.id, result);
-
-      return result;
-    }));
-
+    const chatGroups = traverseGroups.concat(accessGroups);
     const chatGroupMap = _.keyBy(chatGroups, "id");
     const chatGroupIds = _.map(chatGroups, "id");
+    const accessGroupIds = _.map(accessGroups, "id");    
+    const chatThreads = await models.listThreads(chatGroupIds, ownerId);
 
-    console.log("List from groups", chatGroupIds);
+    const threads = await Promise.all(Promise.filter(chatThreads, async (thread) => {
+      if (accessGroupIds.includes(thread.groupId)) {
+        return true;
+      }
 
-    const threads = await Promise.all(Promise.filter(await models.listThreads(chatGroupIds), async (thread) => {
       return await this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
     }));
-
+    
     res.status(200).send(await Promise.all(threads.map((thread) => {
       return this.translateChatThread(thread, chatGroupMap[thread.groupId]);
     })));

@@ -29,7 +29,6 @@ test("Test SAP purchase builder", async (t) => {
   builder.addPurchaseReceiptLine({
     ItemCode: "304111",
     Quantity: 100,
-    Price: 300,
     UnitPrice: 3,
     WarehouseCode: "10",
     U_PFZ_REF: ""

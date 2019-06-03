@@ -319,11 +319,25 @@ export default class ContactsServiceImpl extends ContactsService {
       const streetAddress1 = userManagement.getSingleAttribute(user, UserProperty.STREET_1);
       const city1 = userManagement.getSingleAttribute(user, UserProperty.CITY_1);
 
+      const postalCode2 = userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_2);
+      const streetAddress2 = userManagement.getSingleAttribute(user, UserProperty.STREET_2);
+      const city2 = userManagement.getSingleAttribute(user, UserProperty.CITY_2);
+
       if (postalCode1 && streetAddress1) {
         const address: Address = {
           "streetAddress": streetAddress1,
           "postalCode": postalCode1,
           "city": city1 || null
+        };
+
+        result.push(address);  
+      } 
+
+      if (postalCode2 && streetAddress2) {
+        const address: Address = {
+          "streetAddress": streetAddress1,
+          "postalCode": postalCode1,
+          "city": city2 || null
         };
 
         result.push(address);  
