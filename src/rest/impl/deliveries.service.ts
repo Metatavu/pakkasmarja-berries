@@ -573,7 +573,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       "time": delivery.time,
       "status": delivery.status,
       "amount": delivery.amount,
-      "price": delivery.unitPriceWithBonus ? (delivery.unitPriceWithBonus * delivery.amount).toFixed(3) : null,
+      "price": delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
       "qualityId": delivery.qualityId,
       "deliveryPlaceId": deliveryPlace.externalId,
       "loans": []
