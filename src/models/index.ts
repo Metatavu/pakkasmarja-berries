@@ -614,7 +614,8 @@ export class Models {
       unitPrice: { type: Sequelize.DOUBLE, allowNull: true },
       unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
-      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
+      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } },
+      warehouseCode: { type: Sequelize.STRING(191), allowNull: false }
     });
 
     this.DeliveryNote = this.defineModel("DeliveryNote", {
