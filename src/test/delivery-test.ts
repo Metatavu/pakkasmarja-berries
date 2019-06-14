@@ -189,7 +189,7 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.status, deliveriesData[1].status)
     t.equal(updatedDelivery.amount, deliveriesData[1].amount)
     t.equal(updatedDelivery.deliveryPlaceId, deliveriesData[1].deliveryPlaceId)
-    t.equal(updatedDelivery.price, deliveriesData[1].price)
+    t.equal(updatedDelivery.price, "210.00")
     t.equal(updatedDelivery.productId, deliveriesData[1].productId)
     t.equal(updatedDelivery.time, deliveriesData[1].time)
     t.equal(updatedDelivery.warehouseCode, deliveriesData[1].warehouseCode)
