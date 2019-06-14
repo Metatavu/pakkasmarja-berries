@@ -11,12 +11,13 @@
  */
 
 
-export type DeliveryStatus = 'PROPOSAL' | 'PLANNED' | 'DELIVERY' | 'DONE' | 'REJECTED';
+export type DeliveryStatus = 'PROPOSAL' | 'PLANNED' | 'DELIVERY' | 'DONE' | 'REJECTED' | 'NOT_ACCEPTED';
 
 export const DeliveryStatus = {
     PROPOSAL: 'PROPOSAL' as DeliveryStatus,
     PLANNED: 'PLANNED' as DeliveryStatus,
     DELIVERY: 'DELIVERY' as DeliveryStatus,
     DONE: 'DONE' as DeliveryStatus,
-    REJECTED: 'REJECTED' as DeliveryStatus
+    REJECTED: 'REJECTED' as DeliveryStatus,
+    NOTACCEPTED: 'NOT_ACCEPTED' as DeliveryStatus
 };
