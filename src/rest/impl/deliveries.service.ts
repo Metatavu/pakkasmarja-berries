@@ -140,11 +140,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, warehouseCode);
       await this.buildPurchaseXML(databaseDelivery, product, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], warehouseCode);
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
-      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id, warehouseCode);
       res.status(200).send(await this.translateDatabaseDelivery(result));
     }
   }

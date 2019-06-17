@@ -2716,7 +2716,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: string, warehouseCode: string | null): PromiseLike<DeliveryModel> {
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string, warehouseCode: string | null): PromiseLike<DeliveryModel> {
     return this.Delivery.create({
       id: id,
       productId: productId,
@@ -2725,6 +2725,8 @@ export class Models {
       status: status,
       amount: amount,
       price: price,
+      unitPrice: unitPrice,
+      unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId,
       warehouseCode: warehouseCode
