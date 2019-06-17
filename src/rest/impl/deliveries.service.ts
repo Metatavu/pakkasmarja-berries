@@ -77,8 +77,76 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const qualityId = req.body.qualityId;
     const warehouseCode = req.body.warehouseCode;
 
-    const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id, warehouseCode);
-    res.status(200).send(await this.translateDatabaseDelivery(result));
+    const deliveryQuality = qualityId ? await models.findDeliveryQuality(qualityId) : null;
+    if (qualityId && !deliveryQuality) {
+      this.sendBadRequest(res, "Invalid qualityId");
+      return;
+    }
+
+    if (status === "DONE" && !deliveryQuality) {
+      this.sendBadRequest(res, "Missing qualityId");
+      return;  
+    }
+
+    if (status === "DONE" && deliveryQuality) {
+      if (!warehouseCode) {
+        this.sendInternalServerError(res, "Missing warehouse code");
+        return;
+      }
+
+      const product: ProductModel = await models.findProductById(productId);
+      if (!product || !product.id) {
+        this.sendInternalServerError(res, "Failed to resolve product");
+        return;
+      }
+      
+      const productPrice = await this.getCurrentProductPrice(product.id);
+      if (!productPrice) {
+        this.sendInternalServerError(res, "Failed to resolve price");
+        return;
+      }
+
+      const unitPrice = parseFloat(productPrice);
+      const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
+
+      if (!unitPrice || !unitPriceWithBonus) {
+        this.sendInternalServerError(res, "Failed to resolve price");
+        return;
+      }
+
+      const receivingUserId = this.getLoggedUserId(req);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(req.body.userId);
+      if (!deliveryContact) {
+        this.sendInternalServerError(res, "Failed to deliveryContact");
+        return;
+      }
+
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      if (!receivingContact) {
+        this.sendInternalServerError(res, "Failed to receivingContact");
+        return;
+      }
+
+      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
+      const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
+ 
+      if (!deliveryContactSapId) {
+        this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
+        return;  
+      }
+
+      if (!sapSalesPersonCode) {
+        this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
+        return;  
+      }
+
+      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      await this.buildPurchaseXML(databaseDelivery, product, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], warehouseCode);
+      res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
+    } else {
+      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      res.status(200).send(await this.translateDatabaseDelivery(result));
+    }
   }
 
   /**
