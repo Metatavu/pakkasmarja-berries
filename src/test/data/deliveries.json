@@ -7,7 +7,8 @@
   "amount": 100,
   "price": null,
   "qualityId": "bad02318-1a44-11e8-87a4-c7808d590bbb",
-  "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07"
+  "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
+  "warehouseCode": "02"
 }, {
   "id": null,
   "productId": "b1590dd2-4bbb-11e9-8646-d663bd873d93",
@@ -17,5 +18,6 @@
   "amount": 110,
   "price": "23100.000",
   "qualityId": "bad02318-1a44-11e8-87a4-c7808d590bbb",
-  "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07"
+  "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
+  "warehouseCode": "03"
 }]

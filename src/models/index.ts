@@ -250,6 +250,7 @@ export interface DeliveryModel {
   unitPriceWithBonus: number | null;
   qualityId: string | null;
   deliveryPlaceId: number;
+  warehouseCode: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -613,7 +614,8 @@ export class Models {
       unitPrice: { type: Sequelize.DOUBLE, allowNull: true },
       unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
-      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } }
+      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } },
+      warehouseCode: { type: Sequelize.STRING(191), allowNull: false }
     });
 
     this.DeliveryNote = this.defineModel("DeliveryNote", {
@@ -2714,7 +2716,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, qualityId: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string, warehouseCode: string | null): PromiseLike<DeliveryModel> {
     return this.Delivery.create({
       id: id,
       productId: productId,
@@ -2723,8 +2725,11 @@ export class Models {
       status: status,
       amount: amount,
       price: price,
+      unitPrice: unitPrice,
+      unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
-      deliveryPlaceId: deliveryPlaceId
+      deliveryPlaceId: deliveryPlaceId,
+      warehouseCode: warehouseCode
     } as any);
   }
 
@@ -2742,7 +2747,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number, warehouseCode: string | null): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
@@ -2752,7 +2757,8 @@ export class Models {
       unitPrice: unitPrice,
       unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
-      deliveryPlaceId: deliveryPlaceId
+      deliveryPlaceId: deliveryPlaceId,
+      warehouseCode: warehouseCode
     }, {
       where: {
         id: id
