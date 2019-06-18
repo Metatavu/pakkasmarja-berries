@@ -75,7 +75,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     const price = req.body.price;
     const qualityId = req.body.qualityId;
-    const warehouseCode = req.body.warehouseCode;
 
     const deliveryQuality = qualityId ? await models.findDeliveryQuality(qualityId) : null;
     if (qualityId && !deliveryQuality) {
@@ -89,11 +88,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     if (status === "DONE" && deliveryQuality) {
-      if (!warehouseCode) {
-        this.sendInternalServerError(res, "Missing warehouse code");
-        return;
-      }
-
       const product: ProductModel = await models.findProductById(productId);
       if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
@@ -106,8 +100,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
 
+      const itemGroup = await models.findItemGroupById(product.itemGroupId);
+
       const unitPrice = parseFloat(productPrice);
       const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
+
+      
 
       if (!unitPrice || !unitPriceWithBonus) {
         this.sendInternalServerError(res, "Failed to resolve price");
@@ -140,11 +138,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, warehouseCode);
-      await this.buildPurchaseXML(databaseDelivery, product, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], warehouseCode);
+      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
-      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id);
       res.status(200).send(await this.translateDatabaseDelivery(result));
     }
   }
@@ -416,13 +414,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     let databaseDelivery = null;
-    const warehouseCode = payload.warehouseCode;
     if (status === "DONE" && deliveryQuality) {
-      if (!warehouseCode) {
-        this.sendInternalServerError(res, "Missing warehouse code");
-        return;
-      }
-
       const product: ProductModel = await models.findProductById(productId);
       if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
@@ -434,6 +426,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         this.sendInternalServerError(res, "Failed to resolve price");
         return;
       }
+
+      const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
       const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
@@ -469,11 +463,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
-      await this.buildPurchaseXML(databaseDelivery, product, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], warehouseCode);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
     } else {
-      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id, warehouseCode);
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
     }
 
@@ -524,13 +518,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param loans
    * @return promise for success
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[], warehouseCode: string) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[], itemGroupCategory: string) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
     const notes = await this.getNotesString(delivery.id);
     const sapItemCode = product.sapItemCode;
     const loanWarehouse = "100";
+    const warehouseCode = deliveryPlace.sapId == "01" && itemGroupCategory == "FRESH" ? "02" : deliveryPlace.sapId;
 
     builder.setPurchaseReceiptHeader({
       DocDate: date,

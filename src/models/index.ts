@@ -2732,7 +2732,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string, warehouseCode: string | null): PromiseLike<DeliveryModel> {
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
     return this.Delivery.create({
       id: id,
       productId: productId,
@@ -2745,7 +2745,6 @@ export class Models {
       unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId,
-      warehouseCode: warehouseCode
     } as any);
   }
 
@@ -2763,7 +2762,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number, warehouseCode: string | null): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
@@ -2774,7 +2773,6 @@ export class Models {
       unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId,
-      warehouseCode: warehouseCode
     }, {
       where: {
         id: id
