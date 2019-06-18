@@ -615,7 +615,7 @@ export class Models {
       unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
       deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } },
-      warehouseCode: { type: Sequelize.STRING(191), allowNull: false }
+      warehouseCode: { type: Sequelize.STRING(191), allowNull: true }
     });
 
     this.DeliveryNote = this.defineModel("DeliveryNote", {
@@ -2679,21 +2679,37 @@ export class Models {
    */
   private createListProductsWhere(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string | null) {
     const where: any = {};
+    let contractUserSQL = null;
+    let categorySQL = null;
 
     if (itemGroupId) {
       where.itemGroupId = itemGroupId;
     }
 
     if (contractUserId) {
-      where.userId = contractUserId;
+      contractUserSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Contracts", {
+        attributes: ["itemGroupId"],
+        where: { userId: contractUserId,
+                 status: "APPROVED"
+                }
+      }).slice(0, -1);
     }
 
     if (itemGroupCategory) {
-      const categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
+      categorySQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("ItemGroups", {
         attributes: ["id"],
         where: { category: itemGroupCategory }
       }).slice(0, -1);
+    }
 
+    if (contractUserSQL && categorySQL) {
+      where.itemGroupId = { [Sequelize.Op.and]: [
+        { [Sequelize.Op.in]: this.sequelize.literal(`(${contractUserSQL})`) },
+        { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) }
+      ]}
+    } else if (contractUserSQL) {
+      where.itemGroupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${contractUserSQL})`) };
+    } else if (categorySQL) {
       where.itemGroupId = { [Sequelize.Op.in]: this.sequelize.literal(`(${categorySQL})`) };
     }
 
