@@ -169,6 +169,7 @@ test("Create delivery", async (t) => {
     t.equal(createdDelivery.price, deliveriesData[0].price)
     t.equal(createdDelivery.productId, deliveriesData[0].productId)
     t.equal(createdDelivery.time, deliveriesData[0].time)
+    t.equal(createdDelivery.warehouseCode, deliveriesData[0].warehouseCode)
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -188,9 +189,10 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.status, deliveriesData[1].status)
     t.equal(updatedDelivery.amount, deliveriesData[1].amount)
     t.equal(updatedDelivery.deliveryPlaceId, deliveriesData[1].deliveryPlaceId)
-    t.equal(updatedDelivery.price, deliveriesData[1].price)
+    t.equal(updatedDelivery.price, "210.00")
     t.equal(updatedDelivery.productId, deliveriesData[1].productId)
     t.equal(updatedDelivery.time, deliveriesData[1].time)
+    t.equal(updatedDelivery.warehouseCode, deliveriesData[1].warehouseCode)
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -213,6 +215,7 @@ test("Find delivery", async (t) => {
     t.equal(foundDelivery.price, deliveriesData[0].price)
     t.equal(foundDelivery.productId, deliveriesData[0].productId)
     t.equal(foundDelivery.time, deliveriesData[0].time)
+    t.equal(foundDelivery.warehouseCode, deliveriesData[0].warehouseCode)
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }

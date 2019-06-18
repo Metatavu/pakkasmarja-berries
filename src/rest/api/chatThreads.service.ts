@@ -131,7 +131,8 @@ export default abstract class ChatThreadsService extends AbstractService {
    * @summary Returns list of chat threads
    * Accepted parameters:
     * - (query) number groupId - Filter chat threads by group id
-    * - (query) ChatGroupType groupType - Filter chat groups by group type
+    * - (query) ChatGroupType groupType - Filter chat treads by group type
+    * - (query) string ownerId - Filter chat treads by owner id
   */
   public abstract listChatThreads(req: Request, res: Response): Promise<void>;
 

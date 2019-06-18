@@ -26,6 +26,7 @@ export interface Delivery {
     price: string  | null;
     qualityId: string  | null;
     deliveryPlaceId: string ;
+    warehouseCode: string  | null;
     /**
      * Array of loans. Property is write only
      */
@@ -45,6 +46,7 @@ export interface DeliveryOpt {
     price?: string;
     qualityId?: string;
     deliveryPlaceId?: string;
+    warehouseCode?: string;
     /**
      * Array of loans. Property is write only
      */
