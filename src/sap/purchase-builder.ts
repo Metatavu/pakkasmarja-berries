@@ -173,8 +173,8 @@ export default class PurchaseMessageBuilder {
     this.PurchaseReceipt.Lines.forEach((purchaseReceiptLine) => {
       const line = lines.ele("Line");
       line.ele("ItemCode", purchaseReceiptLine.ItemCode);
-      line.ele("Quantity", purchaseReceiptLine.Quantity.toFixed(3));
-      line.ele("UnitPrice", purchaseReceiptLine.UnitPrice.toFixed(3));
+      line.ele("Quantity", Number(purchaseReceiptLine.Quantity).toFixed(3));
+      line.ele("UnitPrice", Number(purchaseReceiptLine.UnitPrice).toFixed(3));
       line.ele("WarehouseCode", purchaseReceiptLine.WarehouseCode);
       line.ele("U_PFZ_REF", purchaseReceiptLine.U_PFZ_REF);
     });

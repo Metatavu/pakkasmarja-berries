@@ -103,9 +103,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
-      const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
-
-      
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
 
       if (!unitPrice || !unitPriceWithBonus) {
         this.sendInternalServerError(res, "Failed to resolve price");
@@ -430,8 +430,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
-      const unitPriceWithBonus = unitPrice + deliveryQuality.priceBonus;
-
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
       if (!unitPrice || !unitPriceWithBonus) {
         this.sendInternalServerError(res, "Failed to resolve price");
         return;
