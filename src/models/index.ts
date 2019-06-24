@@ -1423,8 +1423,36 @@ export class Models {
    * @param {int} maxResults max results
    * @return {Promise} promise for item groups
    */
-  listItemGroups(firstResult?: number, maxResults?: number): Bluebird<ItemGroupModel[]> {
-    return this.sequelize.models.ItemGroup.findAll({ where: { }, offset: firstResult, limit: maxResults });
+  listItemGroups(contractUserId: string | null, firstResult?: number, maxResults?: number): Bluebird<ItemGroupModel[]> {
+    const where = this.createItemGroupsWhere(contractUserId);
+    return this.sequelize.models.ItemGroup.findAll({ where: where, offset: firstResult, limit: maxResults });
+  }
+
+  /**
+   * Creates a where clause for listing item groups. 
+   * 
+   * All parameters are optional and ignored if not given
+   * 
+   * @param contractUserId contractUserId
+   */
+  private createItemGroupsWhere(contractUserId: string | null) {
+    const where: any = {};
+    let contractUserSQL = null;
+
+    if (contractUserId) {
+      contractUserSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Contracts", {
+        attributes: ["itemGroupId"],
+        where: { userId: contractUserId,
+                 status: "APPROVED"
+                }
+      }).slice(0, -1);
+    }
+
+    if (contractUserSQL) {
+      where.id = { [Sequelize.Op.in]: this.sequelize.literal(`(${contractUserSQL})`) };
+    } 
+
+    return where;
   }
   
   /**
