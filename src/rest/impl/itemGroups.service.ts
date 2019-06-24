@@ -76,7 +76,8 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
    * @inheritdoc
    */
   async listItemGroups(req: Request, res: Response) {
-    const databaseItemGroups = await models.listItemGroups();
+    const contractUserId = req.query.contractUserId || null;
+    const databaseItemGroups = await models.listItemGroups(contractUserId);
     const itemGroups = await Promise.all(databaseItemGroups.map((databaseItemGroup) => {
       return this.translateDatabaseItemGroup(databaseItemGroup);
     }));
