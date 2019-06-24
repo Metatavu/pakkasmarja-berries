@@ -270,7 +270,7 @@ export default class OperationsServiceImpl extends OperationsService {
    * @return {Promise} promise for an operation report
   */
   private async createItemGroupDefaultDocumentTemplates() {
-    const itemGroups = await models.listItemGroups();
+    const itemGroups = await models.listItemGroups(null);
     const operationReport = await models.createOperationReport("ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES");
     const type = `${(new Date()).getFullYear()}`;
     
