@@ -113,8 +113,8 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
     }
 
     const body: NewsArticle = req.body;
-
-    models.updateNewsArticle(databaseNewsArticle.id, body.title, body.contents, body.imageUrl, true);
+    const imageUrl = body.imageUrl || null;
+    models.updateNewsArticle(databaseNewsArticle.id, body.title, body.contents, imageUrl, true);
     
     mqtt.publish("newsarticles", {
       "operation": "UPDATED",

@@ -3104,6 +3104,63 @@ export class Models {
   }
 
   /**
+   * Finds product price at time
+   * 
+   * @param productId product id
+   * @param date date
+   * @return product price at a specific time
+   */
+  public findProductPriceAtTime(productId: string, date: Date): PromiseLike<ProductPriceModel | null> {
+    return this.ProductPrice.findOne({
+      where: {
+        productId: productId,
+        createdAt:{
+          $lte: date 
+        }
+      },
+      limit: 1,
+      order: [['createdAt', 'DESC']]
+    })
+  }
+
+  /**
+   * Lists product prices until time
+   * 
+   * @param productId product id
+   * @param date date
+   * @param sort "CREATED_AT_ASC" | "CREATED_AT_DESC"
+   * @param firstResult defaults at 0
+   * @param maxResults maxresults
+   * @return product price at a specific time
+   */
+  public listProductPricesUntilTime(productId: string, date: Date, sort: "CREATED_AT_ASC" | "CREATED_AT_DESC", firstResult?: number, maxResults?: number): PromiseLike<ProductPriceModel[]> {
+    let where: any = {};
+    let order: any;
+
+    where.productId = productId;
+    where.createdAt = {
+      $lte: date 
+    }
+
+    switch (sort) {
+      case "CREATED_AT_ASC":
+        order = [['createdAt', 'ASC']];
+        break;
+      case "CREATED_AT_DESC":
+        order = [['createdAt', 'DESC']];
+        break;
+    }
+
+    return this.ProductPrice.findAll({ 
+      where: where, 
+      order: order,
+      offset: firstResult, 
+      limit: maxResults
+    });
+
+  }
+
+  /**
    * Updates product price
    * 
    * @param id id 
