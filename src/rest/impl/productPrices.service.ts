@@ -106,6 +106,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   public async listProductPrices(req: Request, res: Response) {
     const productId = req.params.productId;
     const sort = req.query.sort;
+    const atTime = req.query.atTime;
     const firstResult = parseInt(req.query.firstResult) || 0;
     const maxResults = parseInt(req.query.maxResults) || 5;
 
@@ -120,7 +121,13 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
       return;
     }
 
-    const productPrices: ProductPriceModel[] = await models.listProductPrices(productId, sort || "CREATED_AT_DESC", firstResult, maxResults);
+    let productPrices: ProductPriceModel[] = [];
+
+    if(atTime){
+      productPrices = await models.listProductPricesUntilTime(productId, atTime, sort || "CREATED_AT_DESC", firstResult, maxResults);
+    }else{
+      productPrices = await models.listProductPrices(productId, sort || "CREATED_AT_DESC", firstResult, maxResults);
+    }
 
     res.status(200).send(await Promise.all(productPrices.map((productPrice) => {
       return this.translateDatabaseProductPrice(productPrice);

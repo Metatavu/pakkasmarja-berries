@@ -56,10 +56,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     const amount = req.body.amount;
-    if (!amount) {
-      this.sendBadRequest(res, "Missing required body param amount");
-      return;
-    }
 
     const deliveryPlaceId = req.body.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -94,20 +90,24 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
       
-      const productPrice = await this.getCurrentProductPrice(product.id);
+      const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
-        this.sendInternalServerError(res, "Failed to resolve price");
+        this.sendInternalServerError(res, "Failed to resolve product price");
         return;
       }
 
       const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
-      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-      const totalPrice = unitPrice * amount + bonusPrice;
-      const unitPriceWithBonus = totalPrice / amount;
+      let unitPriceWithBonus = 0;
 
-      if (!unitPrice || !unitPriceWithBonus) {
+      if(amount > 0){
+        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+        const totalPrice = unitPrice * amount + bonusPrice;
+        unitPriceWithBonus = totalPrice / amount;
+      }
+
+      if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
         return;
       }
@@ -384,10 +384,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     const amount = payload.amount;
-    if (!amount) {
-      this.sendBadRequest(res, "Missing required body param amount");
-      return;
-    }
 
     const deliveryPlaceId = payload.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -421,19 +417,24 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
       
-      const productPrice = await this.getCurrentProductPrice(product.id);
+      const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
-        this.sendInternalServerError(res, "Failed to resolve price");
+        this.sendInternalServerError(res, "Failed to resolve product price");
         return;
       }
 
       const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
-      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-      const totalPrice = unitPrice * amount + bonusPrice;
-      const unitPriceWithBonus = totalPrice / amount;
-      if (!unitPrice || !unitPriceWithBonus) {
+      let unitPriceWithBonus = 0;
+
+      if(amount > 0){
+        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+        const totalPrice = unitPrice * amount + bonusPrice;
+        unitPriceWithBonus = totalPrice / amount;
+      }
+
+      if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
         return;
       }
@@ -660,6 +661,21 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    */
   private async getCurrentProductPrice(productId: string): Promise<string | null> {
     const price = await models.findLatestProductPrice(productId);
+    if (!price) {
+      return null;
+    }
+
+    return price.price;
+  }
+
+  /**
+   * Returns current price for a product
+   * 
+   * @param productId product id
+   * @return product price or null if not found
+   */
+  private async getProductPriceAtTime(productId: string, date: Date): Promise<string | null> {
+    const price = await models.findProductPriceAtTime(productId, date);
     if (!price) {
       return null;
     }
