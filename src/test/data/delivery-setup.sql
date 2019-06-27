@@ -13,8 +13,8 @@ VALUES
 INSERT INTO
   ProductPrices (id, productId, unit, price, createdAt, updatedAt)
 VALUES
-  ('6a8ef30b-f066-41bc-9efe-5816b61a2b04', 'b1590990-4bbb-11e9-8646-d663bd873d93', 'ltk', 100, NOW() - INTERVAL 1 DAY, NOW()),
-  ('80121ca0-1a7e-4135-823c-a55a9b85f463', 'b1590dd2-4bbb-11e9-8646-d663bd873d93', 'ltk', 200, NOW() - INTERVAL 1 DAY, NOW());
+  ('6a8ef30b-f066-41bc-9efe-5816b61a2b04', 'b1590990-4bbb-11e9-8646-d663bd873d93', 'ltk', 100, NOW(), NOW()),
+  ('80121ca0-1a7e-4135-823c-a55a9b85f463', 'b1590dd2-4bbb-11e9-8646-d663bd873d93', 'ltk', 200, NOW(), NOW());
 
 INSERT INTO 
     DeliveryPlaces (externalId, sapId, name, createdAt, updatedAt)
