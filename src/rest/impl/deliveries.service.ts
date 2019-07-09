@@ -11,6 +11,7 @@ import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
 import * as fs from "fs";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
+import * as _ from "lodash";
 
 /**
  * Implementation for Deliveries REST service
@@ -698,8 +699,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const notes = deliveryNotes.map((deliveryNote) => {
       return deliveryNote.text;
     });
-    
-    return notes.join(" ; ");
+
+    const notesJoined = notes.join(" ; ");
+
+    return _.truncate(notesJoined, { "length": 253 });
   }
 
   /**
