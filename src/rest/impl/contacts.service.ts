@@ -4,7 +4,7 @@ import ContactsService from "../api/contacts.service";
 import ApplicationRoles from "../application-roles";
 import userManagement, { UserProperty } from "../../user-management";
 import mailer from "../../mailer";
-import { Contact, Address } from "../model/models";
+import { Contact, Address, BasicContact } from "../model/models";
 import { config } from "../../config";
 import { getLogger, Logger } from "log4js";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
@@ -38,7 +38,26 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    res.status(200).send(this.translateKeycloakUser(user));
+    res.status(200).send(this.translateContact(user));
+  }
+
+  /**
+   * @inheritdoc
+   */
+  async findBasicContact(req: Request, res: Response): Promise<void> {
+    const userId = req.params.id;
+    if (!userId) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const user = await userManagement.findUser(userId);
+    if (!user) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    res.status(200).send(this.translateBasicContact(user));
   }
   
   /**
@@ -57,7 +76,7 @@ export default class ContactsServiceImpl extends ContactsService {
       });
 
       const contacts = users.map((user: any) => {
-        return this.translateKeycloakUser(user);
+        return this.translateContact(user);
       });
 
       res.status(200).send(contacts);
@@ -98,7 +117,7 @@ export default class ContactsServiceImpl extends ContactsService {
     await userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact));
     const updatedUser = await userManagement.findUser(userId);
     this.triggerChangeNotification(user, updatedUser);
-    res.status(200).send(this.translateKeycloakUser(updatedUser));
+    res.status(200).send(this.translateContact(updatedUser));
 }
   
   /**
@@ -203,12 +222,41 @@ export default class ContactsServiceImpl extends ContactsService {
   }
   
   /**
+   * Translates Keycloak user into BasicContact
+   * 
+   * @param {Object} user Keycloak user
+   * @return {BasicContact} basic contact 
+   */
+  private translateBasicContact(user: UserRepresentation | null): BasicContact | null {
+    if (!user || !user.id) {
+      return null;
+    }
+
+    try {
+      const result: BasicContact = {
+        'id': user.id,
+        "avatarUrl": userManagement.getUserImage(user),
+        "displayName": userManagement.getUserDisplayName(user)
+      };
+      
+      return result;
+    } catch (e) {
+      this.logger.error("Failed to translate basic contact", user);
+      return null;
+    }
+  }
+  
+  /**
    * Translates Keycloak user into Contact
    * 
    * @param {Object} user Keycloak user
    * @return {Contact} contact 
    */
-  translateKeycloakUser(user: any) {
+  private translateContact(user: UserRepresentation | null): Contact | null {
+    if (!user || !user.id) {
+      return null;
+    }
+
     try {
       const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
       let vatLiable: Contact.VatLiableEnum | null = null;
@@ -224,11 +272,11 @@ export default class ContactsServiceImpl extends ContactsService {
       const result: Contact = {
         'id': user.id,
         "sapId": userManagement.getSingleAttribute(user, UserProperty.SAP_ID) ||null,
-        'firstName': user.firstName,
-        'lastName': user.lastName,
+        'firstName': user.firstName || null,
+        'lastName': user.lastName || null,
         'companyName': userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
         'phoneNumbers': this.resolveKeycloakUserPhones(user),
-        'email': user.email,
+        'email': user.email || null,
         'addresses': this.resolveKeycloakUserAddresses(user),
         'BIC': userManagement.getSingleAttribute(user, UserProperty.BIC) || null,
         'IBAN': userManagement.getSingleAttribute(user, UserProperty.IBAN) || null,
@@ -241,7 +289,7 @@ export default class ContactsServiceImpl extends ContactsService {
       
       return result;
     } catch (e) {
-      this.logger.error("Failed to translate user", user);
+      this.logger.error("Failed to translate contact", user);
       return null;
     }
   }

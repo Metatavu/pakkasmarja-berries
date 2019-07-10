@@ -111,6 +111,7 @@ export default abstract class ItemGroupsService extends AbstractService {
    * Lists item groups
    * @summary Lists item groups
    * Accepted parameters:
+    * - (query) string contractUserId - contract user id
   */
   public abstract listItemGroups(req: Request, res: Response): Promise<void>;
 

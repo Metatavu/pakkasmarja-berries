@@ -13,11 +13,21 @@ export default abstract class ContactsService extends AbstractService {
   constructor(app: Application, keycloak: Keycloak) {
     super();
 
+    app.get(`/rest/v1${this.toPath('/contacts/${encodeURIComponent(String(id))}/basic')}`, [ keycloak.protect() ], this.catchAsync(this.findBasicContact.bind(this)));
     app.get(`/rest/v1${this.toPath('/contacts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContact.bind(this)));
     app.get(`/rest/v1${this.toPath('/contacts')}`, [ keycloak.protect() ], this.catchAsync(this.listContacts.bind(this)));
     app.put(`/rest/v1${this.toPath('/contacts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContact.bind(this)));
     app.put(`/rest/v1${this.toPath('/contacts/${encodeURIComponent(String(id))}/credentials')}`, [ keycloak.protect() ], this.catchAsync(this.updateContactCredentials.bind(this)));
   }
+
+
+  /**
+   * Finds a basic vesion of contact by id
+   * @summary Find basic contact
+   * Accepted parameters:
+    * - (path) string id - contact id
+  */
+  public abstract findBasicContact(req: Request, res: Response): Promise<void>;
 
 
   /**
