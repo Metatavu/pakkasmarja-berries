@@ -1,6 +1,7 @@
 export * from './address';
 export * from './areaDetail';
 export * from './badRequest';
+export * from './basicContact';
 export * from './chatGroup';
 export * from './chatGroupGroupPermission';
 export * from './chatGroupPermissionScope';

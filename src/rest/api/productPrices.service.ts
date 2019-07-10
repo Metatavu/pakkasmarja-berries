@@ -57,6 +57,7 @@ export default abstract class ProductPricesService extends AbstractService {
    * Accepted parameters:
     * - (path) string productId - product id
     * - (query) string sort - sort
+    * - (query) string atTime - sort
     * - (query) number firstResult - Offset of first result. Defaults to 0
     * - (query) number maxResults - Max results. Defaults to 5
   */

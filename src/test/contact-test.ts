@@ -6,6 +6,7 @@ import ApplicationRoles from "../rest/application-roles";
 import mail from "./mail";
 import database from "./database";
 import operations from "./operations";
+import { BasicContact } from "src/rest/model/models";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contactDatas = require(`${testDataDir}/contacts.json`);
@@ -76,6 +77,26 @@ test("Test find contact", async (t) => {
     .expect(200)
     .then(response => {
       t.deepEqual(response.body, contactDatas["677e99fd-b854-479f-afa6-74f295052770"]);
+    });
+});
+
+test("Test find basic contact", async (t) => {
+  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+  const id = "677e99fd-b854-479f-afa6-74f295052770";
+
+  return request("http://localhost:3002")
+    .get(`/rest/v1/contacts/${id}/basic`)
+    .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then(response => {
+      const expected: BasicContact = {
+        id: contactDatas[id].id,
+        displayName: contactDatas[id].displayName,
+        avatarUrl: contactDatas[id].avatarUrl
+      };
+
+      t.deepEqual(response.body, expected);
     });
 });
 
