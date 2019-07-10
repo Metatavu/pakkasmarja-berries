@@ -4,9 +4,8 @@ node_js:
 cache:
   directories:
     - keycloak-4.8.3.Final
-addons:
-  mariadb: '10.3'
 services:
+  - mysql
   - redis-server
 before_install:
   - gem install sass
