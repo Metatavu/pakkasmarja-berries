@@ -697,7 +697,7 @@ export default new class TaskQueue {
       const endDate = null;
       const signDate = null;
       const termDate = null;
-      const remarks = null;
+      let remarks = null;
       let proposedQuantity = contractQuantity;
       let deliveryPlaceComment = null;
       let quantityComment = null;
@@ -725,6 +725,7 @@ export default new class TaskQueue {
         rejectComment = contract.rejectComment;
         areaDetails = contract.areaDetails;
         deliverAll = contract.deliverAll;
+        remarks = contract.remarks;
   
         await models.updateContract(contract.id, 
           year, 
