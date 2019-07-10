@@ -19,7 +19,7 @@
     "async": "2.6.1",
     "basic-auth": "^2.0.1",
     "better-queue": "^3.8.10",
-    "better-queue-sql": "^1.0.3",
+    "better-queue-sql": "https://github.com/Metatavu/better-queue-sql/releases/download/1.0.3%2Bmysql-hotfix/better-queue-sql-1.0.3+mysql-hotfix.tgz",
     "bluebird": "^3.5.3",
     "body-parser": "^1.18.3",
     "cheerio": "^1.0.0-rc.2",
