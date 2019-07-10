@@ -51,9 +51,9 @@ export default new class TaskQueue {
     this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
 
     this.enqueueQuestionGroupUsersThreadsTask();
+    this.enqueueContractDeliveredQuantityUpdateQueue();
 
     // FIXME!
-    // this.enqueueContractDeliveredQuantityUpdateQueue();
     // this.enqueueContractDocumentStatusBatchQueue();
   }
 
@@ -120,7 +120,7 @@ export default new class TaskQueue {
   /**
    * Adds task to sapContractDeliveredQuantityUpdateQueue
    */
-  enqueueContractDeliveredQuantityUpdateQueue() {
+  private enqueueContractDeliveredQuantityUpdateQueue() {
     this.sapContractDeliveredQuantityUpdateQueue.push({id: 1});
   }
 
