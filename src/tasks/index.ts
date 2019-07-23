@@ -11,6 +11,8 @@ import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
+import chatGroupPermissionController from "../user-management/chat-group-permission-controller";
+import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -865,8 +867,13 @@ export default new class TaskQueue {
   private checkUserQuestionGroupThread = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
     let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
     const title = userManagement.getUserDisplayName(user) || "";
-
+    const expectedAccess = await this.hasChatGroupTraversePermission(chatGroup, user);
+    
     if (!chatThread) {
+      if (!expectedAccess) {
+        return;
+      }
+
       this.logger.info(`Creating new question group ${chatGroup.id} thread for user ${user.id}`);
       chatThread = await models.createThread(chatGroup.id, user.id || null, title, null, "question", null, "TEXT", false, null);
     } else {
@@ -875,20 +882,53 @@ export default new class TaskQueue {
     
     let resource = await chatThreadPermissionController.findChatThreadResource(chatThread);
     if (!resource) {
+      if (!expectedAccess) {
+        return;
+      }
+      
       this.logger.info(`Creating new resource for chat thread ${chatThread.id}`);
       resource = await chatThreadPermissionController.createChatThreadResource(chatThread);
     }
 
     let accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
     if (!accessPermission) {
+      if (!expectedAccess) {
+        return;
+      }
+      
       this.logger.info(`Creating new access permission for chat thread ${chatThread.id}`);
       await chatThreadPermissionController.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
     }
 
     const scope = await chatThreadPermissionController.getUserChatThreadScope(chatThread, user);
-    if (scope !== "chat-thread:access") {
+    if (expectedAccess && scope !== "chat-thread:access") {
+      this.logger.info(`Granting user ${user.id} access into ${chatThread.id}`);
       await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, "chat-thread:access");
+    } else if (!expectedAccess && scope === "chat-thread:access") {
+      this.logger.info(`Removing access into ${chatThread.id} from user ${user.id}`);
+      await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
     }
+  }
+
+  /**
+   * Returns whether user has traverse permission for given user group
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   * @returns whether user has traverse permission for given user group
+   */
+  private hasChatGroupTraversePermission = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<boolean> => {
+    const userGroups = await userManagement.listUserUserGroups(user);
+
+    for (let i = 0; i < userGroups.length; i++) {
+      const userGroup = userGroups[i];
+      const scope = await chatGroupPermissionController.getUserGroupChatGroupScope(chatGroup, userGroup);
+      if (scope == CHAT_GROUP_TRAVERSE) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

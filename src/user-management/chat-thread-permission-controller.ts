@@ -106,7 +106,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param user user
    * @param scope scope
    */
-  public async setUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation, scope: ApplicationScope): Promise<null> {
+  public async setUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation, scope: ApplicationScope | null): Promise<null> {
     const userPolicy = await this.resolveUserPolicy(user.id!);
     if (!userPolicy) {
       return null;
