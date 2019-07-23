@@ -766,8 +766,12 @@ export default new class UserManagement {
    * @return user groups
    */
   public async listUserUserGroups(user: UserRepresentation): Promise<GroupRepresentation[]> {
-    const userGroupIds = user.groups || [];
-    return await Promise.all(userGroupIds.map((userGroupId) => this.findGroup(userGroupId)));
+    if (!user.id) {
+      return [];
+    }
+    
+    const client = await this.getClient();
+    return await client.users.listGroups({ id: user.id, realm: config().keycloak.admin.realm });
   }
 
   /**
