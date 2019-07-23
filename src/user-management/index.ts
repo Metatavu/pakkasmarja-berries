@@ -760,6 +760,17 @@ export default new class UserManagement {
   }
 
   /**
+   * List's users user groups
+   * 
+   * @param user user
+   * @return user groups
+   */
+  public async listUserUserGroups(user: UserRepresentation): Promise<GroupRepresentation[]> {
+    const userGroupIds = user.groups || [];
+    return await Promise.all(userGroupIds.map((userGroupId) => this.findGroup(userGroupId)));
+  }
+
+  /**
    * Lists users with specified role
    * 
    * @param roleName role name
