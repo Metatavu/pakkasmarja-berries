@@ -220,4 +220,11 @@ export default class ApplicationRoles {
     return "manage-data-sheets";
   }
 
+  /**
+   * Role that allows users to manage delivery qualities
+   */
+  static get MANAGE_DELIVERY_QUALITIES() {
+    return "manage-delivery-qualities";
+  }
+
 }
