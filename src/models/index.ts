@@ -296,6 +296,7 @@ export interface DeliveryQualityModel {
   name: string;
   priceBonus: number;
   color: string;
+  displayName: string;
 }
 
 /**
@@ -318,6 +319,17 @@ export interface DataSheetModel {
   data: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/**
+ * Interface for DeliveryQualityProductModel
+ */
+export interface DeliveryQualityProductModel {
+  id: number,
+  deliveryQualityId: string,
+  productId: string,
+  createdAt: Date,
+  updatedAt: Date
 }
 
 const PRINT_MODEL_INTERFACES = false;
@@ -642,7 +654,14 @@ export class Models {
       itemGroupCategory: { type: Sequelize.STRING(191), allowNull: false },
       name: { type: Sequelize.STRING(191), allowNull: false },
       priceBonus: { type: Sequelize.DOUBLE, allowNull: false, defaultValue: 0 },
-      color: { type: Sequelize.STRING(191), allowNull: false }
+      color: { type: Sequelize.STRING(191), allowNull: false },
+      displayName: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.defineModel("DeliveryQualityProduct", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      deliveryQualityId: { type: Sequelize.UUID, allowNull: false, references: { model: this.sequelize.models.DeliveryQuality, key: "id" } },
+      productId: { type: Sequelize.UUID, allowNull: false, references: { model: this.sequelize.models.Product, key: "id" } }
     });
 
     this.Unread = this.defineModel("Unread", {
@@ -3216,6 +3235,98 @@ export class Models {
   // Delivery qualities
 
   /**
+   * Creates delivery quality
+   * 
+   * @param id id
+   * @param itemGroupCategory itemGroupCategory
+   * @param name name
+   * @param displayName displayName
+   * @param priceBonus priceBonus
+   * @param color color
+   * @returns promise for delivery quality
+   */
+  public createDeliveryQuality(id: string, itemGroupCategory: string, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<DeliveryQualityModel> {
+    return this.DeliveryQuality.create({
+      id: id,
+      itemGroupCategory: itemGroupCategory,
+      name: name,
+      displayName: displayName,
+      priceBonus: priceBonus,
+      color: color
+    } as any);
+
+  }
+
+  /**
+   * Updates delivery quality
+   * 
+   * @param deliveryQualityId deliveryQualityId
+   * @param itemGroupCategory itemGroupCategory
+   * @param name name
+   * @param displayName displayName
+   * @param priceBonus priceBonus
+   * @param color color
+   * @returns promise for delivery quality
+   */
+  public updateDeliveryQuality(id: string, itemGroupCategory: string, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<[number, any]> {
+    return this.DeliveryQuality.update({
+      itemGroupCategory: itemGroupCategory,
+      name: name,
+      displayName: displayName,
+      priceBonus: priceBonus,
+      color: color
+    }, {
+      where: {
+        id: id
+      }
+    });
+  }
+
+  /**
+   * Create delivery quality product
+   * 
+   * @param {String} deliveryQualityId deliveryQualityId
+   * @param {String} productId productId
+   * @returns {Promise} Promise for created entity
+   */
+  createDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<DeliveryQualityProductModel> {
+    return this.sequelize.models.DeliveryQualityProduct.create({
+      deliveryQualityId: deliveryQualityId,
+      productId: productId
+    });
+  }
+
+  /**
+   * Deletes predefined text from thread 
+   * 
+   * @param {String} deliveryQualityId thread id
+   * @param {String} productId productId
+   * @return {Promise} promise that resolves on successful removal
+   */
+  deleteDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<number> {
+    return this.sequelize.models.DeliveryQualityProduct.destroy({ 
+      where: { 
+        deliveryQualityId: deliveryQualityId,
+        productId: productId 
+      } 
+    });
+  }
+
+  /**
+   * List delivery quality products by delivery quality id
+   * 
+   * @param {String} deliveryQualityId deliveryQualityId
+   * @returns {Promise} Promise for DeliveryQualityProduct
+   */
+  listQualityProductsByQualityId(deliveryQualityId: string): PromiseLike<DeliveryQualityProductModel[]> {
+    return this.sequelize.models.DeliveryQualityProduct.findAll({
+      where: {
+        deliveryQualityId: deliveryQualityId
+      }
+    });
+  }
+
+  /**
    * Finds delivery quality
    * 
    * @param id id 
@@ -3233,15 +3344,27 @@ export class Models {
    * Lists delivery qualities
    * 
    * @param itemGroupCategory itemGroupCategory
+   * @param productId productId
    * @return Promise that resolves list of delivery qualities
    */
-  public listDeliveryQualities(itemGroupCategory: string): PromiseLike<DeliveryQualityModel[]> {
+  public listDeliveryQualities(itemGroupCategory?: string, productId?: string): PromiseLike<DeliveryQualityModel[]> {
     let where: any = {};
 
-    where.itemGroupCategory = itemGroupCategory;
+    if (itemGroupCategory) {
+      where.itemGroupCategory = itemGroupCategory;
+    }
 
+    if (productId) {
+      const deliveryQualityProductSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("DeliveryQualityProducts", {
+        attributes: ["deliveryQualityId"],
+        where: { productId: productId }
+      }).slice(0, -1);
+
+      where.id = { [Sequelize.Op.in]: this.sequelize.literal(`(${deliveryQualityProductSQL})`) };
+    }
+      
     return this.DeliveryQuality.findAll({ 
-      where: where,
+      where: where
     });
   }
 
