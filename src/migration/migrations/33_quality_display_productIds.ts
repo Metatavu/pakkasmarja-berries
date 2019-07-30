@@ -16,6 +16,8 @@ module.exports = {
       type: 'unique',
       name: 'UN_DELIVERYQUALITYPRODUCTS_PRODUCT_DELIVERYQUALITY'
      });
+    await query.sequelize.query("UPDATE DeliveryQualities SET displayName = name");
+    await query.sequelize.query("INSERT INTO DeliveryQualityProducts (deliveryQualityId, productId, createdAt, updatedAt) SELECT d.id, p.id, NOW(), NOW() FROM Products p, DeliveryQualities d");
   }
 };
 
