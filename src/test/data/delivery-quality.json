@@ -1,0 +1,20 @@
+[
+  {
+    "id": "91a70f11-b672-403f-a256-28c220ded9de",
+    "itemGroupCategory": "FRESH",
+    "name": "Name",
+    "priceBonus": 0.5,
+    "color": "#108d10",
+    "displayName": "displayName",
+    "deliveryQualityProductIds": ["b1590990-4bbb-11e9-8646-d663bd873d93"]
+  },
+  {
+    "id": "91a70f11-b672-403f-a256-28c220ded9de",
+    "itemGroupCategory": "FROZEN",
+    "name": "Name2",
+    "priceBonus": 0.2,
+    "color": "#e2ea0",
+    "displayName": "displayName2",
+    "deliveryQualityProductIds": []
+  }
+]
