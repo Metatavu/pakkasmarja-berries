@@ -195,7 +195,7 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
     }
 
     const deliveryQuality = await models.findDeliveryQuality(deliveryQualityId);
-    if (deliveryQuality) {
+    if (!deliveryQuality) {
       this.sendNotFound(res);
       return;
     }
