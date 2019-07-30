@@ -107,7 +107,7 @@ test("Create delivery quality", async (t) => {
     t.equal(createdDeliveryQuality.displayName, deliveryQualityData[0].displayName);
     t.equal(createdDeliveryQuality.priceBonus, deliveryQualityData[0].priceBonus);
     t.equal(createdDeliveryQuality.itemGroupCategory, deliveryQualityData[0].itemGroupCategory);
-    t.equal(createdDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
+    t.deepEquals(createdDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
@@ -130,7 +130,7 @@ test("Update delivery quality", async (t) => {
     t.equal(updatedDeliveryQuality.displayName, deliveryQualityData[1].displayName);
     t.equal(updatedDeliveryQuality.priceBonus, deliveryQualityData[1].priceBonus);
     t.equal(updatedDeliveryQuality.itemGroupCategory, deliveryQualityData[1].itemGroupCategory);
-    t.equal(updatedDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[1].deliveryQualityProductIds);
+    t.deepEquals(updatedDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[1].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
@@ -153,7 +153,7 @@ test("Find delivery quality", async (t) => {
     t.equal(foundDeliveryQuality.displayName, deliveryQualityData[0].displayName);
     t.equal(foundDeliveryQuality.priceBonus, deliveryQualityData[0].priceBonus);
     t.equal(foundDeliveryQuality.itemGroupCategory, deliveryQualityData[0].itemGroupCategory);
-    t.equal(foundDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
+    t.deepEquals(foundDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
