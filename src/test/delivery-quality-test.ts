@@ -102,12 +102,12 @@ test("Create delivery quality", async (t) => {
     const createdDeliveryQuality = await createDeliveryQuality(token);
     t.notEqual(createdDeliveryQuality, null);
     t.notEqual(createdDeliveryQuality.id, null);
-    t.equal(createdDeliveryQuality.color, createdDeliveryQuality[0].color);
-    t.equal(createdDeliveryQuality.name, createdDeliveryQuality[0].name);
-    t.equal(createdDeliveryQuality.displayName, createdDeliveryQuality[0].displayName);
-    t.equal(createdDeliveryQuality.priceBonus, createdDeliveryQuality[0].priceBonus);
-    t.equal(createdDeliveryQuality.itemGroupCategory, createdDeliveryQuality[0].itemGroupCategory);
-    t.equal(createdDeliveryQuality.deliveryQualityProductIds, createdDeliveryQuality[0].deliveryQualityProductIds);
+    t.equal(createdDeliveryQuality.color, deliveryQualityData[0].color);
+    t.equal(createdDeliveryQuality.name, deliveryQualityData[0].name);
+    t.equal(createdDeliveryQuality.displayName, deliveryQualityData[0].displayName);
+    t.equal(createdDeliveryQuality.priceBonus, deliveryQualityData[0].priceBonus);
+    t.equal(createdDeliveryQuality.itemGroupCategory, deliveryQualityData[0].itemGroupCategory);
+    t.equal(createdDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
@@ -125,12 +125,12 @@ test("Update delivery quality", async (t) => {
 
     t.notEqual(updatedDeliveryQuality, null);
     t.notEqual(updatedDeliveryQuality.id, null);
-    t.equal(createdDeliveryQuality.color, createdDeliveryQuality[1].color);
-    t.equal(createdDeliveryQuality.name, createdDeliveryQuality[1].name);
-    t.equal(createdDeliveryQuality.displayName, createdDeliveryQuality[1].displayName);
-    t.equal(createdDeliveryQuality.priceBonus, createdDeliveryQuality[1].priceBonus);
-    t.equal(createdDeliveryQuality.itemGroupCategory, createdDeliveryQuality[1].itemGroupCategory);
-    t.equal(createdDeliveryQuality.deliveryQualityProductIds, createdDeliveryQuality[1].deliveryQualityProductIds);
+    t.equal(updatedDeliveryQuality.color, deliveryQualityData[1].color);
+    t.equal(updatedDeliveryQuality.name, deliveryQualityData[1].name);
+    t.equal(updatedDeliveryQuality.displayName, deliveryQualityData[1].displayName);
+    t.equal(updatedDeliveryQuality.priceBonus, deliveryQualityData[1].priceBonus);
+    t.equal(updatedDeliveryQuality.itemGroupCategory, deliveryQualityData[1].itemGroupCategory);
+    t.equal(updatedDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[1].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
@@ -148,12 +148,12 @@ test("Find delivery quality", async (t) => {
 
     t.notEqual(foundDeliveryQuality, null);
     t.notEqual(foundDeliveryQuality.id, null);
-    t.equal(foundDeliveryQuality.color, foundDeliveryQuality[0].color);
-    t.equal(foundDeliveryQuality.name, foundDeliveryQuality[0].name);
-    t.equal(foundDeliveryQuality.displayName, foundDeliveryQuality[0].displayName);
-    t.equal(foundDeliveryQuality.priceBonus, foundDeliveryQuality[0].priceBonus);
-    t.equal(foundDeliveryQuality.itemGroupCategory, foundDeliveryQuality[0].itemGroupCategory);
-    t.equal(foundDeliveryQuality.deliveryQualityProductIds, foundDeliveryQuality[0].deliveryQualityProductIds);
+    t.equal(foundDeliveryQuality.color, deliveryQualityData[0].color);
+    t.equal(foundDeliveryQuality.name, deliveryQualityData[0].name);
+    t.equal(foundDeliveryQuality.displayName, deliveryQualityData[0].displayName);
+    t.equal(foundDeliveryQuality.priceBonus, deliveryQualityData[0].priceBonus);
+    t.equal(foundDeliveryQuality.itemGroupCategory, deliveryQualityData[0].itemGroupCategory);
+    t.equal(foundDeliveryQuality.deliveryQualityProductIds, deliveryQualityData[0].deliveryQualityProductIds);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
