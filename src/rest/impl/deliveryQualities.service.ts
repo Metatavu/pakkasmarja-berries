@@ -83,7 +83,6 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
       return;
     }
 
-
     const createdDeliveryQuality = await models.createDeliveryQuality(uuid(), itemGroupCategory, name, displayName, priceBonus, color);
     const createDeliveryQualityProductPromises = (payload.deliveryQualityProductIds || []).map((productId) => {
       return models.createDeliveryQualityProduct(createdDeliveryQuality.id || "", productId);
@@ -103,7 +102,7 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
       return;
     }
     
-    const payload : DeliveryQuality = req.body;
+    const payload: DeliveryQuality = req.body;
     if (!payload) {
       this.sendBadRequest(res, "Missing required payload");
       return;
@@ -156,9 +155,10 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
     const deliveryQuality = await models.findDeliveryQuality(deliveryQualityId);
     if (!deliveryQuality) {
       this.sendNotFound(res);
+      return;
     }
     
-    const qualityProducts = await models.listQualityProductsByQualityId(deliveryQualityId);
+    const qualityProducts = await models.listQualityProductsByDeliveryQualityId(deliveryQualityId);
     const existingDeliveryQualityProductIds = qualityProducts.map((deliveryQualityIds) => {
       return deliveryQualityIds.productId;
     });
@@ -195,8 +195,9 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
     }
 
     const deliveryQuality = await models.findDeliveryQuality(deliveryQualityId);
-    if (!deliveryQualityId) {
+    if (deliveryQuality) {
       this.sendNotFound(res);
+      return;
     }
 
     res.status(200).send(await this.translateDatabaseDeliveryQuality(deliveryQuality));
@@ -212,7 +213,7 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
     return null;
   }
     
-  const deliveryQualityProducts : DeliveryQualityProductModel[] = await models.listQualityProductsByQualityId(deliveryQuality.id);
+  const deliveryQualityProducts : DeliveryQualityProductModel[] = await models.listQualityProductsByDeliveryQualityId(deliveryQuality.id);
   const deliveryQualityProductIds = deliveryQualityProducts.length < 1 ? [] : deliveryQualityProducts.map((deliveryQualityProduct) => {
     return deliveryQualityProduct.productId;
   });

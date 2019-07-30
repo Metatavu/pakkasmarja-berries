@@ -3245,7 +3245,7 @@ export class Models {
    * @param color color
    * @returns promise for delivery quality
    */
-  public createDeliveryQuality(id: string, itemGroupCategory: string, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<DeliveryQualityModel> {
+  public createDeliveryQuality(id: string, itemGroupCategory: ItemGroupCategory, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<DeliveryQualityModel> {
     return this.DeliveryQuality.create({
       id: id,
       itemGroupCategory: itemGroupCategory,
@@ -3268,7 +3268,7 @@ export class Models {
    * @param color color
    * @returns promise for delivery quality
    */
-  public updateDeliveryQuality(id: string, itemGroupCategory: string, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<[number, any]> {
+  public updateDeliveryQuality(id: string, itemGroupCategory: ItemGroupCategory, name: string, displayName: string, priceBonus: number, color: string ): PromiseLike<[number, any]> {
     return this.DeliveryQuality.update({
       itemGroupCategory: itemGroupCategory,
       name: name,
@@ -3289,7 +3289,7 @@ export class Models {
    * @param {String} productId productId
    * @returns {Promise} Promise for created entity
    */
-  createDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<DeliveryQualityProductModel> {
+  public createDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<DeliveryQualityProductModel> {
     return this.sequelize.models.DeliveryQualityProduct.create({
       deliveryQualityId: deliveryQualityId,
       productId: productId
@@ -3303,7 +3303,7 @@ export class Models {
    * @param {String} productId productId
    * @return {Promise} promise that resolves on successful removal
    */
-  deleteDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<number> {
+  public deleteDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<number> {
     return this.sequelize.models.DeliveryQualityProduct.destroy({ 
       where: { 
         deliveryQualityId: deliveryQualityId,
@@ -3318,7 +3318,7 @@ export class Models {
    * @param {String} deliveryQualityId deliveryQualityId
    * @returns {Promise} Promise for DeliveryQualityProduct
    */
-  listQualityProductsByQualityId(deliveryQualityId: string): PromiseLike<DeliveryQualityProductModel[]> {
+  public listQualityProductsByDeliveryQualityId(deliveryQualityId: string): PromiseLike<DeliveryQualityProductModel[]> {
     return this.sequelize.models.DeliveryQualityProduct.findAll({
       where: {
         deliveryQualityId: deliveryQualityId
@@ -3347,7 +3347,7 @@ export class Models {
    * @param productId productId
    * @return Promise that resolves list of delivery qualities
    */
-  public listDeliveryQualities(itemGroupCategory?: string, productId?: string): PromiseLike<DeliveryQualityModel[]> {
+  public listDeliveryQualities(itemGroupCategory?: ItemGroupCategory, productId?: string): PromiseLike<DeliveryQualityModel[]> {
     let where: any = {};
 
     if (itemGroupCategory) {

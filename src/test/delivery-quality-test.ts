@@ -172,6 +172,13 @@ test("List delivery qualities", async (t) => {
     await createDeliveryQuality(token);
     const listWithOneItem = await listDeliveryQualities(token);
     t.equal(1, listWithOneItem.length);
+
+    const listWithFreshParam = await listDeliveryQualities(token, "FRESH");
+    t.equal(1, listWithFreshParam.length);
+
+    const listWithProductIdParam = await listDeliveryQualities(token, undefined, deliveryQualityData[0].deliveryQualityProductIds[0]);
+    t.equal(1, listWithProductIdParam.length);
+
   } finally {
     await database.executeFiles(testDataDir, ["delivery-qualities-teardown.sql"]);
   }
