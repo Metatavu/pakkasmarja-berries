@@ -17,7 +17,7 @@ import * as _ from "lodash";
  * Implementation for Deliveries REST service
  */
 export default class DeliveriesServiceImpl extends DeliveriesService {
-  
+
   /**
    * Constructor
    * 

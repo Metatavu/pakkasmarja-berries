@@ -1,0 +1,59 @@
+<div style="
+height: 940px;
+">
+<table style="width:100%; table-layout: fixed;">
+  <colgroup>
+      <col span="1" style="width: 5%;">
+      <col span="1" style="width: 8%;">
+      <col span="1" style="width: 23%;">
+      <col span="1" style="width: 7%;">
+      <col span="1" style="width: 7%;">
+      <col span="1" style="width: 10%;">
+      <col span="1" style="width: 8%;">
+      <col span="1" style="width: 8%;">
+      <col span="1" style="width: 12%;">
+      <col span="1" style="width: 12%;">
+  </colgroup>
+  <tr style="border-bottom: 1px solid black;line-height: 90%;">
+    <th>Aika</th>
+    <th style="text-align:center">Tuote numero</th>
+    <th>Tuote</th>
+    <th>Laatu</th>
+    <th>Määrä</th>
+    <th style="text-align:center;padding:0px 10px;">Määrä KG</th>
+    <th style="text-align:center; font-size:0.85em;">Y-hinta alv 0% (Yksikkö)</th>
+    <th style="text-align:center; font-size:0.85em;">Y-hinta alv 14% (Yksikkö)</th>
+    <th style="text-align:center; font-size:0.85em;">Yhteensä alv 0%</th>
+    <th style="text-align:center; font-size:0.85em;">Yhteensä alv 14%</th>
+  </tr>
+  {{#groupedDeliveriesByDate}}
+  <tr style="padding 15px 0px">
+    <td style="font-size:1.05em;"><strong style="padding-right:10px;">Päivämäärä:</strong>{{date}}<strong style="padding:0px 10px;">Toimituspaikka:</strong>{{deliveryPlaces}}</td>
+  </tr>
+    {{#deliveries}}
+    <tr> 
+      <td>{{delivery.time}}</td>
+      <td style="text-align:center;">{{product.sapItemCode}}</td>
+      <td>{{product.name}}</td>
+      <td>{{deliveryQuality.displayName}}</td>
+      <td>{{delivery.amount}}({{product.unitName}})</td>
+      <td style="text-align:center;">{{kg}}</td>
+      <td style="text-align:center;">{{delivery.price}}€</td>
+      <td style="text-align:center;">{{unitPriceAlv14}}€</td>
+      <td style="text-align:center;">{{totalPrice}}€</td>
+      <td style="text-align:center;">{{totalPriceAlv14}}€</td>
+    </tr> 
+    {{/deliveries}}
+  {{/groupedDeliveriesByDate}}
+</table>
+<div style="display:float;float:right;margin-top:30px;border-top: 1px solid black; width:55%">
+<div>
+  <div style="font-size:1.2em;"><strong>Yhteensä alv 0% </strong><span style="float:right;">{{alv0}} €<span></div>
+</div>
+  <div style="font-size:1.2em;"><strong>Yhteensä alv 14% </strong><span style="float:right;">{{alv14}} €<span></div>
+  {{#productTotals}}
+    <div style="font-size:1.2em;"><strong>Määrä yhteensä </strong>{{productName}}<span style="float:right;">{{totalAmountUnits}}({{unitName}})<span></div>
+    <div style="font-size:1.2em;"><strong>Määrä yhteensä </strong>{{productName}}<span style="float:right;">{{totalAmountKgs}}(KG) <span></div>
+  {{/productTotals}}
+</div>
+</div>

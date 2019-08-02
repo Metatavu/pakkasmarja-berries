@@ -2881,6 +2881,54 @@ export class Models {
   }
 
   /**
+   * Lists deliveries by date and productIds
+   * 
+   * @param status status
+   * @param userId userId
+   * @param timeBefore timeBefore
+   * @param timeAfter timeAfter
+   * @param productIds productIds
+   * @return Promise that resolves list of deliveries
+   */
+  public listDeliveriesByDateAndProductIds(status: DeliveryStatus | null, userId: string | null, timeBefore: Date | null, timeAfter: Date | null, productIds : string[] | undefined | null): Bluebird<DeliveryModel[]> {
+    const where : any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (timeBefore && !timeAfter) {
+      where.time = {
+        $lte: timeBefore
+      };
+    }
+
+    if (timeAfter && !timeBefore) {
+      where.time = {
+        $gte: timeAfter
+      };
+    }
+
+    if (timeAfter && timeBefore) {
+      where.time = {
+        $between: [timeAfter, timeBefore]
+      };
+    }
+
+    if (productIds && productIds.length > 0) {
+      where.productId = { [Sequelize.Op.in]: productIds };
+    }
+
+    return this.Delivery.findAll({ 
+      where: where
+    });
+  }
+
+  /**
    * Creates a where clause for listing / counting deliveries. 
    * 
    * All parameters are optional and ignored if not given

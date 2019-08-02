@@ -44,7 +44,7 @@ export default new class Pdf {
       if (tempFiles.footerPath) {
         options.footerHtml = `file://${tempFiles.footerPath}`;
       }
-
+      
       return new Promise((resolve, reject) => {
         wkhtmltopdf(html, options, (err: Error, pdfStream: Stream) => {
           tempFiles.cleanup();
