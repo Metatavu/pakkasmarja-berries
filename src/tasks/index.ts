@@ -897,6 +897,8 @@ export default new class TaskQueue {
         
         this.logger.info(`Deleting empty question chat thread ${chatThread.id} from user ${user.id}`);
         await models.deleteThread(chatThread.id);
+      } else {
+        this.logger.info(`Refused to remove chat thread ${chatThread.id} because it contained ${messageCount} messages`);
       }
     }
   }
