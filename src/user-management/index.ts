@@ -709,7 +709,7 @@ export default new class UserManagement {
    */
   public async deletePermission(permissionId: string) {
     const client = await this.getClient();
-    return client.clients.deleteAuthzPermission({
+    return await client.clients.deleteAuthzPermission({
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       permissionId: permissionId

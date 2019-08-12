@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import * as fs from "fs";
 import { getLogger, Logger } from "log4js";
-import models, { ContractModel, ChatGroupModel } from "../models";
+import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
 import * as Queue from "better-queue"; 
 import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
@@ -865,15 +865,55 @@ export default new class TaskQueue {
    * @param user user
    */
   private checkUserQuestionGroupThread = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
-    let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
-    const title = userManagement.getUserDisplayName(user) || "";
     const expectedAccess = await this.hasChatGroupTraversePermission(chatGroup, user);
     
-    if (!chatThread) {
-      if (!expectedAccess) {
-        return;
-      }
+    if (!expectedAccess) {
+      this.removeUserQuestionGroupThreadAccess(chatGroup, user);
+    } else {
+      this.addUserQuestionGroupThreadAccess(chatGroup, user);
+    }
+  }
 
+  /**
+   * Ensures that given user has does not have access to a thread in given question group 
+   * 
+   * @param chatGroup group
+   * @param user user
+   */
+  private removeUserQuestionGroupThreadAccess = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
+    const chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);    
+    
+    if (chatThread) {
+      this.logger.info(`Removing access into ${chatThread.id} from user ${user.id}`);
+      await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
+
+      const messageCount = await models.countMessagesByThread(chatThread.id);
+      if (messageCount == 0) {        
+        const accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
+        if (accessPermission && accessPermission.id) {
+          this.logger.info(`Delete access permission from empty chat thread ${chatThread.id}`);
+          await userManagement.deletePermission(accessPermission.id);
+        }
+        
+        this.logger.info(`Deleting empty question chat thread ${chatThread.id} from user ${user.id}`);
+        await models.deleteThread(chatThread.id);
+      } else {
+        this.logger.info(`Refused to remove chat thread ${chatThread.id} because it contained ${messageCount} messages`);
+      }
+    }
+  }
+
+  /**
+   * Ensures that given user has access to a thread in given question group 
+   * 
+   * @param chatGroup group
+   * @param user user
+   */
+  private addUserQuestionGroupThreadAccess = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
+    let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);    
+    const title = userManagement.getUserDisplayName(user) || "";
+
+    if (!chatThread) {
       this.logger.info(`Creating new question group ${chatGroup.id} thread for user ${user.id}`);
       chatThread = await models.createThread(chatGroup.id, user.id || null, title, null, "question", null, "TEXT", false, null);
     } else {
@@ -882,31 +922,20 @@ export default new class TaskQueue {
     
     let resource = await chatThreadPermissionController.findChatThreadResource(chatThread);
     if (!resource) {
-      if (!expectedAccess) {
-        return;
-      }
-      
       this.logger.info(`Creating new resource for chat thread ${chatThread.id}`);
       resource = await chatThreadPermissionController.createChatThreadResource(chatThread);
     }
 
     let accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
     if (!accessPermission) {
-      if (!expectedAccess) {
-        return;
-      }
-      
       this.logger.info(`Creating new access permission for chat thread ${chatThread.id}`);
       await chatThreadPermissionController.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
     }
 
     const scope = await chatThreadPermissionController.getUserChatThreadScope(chatThread, user);
-    if (expectedAccess && scope !== "chat-thread:access") {
+    if (scope !== "chat-thread:access") {
       this.logger.info(`Granting user ${user.id} access into ${chatThread.id}`);
       await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, "chat-thread:access");
-    } else if (!expectedAccess && scope === "chat-thread:access") {
-      this.logger.info(`Removing access into ${chatThread.id} from user ${user.id}`);
-      await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
     }
   }
 

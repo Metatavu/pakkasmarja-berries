@@ -1131,6 +1131,20 @@ export class Models {
   public deleteMessage(id: number): PromiseLike<number> {
     return this.sequelize.models.Message.destroy({ where: { id : id } });
   }
+
+  /**
+   * Counts messages in a thread
+   * 
+   * @param threadId thread id
+   * @returns promise for message count
+   */
+  public countMessagesByThread(threadId: number): PromiseLike<number> {
+    return this.sequelize.models.Message.count({ 
+      where: {
+        threadId : threadId
+      }
+    });
+  }
   
   // News Articles
   
