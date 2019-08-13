@@ -1,30 +1,17 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import models, { ProductModel, DeliveryPlaceModel, DeliveryQualityModel, DeliveryModel } from "../../models";
-import * as fs from "fs";
 import * as _ from "lodash";
 import { getLogger, Logger } from "log4js";
 import slugify from "slugify";
-import * as path from "path";
 import { Stream } from "stream";
-import * as Mustache from "mustache";
 import * as pug from "pug";
 import ReportsService from "../api/reports.service";
-import { Contact, Delivery, DeliveryQuality, DeliveryPlace, Product, ItemGroupCategory, Address } from "../model/models";
+import { Contact, DeliveryQuality, DeliveryPlace, Product, ItemGroupCategory, Address } from "../model/models";
 import userManagement, { UserProperty } from "../../user-management";
 import pdf from "../../pdf";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
-import moment = require("moment");
-
-interface ConstructData {
-  contact: Contact,
-  deliveries: {
-    delivery: Delivery,
-    deliveryQuality: DeliveryQuality,
-    deliveryPlace: DeliveryPlace,
-    product: Product
-  }[]
-}
+import * as moment from "moment";
 
 interface HtmlDeliveriesReportData {
   documentName: string,
@@ -75,7 +62,7 @@ export default class ReportsServiceImpl extends ReportsService {
     }
 
     if (type === "deliveriesReport") {
-      this.getDeliveriesReport(req, res, format, startDate, endDate, productIds);
+      await this.getDeliveriesReport(req, res, format, startDate, endDate, productIds);
     }
 
   }
@@ -105,6 +92,16 @@ export default class ReportsServiceImpl extends ReportsService {
 
     const deliveries = await models.listDeliveriesByDateAndProductIds("DONE", loggedUserId,  endDate, startDate, productIds);
 
+    const deliveryPlaceMap: { [key: number]: DeliveryPlaceModel } = {};
+    const deliveryPlaceIds = _.uniq(deliveries.map((delivery) => {
+      return delivery.deliveryPlaceId;
+    }));
+
+    for (let i = 0; i < deliveryPlaceIds.length; i++) {
+      const deliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceIds[i]);
+      deliveryPlaceMap[deliveryPlace.id] = deliveryPlace;;
+    }
+
     if (deliveries.length <= 0) {
       this.sendNotFound(res, "Did not find any deliveries");
       return;
@@ -128,6 +125,7 @@ export default class ReportsServiceImpl extends ReportsService {
       const kg = (delivery.amount * (product.units * product.unitSize)).toFixed(2);
       const totalPrice = (delivery.amount * Number(delivery.price)).toFixed(2);
       const totalPriceAlv14 = (Number(totalPrice) * 1.14).toFixed(2);
+
       return {
         delivery: delivery,
         deliveryQuality: deliveryQuality,
@@ -139,40 +137,52 @@ export default class ReportsServiceImpl extends ReportsService {
         totalPriceAlv14: totalPriceAlv14
       };
     });
-    const constructedDeliveries = await Promise.all(constructedDeliveryPromises);
 
+    const constructedDeliveries = await Promise.all(constructedDeliveryPromises);
     const groupedByDateConstructedDeliveries = _.chain(constructedDeliveries)
-    .groupBy(obj => moment(obj.delivery.date).format("DD.MM.YYYY"))
-    .map((constructedDeliveries, i) => {
-      return {
-        date: i,
-        deliveries: constructedDeliveries
-      }
-    }).value();
+      .sortBy(obj => {
+        return moment(obj.delivery.date).format("YYYY-MM-DD");
+      })
+      .groupBy(obj => {
+        const date = moment(obj.delivery.date).format("DD.MM.YYYY");
+        const deliveryPlaceId = obj.delivery.deliveryPlaceId;
+        return `${date}-${deliveryPlaceId}`;
+      })
+      .map((constructedDeliveries) => {
+        const delivery = constructedDeliveries[0].delivery;
+        const deliveryPlaceId = delivery.deliveryPlaceId;
+        const deliveryDate = moment(delivery.date).format("DD.MM.YYYY");
+
+        return {
+          date: deliveryDate,
+          deliveryPlace: deliveryPlaceMap[deliveryPlaceId].name,
+          deliveries: constructedDeliveries
+        }
+      }).value();
 
     const productTotals = _.chain(constructedDeliveries)
-    .groupBy(constructedDelivery => constructedDelivery.product.name)
-    .map((constructedDeliveries, productName) => {
-      const totalAmountUnits = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount));
-      const totalAmountKgs = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount) * (obj.product.units * obj.product.unitSize));
-      const unitName = _.uniqBy( constructedDeliveries.map(constructedDelivery => constructedDelivery.product.unitName), 'unitName');
-      return {
-        productName: productName,
-        totalAmountUnits:  totalAmountUnits,
-        totalAmountKgs: totalAmountKgs,
-        unitName: unitName
-      } 
-    }).value();
+      .groupBy(constructedDelivery => constructedDelivery.product.name)
+      .map((constructedDeliveries, productName) => {
+        const totalAmountUnits = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount));
+        const totalAmountKgs = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount) * (obj.product.units * obj.product.unitSize));
+        const unitName = _.uniqBy( constructedDeliveries.map(constructedDelivery => constructedDelivery.product.unitName), 'unitName');
+        return {
+          productName: productName,
+          totalAmountUnits:  totalAmountUnits,
+          totalAmountKgs: totalAmountKgs,
+          unitName: unitName
+        } 
+      }).value();
 
     const startDateString = startDate.toString();
     const endDateString = endDate.toString();
     
-    const constructData = {
+    const reportData = {
       contact: this.translateContact(contact),
       dateNow: moment().format("DD.MM.YYYY"),
       startDate: moment(startDateString.substr(0, startDateString.indexOf('T'))).format("DD.MM.YYYY"),
       endDate: moment(endDateString.substr(0, endDateString.indexOf('T'))).format("DD.MM.YYYY"),
-      alv0:  _.sumBy(constructedDeliveries, obj => Number(obj.totalPrice)),
+      alv0:  _.sumBy(constructedDeliveries, obj => Number(obj.totalPrice)).toFixed(2),
       alv14: _.sumBy(constructedDeliveries, obj => Number(obj.totalPriceAlv14)).toFixed(2),
       deliveryPlaces: _.uniqBy(constructedDeliveries.map(contructedDelivery => { return contructedDelivery.deliveryPlace.name }), 'name').join(", "),
       groupedDeliveriesByDate: groupedByDateConstructedDeliveries,
@@ -183,7 +193,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
     switch (format) {
       case "HTML":
-        this.getDeliveriesReportHtml(baseUrl, constructData)
+        this.getDeliveriesReportHtml(baseUrl, reportData)
           .then((document) => {
             if (!document) {
               this.sendNotFound(res, "Document not found");
@@ -196,10 +206,9 @@ export default class ReportsServiceImpl extends ReportsService {
             this.logger.error(`Html rendering failed on ${err}`);
             this.sendInternalServerError(res, err);
           });
-        return;
-        break;
+      break;
       case "PDF":
-        this.getDeliveriesReportPdf(baseUrl, constructData)
+        this.getDeliveriesReportPdf(baseUrl, reportData)
           .then((document) => {
             if (!document) {
               this.sendNotFound(res);
@@ -222,50 +231,41 @@ export default class ReportsServiceImpl extends ReportsService {
   }
 
   /**
-   * Renders contract document as HTML
+   * Renders report document as HTML
    * 
-   * @param {String} baseUrl baseUrl
-   * @param {Contract} contract contract
-   * @param {String} type document type 
+   * @param baseUrl baseUrl
+   * @param reportData report data
+   * @return report
    */
-  private async getDeliveriesReportHtml(baseUrl: string, data: any): Promise<HtmlDeliveriesReportData | null> {
-    try {
-
-      const html = "<div>{{>deliveryRaportHeader}} {{>deliveryRaportBody}} {{>deliveryRaportFooter}}</div>";
-      const content: string | null = await this.renderDocumentTemplateComponent(baseUrl, html, "delivery-report-content.pug", data);
-      if (!content) {
-        return null;
-      }
-
-      const documentName = "Otsikko";
-      const documentSlug = this.getDocumentSlug(documentName);
-      return {
-        documentName: documentName,
-        filename: `${documentSlug}.html`,
-        content: content,
-        type: "text/html"
-      };
-    } catch (e) {
-      this.logger.error("Failed to generate contract document html", e);
-      return null;
+  private async getDeliveriesReportHtml(baseUrl: string, reportData: any): Promise<HtmlDeliveriesReportData> {
+    const content: string | null = await this.renderPugTemplate("delivery-report-content.pug", baseUrl, reportData);
+    if (!content) {
+      throw new Error("Failed to render report HTML");
     }
+
+    const documentName = "Otsikko";
+    const documentSlug = this.getDocumentSlug(documentName);
+    return {
+      documentName: documentName,
+      filename: `${documentSlug}.html`,
+      content: content,
+      type: "text/html"
+    };
   }
 
   /**
- * Renders contract document as HTML
- * 
- * @param {String} baseUrl baseUrl
- * @param {Contract} contract contract
- * @param {String} type document type 
- */
-  async getDeliveriesReportPdf(baseUrl: string, data: any): Promise<PdfDeliveriesReport | null> {
+   * Renders report document as HTML
+   * 
+   * @param baseUrl baseUrl
+   * @param reportData report data
+   * @return report
+   */
+  private async getDeliveriesReportPdf(baseUrl: string, reportData: any): Promise<PdfDeliveriesReport | null> {
+    const deliveriesHtmlReport: HtmlDeliveriesReportData | null = await this.getDeliveriesReportHtml(baseUrl, reportData);
+    const header = null;
+    const footer = await this.renderPugTemplate("delivery-report-footer.pug", baseUrl, reportData);
+    const dataStream = await pdf.renderPdf(deliveriesHtmlReport.content, header, footer, baseUrl);
 
-    const deliveriesHtmlReport: HtmlDeliveriesReportData | null = await this.getDeliveriesReportHtml(baseUrl, data);
-    if (!deliveriesHtmlReport) {
-      return null;
-    }
-
-    const dataStream = await pdf.renderPdf(deliveriesHtmlReport.content, null, null, baseUrl);
     return {
       documentName: deliveriesHtmlReport.documentName,
       filename: `${deliveriesHtmlReport.documentSlug}`,
@@ -275,104 +275,15 @@ export default class ReportsServiceImpl extends ReportsService {
   }
 
   /**
-   * Renders a document template component into HTML text
-   * 
-   * @param {String} baseurl base url
-   * @param {String} mustacheTemplate mustache template
-   * @param {String} pugTemplateName pug template name
-   * @param {Object} mustacheData data passed to Mustache renderer
-   * @return {String} rendered HTML
-   */
-  private async renderDocumentTemplateComponent(baseUrl: string, mustacheTemplate: string, pugTemplateName: string, mustacheData: any): Promise<string | null> {
-    if (!mustacheTemplate) {
-      return null;
-    }
-
-    const mustachePartials = await this.loadMustachePartials();
-    const preprosessedMustacheTemplate = await this.preprosessMustacheTemplate(mustacheTemplate);
-
-    const bodyContent = Mustache.render(preprosessedMustacheTemplate,
-      mustacheData,
-      mustachePartials
-    );
-
-    return this.renderPugTemplate(pugTemplateName, {
-      bodyContent: bodyContent,
-      baseUrl: baseUrl
-    });
-  }
-
-
-  private async loadMustachePartials() {
-    const result = {};
-    const partialFiles = await this.getMustachePartialFiles();
-    const partials = await Promise.all(partialFiles.map((partialFile) => {
-      return this.loadMustachePartial(partialFile);
-    }));
-
-    partialFiles.forEach((partialFile: string, index: number) => {
-      const partialName = path.basename(partialFile, ".mustache");
-      result[partialName] = partials[index];
-    });
-
-    return result;
-  }
-
-  private loadMustachePartial(file: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      fs.readFile(file, (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data.toString());
-        }
-      });
-    });
-  }
-
-  private getMustachePartialFiles(): Promise<string[]> {
-    const folder = `${__dirname}/../../../mustache/`;
-
-    return new Promise((resolve, reject) => {
-      fs.readdir(folder, (err: Error, files: string[]) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(files.map((file: string) => {
-            return `${folder}/${file}`;
-          }));
-        }
-      });
-    });
-  }
-
-  /**
-   * Preprosesses mustache template.
-   * 
-   * @param {String} template mustache template 
-   */
-  private async preprosessMustacheTemplate(template: string) {
-    const partials = (await this.getMustachePartialFiles()).map((partialFile: string) => {
-      return path.basename(partialFile, ".mustache");
-    });
-
-    partials.forEach((partial) => {
-      template = template.replace(new RegExp("[{]{2,3}[\\s]{0,}" + partial + "[\\s]{0,}[}]{2,3}", "gi"), `{{ > ${partial} }}`);
-    });
-
-    return template;
-  }
-
-  /**
    * Renders a pug template
    * 
    * @param {String} template template name
    * @param {Object} model model
    * @return {String} rendered HTML
    */
-  private renderPugTemplate(template: string, model: { bodyContent: string, baseUrl: string }) {
+  private renderPugTemplate(template: string, baseUrl: string, model: any) {
     const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
-    return compiledPug(model);
+    return compiledPug({ ... model, baseUrl: baseUrl });
   }
 
   /**
@@ -458,7 +369,8 @@ export default class ReportsServiceImpl extends ReportsService {
       "status": delivery.status,
       "amount": delivery.amount,
       "price": delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
-      "qualityId": delivery.qualityId
+      "qualityId": delivery.qualityId,
+      "deliveryPlaceId": delivery.deliveryPlaceId
     };
 
     return result;
@@ -542,7 +454,7 @@ export default class ReportsServiceImpl extends ReportsService {
    * @param {Object} user
    * @return {Address[]} array of addresses
    */
-  resolveKeycloakUserAddresses(user: any): Address[] {
+  private resolveKeycloakUserAddresses(user: any): Address[] {
     const result: Address[] = [];
     if (user && user.attributes) {
       const postalCode1 = userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_1);
