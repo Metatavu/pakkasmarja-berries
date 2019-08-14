@@ -81,7 +81,7 @@ html(lang='en')
             td(style='font-size:1.05em; padding-top: 20px; padding-bottom: 20px; page-break-after: avoid;', colspan=9)
               strong(style='padding-right:10px;') P&auml;iv&auml;m&auml;&auml;r&auml;:
               =deliveryGroup.date
-              strong(style='padding:0px 10px;') 
+              strong(style='padding:0px 10px;')
                 |Toimituspaikka:
                 =deliveryGroup.deliveryPlace 
           each delivery in deliveryGroup.deliveries
@@ -97,21 +97,22 @@ html(lang='en')
                 =delivery.deliveryQuality.displayName
               td(style='text-align: right')
                 =delivery.delivery.amount
+                |&nbsp;
                 =delivery.product.unitName
               td(style='text-align: right')
                 =delivery.kg
               td(style='text-align: right')
                 =delivery.delivery.price
-                |&euro;
+                |&nbsp;&euro;
               td(style='text-align: right')
                 =delivery.unitPriceAlv14
-                |&euro;
+                |&nbsp;&euro;
               td(style='text-align: right')
                 =delivery.totalPrice
-                |&euro;
+                |&nbsp;&euro;
               td(style='text-align: right')
                 =delivery.totalPriceAlv14
-                |&euro;
+                |&nbsp;&euro;
         tr
           td(colspan=9)
             |&nbsp;
@@ -122,7 +123,7 @@ html(lang='en')
           td(style='text-align: right; border-top: 1px solid #000', colspan=2)
             span
               =alv0
-              |&euro;
+              |&nbsp;&euro;
         tr(style='padding 15px 0px')
           td(colspan=5)
           td(style='text-align: left', colspan=2)
@@ -130,7 +131,7 @@ html(lang='en')
           td(style='text-align: right', colspan=2)
             span
               =alv14
-              |&euro;
+              |&nbsp;&euro;
               
     .header Toimitukset tuotteittain
 
@@ -158,8 +159,7 @@ html(lang='en')
             td(style='text-align: right', colspan=1)
               span
                 =productTotal.totalAmountKgs
-                | 
-                |kg
+                |&nbsp;kg
             
     p(style="margin: 50px; text-align: center")
       strong Huomaathan, 

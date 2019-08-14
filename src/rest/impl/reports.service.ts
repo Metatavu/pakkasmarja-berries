@@ -156,7 +156,9 @@ export default class ReportsServiceImpl extends ReportsService {
         return {
           date: deliveryDate,
           deliveryPlace: deliveryPlaceMap[deliveryPlaceId].name,
-          deliveries: constructedDeliveries
+          deliveries: _.sortBy(constructedDeliveries, (constructedDelivery) => {
+            return constructedDelivery.delivery.date.toString();
+          })
         }
       }).value();
 
