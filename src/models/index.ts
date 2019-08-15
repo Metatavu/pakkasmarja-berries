@@ -2884,61 +2884,17 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of deliveries
    */
-  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number, maxResults?: number): Bluebird<DeliveryModel[]> {
-    const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productId, deliveryPlaceId, timeBefore, timeAfter);
+  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number | null, maxResults?: number | null): PromiseLike<DeliveryModel[]> {
+    if (productIds && productIds.length == 0) {
+      return Promise.resolve([]);
+    }
+    
+    const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productIds, deliveryPlaceId, timeBefore, timeAfter);
 
-    return this.Delivery.findAll({ 
+    return this.Delivery.findAll({
       where: where, 
-      offset: firstResult, 
-      limit: maxResults
-    });
-  }
-
-  /**
-   * Lists deliveries by date and productIds
-   * 
-   * @param status status
-   * @param userId userId
-   * @param timeBefore timeBefore
-   * @param timeAfter timeAfter
-   * @param productIds productIds
-   * @return Promise that resolves list of deliveries
-   */
-  public listDeliveriesByDateAndProductIds(status: DeliveryStatus | null, userId: string | null, timeBefore: Date | null, timeAfter: Date | null, productIds : string[] | undefined | null): Bluebird<DeliveryModel[]> {
-    const where : any = {};
-
-    if (status) {
-      where.status = status;
-    }
-
-    if (userId) {
-      where.userId = userId;
-    }
-
-    if (timeBefore && !timeAfter) {
-      where.time = {
-        $lte: timeBefore
-      };
-    }
-
-    if (timeAfter && !timeBefore) {
-      where.time = {
-        $gte: timeAfter
-      };
-    }
-
-    if (timeAfter && timeBefore) {
-      where.time = {
-        $between: [timeAfter, timeBefore]
-      };
-    }
-
-    if (productIds && productIds.length > 0) {
-      where.productId = { [Sequelize.Op.in]: productIds };
-    }
-
-    return this.Delivery.findAll({ 
-      where: where
+      offset: firstResult || undefined, 
+      limit: maxResults || undefined
     });
   }
 
@@ -2957,15 +2913,15 @@ export class Models {
    * @param timeAfter timeAfter
    * @return where clause
    */
-  private createListDeliveriesWhere(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null) {
+  private createListDeliveriesWhere(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null) {
     const where: any = {};
 
     if (status) {
       where.status = status;
     }
 
-    if (productId) {
-      where.productId = productId;
+    if (productIds) {
+      where.productId = { [Sequelize.Op.in]: productIds };
     }
 
     if (deliveryPlaceId) {

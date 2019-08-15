@@ -324,7 +324,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const deliveries: DeliveryModel[] = await models.listDeliveries(status, userId, itemGroupCategory, databaseItemGroupId, productId, databaseDeliveryPlaceId, timeBefore, timeAfter, firstResult, maxResults);
+    const deliveries: DeliveryModel[] = await models.listDeliveries(status, userId, itemGroupCategory, databaseItemGroupId, productId ? [ productId ] : null, databaseDeliveryPlaceId, timeBefore, timeAfter, firstResult, maxResults);
     res.status(200).send(await Promise.all(deliveries.map((delivery) => {
       return this.translateDatabaseDelivery(delivery);
     })));

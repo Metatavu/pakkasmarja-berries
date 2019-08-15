@@ -28,6 +28,54 @@ interface PdfDeliveriesReport {
   type: string
 }
 
+interface DeliveryReportDataDelivery {
+  time: string,
+  amount: string,
+  totalPrice: string,
+  totalPriceAlv14: string,
+  deliveryQuality: string,
+  unitPrice: string,
+  unitPriceAlv14: string,
+  kg: string,
+  product: {
+    sapItemCode: string,
+    name: string,
+    unitName: string
+  }
+}
+
+interface DeliveryReportDataDeliveryGroup {
+  date: string,
+  deliveryPlace: string,
+  deliveries: DeliveryReportDataDelivery[]
+}
+
+interface DeliveryReportDataProductTotal {
+  productName: string,
+  totalAmountUnits: string,
+  unitName: string,
+  totalAmountKgs: string
+}
+
+interface DeliveryReportData {
+  dateNow: string | null,
+  startDate: string | null,
+  endDate: string | null,
+  alv0: string,
+  alv14: string,
+  deliveryGroups: DeliveryReportDataDeliveryGroup[],
+  productTotals: DeliveryReportDataProductTotal[],
+  contact: {
+    sapId: string | null,
+    displayName: string | null,
+    address: {
+      streetAddress: string | null,
+      postalCode: string | null,
+      city: string | null
+    }
+  }
+}
+
 /**
  * Implementation for Reports REST service
  */
@@ -52,34 +100,21 @@ export default class ReportsServiceImpl extends ReportsService {
   public async getReport(req: Request, res: Response) {
     const type = req.params.type;
     const format = req.query.format;
-    const startDate = req.query.startDate;
-    const endDate = req.query.endDate;
-    const productIds = req.query.productIds ? req.query.productIds.split(",") : [];
+    const startDateParam = req.query.startDate;
+    const endDateParam = req.query.endDate;
+    const productIds = req.query.productIds ? req.query.productIds.split(",") : null;
 
     if (!type) {
       this.sendNotFound(res, "Missing required param type");
       return;
     }
 
-    if (type === "deliveriesReport") {
-      await this.getDeliveriesReport(req, res, format, startDate, endDate, productIds);
-    }
-
-  }
-
-  /**
-   * Get deliveries Report
-   * @param {Date} startDate startDate
-   * @param {Date} endDate endDate
-   * @param {String[]} productIds productIds
-   */
-  private async getDeliveriesReport(req: Request, res: Response, format: string, startDate: Date, endDate: Date, productIds: string[]) {
-    if (!startDate) {
+    if (!startDateParam) {
       this.sendNotFound(res, "Missing required param startDate");
       return;
     }
 
-    if (!endDate) {
+    if (!endDateParam) {
       this.sendNotFound(res, "Missing required param endDate");
       return;
     }
@@ -90,112 +125,24 @@ export default class ReportsServiceImpl extends ReportsService {
       return;
     }
 
-    const deliveries = await models.listDeliveriesByDateAndProductIds("DONE", loggedUserId,  endDate, startDate, productIds);
-
-    const deliveryPlaceMap: { [key: number]: DeliveryPlaceModel } = {};
-    const deliveryPlaceIds = _.uniq(deliveries.map((delivery) => {
-      return delivery.deliveryPlaceId;
-    }));
-
-    for (let i = 0; i < deliveryPlaceIds.length; i++) {
-      const deliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceIds[i]);
-      deliveryPlaceMap[deliveryPlace.id] = deliveryPlace;;
-    }
-
-    if (deliveries.length <= 0) {
-      this.sendNotFound(res, "Did not find any deliveries");
-      return;
-    }
-
     const contact = await userManagement.findUser(loggedUserId);
     if (!contact) {
       this.sendNotFound(res, "Could not find logged user");
       return;
     }
 
-    const constructedDeliveryPromises = deliveries.map(async deliveryModel => {
-      const delivery = this.translateDatabaseDelivery(deliveryModel);
-      const deliveryQualityModel = await models.findDeliveryQuality(delivery.qualityId || "");
-      const deliveryQuality = await this.translateDatabaseDeliveryQuality(deliveryQualityModel);
-      const deliveryPlaceModel = await models.findDeliveryPlaceById(deliveryModel.deliveryPlaceId);
-      const deliveryPlace = this.translateDatabaseDeliveryPlace(deliveryPlaceModel);
-      const productModel = await models.findProductById(delivery.productId);
-      const product = await this.translateDatabaseProduct(productModel);
-      const unitPriceAlv14 = (Number(delivery.price) * 1.14).toFixed(2);
-      const kg = (delivery.amount * (product.units * product.unitSize)).toFixed(2);
-      const totalPrice = (delivery.amount * Number(delivery.price)).toFixed(2);
-      const totalPriceAlv14 = (Number(totalPrice) * 1.14).toFixed(2);
+    const startDate = this.parseDate(startDateParam);
+    const endDate = this.parseDate(endDateParam);
 
-      return {
-        delivery: delivery,
-        deliveryQuality: deliveryQuality,
-        deliveryPlace: deliveryPlace,
-        product: product,
-        kg: kg,
-        unitPriceAlv14: unitPriceAlv14,
-        totalPrice: totalPrice,
-        totalPriceAlv14: totalPriceAlv14
-      };
-    });
+    let reportData = null;
 
-    const constructedDeliveries = await Promise.all(constructedDeliveryPromises);
-    const groupedByDateConstructedDeliveries = _.chain(constructedDeliveries)
-      .sortBy(obj => {
-        return moment(obj.delivery.date).format("YYYY-MM-DD");
-      })
-      .groupBy(obj => {
-        const date = moment(obj.delivery.date).format("DD.MM.YYYY");
-        const deliveryPlaceId = obj.delivery.deliveryPlaceId;
-        return `${date}-${deliveryPlaceId}`;
-      })
-      .map((constructedDeliveries) => {
-        const delivery = constructedDeliveries[0].delivery;
-        const deliveryPlaceId = delivery.deliveryPlaceId;
-        const deliveryDate = moment(delivery.date).format("DD.MM.YYYY");
-
-        return {
-          date: deliveryDate,
-          deliveryPlace: deliveryPlaceMap[deliveryPlaceId].name,
-          deliveries: _.sortBy(constructedDeliveries, (constructedDelivery) => {
-            return constructedDelivery.delivery.date.toString();
-          })
-        }
-      }).value();
-
-    const productTotals = _.chain(constructedDeliveries)
-      .groupBy(constructedDelivery => constructedDelivery.product.name)
-      .map((constructedDeliveries, productName) => {
-        const totalAmountUnits = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount));
-        const totalAmountKgs = _.sumBy(constructedDeliveries, obj => Number(obj.delivery.amount) * (obj.product.units * obj.product.unitSize));
-        const unitName = _.uniqBy( constructedDeliveries.map(constructedDelivery => constructedDelivery.product.unitName), 'unitName');
-        return {
-          productName: productName,
-          totalAmountUnits:  totalAmountUnits,
-          totalAmountKgs: totalAmountKgs,
-          unitName: unitName
-        } 
-      }).value();
-
-    const startDateString = startDate.toString();
-    const endDateString = endDate.toString();
-    
-    const reportData = {
-      contact: this.translateContact(contact),
-      dateNow: moment().format("DD.MM.YYYY"),
-      startDate: moment(startDateString.substr(0, startDateString.indexOf('T'))).format("DD.MM.YYYY"),
-      endDate: moment(endDateString.substr(0, endDateString.indexOf('T'))).format("DD.MM.YYYY"),
-      alv0:  _.sumBy(constructedDeliveries, obj => Number(obj.totalPrice)).toFixed(2),
-      alv14: _.sumBy(constructedDeliveries, obj => Number(obj.totalPriceAlv14)).toFixed(2),
-      deliveryPlaces: _.uniqBy(constructedDeliveries.map(contructedDelivery => { return contructedDelivery.deliveryPlace.name }), 'name').join(", "),
-      groupedDeliveriesByDate: groupedByDateConstructedDeliveries,
-      productTotals: productTotals
+    if (type === "deliveriesReport") {
+      reportData = await this.getDeliveryReportData(contact, productIds, startDate, endDate);
     }
-
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
     switch (format) {
       case "HTML":
-        this.getDeliveriesReportHtml(baseUrl, reportData)
+        this.getDeliveriesReportHtml(reportData)
           .then((document) => {
             if (!document) {
               this.sendNotFound(res, "Document not found");
@@ -210,7 +157,7 @@ export default class ReportsServiceImpl extends ReportsService {
           });
       break;
       case "PDF":
-        this.getDeliveriesReportPdf(baseUrl, reportData)
+        this.getDeliveriesReportPdf(reportData)
           .then((document) => {
             if (!document) {
               this.sendNotFound(res);
@@ -230,6 +177,140 @@ export default class ReportsServiceImpl extends ReportsService {
           });
       break;
     }
+
+  }
+
+  /**
+   * Parses a date string
+   * 
+   * @param date date
+   * @return moment
+   */
+  private parseDate = (date: string) => {
+    return moment(date.substr(0, date.indexOf('T')));
+  }
+
+  /**
+   * Generates report data for delivery report
+   * 
+   * @param user user
+   * @param productIds product ids 
+   * @param startDate start date
+   * @param endDate end date
+   * @return report data
+   */
+  private async getDeliveryReportData(user: UserRepresentation, productIds: string[] | null, startDate: moment.Moment, endDate: moment.Moment): Promise<DeliveryReportData> {
+    const deliveries = await models.listDeliveries("DONE", user.id!,  null, null,  productIds, null, endDate.toDate(), startDate.toDate(), null, null);
+
+    const deliveryPlaceMap: { [key: number]: DeliveryPlaceModel } = {};
+    const deliveryPlaceIds = _.uniq(deliveries.map((delivery) => {
+      return delivery.deliveryPlaceId;
+    }));
+
+    for (let i = 0; i < deliveryPlaceIds.length; i++) {
+      const deliveryPlace = await models.findDeliveryPlaceById(deliveryPlaceIds[i]);
+      deliveryPlaceMap[deliveryPlace.id] = deliveryPlace;;
+    }
+
+    const productMap: { [key: number]: ProductModel } = {};
+    const deliveryProductIds = _.uniq(deliveries.map((delivery) => {
+      return delivery.productId;
+    }));
+
+    for (let i = 0; i < deliveryProductIds.length; i++) {
+      const product = await models.findProductById(deliveryProductIds[i]);
+      productMap[product.id!] = product;
+    }
+
+    const deliveryQualities = await models.listDeliveryQualities(); 
+    const deliveryQualityMap: { [key: number]: DeliveryPlaceModel } = {};
+    for (let i = 0; i < deliveryQualities.length; i++) {
+      const deliveryQuality = deliveryQualities[i];
+      deliveryQualityMap[deliveryQuality.id!] = deliveryQuality;
+    }
+
+  const deliveryGroups: DeliveryReportDataDeliveryGroup[] = _.chain(deliveries)
+    .sortBy(delivery => {
+      return moment(delivery.createdAt).format("YYYY-MM-DD HH:mm");
+    })
+    .groupBy(delivery => {
+      const date = moment(delivery.createdAt).format("DD.MM.YYYY");
+      const deliveryPlaceId = delivery.deliveryPlaceId;
+      return `${date}-${deliveryPlaceId}`;
+    })
+    .map((groupedDeliveries) => {
+      const delivery = groupedDeliveries[0];
+      const deliveryPlaceId = delivery.deliveryPlaceId;
+      const deliveryDate = moment(delivery.createdAt).format("DD.MM.YYYY");
+      
+      const deliveries: DeliveryReportDataDelivery[] = groupedDeliveries.map((delivery) => {
+        const product = productMap[delivery.productId];
+        const unitPrice = delivery.unitPriceWithBonus || 0;
+        const unitPriceAlv14 = unitPrice * 1.14;
+        const totalPrice = delivery.amount * unitPrice;
+        const totalPriceAlv14 = totalPrice * 1.14;
+        const deliveryQuality = delivery.qualityId ? deliveryQualityMap[delivery.qualityId] : null;
+
+        return {
+          time: moment(delivery.createdAt).format("HH:mm"),
+          amount: delivery.amount.toString(),
+          totalPrice: totalPrice.toFixed(2),
+          totalPriceAlv14: totalPriceAlv14.toFixed(2),
+          deliveryQuality: deliveryQuality ? deliveryQuality.displayName : null,
+          unitPrice: unitPrice.toFixed(2),
+          unitPriceAlv14: unitPriceAlv14.toFixed(2),
+          kg: (delivery.amount * (product.units * product.unitSize)).toString(),
+          product: {
+            sapItemCode: product.sapItemCode,
+            name: product.name,
+            unitName: product.unitName
+          }
+        }
+      });
+
+      return {
+        date: deliveryDate,
+        deliveryPlace: deliveryPlaceMap[deliveryPlaceId].name,
+        deliveries: deliveries
+      }
+    }).value();
+
+    const productTotals: DeliveryReportDataProductTotal[] = _.chain(deliveries)
+      .groupBy(delivery => delivery.productId)
+      .map((deliveries, productId) => {
+        const product = productMap[productId];
+        const totalAmountUnits = _.sumBy(deliveries, delivery => delivery.amount);
+        const totalAmountKgs = _.sumBy(deliveries, delivery => delivery.amount * product.units * product.unitSize);
+
+        return {
+          productName: product.name,
+          totalAmountUnits:  totalAmountUnits.toFixed(2),
+          totalAmountKgs: totalAmountKgs.toFixed(2),
+          unitName: product.unitName
+        } 
+      }).value();
+
+    const alv0 = _.sumBy(deliveries, delivery => delivery.unitPriceWithBonus || 0);
+    const alv14 = alv0 * 1.14;
+
+    return {
+      alv0: alv0.toFixed(2),
+      alv14: alv14.toFixed(2),
+      contact: {
+        address: {
+          city: userManagement.getSingleAttribute(user, UserProperty.CITY_1),
+          postalCode: userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_1),
+          streetAddress: userManagement.getSingleAttribute(user, UserProperty.STREET_1)
+        },
+        displayName: userManagement.getUserDisplayName(user),
+        sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_ID) || null
+      },
+      dateNow: moment().format("DD.MM.YYYY"),
+      startDate: moment(startDate).format("DD.MM.YYYY"),
+      endDate: moment(endDate).format("DD.MM.YYYY"),
+      deliveryGroups: deliveryGroups,
+      productTotals: productTotals
+    }
   }
 
   /**
@@ -239,8 +320,8 @@ export default class ReportsServiceImpl extends ReportsService {
    * @param reportData report data
    * @return report
    */
-  private async getDeliveriesReportHtml(baseUrl: string, reportData: any): Promise<HtmlDeliveriesReportData> {
-    const content: string | null = await this.renderPugTemplate("delivery-report-content.pug", baseUrl, reportData);
+  private async getDeliveriesReportHtml(reportData: any): Promise<HtmlDeliveriesReportData> {
+    const content: string | null = await this.renderPugTemplate("delivery-report-content.pug", reportData);
     if (!content) {
       throw new Error("Failed to render report HTML");
     }
@@ -262,11 +343,11 @@ export default class ReportsServiceImpl extends ReportsService {
    * @param reportData report data
    * @return report
    */
-  private async getDeliveriesReportPdf(baseUrl: string, reportData: any): Promise<PdfDeliveriesReport | null> {
-    const deliveriesHtmlReport: HtmlDeliveriesReportData | null = await this.getDeliveriesReportHtml(baseUrl, reportData);
+  private async getDeliveriesReportPdf(reportData: any): Promise<PdfDeliveriesReport | null> {
+    const deliveriesHtmlReport: HtmlDeliveriesReportData | null = await this.getDeliveriesReportHtml(reportData);
     const header = null;
-    const footer = await this.renderPugTemplate("delivery-report-footer.pug", baseUrl, reportData);
-    const dataStream = await pdf.renderPdf(deliveriesHtmlReport.content, header, footer, baseUrl);
+    const footer = await this.renderPugTemplate("delivery-report-footer.pug", reportData);
+    const dataStream = await pdf.renderPdf(deliveriesHtmlReport.content, header, footer);
 
     return {
       documentName: deliveriesHtmlReport.documentName,
@@ -283,9 +364,9 @@ export default class ReportsServiceImpl extends ReportsService {
    * @param {Object} model model
    * @return {String} rendered HTML
    */
-  private renderPugTemplate(template: string, baseUrl: string, model: any) {
+  private renderPugTemplate(template: string, model: any) {
     const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
-    return compiledPug({ ... model, baseUrl: baseUrl });
+    return compiledPug(model);
   }
 
   /**
@@ -295,200 +376,6 @@ export default class ReportsServiceImpl extends ReportsService {
    */
   private getDocumentSlug(documentName: string): string {
     return slugify(documentName);
-  }
-
-  /**
-   * Translates database product into REST entity
-   * 
-   * @param product product 
-   */
-  private async translateDatabaseProduct(product: ProductModel) {
-    const itemGroup = await models.findItemGroupById(product.itemGroupId);
-
-    const result: Product = {
-      "id": product.id,
-      "itemGroupId": itemGroup.externalId,
-      "name": product.name,
-      "units": product.units,
-      "unitSize": product.unitSize,
-      "unitName": product.unitName,
-      "sapItemCode": product.sapItemCode
-    };
-
-    return result;
-  }
-
-  /**
-   * Translates Database delivery place into REST entity
-   * 
-   * @param {Object} deliveryPlace Sequelize delivery place model
-   * @return {DeliveryPlace} REST entity
-   */
-  private translateDatabaseDeliveryPlace(deliveryPlace: DeliveryPlaceModel): DeliveryPlace {
-    const result: DeliveryPlace = {
-      "id": deliveryPlace.externalId,
-      "name": deliveryPlace.name
-    };
-
-    return result;
-  }
-
-  /**
-   * Translates database deliveryQuality into REST entity
-   * 
-   * @param deliveryQuality deliveryQuality 
-   */
-  private async translateDatabaseDeliveryQuality(deliveryQuality: DeliveryQualityModel) : Promise<DeliveryQuality | null> {
-    if (!deliveryQuality.id) {
-      return null;
-    }
-  
-    const result: DeliveryQuality = {
-      id: deliveryQuality.id,
-      itemGroupCategory: (deliveryQuality.itemGroupCategory as ItemGroupCategory),
-      name: deliveryQuality.name,
-      priceBonus: deliveryQuality.priceBonus,
-      color: deliveryQuality.color,
-      displayName: deliveryQuality.displayName,
-      deliveryQualityProductIds: []
-    };
-  
-    return result;
-  }
-
-  /**
-   * Translates database delivery into REST entity
-   * 
-   * @param delivery delivery 
-   */
-  private translateDatabaseDelivery(delivery: DeliveryModel) {
-
-    const result = {
-      "id": delivery.id,
-      "productId": delivery.productId,
-      "date": delivery.time,
-      "time": moment(delivery.time).format("HH:mm"),
-      "status": delivery.status,
-      "amount": delivery.amount,
-      "price": delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
-      "qualityId": delivery.qualityId,
-      "deliveryPlaceId": delivery.deliveryPlaceId
-    };
-
-    return result;
-  }
-
-  /**
-   * Translates Keycloak user into Contact
-   * 
-   * @param {Object} user Keycloak user
-   * @return {Contact} contact 
-   */
-  private translateContact(user: UserRepresentation | null): Contact | null {
-    if (!user || !user.id) {
-      return null;
-    }
-
-    try {
-      const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
-      let vatLiable: Contact.VatLiableEnum | null = null;
-
-      if ("true" == userVatLiable) {
-        vatLiable = userVatLiable;
-      } else if ("false" == userVatLiable) {
-        vatLiable = userVatLiable;
-      } else if ("EU" == userVatLiable) {
-        vatLiable = userVatLiable;
-      }
-
-      const result: Contact = {
-        'id': user.id,
-        "sapId": userManagement.getSingleAttribute(user, UserProperty.SAP_ID) ||null,
-        'firstName': user.firstName || null,
-        'lastName': user.lastName || null,
-        'companyName': userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
-        'phoneNumbers': this.resolveKeycloakUserPhones(user),
-        'email': user.email || null,
-        'addresses': this.resolveKeycloakUserAddresses(user),
-        'BIC': userManagement.getSingleAttribute(user, UserProperty.BIC) || null,
-        'IBAN': userManagement.getSingleAttribute(user, UserProperty.IBAN) || null,
-        'taxCode': userManagement.getSingleAttribute(user, UserProperty.TAX_CODE) || null,
-        'vatLiable': vatLiable,
-        'audit': userManagement.getSingleAttribute(user, UserProperty.AUDIT) || null,
-        "avatarUrl": userManagement.getUserImage(user),
-        "displayName": userManagement.getUserDisplayName(user)
-      };
-      
-      return result;
-    } catch (e) {
-      this.logger.error("Failed to translate contact", user);
-      return null;
-    }
-  }
-
-  /**
-   * Resolves Keycloak user's phone numbers
-   * 
-   * @param {Object} user
-   * @return {String[]} array of phone numbers
-   */
-  private resolveKeycloakUserPhones(user: any) {
-    const result = [];
-    if (user && user.attributes) {
-      const phoneNumber1 = userManagement.getSingleAttribute(user, UserProperty.PHONE_1);
-      const phoneNumber2 = userManagement.getSingleAttribute(user, UserProperty.PHONE_2);
-      
-      if (phoneNumber1) {
-        result.push(phoneNumber1);
-      }
-
-      if (phoneNumber2) {
-        result.push(phoneNumber2);
-      }
-    }
-    
-    return _.compact(result);
-  }
-
-  /**
-   * Resolves Keycloak user's addresses
-   * 
-   * @param {Object} user
-   * @return {Address[]} array of addresses
-   */
-  private resolveKeycloakUserAddresses(user: any): Address[] {
-    const result: Address[] = [];
-    if (user && user.attributes) {
-      const postalCode1 = userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_1);
-      const streetAddress1 = userManagement.getSingleAttribute(user, UserProperty.STREET_1);
-      const city1 = userManagement.getSingleAttribute(user, UserProperty.CITY_1);
-
-      const postalCode2 = userManagement.getSingleAttribute(user, UserProperty.POSTAL_CODE_2);
-      const streetAddress2 = userManagement.getSingleAttribute(user, UserProperty.STREET_2);
-      const city2 = userManagement.getSingleAttribute(user, UserProperty.CITY_2);
-
-      if (postalCode1 && streetAddress1) {
-        const address: Address = {
-          "streetAddress": streetAddress1,
-          "postalCode": postalCode1,
-          "city": city1 || null
-        };
-
-        result.push(address);  
-      } 
-
-      if (postalCode2 && streetAddress2) {
-        const address: Address = {
-          "streetAddress": streetAddress1,
-          "postalCode": postalCode1,
-          "city": city2 || null
-        };
-
-        result.push(address);  
-      } 
-    }
-    
-    return result;
   }
 
 }
