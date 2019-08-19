@@ -3466,6 +3466,20 @@ export class Models {
       }
     });
   }
+
+  /**
+   * Deletes unreads by path
+   * 
+   * @param path path
+   * @returns promise for deletion
+   */
+  public deleteUnreadsByPath(path: string): PromiseLike<number> {
+    return this.Unread.destroy({
+      where: {
+        path: path
+      }
+    });
+  }
   
   // data sheets
   

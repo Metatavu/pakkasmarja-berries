@@ -57,6 +57,9 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
     await models.deleteNewsArticle(databaseNewsArticle.id);
 
+    const path = `news-${databaseNewsArticle.id}`;
+    await models.deleteUnreadsByPath(path);
+    
     mqtt.publish("newsarticles", {
       "operation": "DELETED",
       "id": databaseNewsArticle.id
