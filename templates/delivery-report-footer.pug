@@ -1,0 +1,41 @@
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    link(rel='stylesheet', href='https://cdn.metatavu.io/libs/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css')
+    script(type='text/javascript', src='https://cdn.metatavu.io/libs/wkhtmltopdf-scripts/0.0.1/subst.js')
+    style(type='text/css').
+      footer {
+        font-size: 12px;
+      }   
+
+      .line {
+        border-top: 1px solid #000;
+      }
+  body(onload="subst()")
+    footer
+      .row
+        .col-4
+          |&nbsp;
+      .row
+        .col-4
+          |&nbsp;
+      .row
+        .col-12
+          .line
+      .row
+        .col-4
+          |&nbsp;
+      .row
+        .col-4
+          div PAKKASMARJA OY
+          div Lintikonkatu 20
+          div 77600 SUONENJOKI
+          div Finland
+        .col-8.text-right
+          div &nbsp;
+          div &nbsp;
+          div &nbsp;
+          div(style="color: red") Raportti ladattu Pakkasmarja-apista
+

@@ -2884,13 +2884,17 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of deliveries
    */
-  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number, maxResults?: number): Bluebird<DeliveryModel[]> {
-    const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productId, deliveryPlaceId, timeBefore, timeAfter);
+  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number | null, maxResults?: number | null): PromiseLike<DeliveryModel[]> {
+    if (productIds && productIds.length == 0) {
+      return Promise.resolve([]);
+    }
+    
+    const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productIds, deliveryPlaceId, timeBefore, timeAfter);
 
-    return this.Delivery.findAll({ 
+    return this.Delivery.findAll({
       where: where, 
-      offset: firstResult, 
-      limit: maxResults
+      offset: firstResult || undefined, 
+      limit: maxResults || undefined
     });
   }
 
@@ -2909,15 +2913,15 @@ export class Models {
    * @param timeAfter timeAfter
    * @return where clause
    */
-  private createListDeliveriesWhere(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productId: string | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null) {
+  private createListDeliveriesWhere(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null) {
     const where: any = {};
 
     if (status) {
       where.status = status;
     }
 
-    if (productId) {
-      where.productId = productId;
+    if (productIds) {
+      where.productId = { [Sequelize.Op.in]: productIds };
     }
 
     if (deliveryPlaceId) {
@@ -3459,6 +3463,20 @@ export class Models {
     return this.Unread.destroy({
       where: {
         id: id
+      }
+    });
+  }
+
+  /**
+   * Deletes unreads by path
+   * 
+   * @param path path
+   * @returns promise for deletion
+   */
+  public deleteUnreadsByPath(path: string): PromiseLike<number> {
+    return this.Unread.destroy({
+      where: {
+        path: path
       }
     });
   }
