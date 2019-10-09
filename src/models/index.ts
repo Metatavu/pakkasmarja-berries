@@ -3487,6 +3487,23 @@ export class Models {
   }
 
   /**
+   * Deletes unreads by path like
+   * 
+   * @param path path like
+   * @returns promise for deletion
+   */
+  public deleteUnreadsByPathLike(path: string): PromiseLike<number> {
+    const where: any = {
+    }
+    
+    where.path = { [Sequelize.Op.like]: path };
+
+    return this.Unread.destroy({
+      where: where
+    });
+  }
+
+  /**
    * Deletes unreads by path
    * 
    * @param path path
