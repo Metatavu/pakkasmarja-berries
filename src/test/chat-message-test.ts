@@ -570,4 +570,9 @@ test("Chat message unreads permission change", async (t) => {
   await waitAsync(2000);
 
   t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 0);
+  
+  await deleteChatThread(token, chatThread1.id!);
+  await deleteChatGroup(token, chatGroup1.id!);
+
+  await auth.removeAdminRoles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
