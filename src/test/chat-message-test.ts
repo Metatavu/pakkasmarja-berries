@@ -565,7 +565,7 @@ test("Chat message unreads permission change", async (t) => {
 
   t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 1);
 
-  await chatPermissions.deleteChatGroupGroupPermission(token, chatThread1.id!, permission.id!);
+  await chatPermissions.deleteChatGroupGroupPermission(token, chatGroup1.id!, permission.id!);
 
   await waitAsync(2000);
 
