@@ -11,6 +11,7 @@ import { ChatGroupGroupPermission } from "../model/chatGroupGroupPermission";
 import { ChatGroupPermissionScope } from "../model/chatGroupPermissionScope";
 import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE, ApplicationScope } from "../application-scopes";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Chat Groups REST service
@@ -361,6 +362,15 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     }
 
     await chatGroupPermissionController.setUserGroupChatGroupScope(chatGroup, userGroup, null);
+
+    const groupUsers: UserRepresentation[] = await userManagement.listUserGroupUsers(userGroup.id);
+    const groupUserIds = groupUsers.map((groupUser) => {
+      return groupUser.id;
+    });
+
+    await Promise.all(groupUserIds.map((groupUserId) => {
+      return models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}`, groupUserId!);
+    }));
 
     res.status(204).send();
   }
