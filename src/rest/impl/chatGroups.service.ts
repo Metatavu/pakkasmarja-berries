@@ -369,7 +369,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     });
 
     await Promise.all(groupUserIds.map((groupUserId) => {
-      return models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}`, groupUserId!);
+      return models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, groupUserId!);
     }));
 
     res.status(204).send();
