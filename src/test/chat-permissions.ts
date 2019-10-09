@@ -101,7 +101,7 @@ export default new class ChatPermissions {
       .delete(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
-      .expect(200)
+      .expect(204)
       .then((response) => {
         return response.body;
       });
