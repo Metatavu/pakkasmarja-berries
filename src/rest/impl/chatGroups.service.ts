@@ -368,10 +368,8 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       return groupUser.id;
     });
 
-    console.log("affected groupUserIds", groupUserIds);
-
-    await Promise.all(groupUserIds.map((groupUserId) => {
-      return models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, groupUserId!);
+    await Promise.all(groupUserIds.map(async (groupUserId) => {
+      return await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, groupUserId!);
     }));
 
     res.status(204).send();
