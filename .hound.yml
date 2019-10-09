@@ -6,7 +6,7 @@ jshint:
   enabled: false
 
 tslint:
-  enabled: true
+  enabled: false
   config_file: tslint.json
   
 scss:
