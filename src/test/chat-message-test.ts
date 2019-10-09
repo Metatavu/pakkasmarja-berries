@@ -559,7 +559,7 @@ test("Chat message unreads permission change", async (t) => {
   const chatThread1 = await createChatThread(token, chatGroup1.id!, "Thread 1");
 
   const permission = await chatPermissions.createChatGroupGroupPermission(token, chatGroup1.id!, userGroup1!.id!, "ACCESS");
-  await createChatMessage(token, chatThread1.id!, "Message!");
+  const chatMessage1 = await createChatMessage(token, chatThread1.id!, "Message!");
 
   await waitAsync(2000);
 
@@ -571,6 +571,7 @@ test("Chat message unreads permission change", async (t) => {
 
   t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 0);
   
+  await deleteChatMessage(token, chatThread1.id!, chatMessage1.id!);
   await deleteChatThread(token, chatThread1.id!);
   await deleteChatGroup(token, chatGroup1.id!);
 
