@@ -17,6 +17,8 @@ import RolePolicyRepresentation from "keycloak-admin/lib/defs/rolePolicyRepresen
 import RoleDefinition from "keycloak-admin/lib/defs/roleDefinition";
 import RoleRepresentation from "keycloak-admin/lib/defs/roleRepresentation";
 import { Promise } from "bluebird";
+import * as jwt_decode from "jwt-decode";
+import PermissionCache from "./permission-cache";
 
 export enum UserProperty {
   SAP_ID = "sapId",
@@ -46,12 +48,15 @@ interface PolicyResolveResult {
 export default new class UserManagement {
 
   private client: any;
-  private userCache: UserCache|null;
+  private permissionCache: PermissionCache | null;
+  private userCache: UserCache | null;
   private requireFreshClient: boolean;
   private restClientInternalId: string;
   
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
+    this.permissionCache = config().cache.enabled ? new PermissionCache(5 * 1000 * 60) : null;
+
     this.client = new KcAdminClient({
       baseUrl: config().keycloak.rest["auth-server-url"]
     });
@@ -555,13 +560,19 @@ export default new class UserManagement {
    */
   public async updateScopePermission(permissionId: string, permission: PolicyRepresentation) {
     const client = await this.getClient();
-    
-    return client.clients.updateAuthzScopePermission({
+
+    const result = await client.clients.updateAuthzScopePermission({
       id: await this.getRestClientInternalId(),
       realm: config().keycloak.admin.realm,
       permission: permission,
       permissionId: permissionId
     });
+
+    if (this.permissionCache) {
+      await this.permissionCache.flush();
+    }
+
+    return result;
   }
 
   /**
@@ -675,6 +686,13 @@ export default new class UserManagement {
    * @returns promise which resolves if access token has given permissions
    */
   public async hasResourcePermission(resourceName: string, scopes: string[], accessToken: string) {
+    const userId = this.getAccessTokenUserId(accessToken);
+    const cachedPermission = userId ? await this.getCachedPermission(resourceName, scopes, userId) : null;
+
+    if (cachedPermission !== null) {
+      return cachedPermission;
+    }
+
     const url = `${config().keycloak.rest["auth-server-url"]}/realms/${config().keycloak.rest.realm}/protocol/openid-connect/token`;
     const headers = {
       Accept: 'application/x-www-form-urlencoded',
@@ -692,13 +710,19 @@ export default new class UserManagement {
       body.append("permission", `${resourceName}#${scope}`);
     });
 
-    const result = await fetch(url, {
+    const response = await fetch(url, {
       method: "POST", 
       headers: headers,
       body: body
     });
 
-    return result.status === 200;
+    const result = response.status === 200;
+    
+    if (userId) {
+      await this.updateCachedPermission(resourceName, scopes, userId, result);
+    }
+
+    return result;
   }
 
   /**
@@ -1017,6 +1041,42 @@ export default new class UserManagement {
     }
 
     return clients[0].id!;
-  }  
+  }    
+  
+  /**
+  * Returns an user id from an access token
+  * 
+  * @param accessToken token
+  */
+  private getAccessTokenUserId(accessToken: string): string | null {
+    const decodedToken: any = jwt_decode(accessToken);
+    return decodedToken ? decodedToken.sub || null : null;
+  }
+
+  /**
+   * Returns permission from cache
+   * 
+   * @param resourceName resource name
+   * @param scopes scopes
+   * @param userId user id
+   */
+  private async getCachedPermission(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
+    return this.permissionCache ? await this.permissionCache.get(resourceName, scopes, userId) : null;
+  }
+
+  /**
+   * Updates permission into cache
+   * 
+   * @param resourceName resource name
+   * @param scopes scopes
+   * @param userId user id
+   * @param permission permission
+   */
+  private async updateCachedPermission(resourceName: string, scopes: string[], userId: string, permission: boolean): Promise<void> {
+    if (this.permissionCache) {
+      await this.permissionCache.set(resourceName, scopes, userId, permission);
+    }
+  }
+
   
 };
