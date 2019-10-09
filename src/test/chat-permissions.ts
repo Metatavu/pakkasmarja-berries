@@ -52,24 +52,6 @@ export default new class ChatPermissions {
   }
 
   /**
-   * Delete chat group group permission
-   * 
-   * @param token token
-   * @param chatGroupId chatGroupId
-   * @returns promise for delete permission
-   */
-  public deleteChatGroupGroupPermission = (token: string, chatGroupId: number, id: string): Promise<void> => {
-    return request("http://localhost:3002")
-      .delete(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
-      .set("Authorization", `Bearer ${token}`)
-      .set("Accept", "application/json")
-      .expect(200)
-      .then((response) => {
-        return response.body;
-      });
-  }
-
-  /**
    * Finds chat group group permission
    * 
    * @param token token
@@ -105,6 +87,24 @@ export default new class ChatPermissions {
       .then((response) => {
         return response.body;
       });  
+  }
+
+  /**
+   * Delete chat group group permission
+   * 
+   * @param token token
+   * @param chatThreadId chatThreadId
+   * @returns promise for delete permission
+   */
+  public deleteChatGroupGroupPermission = (token: string, chatGroupId: number, id: string): Promise<void> => {
+    return request("http://localhost:3002")
+      .delete(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .expect(200)
+      .then((response) => {
+        return response.body;
+      });
   }
 
   /**
