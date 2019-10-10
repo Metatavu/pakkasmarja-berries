@@ -33,7 +33,10 @@ export default class PermissionCache {
   public async get(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
     try {
       const getAsync = promisify(this.client.get).bind(this.client);
-      return await getAsync(this.getKey(resourceName, scopes, userId));
+      const key = this.getKey(resourceName, scopes, userId);
+      const stored: string = await getAsync(key);
+      const result = stored ? stored === "true" : null;
+      return result;
     } catch (e) {
       this.logger.error("Permission cache retrieve failed", e);
     }
@@ -50,7 +53,8 @@ export default class PermissionCache {
    */
   public async set(resourceName: string, scopes: string[], userId: string, permission: boolean): Promise<void> {
     const setAsync = promisify(this.client.set).bind(this.client);
-    return await setAsync(this.getKey(resourceName, scopes, userId), permission, "PX", this.expireTime);
+    const key = this.getKey(resourceName, scopes, userId);
+    return await setAsync(key, permission ? "true" : "false", "PX", this.expireTime);
   }
 
   /**
