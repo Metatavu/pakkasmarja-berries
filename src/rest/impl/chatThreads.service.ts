@@ -508,7 +508,8 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    models.deleteThread(thread.id);
+    await models.deleteUnreadsByPathLike(`chat-${chatGroup.id}-${thread.id}-%`);
+    await models.deleteThread(thread.id);
     await chatThreadPermissionController.deletePermission(chatThreadPermissionController.getPermissionName(thread, "chat-thread:access"));
 
     res.status(204).send();

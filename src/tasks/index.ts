@@ -881,8 +881,10 @@ export default new class TaskQueue {
    * @param user user
    */
   private removeUserQuestionGroupThreadAccess = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
-    const chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);    
-    
+    await this.removeUserChatGroupUnreads(chatGroup, user);
+
+    const chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
+
     if (chatThread) {
       this.logger.info(`Removing access into ${chatThread.id} from user ${user.id}`);
       await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
@@ -958,6 +960,16 @@ export default new class TaskQueue {
     }
 
     return false;
+  }
+
+  /**
+   * Removes all unreads from an user to a chat group
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   */
+  private async removeUserChatGroupUnreads(chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void>  {
+    await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!);
   }
 
   /**
