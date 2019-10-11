@@ -542,3 +542,38 @@ test("Create chat message unreads", async (t) => {
 
   await auth.removeAdminRoles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
+
+
+test("Chat message unreads permission change", async (t) => {
+  const token = await auth.getAdminToken([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  const token1 = await auth.getTokenUser1([]);
+  const userGroups = await listUserGroups(token);
+
+  const userGroup1 = userGroups.find((userGroup) => {
+    return userGroup.name == "testgroup1";
+  });
+
+  t.notEqual(userGroup1, null);
+
+  const chatGroup1 = await createChatGroup(token, "Group 1", "CHAT");
+  const chatThread1 = await createChatThread(token, chatGroup1.id!, "Thread 1");
+
+  const permission = await chatPermissions.createChatGroupGroupPermission(token, chatGroup1.id!, userGroup1!.id!, "ACCESS");
+  const chatMessage1 = await createChatMessage(token, chatThread1.id!, "Message!");
+
+  await waitAsync(2000);
+
+  t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 1);
+
+  await chatPermissions.deleteChatGroupGroupPermission(token, chatGroup1.id!, permission.id!);
+
+  await waitAsync(2000);
+
+  t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 0);
+  
+  await deleteChatMessage(token, chatThread1.id!, chatMessage1.id!);
+  await deleteChatThread(token, chatThread1.id!);
+  await deleteChatGroup(token, chatGroup1.id!);
+
+  await auth.removeAdminRoles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
