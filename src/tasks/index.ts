@@ -843,7 +843,7 @@ export default new class TaskQueue {
   private async checkQuestionGroupUsersThreads() {
     this.logger.info("Checking question group user threads...");
 
-    const users = await userManagement.listUsers();
+    const users = await userManagement.listAllUsers();
     const questionGroups = await models.listChatGroups("QUESTION");
 
     for (let i = 0; i < users.length; i++) {
@@ -969,9 +969,9 @@ export default new class TaskQueue {
    * @param user user
    */
   private async removeUserChatGroupUnreads(chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void>  {
-    const count = (await models.listUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!)).length;
+    const count = (await models.listUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}-%`, user.id!)).length;
     this.logger.info(`Removing ${count} unreads from user ${user.id}, path chat-${chatGroup.id}`);
-    await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!);
+    await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}-%`, user.id!);
   }
 
   /**
