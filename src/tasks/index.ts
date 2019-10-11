@@ -969,6 +969,8 @@ export default new class TaskQueue {
    * @param user user
    */
   private async removeUserChatGroupUnreads(chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void>  {
+    const count = (await models.listUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!)).length;
+    this.logger.info(`Removing ${count} unreads from user ${user.id}`);
     await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!);
   }
 
