@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as config from "nconf";
 import * as mysql from "mysql2/promise";
 
-config.file({file: `${__dirname}/../../config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
+config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
 
 /**
  * Database utility class for tests

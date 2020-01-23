@@ -55,7 +55,7 @@ export default new class Mailer {
       }
 
       return new Promise((resolve, reject) => {
-        fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), (err) => {
+        fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), { mode: 0o777 }, (err) => {
           if (err) {
             reject(err);
           } else {

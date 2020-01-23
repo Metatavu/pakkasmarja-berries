@@ -1,0 +1,134 @@
+<SAP>
+  <ItemGroups>
+    <ItemGroup>
+      <ItemGroupCode>123</ItemGroupCode>
+      <ItemGroupName>123000/Frozen Tes</ItemGroupName>
+    </ItemGroup>
+    <ItemGroup>
+      <ItemGroupCode>234</ItemGroupCode>
+      <ItemGroupName>234000/Fresh Tes</ItemGroupName>
+    </ItemGroup>
+    <ItemGroup>
+      <ItemGroupCode>456</ItemGroupCode>
+      <ItemGroupName>345000/Frozen Te</ItemGroupName>
+    </ItemGroup>
+  </ItemGroups>
+  <DeliveryPlaces>
+    <DeliveryPlaces>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+    </DeliveryPlaces>
+    <DeliveryPlaces>
+      <PlaceCode>02</PlaceCode>
+      <PlaceName>Test 2</PlaceName>
+    </DeliveryPlaces>
+  </DeliveryPlaces>
+  <BusinessPartners>
+    <BusinessPartners>
+      <CardType>S</CardType>
+      <CardCode>tusap1</CardCode>
+      <CardName>Test Corp 2.</CardName>
+      <UserName>
+      </UserName>
+      <Phone1>+358 22 222 2222</Phone1>
+      <Phone2>+358 33 333 3333</Phone2>
+      <Email>test1@testrealm1.com</Email>
+      <BillStreet>Test Street 222</BillStreet>
+      <BillZipCode>22222</BillZipCode>
+      <BillCity>Demo</BillCity>
+      <ShipStreet></ShipStreet>
+      <ShipZipCode></ShipZipCode>
+      <ShipCity></ShipCity>
+      <IBAN>FI2222222222222222</IBAN>
+      <BIC>DEMO1234</BIC>
+      <FederalTaxID>DM22233344</FederalTaxID>
+      <VatLiable>EU</VatLiable>
+      <Audit>2030</Audit>
+      <Mansikka></Mansikka>
+      <Vadelma></Vadelma>
+      <Herukka></Herukka>
+      <Pensasmustikka></Pensasmustikka>
+      <Muu></Muu>
+      <Tuoremansikka></Tuoremansikka>
+    </BusinessPartners>
+    <BusinessPartners>
+      <CardType>S</CardType>
+      <CardCode>tusap2</CardCode>
+      <CardName>Test Corp.</CardName>
+      <UserName>
+      </UserName>
+      <Phone1>+358 12 345 6789</Phone1>
+      <Phone2>+358 23 456 7890</Phone2>
+      <Email>test2@testrealm1.com</Email>
+      <BillStreet>Test Street 123</BillStreet>
+      <BillZipCode>10100</BillZipCode>
+      <BillCity>Test</BillCity>
+      <ShipStreet>PL 123 Example</ShipStreet>
+      <ShipZipCode>20200</ShipZipCode>
+      <ShipCity>Demo</ShipCity>
+      <IBAN>FI2112345600000786</IBAN>
+      <BIC>DABAIE2D</BIC>
+      <FederalTaxID>FI12345678</FederalTaxID>
+      <VatLiable>Y</VatLiable>
+      <Audit>2020</Audit>
+      <Mansikka></Mansikka>
+      <Vadelma></Vadelma>
+      <Herukka></Herukka>
+      <Pensasmustikka></Pensasmustikka>
+      <Muu></Muu>
+      <Tuoremansikka></Tuoremansikka>
+    </BusinessPartners>
+  </BusinessPartners>
+  <Contracts>
+    <Contracts>
+      <ContractId>1111</ContractId>
+      <ContractNumber>1111</ContractNumber>
+      <CardCode>tusap2</CardCode>
+      <CardName>Test Corp.</CardName>
+      <Year>2018</Year>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+      <ContractLines>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>123</ItemGroupCode>
+          <ContractQuantity>300000</ContractQuantity>
+          <DeliveredQuantity>7000</DeliveredQuantity>
+          <PlaceCode>01</PlaceCode>
+        </ContractLine>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>456</ItemGroupCode>
+          <ContractQuantity>400000</ContractQuantity>
+          <DeliveredQuantity>8000</DeliveredQuantity>
+          <PlaceCode>01</PlaceCode>
+        </ContractLine>
+      </ContractLines>
+    </Contracts>
+    <Contracts>
+      <ContractId>2222</ContractId>
+      <ContractNumber>2222</ContractNumber>
+      <CardCode>tusap2</CardCode>
+      <CardName></CardName>
+      <Year>2018</Year>
+      <PlaceCode>01</PlaceCode>
+      <PlaceName>Test</PlaceName>
+      <ContractLines>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>123</ItemGroupCode>
+          <ContractQuantity>10000</ContractQuantity>
+          <DeliveredQuantity>5000</DeliveredQuantity>
+          <PlaceCode>01</PlaceCode>
+        </ContractLine>
+        <ContractLine>
+          <CardCode>tusap2</CardCode>
+          <ItemGroupCode>234</ItemGroupCode>
+          <ContractQuantity>20000</ContractQuantity>
+          <DeliveredQuantity>6000</DeliveredQuantity>
+          <PlaceCode>01</PlaceCode>
+        </ContractLine>
+      </ContractLines>
+    </Contracts>
+  </Contracts>
+</SAP>
