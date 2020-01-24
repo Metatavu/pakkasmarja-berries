@@ -18,7 +18,7 @@ This guide assumes that you are running on linux and have installed docker, dock
 
 ## running tests
 
-- Open another terminal and run   `npm run tests`.
+- Open another terminal and run   `npm run test`.
 
 ## stopping the environment
 
