@@ -2,8 +2,9 @@ FROM node:dubnium
 RUN apt update
 RUN apt install libssl1.0-dev -y
 RUN apt install redis-server sshfs -y
-WORKDIR /opt/wkhtmltopdf
-RUN curl -sSL "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz"|tar -xvJ
+WORKDIR /tmp
+RUN wget "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb"
+RUN apt install /tmp/wkhtmltox_0.12.5-1.stretch_amd64.deb -y
 WORKDIR /usr/src/pakkasmarja
 ADD . .
 COPY package*.json ./
