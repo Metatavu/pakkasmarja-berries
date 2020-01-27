@@ -3,7 +3,7 @@ import * as config from "nconf";
 import KcAdminClient from "keycloak-admin";
 import { RoleMappingPayload } from "keycloak-admin/lib/defs/roleRepresentation";
 
-config.file({ file: `${__dirname}/../../config.json` }).defaults(require(`${__dirname}/../../default-config.json`));
+config.file({ file: `${__dirname}/../../test/config.json` }).defaults(require(`${__dirname}/../../default-config.json`));
 
 const keyclockSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
 

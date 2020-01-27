@@ -3,7 +3,8 @@ import * as tmp from "tmp";
 import * as PDFParser from "pdf2json";
 
 import * as config from "nconf";
-config.file({file: `${__dirname}/../../config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
+
+config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
 
 /**
  * Pdf utility class for tests

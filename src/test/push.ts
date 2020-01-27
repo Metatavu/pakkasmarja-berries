@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as config from "nconf";
-config.file({file: `${__dirname}/../../config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
+
+config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
 
 /**
  * PushNotification utility class for tests
