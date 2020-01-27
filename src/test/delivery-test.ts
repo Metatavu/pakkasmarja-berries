@@ -1,9 +1,10 @@
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import { Delivery, DeliveryNote } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
+import mail from "./mail";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveriesData = require(`${testDataDir}/deliveries.json`);
@@ -11,7 +12,7 @@ const deliveryNotesData = require(`${testDataDir}/deliveryNote.json`);
 
 /**
  * Creates delivery
- * 
+ *
  * @param token token
  * @returns promise for delivery
  */
@@ -24,14 +25,14 @@ const createDelivery = (token: string, deliveryModel?: Delivery): Promise<Delive
     .set("Accept", "application/json")
     .send(payload)
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Creates delivery note
- * 
+ *
  * @param token token
  * @returns promise for delivery
  */
@@ -44,14 +45,14 @@ const createDeliveryNote = (token: string, id: string, deliveryNoteModel?: Deliv
     .set("Accept", "application/json")
     .send(payload)
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Updates delivery note
- * 
+ *
  * @param token token
  * @param deliveryId deliveryId
  * @param noteId noteId
@@ -66,14 +67,14 @@ const updateDeliveryNote = (token: string, deliveryId: string, noteId: string, d
     .set("Accept", "application/json")
     .send(payload)
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Lists delivery notes
- * 
+ *
  * @param token token
  * @param deliveryId deliveryId
  * @returns promise for list of deliveries
@@ -84,14 +85,14 @@ const listDeliveryNotes = (token: string, deliveryId: string): Promise<DeliveryN
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Updates delivery
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for delivery
@@ -104,14 +105,14 @@ const updateDelivery = (token: string, id: string): Promise<Delivery> => {
     .set("Accept", "application/json")
     .send(payload)
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Finds delivery
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for delivery
@@ -122,25 +123,25 @@ const findDelivery = (token: string, id: string): Promise<Delivery> => {
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
 /**
  * Build query
- * 
+ *
  * @param obj object of params
  */
 const buildURLQuery = (obj: any) => {
   return Object.entries(obj)
-    .map(pair => pair.map(encodeURIComponent).join('='))
-    .join('&');
+    .map(pair => pair.map(encodeURIComponent).join("="))
+    .join("&");
 };
 
 /**
  * Lists deliveries
- * 
+ *
  * @param token token
  * @returns promise for list of deliveries
  */
@@ -150,12 +151,12 @@ const listDeliveries = (token: string, params: any): Promise<Delivery[]> => {
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
     .expect(200)
-    .then((response) => {
+    .then(response => {
       return response.body;
     });
-}
+};
 
-test("Create delivery", async (t) => {
+test("Create delivery", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -163,12 +164,12 @@ test("Create delivery", async (t) => {
     const createdDelivery = await createDelivery(token);
     t.notEqual(createdDelivery, null);
     t.notEqual(createdDelivery.id, null);
-    t.equal(createdDelivery.status, deliveriesData[0].status)
-    t.equal(createdDelivery.amount, deliveriesData[0].amount)
-    t.equal(createdDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId)
-    t.equal(createdDelivery.price, deliveriesData[0].price)
-    t.equal(createdDelivery.productId, deliveriesData[0].productId)
-    t.equal(createdDelivery.time, deliveriesData[0].time)
+    t.equal(createdDelivery.status, deliveriesData[0].status);
+    t.equal(createdDelivery.amount, deliveriesData[0].amount);
+    t.equal(createdDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId);
+    t.equal(createdDelivery.price, deliveriesData[0].price);
+    t.equal(createdDelivery.productId, deliveriesData[0].productId);
+    t.equal(createdDelivery.time, deliveriesData[0].time);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -176,7 +177,7 @@ test("Create delivery", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Update delivery", async (t) => {
+test("Update delivery", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -185,12 +186,12 @@ test("Update delivery", async (t) => {
     const updatedDelivery = await updateDelivery(token, createdDelivery.id || "");
     t.notEqual(updatedDelivery, null);
     t.notEqual(updatedDelivery.id, null);
-    t.equal(updatedDelivery.status, deliveriesData[1].status)
-    t.equal(updatedDelivery.amount, deliveriesData[1].amount)
-    t.equal(updatedDelivery.deliveryPlaceId, deliveriesData[1].deliveryPlaceId)
-    t.equal(updatedDelivery.price, deliveriesData[1].price)
-    t.equal(updatedDelivery.productId, deliveriesData[1].productId)
-    t.equal(updatedDelivery.time, deliveriesData[1].time)
+    t.equal(updatedDelivery.status, deliveriesData[1].status);
+    t.equal(updatedDelivery.amount, deliveriesData[1].amount);
+    t.equal(updatedDelivery.deliveryPlaceId, deliveriesData[1].deliveryPlaceId);
+    t.equal(updatedDelivery.price, deliveriesData[1].price);
+    t.equal(updatedDelivery.productId, deliveriesData[1].productId);
+    t.equal(updatedDelivery.time, deliveriesData[1].time);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -198,7 +199,39 @@ test("Update delivery", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Find delivery", async (t) => {
+test("Update delivery if user rejected already confirmed delivery", async t => {
+  mail.clearOutbox();
+
+  await database.executeFiles(testDataDir, ["delivery-update.sql"]);
+
+  const updateDeliveriesData = require(`${testDataDir}/deliveries-update.json`);
+
+  const token = await auth.getTokenUser1([ApplicationRoles.UPDATE_OTHER_DELIVERIES]);
+
+  const createdDelivery = await createDelivery(token);
+
+  const payload: Delivery = updateDeliveriesData[0];
+
+  const contactUpdateMails = require(`${testDataDir}/deliveries-update-mail.json`);
+
+  try {
+    request("http://localhost:3002")
+      .put(`/rest/v1/deliveries/${createdDelivery.id || ""}`)
+      .set("Authorization", `Bearer ${token}`)
+      .set("Accept", "application/json")
+      .send(payload)
+      .expect(200)
+      .then(response => {
+        t.deepEqual(mail.getOutbox(), contactUpdateMails);
+      });
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.UPDATE_OTHER_DELIVERIES]);
+});
+
+test("Find delivery", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -207,12 +240,12 @@ test("Find delivery", async (t) => {
     const foundDelivery = await findDelivery(token, createdDelivery.id || "");
     t.notEqual(foundDelivery, null);
     t.notEqual(foundDelivery.id, null);
-    t.equal(foundDelivery.status, deliveriesData[0].status)
-    t.equal(foundDelivery.amount, deliveriesData[0].amount)
-    t.equal(foundDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId)
-    t.equal(foundDelivery.price, deliveriesData[0].price)
-    t.equal(foundDelivery.productId, deliveriesData[0].productId)
-    t.equal(foundDelivery.time, deliveriesData[0].time)
+    t.equal(foundDelivery.status, deliveriesData[0].status);
+    t.equal(foundDelivery.amount, deliveriesData[0].amount);
+    t.equal(foundDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId);
+    t.equal(foundDelivery.price, deliveriesData[0].price);
+    t.equal(foundDelivery.productId, deliveriesData[0].productId);
+    t.equal(foundDelivery.time, deliveriesData[0].time);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -220,7 +253,7 @@ test("Find delivery", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Delete delivery", async (t) => {
+test("Delete delivery", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -231,13 +264,13 @@ test("Delete delivery", async (t) => {
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204)
-      .then((response) => {});
+      .then(response => {});
     await request("http://localhost:3002")
       .get(`/rest/v1/deliveries/${createdDelivery.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then((response) => {});
+      .then(response => {});
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -245,7 +278,7 @@ test("Delete delivery", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("List deliveries", async (t) => {
+test("List deliveries", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -275,7 +308,7 @@ test("List deliveries", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("List deliveries - Forbidden", async (t) => {
+test("List deliveries - Forbidden", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -292,7 +325,7 @@ test("List deliveries - Forbidden", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("List deliveries with itemGroupCategory", async (t) => {
+test("List deliveries with itemGroupCategory", async t => {
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -323,8 +356,7 @@ test("List deliveries with itemGroupCategory", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-
-test("Create delivery notes", async (t) => {
+test("Create delivery notes", async t => {
   await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -332,7 +364,7 @@ test("Create delivery notes", async (t) => {
     const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
     t.notEqual(createdDeliveryNote, null);
     t.notEqual(createdDeliveryNote.id, null);
-    t.equal(createdDeliveryNote.text, deliveryNotesData[0].text)
+    t.equal(createdDeliveryNote.text, deliveryNotesData[0].text);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
   }
@@ -340,7 +372,7 @@ test("Create delivery notes", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Update delivery notes", async (t) => {
+test("Update delivery notes", async t => {
   await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -349,7 +381,7 @@ test("Update delivery notes", async (t) => {
     const updatedDeliveryNote = await updateDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08", createdDeliveryNote.id || "");
     t.notEqual(updatedDeliveryNote, null);
     t.notEqual(updatedDeliveryNote.id, null);
-    t.equal(updatedDeliveryNote.text, deliveryNotesData[1].text)
+    t.equal(updatedDeliveryNote.text, deliveryNotesData[1].text);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
   }
@@ -357,7 +389,7 @@ test("Update delivery notes", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("List delivery notes", async (t) => {
+test("List delivery notes", async t => {
   await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -375,7 +407,7 @@ test("List delivery notes", async (t) => {
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
 
-test("Delete delivery note", async (t) => {
+test("Delete delivery note", async t => {
   await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
@@ -386,13 +418,13 @@ test("Delete delivery note", async (t) => {
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204)
-      .then((response) => {});
+      .then(response => {});
     await request("http://localhost:3002")
       .get(`/rest/v1/deliveries/bad02318-1a44-11e8-87a4-c7808d590a08/notes/${createdDeliveryNote.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(404)
-      .then((response) => {});
+      .then(response => {});
 
     const notes = await listDeliveryNotes(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
     t.equal(notes.length, 0);
@@ -402,4 +434,3 @@ test("Delete delivery note", async (t) => {
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
-

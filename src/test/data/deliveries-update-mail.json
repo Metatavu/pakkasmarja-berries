@@ -1,0 +1,8 @@
+[
+  {
+    "from": "noreply@example.com",
+    "to": "to@example.org",
+    "subject": "[Etunimi] [Sukunimi] hylkäsi vastaanoton",
+    "text": "[Etunimi] [Sukunimi] hylkäsi vastaanoton sovelluksen kautta tilauksessa:\n\nLähettäjä: [lahettaja]\nToimitustunnus: [toimitustunnus]\n Tuotetunnus: [tuotetunnus]\nMäärä: [maara]\nToimituspaikka: [toimituspaikka]\nAjankohta: [ajankohta]\nLuomispäivä: [luomispaiva]\nPäivitetty: [paivitetty]\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------;"
+  }
+]

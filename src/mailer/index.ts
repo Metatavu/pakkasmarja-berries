@@ -3,28 +3,27 @@ import * as Mailgun from "mailgun-js";
 import * as uuid from "uuid4";
 import { config } from "../config";
 
-export default new class Mailer {
- 
-  private mailgun: Mailgun.Mailgun | null;
-  
-  constructor () {
-    this.mailgun = !this.inTestMode() ? Mailgun({apiKey: config().mail.api_key, domain: config().mail.domain}) : null;
+export default new (class Mailer {
+  private mailgun: Mailgun.Mailgun | null;
+
+  constructor() {
+    this.mailgun = !this.inTestMode() ? Mailgun({ apiKey: config().mail.api_key, domain: config().mail.domain }) : null;
   }
 
   /**
    * Returns whether mail is running in test mode
    */
   inTestMode() {
-    return config().mode === "TEST" || !config().mail.api_key || !config().mail.domain;
+    return true;
   }
-  
+
   /**
    * Send an email message
-   * 
+   *
    * @param String sender email address
    * @param String to recipient
    * @param String subject email subject
-   * @param String contents email contects as plain text 
+   * @param String contents email contects as plain text
    */
   send(sender: string, to: string, subject: string, contents: string) {
     const options = {
@@ -55,7 +54,7 @@ export default new class Mailer {
       }
 
       return new Promise((resolve, reject) => {
-        fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), (err) => {
+        fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), err => {
           if (err) {
             reject(err);
           } else {
@@ -65,5 +64,4 @@ export default new class Mailer {
       });
     }
   }
-
-}
+})();

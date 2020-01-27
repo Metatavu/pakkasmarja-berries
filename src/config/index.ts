@@ -14,8 +14,8 @@ nconf
       return obj;
     }
   })
-  .file({file: __dirname + "/../../config.json"})
-  .defaults(require( __dirname + "/../../default-config.json"));
+  .file({ file: __dirname + "/../../config.json" })
+  .defaults(require(__dirname + "/../../default-config.json"));
 
 export interface Cache {
   enabled: boolean;
@@ -23,15 +23,15 @@ export interface Cache {
 }
 
 export interface Mqtt {
-  host: string,
-  port: number,
-  path?: string,
-  secure: boolean,
-  topic: string,
-  topicPrefix: string,
-  topicPostfix: string
-  username?: string,
-  password?: string
+  host: string;
+  port: number;
+  path?: string;
+  secure: boolean;
+  topic: string;
+  topicPrefix: string;
+  topicPostfix: string;
+  username?: string;
+  password?: string;
 }
 
 export interface ContractDocumentStatus {
@@ -93,12 +93,12 @@ export interface Tasks {
 
 export interface KeycloakAdminConfig {
   realm: string;
-  baseUrl: string,
-  username: string,
-  password: string,
-  grant_type: string,
-  client_id: string
-  client_secret: string
+  baseUrl: string;
+  username: string;
+  password: string;
+  grant_type: string;
+  client_id: string;
+  client_secret: string;
 }
 
 export interface KeycloakConfig {
@@ -151,20 +151,20 @@ export interface SAPItemGroupCategories {
 }
 
 export interface SAPItemGroupDisplayNames {
-  [key: string]: string
+  [key: string]: string;
 }
 
 export interface SAPItemGroupPrerequisites {
-  [key: string]: string
+  [key: string]: string;
 }
 
 export interface SAPItemGroupMinimumProfitEstimation {
-  [key: string]: number
+  [key: string]: number;
 }
 
-export interface SAPLoanProducts {
-  GRAY_BOX: string,
-  RED_BOX: string
+export interface SAPLoanProducts {
+  GRAY_BOX: string;
+  RED_BOX: string;
 }
 
 export interface SAP {
@@ -174,7 +174,7 @@ export interface SAP {
   "item-group-prerequisites": SAPItemGroupPrerequisites;
   "item-group-minimum-profit-estimation": SAPItemGroupMinimumProfitEstimation;
   "xml-fileupload-path": string;
-  "loanProductIds": SAPLoanProducts
+  loanProductIds: SAPLoanProducts;
 }
 
 export interface VismaSign {
@@ -192,6 +192,8 @@ export interface Mail {
 
 export interface Notifications {
   email: string;
+  frozen: string;
+  fresh: string;
 }
 
 export interface Contacts {
@@ -207,13 +209,13 @@ export interface Migrations {
 }
 
 export interface ClientServerConfig {
-  host: string
-  port: string
-  secure: boolean
+  host: string;
+  port: string;
+  secure: boolean;
 }
 
 export interface ClientConfig {
-  server: ClientServerConfig
+  server: ClientServerConfig;
 }
 
 export interface Config {
@@ -231,21 +233,21 @@ export interface Config {
   "visma-sign"?: VismaSign;
   mail: Mail;
   contacts?: Contacts;
-  pushNotification: PushNotification
-  migrations: Migrations,
-  mqtt: Mqtt,
-  uploadDirectory: string,
-  client: ClientConfig
+  pushNotification: PushNotification;
+  migrations: Migrations;
+  mqtt: Mqtt;
+  uploadDirectory: string;
+  client: ClientConfig;
 }
 
 export function config(): Config {
-  return { 
-    ... nconf.get(),
+  return {
+    ...nconf.get(),
     mail: {
       api_key: nconf.get("mail:api_key"),
       domain: nconf.get("mail:domain"),
       mockFolder: nconf.get("mail:mockFolder"),
       sender: nconf.get("mail:sender")
     }
-  }
+  };
 }
