@@ -139,7 +139,6 @@ test("Test find contact - invalid id", async () => {
 
 test("Test update contact", async (t) => {
   mail.clearOutbox();
-
   const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
     "firstName": "Updated first name",
     "lastName": "Updated last name",
@@ -168,6 +167,45 @@ test("Test update contact", async (t) => {
     .expect(200)
     .then(response => {
       t.deepEqual(mail.getOutbox(), contactUpdateMails);
+      t.deepEqual(response.body, updateData);
+      return users.resetUser(updateData.id, t);
+    });
+});
+
+test("Test update contact without changes", async (t) => {
+  await mail.clearOutbox();
+  await users.resetUsers(["677e99fd-b854-479f-afa6-74f295052770"], t);
+  const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
+    "firstName": "Updated first name",
+    "lastName": "Updated last name",
+    "companyName": "Updated company name",
+    "phoneNumbers": ["+123 567 8901"],
+    "email": "updatedemail@testrealm1.com",
+    "addresses": [{
+      "streetAddress": "Updated street",
+      "postalCode": "98765",
+      "city": "Updated city"
+    }],
+    "BIC": "DABAIE3D",
+    "IBAN": "FI1112345600000786",
+    "taxCode": "FI23456789",
+    "vatLiable": "EU",
+    "audit": "No",
+    "avatarUrl": "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
+    "displayName": "Updated first name Updated last name Updated company name"
+  });
+  
+  return request("http://localhost:3002")
+    .put(`/rest/v1/contacts/${updateData.id}`)
+    .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
+    .send(updateData)
+    .set("Accept", "application/json")
+    .expect(200)
+    .send(updateData)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then(response => {
+      t.deepEqual(mail.getOutbox().length, 1);
       t.deepEqual(response.body, updateData);
       return users.resetUser(updateData.id, t);
     });
