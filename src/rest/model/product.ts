@@ -19,6 +19,7 @@ export interface Product {
     unitSize: number ;
     unitName: string ;
     sapItemCode: string ;
+    active: boolean ;
 }    
 
 export interface ProductOpt { 
@@ -29,4 +30,5 @@ export interface ProductOpt {
     unitSize?: number;
     unitName?: string;
     sapItemCode?: string;
+    active?: boolean;
 }

@@ -75,7 +75,13 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode);
+    const active = payload.active;
+    if (!active) {
+      this.sendBadRequest(res, "Missing required param active");
+      return;
+    }
+
+    const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode, active);
     res.status(200).send(await this.translateDatabaseProduct(createdProduct));
   } 
   
@@ -205,7 +211,13 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    await models.updateProduct(productId, databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode);
+    const active = payload.active;
+    if (!sapItemCode) {
+      this.sendBadRequest(res, "Missing required param active");
+      return;
+    }
+
+    await models.updateProduct(productId, databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode, active);
 
     const product = await models.findProductById(productId);
     if (!product) {
@@ -230,7 +242,8 @@ export default class ProductsServiceImpl extends ProductsService {
       "units": product.units,
       "unitSize": product.unitSize,
       "unitName": product.unitName,
-      "sapItemCode": product.sapItemCode
+      "sapItemCode": product.sapItemCode,
+      "active": product.active
     };
 
     return result;
