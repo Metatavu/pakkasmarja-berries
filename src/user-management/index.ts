@@ -27,7 +27,7 @@ export enum UserProperty {
   BIC = "BIC",
   IBAN = "IBAN",
   TAX_CODE = "verotunniste",
-  VAT_LIABLE = "arvonlisäverovelvollisuus",
+  VAT_LIABLE = "arvonlisäverovelvollisuus", 
   AUDIT = "auditointi",
   PHONE_1 = "Puhelin 1",
   PHONE_2 = "Puhelin 2",
@@ -931,7 +931,14 @@ export default new class UserManagement {
    * @return {String} attribute value or null if not found
    */
   public getSingleAttribute(user: any, names: UserProperty|UserProperty[]): string|null {
-    const attributes = user.attributes || {};
+    let attributes = user.attributes || {};
+
+    for (let [key, value] of Object.entries(attributes)) {
+      if (!Array.isArray(value)) {
+        attributes[key] = [value];
+      }
+    }
+
     const nameAttr = _.isArray(names) ? names : [ names ];
     for (let i = 0; i < nameAttr.length; i++) {
       const name = nameAttr[i];        

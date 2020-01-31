@@ -231,7 +231,8 @@ export interface ProductModel {
   units: number;
   unitSize: number;
   unitName: string;
-  sapItemCode: string,
+  sapItemCode: string;
+  active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -613,7 +614,8 @@ export class Models {
       units: { type: Sequelize.INTEGER, allowNull: false },
       unitSize: { type: Sequelize.INTEGER, allowNull: false },
       unitName: { type: Sequelize.STRING(191), allowNull: false },
-      sapItemCode: { type: Sequelize.STRING(191), allowNull: false }
+      sapItemCode: { type: Sequelize.STRING(191), allowNull: false },
+      active: { type: Sequelize.BOOLEAN, allowNull: false }
     });
 
     this.Delivery = this.defineModel("Delivery", {
@@ -2639,9 +2641,10 @@ export class Models {
    * @param unitSize unitSize
    * @param unitName unitName
    * @param sapItemCode SAP ItemCode
+   * @param active active
    * @return promise on created product
    */
-  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<ProductModel> {
+  public createProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string, active: boolean): PromiseLike<ProductModel> {
     return this.Product.create({
       id: id,
       itemGroupId: itemGroupId,
@@ -2649,7 +2652,8 @@ export class Models {
       units: units,
       unitSize: unitSize,
       unitName: unitName,
-      sapItemCode: sapItemCode
+      sapItemCode: sapItemCode,
+      active: active
     } as any);
   }
 
@@ -2663,16 +2667,18 @@ export class Models {
    * @param unitSize unitSize
    * @param unitName unitName
    * @param sapItemCode SAP ItemCode
+   * @param active active
    * @return promise on created product
    */
-  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string): PromiseLike<[number, any]> {
+  public updateProduct(id: string, itemGroupId: number, name: string, units: number, unitSize: number, unitName: string, sapItemCode: string, active: boolean): PromiseLike<[number, any]> {
     return this.Product.update({
       itemGroupId: itemGroupId,
       name: name,
       units: units,
       unitSize: unitSize,
       unitName: unitName,
-      sapItemCode: sapItemCode
+      sapItemCode: sapItemCode,
+      active: active
     }, {
       where: {
         id: id

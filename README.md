@@ -4,9 +4,9 @@ This guide assumes that you are running on linux and have installed docker, dock
 
 ## setup
 
-- Open terminal in project root folder and run    `npm i; docker-compose build`.
+- Open terminal in project root folder and run    `npm i; docker-compose build; npm run build`.
 
-- If missing, add the following line to hosts file (found in /etc/hosts):   `127.0.0.1  test-keycloak`.
+- If missing, add the following line to hosts file (found in /etc/hosts in your computer):   `127.0.0.1  test-keycloak`.
 
 ## running the environment
 
