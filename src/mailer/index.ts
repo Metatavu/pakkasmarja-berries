@@ -14,7 +14,7 @@ export default new (class Mailer {
    * Returns whether mail is running in test mode
    */
   inTestMode() {
-    return true;
+    return config().mode === "TEST" || !config().mail.api_key || !config().mail.domain;
   }
 
   /**

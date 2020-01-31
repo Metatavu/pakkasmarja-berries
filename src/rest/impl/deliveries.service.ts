@@ -547,10 +547,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           `Toimitustunnus: ${databaseDelivery.id}`,
           `Tuotetunnus: ${databaseDelivery.productId}`,
           `Määrä: ${databaseDelivery.amount}`,
-          `Toimituspaikka: ${deliveryPlace}`,
-          `Ajankohta: ${moment(databaseDelivery.time).format("YYYYMMDD")}`,
-          `Luomispäivä: ${moment(databaseDelivery.createdAt).format("YYYYMMDD")}`,
-          `Päivitetty: ${moment(databaseDelivery.updatedAt).format("YYYYMMDD")}`
+          `Toimituspaikka: ${deliveryPlace["name"]}`,
+          `Ajankohta: ${moment(databaseDelivery.time).format("YYYY-MM-DD")}`,
+          `Luomispäivä: ${moment(databaseDelivery.createdAt).format("YYYY-MM-DD")}`,
+          `Päivitetty: ${moment(databaseDelivery.updatedAt).format("YYYY-MM-DD")}`
         ];
 
         /**Email data for recipient */
@@ -570,11 +570,20 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         const sender = `${config().mail.sender}@${config().mail.domain}`;
         const contactConfig = config().contacts;
 
-        if (contactConfig && contactConfig.notifications && contactConfig.notifications.fresh && contactConfig.notifications.frozen) {
-          const recipientEmail = category == "FRESH" ? contactConfig.notifications.fresh : contactConfig.notifications.frozen;
+        if (
+          contactConfig &&
+          contactConfig.notifications &&
+          contactConfig.notifications.fresh &&
+          contactConfig.notifications.frozen &&
+          contactConfig.notifications.deliveries
+        ) {
+          const recipientEmail =
+            category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
           const shipperEmail = deliveryContact.email;
 
-          mailer.send(sender, recipientEmail, subjectToRecipient, contentsToRecipient);
+          recipientEmail.forEach(recEmail => {
+            mailer.send(sender, recEmail, subjectToRecipient, contentsToRecipient);
+          });
 
           if (shipperEmail) {
             mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper);

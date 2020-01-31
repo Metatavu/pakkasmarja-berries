@@ -1,8 +1,6 @@
-[
-  {
-    "from": "noreply@example.com",
-    "to": "to@example.org",
-    "subject": "[Etunimi] [Sukunimi] hylkäsi vastaanoton",
-    "text": "[Etunimi] [Sukunimi] hylkäsi vastaanoton sovelluksen kautta tilauksessa:\n\nLähettäjä: [lahettaja]\nToimitustunnus: [toimitustunnus]\n Tuotetunnus: [tuotetunnus]\nMäärä: [maara]\nToimituspaikka: [toimituspaikka]\nAjankohta: [ajankohta]\nLuomispäivä: [luomispaiva]\nPäivitetty: [paivitetty]\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------;"
-  }
-]
+{
+  "from": "noreply@example.com",
+  "to": "tero.tanttu@metatavu.fi",
+  "subject": "Test 1 User 1 hylkäsi vastaanoton",
+  "text": "Test 1 User 1 hylkäsi vastaanoton sovelluksen kautta tilauksessa:\n\nLähettäjä: Test 1 User 1\nToimitustunnus: 0af21030-c232-434a-9b7e-12c1addfcfbf\nTuotetunnus: b1590dd2-4bbb-11e9-8646-d663bd873d93\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 2020-03-21\nLuomispäivä: 2020-01-31\nPäivitetty: 2020-01-31\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
+}
