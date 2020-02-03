@@ -106,7 +106,10 @@
   "uploadDirectory": "/tmp/",
   "contacts": {
     "notifications": {
-      "email": "to@example.org"
+      "email": "to@example.org",
+      "fresh": "tuore@example.com",
+      "frozen": "pakaste@example.com",
+      "deliveries": "tilaukset@example.com"
     }
   }
 }

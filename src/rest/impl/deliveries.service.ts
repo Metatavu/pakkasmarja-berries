@@ -2,7 +2,7 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import models, { DeliveryModel, DeliveryNoteModel, ProductModel, DeliveryPlaceModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
-import { Delivery, DeliveryNote, DeliveryLoan } from "../model/models";
+import { Delivery, DeliveryNote, DeliveryLoan, ItemGroupCategory } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
 import PurchaseMessageBuilder, { TransferLine, TransferLineBinAllocation } from "../../sap/purchase-builder";
@@ -12,6 +12,7 @@ import { config } from "../../config";
 import * as fs from "fs";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as _ from "lodash";
+import mailer from "../../mailer";
 
 /**
  * Implementation for Deliveries REST service
@@ -472,6 +473,73 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
+
+      if (databaseDelivery.status === "REJECTED") {
+        const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
+        const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
+
+        if (!deliveryContact) {
+          this.sendInternalServerError(res, "Failed to deliveryContact");
+          return;
+        }
+
+        const product: ProductModel = await models.findProductById(productId);
+        if (!product || !product.id) {
+          this.sendInternalServerError(res, "Failed to resolve product");
+          return;
+        }
+
+        const itemGroup = await models.findItemGroupById(product.itemGroupId);
+        const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
+
+        const deliveryInfo: string[] = [
+          `Lähettäjä: ${deliveryContact.firstName} ${deliveryContact.lastName}`,
+          `Toimitustunnus: ${databaseDelivery.id}`,
+          `Tuotetunnus: ${databaseDelivery.productId}`,
+          `Määrä: ${databaseDelivery.amount}`,
+          `Toimituspaikka: ${deliveryPlace["name"]}`,
+          `Ajankohta: ${moment(databaseDelivery.time).format("YYYY-MM-DD")}`,
+          `Luomispäivä: ${moment(databaseDelivery.createdAt).format("YYYY-MM-DD")}`,
+          `Päivitetty: ${moment(databaseDelivery.updatedAt).format("YYYY-MM-DD")}`
+        ];
+
+        /**Email data for recipient */
+        const subjectToRecipient = `${deliveryContact.firstName} ${deliveryContact.lastName} hylkäsi vastaanoton`;
+        const contentsToRecipient = `${deliveryContact.firstName} ${
+          deliveryContact.lastName
+        } hylkäsi vastaanoton sovelluksen kautta tilauksessa:\n\n${deliveryInfo.join(
+          "\n"
+        )}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+
+        /**Email data for shipper */
+        const subjectToShipper = `Toimituksen hylkäys lähetetty vastaanottajalle`;
+        const contentsToShipper = `Toimituksen hylkäys lähetetty vastaanottajalle tilauksesta:\n\n${deliveryInfo.join(
+          "\n"
+        )}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+
+        const sender = `${config().mail.sender}@${config().mail.domain}`;
+        const contactConfig = config().contacts;
+
+        if (
+          contactConfig &&
+          contactConfig.notifications &&
+          contactConfig.notifications.fresh &&
+          contactConfig.notifications.frozen &&
+          contactConfig.notifications.deliveries
+        ) {
+          const recipientEmail =
+            category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
+          const shipperEmail = deliveryContact.email;
+
+          recipientEmail.forEach(recEmail => {
+            mailer.send(sender, recEmail, subjectToRecipient, contentsToRecipient);
+          });
+
+          if (shipperEmail) {
+            mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper);
+          }
+        }
+      }
     }
 
     res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
