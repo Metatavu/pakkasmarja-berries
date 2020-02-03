@@ -229,9 +229,9 @@ test("Update delivery if user rejected already confirmed delivery", async t => {
     t.notEqual(updatedDeliveryRejected, null);
     t.equal(updatedDeliveryRejected.status, deliveriesDataUpdate[0].status);
     t.equal(mail.getOutbox().length, 3);
-    t.equal(mail.getOutbox().filter(mail => mail["to"] === "pakaste@pakkasmarja.fi" || mail["to"] === "tilaukset@pakkasmarja.fi").length, 2);
+    t.equal(mail.getOutbox().filter(mail => mail["to"] === "pakaste@example.com" || mail["to"] === "tilaukset@example.com").length, 2);
     t.equal(mail.getOutbox().filter(mail => mail["to"] === "test1@testrealm1.com").length, 1);
-    t.equal(mail.getOutbox().find(mail => mail["to"] === "pakaste@pakkasmarja.fi")["text"].length, contactUpdateMails["text"].length);
+    t.equal(mail.getOutbox().find(mail => mail["to"] === "pakaste@example.com")["text"].length, contactUpdateMails["text"].length);
     t.equal(mail.getOutbox().find(mail => mail["to"] === "test1@testrealm1.com")["text"].length, contacatUpdateMailToShipper["text"].length);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
