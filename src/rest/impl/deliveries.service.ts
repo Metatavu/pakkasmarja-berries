@@ -2,7 +2,7 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import models, { DeliveryModel, DeliveryNoteModel, ProductModel, DeliveryPlaceModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
-import { Delivery, DeliveryNote, DeliveryLoan } from "../model/models";
+import { Delivery, DeliveryNote, DeliveryLoan, ItemGroupCategory } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
 import PurchaseMessageBuilder, { TransferLine, TransferLineBinAllocation } from "../../sap/purchase-builder";
@@ -12,16 +12,16 @@ import { config } from "../../config";
 import * as fs from "fs";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as _ from "lodash";
-import { ItemGroupCategory } from "../model/itemGroupCategory";
 import mailer from "../../mailer";
 
 /**
  * Implementation for Deliveries REST service
  */
 export default class DeliveriesServiceImpl extends DeliveriesService {
+
   /**
    * Constructor
-   *
+   * 
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -82,16 +82,16 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     if (status === "DONE" && !deliveryQuality) {
       this.sendBadRequest(res, "Missing qualityId");
-      return;
+      return;  
     }
 
     if (status === "DONE" && deliveryQuality) {
       const product: ProductModel = await models.findProductById(productId);
-      if (!product || !product.id) {
+      if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
-
+      
       const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
         this.sendInternalServerError(res, "Failed to resolve product price");
@@ -103,7 +103,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const unitPrice = parseFloat(productPrice);
       let unitPriceWithBonus = 0;
 
-      if (amount > 0) {
+      if(amount > 0){
         const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
         const totalPrice = unitPrice * amount + bonusPrice;
         unitPriceWithBonus = totalPrice / amount;
@@ -115,13 +115,13 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const receivingUserId = this.getLoggedUserId(req);
-      const deliveryContact: UserRepresentation | null = await userManagement.findUser(req.body.userId);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(req.body.userId);
       if (!deliveryContact) {
         this.sendInternalServerError(res, "Failed to deliveryContact");
         return;
       }
 
-      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
       if (!receivingContact) {
         this.sendInternalServerError(res, "Failed to receivingContact");
         return;
@@ -129,40 +129,19 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
-
+ 
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;
+        return;  
       }
 
       if (!sapSalesPersonCode) {
         this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
-        return;
+        return;  
       }
 
-      const databaseDelivery = await models.createDelivery(
-        uuid(),
-        productId,
-        userId,
-        time,
-        status,
-        amount,
-        price,
-        unitPrice,
-        unitPriceWithBonus,
-        qualityId,
-        databaseDeliveryPlace.id
-      );
-      await this.buildPurchaseXML(
-        databaseDelivery,
-        product,
-        databaseDeliveryPlace,
-        unitPriceWithBonus,
-        deliveryContactSapId,
-        sapSalesPersonCode,
-        req.body.loans || [],
-        itemGroup.category
-      );
+      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
       const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id);
@@ -250,7 +229,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     await models.deleteDeliveryNoteById(deliveryNoteId);
     res.status(204).send();
   }
-
+  
   /**
    * @inheritdoc
    */
@@ -310,7 +289,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   /**
    * @inheritdoc
    */
-  public async listDeliveries(req: Request, res: Response) {
+  public async listDeliveries(req: Request, res: Response){
     const status = req.query.status || null;
     const itemGroupCategory = req.query.itemGroupCategory || null;
     const itemGroupId = req.query.itemGroupId || null;
@@ -346,25 +325,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const deliveries: DeliveryModel[] = await models.listDeliveries(
-      status,
-      userId,
-      itemGroupCategory,
-      databaseItemGroupId,
-      productId ? [productId] : null,
-      databaseDeliveryPlaceId,
-      timeBefore,
-      timeAfter,
-      firstResult,
-      maxResults
-    );
-    res.status(200).send(
-      await Promise.all(
-        deliveries.map(delivery => {
-          return this.translateDatabaseDelivery(delivery);
-        })
-      )
-    );
+    const deliveries: DeliveryModel[] = await models.listDeliveries(status, userId, itemGroupCategory, databaseItemGroupId, productId ? [ productId ] : null, databaseDeliveryPlaceId, timeBefore, timeAfter, firstResult, maxResults);
+    res.status(200).send(await Promise.all(deliveries.map((delivery) => {
+      return this.translateDatabaseDelivery(delivery);
+    })));
   }
 
   /**
@@ -374,13 +338,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const deliveryId = req.params.deliveryId;
     const deliveryNotes: DeliveryNoteModel[] = await models.listDeliveryNotes(deliveryId);
 
-    res.status(200).send(
-      await Promise.all(
-        deliveryNotes.map(deliveryNote => {
-          return this.translateDatabaseDeliveryNote(deliveryNote);
-        })
-      )
-    );
+    res.status(200).send(await Promise.all(deliveryNotes.map((deliveryNote) => {
+      return this.translateDatabaseDeliveryNote(deliveryNote);
+    })));
   }
 
   /**
@@ -388,7 +348,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    */
   public async updateDelivery(req: Request, res: Response) {
     const deliveryId = req.params.deliveryId;
-
     if (!deliveryId) {
       this.sendBadRequest(res, "Missing required body param deliveryId");
       return;
@@ -449,17 +408,17 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     if (status === "DONE" && !deliveryQuality) {
       this.sendBadRequest(res, "Missing qualityId");
-      return;
+      return;  
     }
 
     let databaseDelivery = null;
     if (status === "DONE" && deliveryQuality) {
       const product: ProductModel = await models.findProductById(productId);
-      if (!product || !product.id) {
+      if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
-
+      
       const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
         this.sendInternalServerError(res, "Failed to resolve product price");
@@ -471,7 +430,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const unitPrice = parseFloat(productPrice);
       let unitPriceWithBonus = 0;
 
-      if (amount > 0) {
+      if(amount > 0){
         const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
         const totalPrice = unitPrice * amount + bonusPrice;
         unitPriceWithBonus = totalPrice / amount;
@@ -483,13 +442,13 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const receivingUserId = this.getLoggedUserId(req);
-      const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
       if (!deliveryContact) {
         this.sendInternalServerError(res, "Failed to deliveryContact");
         return;
       }
 
-      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
       if (!receivingContact) {
         this.sendInternalServerError(res, "Failed to receivingContact");
         return;
@@ -497,29 +456,20 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
-
+ 
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;
+        return;  
       }
 
       if (!sapSalesPersonCode) {
         this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
-        return;
+        return;  
       }
 
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
-      await this.buildPurchaseXML(
-        databaseDelivery,
-        product,
-        databaseDeliveryPlace,
-        unitPriceWithBonus,
-        deliveryContactSapId,
-        sapSalesPersonCode,
-        payload.loans || [],
-        itemGroup.category
-      );
+      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
@@ -628,7 +578,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Build purchase XML
-   *
+   * 
    * @param delivery delivery
    * @param product product
    * @param deliveryPlace delivery place
@@ -639,16 +589,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param loans
    * @return promise for success
    */
-  private async buildPurchaseXML(
-    delivery: DeliveryModel,
-    product: ProductModel,
-    deliveryPlace: DeliveryPlaceModel,
-    unitPriceWithBonus: number,
-    deliveryContactSapId: string,
-    sapSalesPersonCode: string,
-    loans: DeliveryLoan[],
-    itemGroupCategory: string
-  ) {
+  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[], itemGroupCategory: string) {
     const builder = new PurchaseMessageBuilder();
 
     const date: string = moment(delivery.time).format("YYYYMMDD");
@@ -662,7 +603,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       CardCode: deliveryContactSapId,
       Comments: notes,
       WarehouseCode: warehouseCode,
-      SalesPersonCode: sapSalesPersonCode
+      SalesPersonCode: sapSalesPersonCode,
     });
 
     builder.addPurchaseReceiptLine({
@@ -679,10 +620,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       Comments: notes,
       WarehouseCode: loanWarehouse,
       FromWarehouseCode: loanWarehouse,
-      SalesPersonCode: sapSalesPersonCode
+      SalesPersonCode: sapSalesPersonCode,
     });
 
-    loans.forEach(loan => {
+    loans.forEach((loan) => {
       const itemCode: string = config().sap.loanProductIds[loan.item];
 
       if (loan.returned > 0) {
@@ -703,7 +644,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           Quantity: loan.returned,
           BinAllocations: binAllocations
         };
-
+  
         builder.addTransferLine(line);
       }
 
@@ -725,9 +666,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           Quantity: loan.loaned,
           BinAllocations: binAllocations
         };
-
+  
         builder.addTransferLine(line);
       }
+
+
     });
 
     const xml = builder.buildXML();
@@ -746,34 +689,34 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Compresses uuid by stripping minus signs from the string
-   *
+   * 
    * @param uuid uuid
    * @returns compressed uuid
    */
   private compressUUID(uuid: string): string {
-    return uuid.replace(/\-/g, "");
+    return uuid.replace(/\-/g, '');
   }
 
   /**
    * Translates database delivery into REST entity
-   *
-   * @param delivery delivery
+   * 
+   * @param delivery delivery 
    */
   private async translateDatabaseDelivery(delivery: DeliveryModel) {
     const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
     const result: Delivery = {
-      id: delivery.id,
-      productId: delivery.productId,
-      userId: delivery.userId,
-      time: delivery.time,
-      status: delivery.status,
-      amount: delivery.amount,
-      price: delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
-      qualityId: delivery.qualityId,
-      deliveryPlaceId: deliveryPlace.externalId,
-      warehouseCode: delivery.warehouseCode,
-      loans: []
+      "id": delivery.id,
+      "productId": delivery.productId,
+      "userId": delivery.userId,
+      "time": delivery.time,
+      "status": delivery.status,
+      "amount": delivery.amount,
+      "price": delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
+      "qualityId": delivery.qualityId,
+      "deliveryPlaceId": deliveryPlace.externalId,
+      "warehouseCode": delivery.warehouseCode,
+      "loans": []
     };
 
     return result;
@@ -781,11 +724,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Returns current price for a product
-   *
+   * 
    * @param productId product id
    * @return product price or null if not found
    */
-  private async getCurrentProductPrice(productId: string): Promise<string | null> {
+  private async getCurrentProductPrice(productId: string): Promise<string | null> {
     const price = await models.findLatestProductPrice(productId);
     if (!price) {
       return null;
@@ -796,11 +739,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Returns current price for a product
-   *
+   * 
    * @param productId product id
    * @return product price or null if not found
    */
-  private async getProductPriceAtTime(productId: string, date: Date): Promise<string | null> {
+  private async getProductPriceAtTime(productId: string, date: Date): Promise<string | null> {
     const price = await models.findProductPriceAtTime(productId, date);
     if (!price) {
       return null;
@@ -811,7 +754,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Get notes
-   *
+   * 
    * @param deliveryId deliveryId
    * @return notes
    */
@@ -821,27 +764,28 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     }
 
     const deliveryNotes = await models.listDeliveryNotes(deliveryId);
-    const notes = deliveryNotes.map(deliveryNote => {
+    const notes = deliveryNotes.map((deliveryNote) => {
       return deliveryNote.text;
     });
 
     const notesJoined = notes.join(" ; ");
 
-    return _.truncate(notesJoined, { length: 253 });
+    return _.truncate(notesJoined, { "length": 253 });
   }
 
   /**
    * Translates database delivery note into REST entity
-   *
-   * @param deliveryNote deliveryNote
+   * 
+   * @param deliveryNote deliveryNote 
    */
   private async translateDatabaseDeliveryNote(deliveryNote: DeliveryNoteModel) {
     const result: DeliveryNote = {
-      id: deliveryNote.id,
-      text: deliveryNote.text,
-      image: deliveryNote.image
+      "id": deliveryNote.id,
+      "text": deliveryNote.text,
+      "image": deliveryNote.image
     };
 
     return result;
   }
+
 }

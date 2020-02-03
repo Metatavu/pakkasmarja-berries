@@ -7,7 +7,7 @@
   },
   "mqtt": {
     "host": "broker.mqttdashboard.com",
-    "path": "/mqtt",
+    "path": "/mqtt", 
     "port": 8000,
     "secure": false,
     "topicPrefix": "pm/",
@@ -74,24 +74,21 @@
   "rest": {
     "clients": {
       "fakeuser": {
-        "secret": "fakesecret"
-      }
+        "secret": "fakesecret" 
+      } 
     }
   },
   "wkhtmltopdf": {
     "command": "wkhtmltopdf"
   },
   "sap": {
-    "import-files": [
-      {
-        "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-Active.xml",
-        "status": "APPROVED"
-      },
-      {
-        "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-History.xml",
-        "status": "TERMINATED"
-      }
-    ],
+    "import-files": [{
+      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-Active.xml",
+      "status": "APPROVED"
+    }, {
+      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-History.xml",
+      "status": "TERMINATED"
+    }],
     "item-group-categories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
@@ -116,3 +113,4 @@
     }
   }
 }
+
