@@ -109,13 +109,15 @@ export default class ContactsServiceImpl extends ContactsService {
     }
 
     const user = await userManagement.findUser(userId);
+    const oldAttributes = Object.assign({},user && user.attributes ? user.attributes : {});
+
     if (!user) {
       this.sendNotFound(res);
       return;
     }
-
     await userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact));
     const updatedUser = await userManagement.findUser(userId);
+    user.attributes = oldAttributes;
     this.triggerChangeNotification(user, updatedUser);
     res.status(200).send(this.translateContact(updatedUser));
 }
@@ -311,7 +313,6 @@ export default class ContactsServiceImpl extends ContactsService {
     const phoneNumbers: string[] = contact.phoneNumbers || [];
     const addresses: Address[] = contact.addresses || [];
     
-    userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, contact.companyName);
     userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, contact.companyName);
     userManagement.setSingleAttribute(user, UserProperty.BIC, contact.BIC);
     userManagement.setSingleAttribute(user, UserProperty.IBAN, contact.IBAN);

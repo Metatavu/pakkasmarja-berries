@@ -65,7 +65,7 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "127.0.0.1",
+    "host": "pm-mysql",
     "database": "pm",
     "username": "pm",
     "password": "random",
@@ -83,10 +83,10 @@
   },
   "sap": {
     "import-files": [{
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-Active.xml",
+      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-Active.xml",
       "status": "APPROVED"
     }, {
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-History.xml",
+      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-History.xml",
       "status": "TERMINATED"
     }],
     "item-group-categories": {
@@ -106,7 +106,10 @@
   "uploadDirectory": "/tmp/",
   "contacts": {
     "notifications": {
-      "email": "to@example.org"
+      "email": "to@example.org",
+      "fresh": "tuore@example.com",
+      "frozen": "pakaste@example.com",
+      "deliveries": "tilaukset@example.com"
     }
   }
 }

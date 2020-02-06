@@ -130,6 +130,7 @@ test("Create product", async (t) => {
     t.equal(createdProduct.name, productData[0].name);
     t.equal(createdProduct.unitName, productData[0].unitName);
     t.equal(createdProduct.unitSize, productData[0].unitSize);
+    t.equal(createdProduct.active, productData[0].active);
   } finally {
     await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
   }
@@ -151,6 +152,7 @@ test("Update product", async (t) => {
     t.equal(updatedProduct.itemGroupId, productData[1].itemGroupId);
     t.equal(updatedProduct.unitName, productData[1].unitName);
     t.equal(updatedProduct.unitSize, productData[1].unitSize);
+    t.equal(updatedProduct.active, productData[1].active);
   } finally {
     await database.executeFiles(testDataDir, ["product-test-teardown.sql"]);
   }

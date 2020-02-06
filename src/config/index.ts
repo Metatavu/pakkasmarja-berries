@@ -192,6 +192,9 @@ export interface Mail {
 
 export interface Notifications {
   email: string;
+  frozen: string;
+  fresh: string;
+  deliveries: string;
 }
 
 export interface Contacts {

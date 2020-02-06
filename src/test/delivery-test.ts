@@ -4,10 +4,12 @@ import auth from "./auth";
 import { Delivery, DeliveryNote } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
+import mail from "./mail";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveriesData = require(`${testDataDir}/deliveries.json`);
 const deliveryNotesData = require(`${testDataDir}/deliveryNote.json`);
+const deliveriesDataUpdate = require(`${testDataDir}/deliveries-update.json`);
 
 /**
  * Creates delivery
@@ -109,6 +111,20 @@ const updateDelivery = (token: string, id: string): Promise<Delivery> => {
     });
 }
 
+const updateDeliveryRejected = (token: string, id: string): Promise<Delivery> => {
+  const payload: Delivery = deliveriesDataUpdate[0];
+
+  return request("http://localhost:3002")
+    .put(`/rest/v1/deliveries/${id}`)
+    .set("Authorization", `Bearer ${token}`)
+    .set("Accept", "application/json")
+    .send(payload)
+    .expect(200)
+    .then(response => {
+      return response.body;
+    });
+};
+
 /**
  * Finds delivery
  * 
@@ -193,6 +209,32 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.time, deliveriesData[1].time)
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+  }
+
+  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+});
+
+test("Update delivery if user rejected already confirmed delivery", async t => {
+  mail.clearOutbox();
+  const contactUpdateMails = require(`${testDataDir}/delivery-cancelled-mail-recipient.json`);
+  const contacatUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
+
+  await database.executeFiles(testDataDir, ["delivery-update-setup.sql"]);
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
+  try {
+    const createdDelivery = await createDelivery(token);
+    const updatedDeliveryRejected = await updateDeliveryRejected(token, createdDelivery.id || "");
+
+    t.notEqual(updatedDeliveryRejected, null);
+    t.equal(updatedDeliveryRejected.status, deliveriesDataUpdate[0].status);
+    t.equal(mail.getOutbox().length, 3);
+    t.equal(mail.getOutbox().filter(mail => mail["to"] === "pakaste@example.com" || mail["to"] === "tilaukset@example.com").length, 2);
+    t.equal(mail.getOutbox().filter(mail => mail["to"] === "test1@testrealm1.com").length, 1);
+    t.equal(mail.getOutbox().find(mail => mail["to"] === "pakaste@example.com")["text"].length, contactUpdateMails["text"].length);
+    t.equal(mail.getOutbox().find(mail => mail["to"] === "test1@testrealm1.com")["text"].length, contacatUpdateMailToShipper["text"].length);
+  } finally {
+    await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
   }
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
