@@ -216,8 +216,8 @@ test("Update delivery", async (t) => {
 
 test("Update delivery if user rejected already confirmed delivery", async t => {
   mail.clearOutbox();
-  const contactUpdateMails = require(`${testDataDir}/deliveries-update-mail.json`);
-  const contacatUpdateMailToShipper = require(`${testDataDir}/deliveries-update-mail-shipper.json`);
+  const contactUpdateMails = require(`${testDataDir}/delivery-cancelled-mail-recipient.json`);
+  const contacatUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
 
   await database.executeFiles(testDataDir, ["delivery-update-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);

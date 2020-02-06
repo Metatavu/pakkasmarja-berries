@@ -1,6 +1,0 @@
-{
-  "from": "noreply@example.com",
-  "to": "test1@testrealm1.com",
-  "subject": "Toimituksen hylkäys lähetetty vastaanottajalle",
-  "text": "Toimituksen hylkäys lähetetty vastaanottajalle tilauksesta:\n\nLähettäjä: Test 1 User 1\nToimitustunnus: 0af21030-c232-434a-9b7e-12c1addfcfbf\nTuotetunnus: b1590dd2-4bbb-11e9-8646-d663bd873d93\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 2020-03-21\nLuomispäivä: 2020-01-31\nPäivitetty: 2020-01-31\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
-}
