@@ -11,7 +11,7 @@
     "mockFolder": "/tmp/pakkaspush"
   },
   "wkhtmltopdf": {
-    "command": "/opt/wkhtmltox/bin/wkhtmltopdf"
+    "command": "wkhtmltopdf"
   },
   "tasks": {
     "tableName": "tasks",
