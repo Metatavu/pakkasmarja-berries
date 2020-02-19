@@ -493,7 +493,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
 
         const deliveryInfo: string[] = [
-          `Lähettäjä: ${deliveryContact.firstName} ${deliveryContact.lastName}`,
+          `Toimittaja: ${deliveryContact.firstName} ${deliveryContact.lastName}`,
           `Toimitustunnus: ${databaseDelivery.id}`,
           `Tuotetunnus: ${databaseDelivery.productId}`,
           `Määrä: ${databaseDelivery.amount}`,
@@ -503,19 +503,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           `Päivitetty: ${moment(databaseDelivery.updatedAt).format("YYYY-MM-DD")}`
         ];
 
-        /**Email data for recipient */
-        const subjectToRecipient = `${deliveryContact.firstName} ${deliveryContact.lastName} hylkäsi vastaanoton`;
-        const contentsToRecipient = `${deliveryContact.firstName} ${
-          deliveryContact.lastName
-        } hylkäsi vastaanoton sovelluksen kautta tilauksessa:\n\n${deliveryInfo.join(
-          "\n"
-        )}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
-
         /**Email data for shipper */
-        const subjectToShipper = `Toimituksen hylkäys lähetetty vastaanottajalle`;
-        const contentsToShipper = `Toimituksen hylkäys lähetetty vastaanottajalle tilauksesta:\n\n${deliveryInfo.join(
-          "\n"
-        )}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const subjectToShipper = `Toimitus ${databaseDelivery.id} on hylätty`;
+        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen ${databaseDelivery.id}. Toimituksen tiedot:\n\n${deliveryInfo.join("\n")}
+          \n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+
+        /**Email data for recipient */
+        const subjectToRecipient = `Ilmoitus toimituksen hylkäyksestä lähetetty`;
+        const contentsToRecipient = `Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä. Toimituksen tiedot:\n\n${deliveryInfo.join("\n")}
+          \n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         const sender = `${config().mail.sender}@${config().mail.domain}`;
         const contactConfig = config().contacts;
@@ -527,12 +523,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           contactConfig.notifications.frozen &&
           contactConfig.notifications.deliveries
         ) {
-          const recipientEmail =
-            category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
+          const recipientEmail = category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
           const shipperEmail = deliveryContact.email;
 
-          recipientEmail.forEach(recEmail => {
-            mailer.send(sender, recEmail, subjectToRecipient, contentsToRecipient);
+          recipientEmail.forEach(recipientEmail => {
+            mailer.send(sender, recipientEmail, subjectToRecipient, contentsToRecipient);
           });
 
           if (shipperEmail) {
