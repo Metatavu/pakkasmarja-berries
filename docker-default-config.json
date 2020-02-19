@@ -3,7 +3,7 @@
   "app-version": "1.2.7",
   "mode": "PRODUCTION",
   "wkhtmltopdf": {
-    "command": "/opt/wkhtmltox/bin/wkhtmltopdf"
+    "command": "wkhtmltopdf"
   },
   "tasks": {
     "tableName": "tasks",
