@@ -1,6 +1,6 @@
 {
   "from": "noreply@example.com",
   "to": "test1@testrealm1.com",
-  "subject": "Toimitus 0af21030-c232-434a-9b7e-12c1addfcfbf on hylätty",
-  "text": "Vastaanottaja on hylännyt toimituksen 0af21030-c232-434a-9b7e-12c1addfcfbf. Toimituksen tiedot:\n\nToimittaja: Test 1 User 1\nToimitustunnus: 0af21030-c232-434a-9b7e-12c1addfcfbf\nTuotetunnus: b1590dd2-4bbb-11e9-8646-d663bd873d93\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 2020-03-21\nLuomispäivä: 2020-01-31\nPäivitetty: 2020-01-31\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
+  "subject": "Marjatoimitus hylätty",
+  "text": "Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli 21.03.2020 klo 09.37.\n\nToimituksen tiedot:\n\nToimittaja: Test 1 User 1\nTuote: Product 1\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 21.03.2020 klo 09.37\nLuomispäivä: 31.01.2020 klo 09.37\nPäivitetty: 31.01.2020 klo 09.37\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
 }

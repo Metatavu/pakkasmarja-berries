@@ -26,12 +26,13 @@ export default new class Mailer {
    * @param String subject email subject
    * @param String contents email contects as plain text 
    */
-  send(sender: string, to: string, subject: string, contents: string) {
+  send(sender: string, to: string, subject: string, contents: string, attachments?: Buffer) {
     const options = {
       from: sender,
       to: to,
       subject: subject,
-      text: contents
+      text: contents,
+      attachments: attachments
     };
 
     if (!this.inTestMode() && this.mailgun) {
