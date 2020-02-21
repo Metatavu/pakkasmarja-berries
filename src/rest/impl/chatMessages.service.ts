@@ -213,6 +213,60 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   }
 
   /**
+   * @inheritdoc
+   */
+  public async listMessageReadBy(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const messageId = req.params.messageId;
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    const chatMessage = await models.findMessage(messageId);
+    if (!chatMessage || chatMessage.threadId != chatThread.id) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    if (chatMessage.userId != this.getLoggedUserId(req)) {
+      if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
+        this.sendForbidden(res);
+        return;
+      }
+    }
+
+    const permissionNames: string[] = [
+      chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:manage")
+    ];
+
+    const permissions = await userManagement.findPermissionsByNames(permissionNames);
+    const permittedUsers = await userManagement.listPermissionsUsers(permissions);
+    const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
+
+    const messageReadBy: string[] = [];
+
+    permittedUsers.forEach(async user => {
+      const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
+      if (userUnreads.length < 1) {
+        messageReadBy.push(userManagement.getUserDisplayName(user) || "");
+      }
+    });
+
+    res.status(200).send(messageReadBy);
+  }
+
+  /**
    * Translates database chat message into REST chat message 
    * 
    * @param {Object} databaseChatMessage database chat message

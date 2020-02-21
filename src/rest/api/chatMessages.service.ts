@@ -17,6 +17,7 @@ export default abstract class ChatMessagesService extends AbstractService {
     app.delete(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/messages/${encodeURIComponent(String(messageId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteChatMessage.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/messages/${encodeURIComponent(String(messageId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findChatMessage.bind(this)));
     app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/messages')}`, [ keycloak.protect() ], this.catchAsync(this.listChatMessages.bind(this)));
+    app.get(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/messages/${encodeURIComponent(String(messageId))}/read')}`, [ keycloak.protect() ], this.catchAsync(this.listMessageReadBy.bind(this)));
     app.put(`/rest/v1${this.toPath('/chatThreads/${encodeURIComponent(String(chatThreadId))}/messages/${encodeURIComponent(String(messageId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateChatMessage.bind(this)));
   }
 
@@ -63,6 +64,16 @@ export default abstract class ChatMessagesService extends AbstractService {
     * - (query) number maxResults - Max results. Defaults to 5
   */
   public abstract listChatMessages(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Returns list of usernames who have read message
+   * @summary Returns list of usernames who have read message
+   * Accepted parameters:
+    * - (path) number chatThreadId - Chat thread
+    * - (path) number messageId - Chat message id
+  */
+  public abstract listMessageReadBy(req: Request, res: Response): Promise<void>;
 
 
   /**
