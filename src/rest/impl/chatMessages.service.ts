@@ -10,6 +10,7 @@ import chatThreadPermissionController from "../../user-management/chat-thread-pe
 import userManagement from "../../user-management";
 import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
 import pushNotifications from "../../push-notifications";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Messages REST service
@@ -215,7 +216,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   /**
    * @inheritdoc
    */
-  public async listMessageReadBy(req: Request, res: Response): Promise<void> {
+  public async getMessageReadAmount(req: Request, res: Response): Promise<void> {
     const chatThreadId = req.params.chatThreadId;
     const messageId = req.params.messageId;
 
@@ -237,16 +238,68 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    if (chatMessage.userId != this.getLoggedUserId(req)) {
-      if (!(await this.isThreadManagePermission(req, chatThread, chatGroup))) {
-        this.sendForbidden(res);
-        return;
-      }
+    const hasThreadManagePermission = await this.isThreadManagePermission(req, chatThread, chatGroup);
+    if (!hasThreadManagePermission) {
+      this.sendForbidden(res);
+      return;
     }
 
     const permissionNames: string[] = [
       chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
-      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access")
+    ];
+
+    const permissions = await userManagement.findPermissionsByNames(permissionNames);
+    const permittedUsers = await userManagement.listPermissionsUsers(permissions);
+    const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
+    
+    let messageReadUserCount: number = 0;
+    for await (let user of permittedUsers) {
+      const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
+      if (userUnreads.length < 1) {
+        messageReadUserCount ++;
+      }
+    }
+
+    res.status(200).send(messageReadUserCount);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async getMessageRead(req: Request, res: Response): Promise<void> {
+    const chatThreadId = req.params.chatThreadId;
+    const messageId = req.params.messageId;
+
+    const chatThread = await models.findThread(chatThreadId);
+    if (!chatThread) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const chatGroup = await models.findChatGroup(chatThread.groupId);
+    if (!chatGroup) {
+      this.sendInternalServerError(res);
+      return;
+    }
+
+    const chatMessage = await models.findMessage(messageId);
+    if (!chatMessage || chatMessage.threadId != chatThread.id) {
+      this.sendNotFound(res);
+      return;
+    }
+
+    const loggedUserId = this.getLoggedUserId(req);
+    const hasThreadManagePermission = await this.isThreadManagePermission(req, chatThread, chatGroup);
+    if (chatMessage.userId != loggedUserId && !hasThreadManagePermission) {
+      this.sendForbidden(res);
+      return;
+    }
+
+    const permissionNames: string[] = hasThreadManagePermission ? [
+      chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
+      chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access")
+    ] : [
       chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:manage")
     ];
 
@@ -254,16 +307,15 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const permittedUsers = await userManagement.listPermissionsUsers(permissions);
     const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
 
-    const messageReadBy: string[] = [];
-
-    permittedUsers.forEach(async user => {
+    for await (let user of permittedUsers) {
       const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
       if (userUnreads.length < 1) {
-        messageReadBy.push(userManagement.getUserDisplayName(user) || "");
+        res.status(200).send(true);
+        break;
       }
-    });
+    }
 
-    res.status(200).send(messageReadBy);
+    res.status(200).send(false);
   }
 
   /**
