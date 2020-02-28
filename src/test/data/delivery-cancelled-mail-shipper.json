@@ -2,5 +2,5 @@
   "from": "noreply@example.com",
   "to": "test1@testrealm1.com",
   "subject": "Marjatoimitus hylätty",
-  "text": "Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli 21.03.2020 klo 09.37.\n\nToimituksen tiedot:\n\nToimittaja: Test 1 User 1\nTuote: Product 1\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 21.03.2020 klo 09.37\nLuomispäivä: 31.01.2020 klo 09.37\nPäivitetty: 31.01.2020 klo 09.37\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
+  "text": "Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli 21.03.2020 klo 09.37.\n\nToimituksen tiedot:\n\nToimittaja: Test 1 User 1\nTuote: Product 1\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 21.03.2020 klo 09.37\n\nToimitus luotu appiin: 31.01.2020 klo 09.37\nToimitus viimeksi päivitetty: 31.01.2020 klo 09.37\n\nLisätietoja:\nPakastelaituri\npuh. 020 709 9585\npakaste@example.com\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
 }

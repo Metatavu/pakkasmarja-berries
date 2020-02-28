@@ -217,7 +217,7 @@ test("Update delivery", async (t) => {
 test("Update delivery if user rejected already confirmed delivery", async t => {
   mail.clearOutbox();
   const contactUpdateMail = require(`${testDataDir}/delivery-cancelled-mail-recipient.json`);
-  const contacatUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
+  const contactUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
 
   await database.executeFiles(testDataDir, ["delivery-update-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
@@ -232,7 +232,7 @@ test("Update delivery if user rejected already confirmed delivery", async t => {
     t.equal(mail.getOutbox().filter(mail => mail["to"] === "pakaste@example.com" || mail["to"] === "tilaukset@example.com").length, 2);
     t.equal(mail.getOutbox().filter(mail => mail["to"] === "test1@testrealm1.com").length, 1);
     t.equal(mail.getOutbox().find(mail => mail["to"] === "pakaste@example.com")["text"].length, contactUpdateMail["text"].length);
-    t.equal(mail.getOutbox().find(mail => mail["to"] === "test1@testrealm1.com")["text"].length, contacatUpdateMailToShipper["text"].length);
+    t.equal(mail.getOutbox().find(mail => mail["to"] === "test1@testrealm1.com")["text"].length, contactUpdateMailToShipper["text"].length);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
   }
