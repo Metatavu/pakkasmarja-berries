@@ -261,7 +261,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       }
     }
 
-    res.status(200).send(messageReadUserCount);
+    res.status(200).send(messageReadUserCount.toString());
   }
 
   /**
@@ -307,15 +307,16 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const permittedUsers = await userManagement.listPermissionsUsers(permissions);
     const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
 
+    let messageRead: boolean = false;
     for await (let user of permittedUsers) {
       const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
       if (userUnreads.length < 1) {
-        res.status(200).send(true);
+        messageRead = true;
         break;
       }
     }
 
-    res.status(200).send(false);
+    res.status(200).send(messageRead);
   }
 
   /**
