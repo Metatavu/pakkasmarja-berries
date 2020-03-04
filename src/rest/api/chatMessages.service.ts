@@ -64,8 +64,8 @@ export default abstract class ChatMessagesService extends AbstractService {
 
 
   /**
-   * Returns amount of users who have read message
-   * @summary Returns amount of users who have read message
+   * Returns amount of users who have read message as string
+   * @summary Returns amount of users who have read message as string
    * Accepted parameters:
     * - (path) number chatThreadId - Chat thread
     * - (path) number messageId - Chat message id
