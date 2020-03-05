@@ -478,7 +478,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     });
     await Promise.all(createPollPredefinedTextPromises);
 
-    res.status(200).send(await this.translateChatThread(thread, chatGroup));
+    res.status(200).send(await this.translateChatThread(req, thread, chatGroup));
 
     mqtt.publish("chatthreads", {
       "operation": "CREATED",
@@ -542,7 +542,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    res.status(200).send(await this.translateChatThread(thread, chatGroup));
+    res.status(200).send(await this.translateChatThread(req, thread, chatGroup));
   }
 
   /**
@@ -583,7 +583,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     }));
     
     res.status(200).send(await Promise.all(threads.map((thread) => {
-      return this.translateChatThread(thread, chatGroupMap[thread.groupId]);
+      return this.translateChatThread(req, thread, chatGroupMap[thread.groupId]);
     })));
   }
 
@@ -646,7 +646,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       await models.deleteThreadPredefinedTextByThreadIdAndText(thread.id, existingText);
     }
 
-    res.status(200).send(await this.translateChatThread(await models.findThread(chatThreadId), chatGroup));
+    res.status(200).send(await this.translateChatThread(req, await models.findThread(chatThreadId), chatGroup));
 
     mqtt.publish("chatthreads", {
       "operation": "UPDATED",
@@ -802,14 +802,16 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * 
    * @param {Object} databaseChatThread database chat thread
    */
-  private async translateChatThread(databaseChatThread: ThreadModel, databaseChatGroup: ChatGroupModel) {
+  private async translateChatThread(req: Request, databaseChatThread: ThreadModel, databaseChatGroup: ChatGroupModel) {
     let answerType: ChatThread.AnswerTypeEnum;
 
     if (databaseChatThread.answerType == "POLL") {
       answerType = "POLL";
     } else {
       answerType = "TEXT";
-    } 
+    }
+
+    const permissionType = await this.isThreadManagePermission(req, databaseChatThread, databaseChatGroup) ? "MANAGE" : "ACCESS";
 
     const title = databaseChatGroup.type == "QUESTION" && databaseChatThread.ownerId 
       ? userManagement.getUserDisplayName(await userManagement.findUser(databaseChatThread.ownerId)) 
@@ -828,6 +830,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       groupId: databaseChatThread.groupId,
       pollPredefinedTexts: predefinedTexts,
       answerType: answerType,
+      permissionType: permissionType,
       expiresAt: databaseChatThread.expiresAt || null,
       pollAllowOther: databaseChatThread.pollAllowOther
     };

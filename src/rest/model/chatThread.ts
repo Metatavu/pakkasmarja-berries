@@ -18,6 +18,7 @@ export interface ChatThread {
     description: string  | null;
     imageUrl: string  | null;
     answerType: ChatThread.AnswerTypeEnum ;
+    permissionType: ChatThread.PermissionTypeEnum ;
     pollAllowOther: boolean  | null;
     pollPredefinedTexts: Array<string>  | null;
     expiresAt: Date  | null;
@@ -30,6 +31,7 @@ export interface ChatThreadOpt {
     description?: string;
     imageUrl?: string;
     answerType?: ChatThread.AnswerTypeEnum;
+    permissionType?: ChatThread.PermissionTypeEnum;
     pollAllowOther?: boolean;
     pollPredefinedTexts?: Array<string>;
     expiresAt?: Date;
@@ -39,5 +41,10 @@ export namespace ChatThread {
     export const AnswerTypeEnum = {
         TEXT: 'TEXT' as AnswerTypeEnum,
         POLL: 'POLL' as AnswerTypeEnum
+    };
+    export type PermissionTypeEnum = 'ACCESS' | 'MANAGE';
+    export const PermissionTypeEnum = {
+        ACCESS: 'ACCESS' as PermissionTypeEnum,
+        MANAGE: 'MANAGE' as PermissionTypeEnum
     };
 }
