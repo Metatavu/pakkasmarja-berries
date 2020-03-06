@@ -251,10 +251,11 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
 
     const permissions = await userManagement.findPermissionsByNames(permissionNames);
     const permittedUsers = await userManagement.listPermissionsUsers(permissions);
+    const receivingUsers = permittedUsers.filter(user => user.id !== chatMessage.userId);
     const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
     
     let messageReadUserCount: number = 0;
-    for await (let user of permittedUsers) {
+    for await (let user of receivingUsers) {
       const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
       if (userUnreads.length < 1) {
         messageReadUserCount ++;
