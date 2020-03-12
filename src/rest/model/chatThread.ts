@@ -18,7 +18,7 @@ export interface ChatThread {
     description: string  | null;
     imageUrl: string  | null;
     answerType: ChatThread.AnswerTypeEnum ;
-    permissionType: ChatThread.PermissionTypeEnum ;
+    permissionType: ChatThread.PermissionTypeEnum  | null;
     pollAllowOther: boolean  | null;
     pollPredefinedTexts: Array<string>  | null;
     expiresAt: Date  | null;
