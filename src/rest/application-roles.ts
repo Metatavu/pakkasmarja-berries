@@ -135,14 +135,14 @@ export default class ApplicationRoles {
   static get CREATE_OPERATIONS() {
     return "create-operations";
   }
-  
+
   /**
    * Role that allows users to manage chat
    */
   static get MANAGE_THREADS() {
     return "manage-threads";
   }
-  
+
   /**
    * Role that allows users manage news articles
    */
@@ -225,6 +225,13 @@ export default class ApplicationRoles {
    */
   static get MANAGE_DELIVERY_QUALITIES() {
     return "manage-delivery-qualities";
+  }
+
+  /**
+   * Role that allows users to manage shared files
+   */
+  static get MANAGE_SHARED_FILES() {
+    return "manage-shared-files";
   }
 
 }
