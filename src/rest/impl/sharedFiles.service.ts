@@ -28,10 +28,10 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     super(app, keycloak);
     AWS.config.update({
       credentials: {
-        accessKeyId: "AKIAWBDWCUA264RQGB7I",
-        secretAccessKey: "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"
+        accessKeyId: process.env.AWS_IAM_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.AWS_IAM_SECRET_ACCESS_KEY || ""
       },
-      region: "eu-central-1"
+      region: process.env.AWS_IAM_REGION || ""
     });
 
     if (!AWS.config.credentials) {
