@@ -27,7 +27,7 @@ log4jsConfigure({
 });
 
 process.on("unhandledRejection", (error) => {
-  console.error("UNHANDLED REJECTION", error ? error.stack : null);
+  console.error("UNHANDLED REJECTION", error ? error : null);
 });
 
 (async () => {
@@ -49,7 +49,7 @@ process.on("unhandledRejection", (error) => {
   });
 
   initializeModels(sequelize);
-  
+
   const port = config().port || 3000;
   const app = express();
 
@@ -93,20 +93,21 @@ process.on("unhandledRejection", (error) => {
 
   app.set('trust proxy', true);
   app.use(cors());
-  app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+  app.use(bodyParser.raw({ inflate: true, type: "application/octet-stream" }));
   app.use(express.static(path.join(__dirname, "../webapp")));
   app.use(express.static(path.join(__dirname, "../public")));
   app.use(i18n.init);
   app.set("views", path.join(__dirname, "../views"));
-  app.set("view engine", "pug"); 
-  
+  app.set("view engine", "pug");
+
   new Api(app, keycloak);
   new SystemRoutes(app);
   new MqttRoutes(app, keycloak);
   new SignRoutes(app);
   new FileRoutes(app, keycloak);
-  
+
   mqtt.connect();
   taskQueue.start();
 
