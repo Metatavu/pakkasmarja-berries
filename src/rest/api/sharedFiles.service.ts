@@ -19,7 +19,8 @@ export default abstract class SharedFilesService extends AbstractService {
     app.delete(`/rest/v1${this.toPath('/sharedFiles')}`, [ keycloak.protect() ], this.catchAsync(this.deleteSharedFile.bind(this)));
     app.get(`/rest/v1${this.toPath('/sharedFiles/download')}`, [ keycloak.protect() ], this.catchAsync(this.getSharedFile.bind(this)));
     app.get(`/rest/v1${this.toPath('/sharedFiles')}`, [ keycloak.protect() ], this.catchAsync(this.listSharedFiles.bind(this)));
-    app.post(`/rest/v1${this.toPath('/sharedFiles')}`, [ keycloak.protect(), this.upload.single("file") ], this.catchAsync(this.uploadSharedFile.bind(this)));
+    app.post(`/rest/v1${this.toPath('/sharedFiles/upload/file')}`, [ keycloak.protect(), this.upload.single("file") ], this.catchAsync(this.uploadSharedFile.bind(this)));
+    app.post(`/rest/v1${this.toPath('/sharedFiles/upload/folder')}`, [ keycloak.protect() ], this.catchAsync(this.uploadSharedFolder.bind(this)));
   }
 
 
@@ -57,9 +58,19 @@ export default abstract class SharedFilesService extends AbstractService {
    * @summary Upload shared file to S3
    * Accepted parameters:
     * - (query) string fileName - File name
-    * - (body) Object body -
+    * - (form) string file - 
     * - (query) string pathPrefix - File path prefix
   */
   public abstract uploadSharedFile(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Uploads shared folder to Amazon S3
+   * @summary Upload shared folder to S3
+   * Accepted parameters:
+    * - (query) string folderName - Folder name
+    * - (query) string pathPrefix - Folder path prefix
+  */
+  public abstract uploadSharedFolder(req: Request, res: Response): Promise<void>;
 
 }
