@@ -63,6 +63,16 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
 
       const fileHeadLoadPromises = data.Contents.map((content) => this.loadDataHead(content));
       const files: SharedFile[] = await Promise.all(fileHeadLoadPromises);
+      const folders = data.CommonPrefixes;
+      if (folders && folders.length > 0) {
+        folders.forEach(folder => {
+          files.push({
+            name: folder.Prefix || "",
+            pathPrefix: pathPrefix,
+            fileType: FileType.FOLDER
+          });
+        });
+      }
       res.send(files);
     });
   }
@@ -169,10 +179,79 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
           return;
         }
 
-        const sharedFileCreated = {
+        const sharedFileCreated: SharedFile = {
           name: fileName,
           pathPrefix: pathPrefix,
-          fileType: data.ContentType
+          fileType: this.determineFileType(data.ContentType || "")
+        }
+
+        res.send(sharedFileCreated);
+      });
+    });
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public async uploadSharedFolder(req: Request, res: Response) {
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_SHARED_FILES)) {
+      this.sendForbidden(res, "You have no permission to manage shared files");
+      return;
+    }
+
+    const pathPrefix = req.query.pathPrefix;
+    const folderName = req.query.folderName;
+
+    if (!folderName) {
+      this.sendBadRequest(res, "Query parameter for fileName was not given");
+      return;
+    }
+
+    if (!this.bucket) {
+      this.sendInternalServerError(res, "S3 bucket name not found");
+      return;
+    }
+
+    const fullPath = pathPrefix ? `${pathPrefix}${folderName}` : folderName;
+
+    if (!folderName.endsWith("/")) {
+      this.sendInternalServerError(res, "Invalid folder name. Folder name must end with forward slash '/'");
+      return;
+    }
+
+    const s3PutObjectParams: AWS.S3.PutObjectRequest = {
+      Bucket: this.bucket,
+      Key: fullPath
+    };
+
+    this.s3.putObject(s3PutObjectParams, (error) => {
+      if (error) {
+        this.sendInternalServerError(res, error);
+        this.logger.info(`REQUEST ERROR IN S3 PUT OBJECT: ${error}`);
+        return;
+      }
+
+      if (!this.bucket) {
+        this.sendInternalServerError(res, "S3 bucket name not found");
+        return;
+      }
+
+      const s3GetObjectParams = {
+        Bucket: this.bucket,
+        Key: fullPath
+      };
+
+      this.s3.getObject(s3GetObjectParams, (error, data) => {
+        if (error) {
+          this.sendInternalServerError(res, error);
+          this.logger.info(`REQUEST ERROR IN S3 GET OBJECT: ${error}`);
+          return;
+        }
+
+        const sharedFileCreated: SharedFile = {
+          name: folderName,
+          pathPrefix: pathPrefix,
+          fileType: FileType.FOLDER
         }
 
         res.send(sharedFileCreated);
@@ -243,20 +322,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
         const isFolder = key.endsWith("/");
         const pathPrefix = this.parsePathFromKey(key);
         const name = this.parseFileNameFromKey(key);
-
-        let fileType: FileType;
-        switch (data.ContentType) {
-          case "application/pdf":
-            fileType = FileType.PDF;
-          break;
-          case "image/png":
-          case "image/jpeg":
-            fileType = FileType.IMAGE;
-          break;
-          default:
-            fileType = FileType.OTHER;
-          break;
-        }
+        const fileType = this.determineFileType(data.ContentType || "");
 
         const fileObject: SharedFile = {
           name: name,
@@ -283,7 +349,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     const spliceIndex = key.endsWith("/") ? -2 : -1;
     const splitKey = key.split("/");
     splitKey.splice(spliceIndex);
-    return splitKey.join("/");
+    return `${splitKey.join("/")}/`;
   }
 
   /**
@@ -307,4 +373,21 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     }
   }
 
+  /**
+   * Determines SharedFile type based on content-type property of S3 response object
+   *
+   * @param contentType content type
+   * @returns FileType
+   */
+  private determineFileType(contentType: string): FileType {
+    switch (contentType) {
+      case "application/pdf":
+        return FileType.PDF;
+      case "image/png":
+      case "image/jpeg":
+        return FileType.IMAGE;
+      default:
+        return FileType.OTHER;
+    }
+  }
 }
