@@ -7,7 +7,6 @@ import SharedFilesService from "../api/sharedFiles.service";
 import { SharedFile } from "../model/sharedFile";
 import { FileType } from "../model/fileType";
 import { S3 } from "aws-sdk";
-import { config } from "../../config";
 import fileType = require("file-type");
 
 /**
@@ -27,10 +26,6 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
   constructor(app: Application, keycloak: Keycloak) {
     super(app, keycloak);
     AWS.config.update({
-      credentials: {
-        accessKeyId: process.env.AWS_IAM_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_IAM_SECRET_ACCESS_KEY || ""
-      },
       region: process.env.AWS_IAM_REGION || ""
     });
 
