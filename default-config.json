@@ -90,10 +90,5 @@
   "cache": {
     "enabled": true,
     "expire-time": 60000
-  },
-  "aws": {
-    "s3": {
-      "bucket": "staging-pakkasmarja-user-content"
-    }
   }
 }
