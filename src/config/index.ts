@@ -219,14 +219,6 @@ export interface ClientConfig {
   server: ClientServerConfig
 }
 
-export interface Aws {
-  s3: S3Settings
-}
-
-export interface S3Settings {
-  bucket: string
-}
-
 export interface Config {
   mode: string;
   port: number;
@@ -246,8 +238,7 @@ export interface Config {
   migrations: Migrations,
   mqtt: Mqtt,
   uploadDirectory: string,
-  client: ClientConfig,
-  aws: Aws
+  client: ClientConfig
 }
 
 export function config(): Config {

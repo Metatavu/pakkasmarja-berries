@@ -16,7 +16,7 @@ import fileType = require("file-type");
 export default class SharedFilesServiceImpl extends SharedFilesService {
   private logger: Logger = getLogger();
   private s3: S3 = new S3({ apiVersion: '2006-03-01' });
-  private bucket = config().aws.s3.bucket;
+  private bucket = process.env.AWS_S3_BUCKET;
 
   /**
    * Constructor
@@ -44,6 +44,11 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
    */
   public async listSharedFiles(req: Request, res: Response) {
     const pathPrefix = req.query.pathPrefix || "";
+    if (!this.bucket) {
+      this.sendInternalServerError(res, "S3 bucket name not found");
+      return;
+    }
+
     const s3Params: AWS.S3.ListObjectsV2Request = {
       Bucket: this.bucket,
       Prefix: pathPrefix
@@ -79,6 +84,11 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
+      return;
+    }
+
+    if (!this.bucket) {
+      this.sendInternalServerError(res, "S3 bucket name not found");
       return;
     }
 
@@ -124,6 +134,11 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       this.sendBadRequest(res, "No file data in request");
     }
 
+    if (!this.bucket) {
+      this.sendInternalServerError(res, "S3 bucket name not found");
+      return;
+    }
+
     const fileData = req.file.buffer;
     const contentTypeObject = await fileType.fromBuffer(fileData);
     const contentType = contentTypeObject ? contentTypeObject.mime : undefined;
@@ -139,6 +154,11 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       if (error) {
         this.sendInternalServerError(res, error);
         this.logger.info(`REQUEST ERROR IN S3 PUT OBJECT: ${error}`);
+        return;
+      }
+
+      if (!this.bucket) {
+        this.sendInternalServerError(res, "S3 bucket name not found");
         return;
       }
 
@@ -181,6 +201,11 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
+    if (!this.bucket) {
+      this.sendInternalServerError(res, "S3 bucket name not found");
+      return;
+    }
+
     const fullPath = pathPrefix ? `${pathPrefix}${fileName}` : fileName;
     const s3Params: AWS.S3.GetObjectRequest = {
       Bucket: this.bucket,
@@ -208,6 +233,10 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       const key = object.Key;
       if (!key) {
         return reject("Missing key");
+      }
+
+      if (!this.bucket) {
+        return;
       }
 
       this.s3.headObject({ Bucket: this.bucket, Key: key }, (error, data) => {
