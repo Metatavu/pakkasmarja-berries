@@ -219,6 +219,14 @@ export interface ClientConfig {
   server: ClientServerConfig
 }
 
+export interface Aws {
+  s3: S3Settings
+}
+
+export interface S3Settings {
+  bucket: string
+}
+
 export interface Config {
   mode: string;
   port: number;
@@ -238,11 +246,12 @@ export interface Config {
   migrations: Migrations,
   mqtt: Mqtt,
   uploadDirectory: string,
-  client: ClientConfig
+  client: ClientConfig,
+  aws: Aws
 }
 
 export function config(): Config {
-  return { 
+  return {
     ... nconf.get(),
     mail: {
       api_key: nconf.get("mail:api_key"),

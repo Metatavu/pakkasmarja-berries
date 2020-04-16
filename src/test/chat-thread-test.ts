@@ -88,6 +88,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
   const payload: ChatThread = {
     id: null,
     answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
+    permissionType: null,
     description: description || null,
     expiresAt: expiresAt || null,
     groupId: groupId,
@@ -177,6 +178,7 @@ const updateChatThread = (token: string, id: number, groupId: number, title: str
   const payload: ChatThread = {
     id: null,
     answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
+    permissionType: null,
     description: description || null,
     expiresAt: expiresAt || null,
     groupId: groupId,
