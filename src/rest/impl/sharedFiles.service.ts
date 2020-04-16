@@ -7,7 +7,6 @@ import SharedFilesService from "../api/sharedFiles.service";
 import { SharedFile } from "../model/sharedFile";
 import { FileType } from "../model/fileType";
 import { S3 } from "aws-sdk";
-import { config } from "../../config";
 import fileType = require("file-type");
 
 /**
@@ -27,10 +26,6 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
   constructor(app: Application, keycloak: Keycloak) {
     super(app, keycloak);
     AWS.config.update({
-      credentials: {
-        accessKeyId: process.env.AWS_IAM_ACCESS_KEY_ID || "",
-        secretAccessKey: process.env.AWS_IAM_SECRET_ACCESS_KEY || ""
-      },
       region: process.env.AWS_IAM_REGION || ""
     });
 
@@ -51,7 +46,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
 
     const s3Params: AWS.S3.ListObjectsV2Request = {
       Bucket: this.bucket,
-      Prefix: pathPrefix
+      Prefix: pathPrefix,
+      Delimiter: "/"
     }
 
     this.s3.listObjectsV2(s3Params, async (error, data) => {
@@ -245,8 +241,9 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
         }
 
         const isFolder = key.endsWith("/");
-        const pathPrefix = this.parsePathFromKey(key, isFolder);
-        const name = this.parseFileNameFromKey(key, isFolder);
+        const pathPrefix = this.parsePathFromKey(key);
+        const name = this.parseFileNameFromKey(key);
+
         let fileType: FileType;
         switch (data.ContentType) {
           case "application/pdf":
@@ -264,7 +261,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
         const fileObject: SharedFile = {
           name: name,
           pathPrefix: pathPrefix,
-          fileType: fileType
+          fileType: isFolder ? FileType.FOLDER : fileType
         };
 
         resolve(fileObject);
@@ -276,34 +273,38 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
    * Parses S3 object path from its key
    *
    * @param key S3 object key
-   * @param folder Is object folder
    * @returns Path
    */
-  private parsePathFromKey(key: string, folder: boolean): string {
+  private parsePathFromKey(key: string): string {
     if (!key.includes("/")) {
       return "";
     }
 
-    const splittedKey = key.split("/");
-    splittedKey.filter(item => item).pop();
-    return folder ? `${splittedKey.join("/")}/` : splittedKey.join("/");
+    const spliceIndex = key.endsWith("/") ? -2 : -1;
+    const splitKey = key.split("/");
+    splitKey.splice(spliceIndex);
+    return splitKey.join("/");
   }
 
   /**
    * Parses S3 object file name from its key
    *
    * @param key S3 object key
-   * @param folder Is object folder
    * @returns File name
    */
-  private parseFileNameFromKey(key: string, folder: boolean): string {
+  private parseFileNameFromKey(key: string): string {
     if (!key.includes("/")) {
       return key;
     }
 
-    const splittedKey = key.split("/");
-    const lastIndex = splittedKey.length - 1;
-    return folder ?`${splittedKey[lastIndex]}`: splittedKey[lastIndex];
+    if (key.endsWith("/")) {
+      const splitKey = key.split("/");
+      splitKey.pop();
+      return `${splitKey[splitKey.length - 1]}/`;
+    } else {
+      const splitKey = key.split("/");
+      return splitKey[splitKey.length - 1];
+    }
   }
 
 }
