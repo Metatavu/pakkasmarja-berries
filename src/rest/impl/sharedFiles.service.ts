@@ -83,10 +83,6 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
   public async getSharedFile(req: Request, res: Response) {
     const pathPrefix = req.query.pathPrefix;
     const fileName = req.query.fileName;
-    if (!pathPrefix) {
-      this.sendBadRequest(res, "Query parameter for pathPrefix was not given");
-      return;
-    }
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
