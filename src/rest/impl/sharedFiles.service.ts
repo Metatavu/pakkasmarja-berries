@@ -61,16 +61,18 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
         return;
       }
 
-      const fileHeadLoadPromises = data.Contents.map((content) => this.loadDataHead(content));
+      const fileHeadLoadPromises = data.Contents.filter(item => item.Key !== pathPrefix).map((object) => this.loadDataHead(object));
       const files: SharedFile[] = await Promise.all(fileHeadLoadPromises);
       const folders = data.CommonPrefixes;
       if (folders && folders.length > 0) {
         folders.forEach(folder => {
-          files.push({
-            name: folder.Prefix || "",
-            pathPrefix: pathPrefix,
-            fileType: FileType.FOLDER
-          });
+          if (this.parsePathFromKey(folder.Prefix || "") === pathPrefix) {
+            files.push({
+              name: this.parseFileNameFromKey(folder.Prefix || ""),
+              pathPrefix: pathPrefix,
+              fileType: FileType.FOLDER
+            });
+          }
         });
       }
       res.send(files);
@@ -83,10 +85,6 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
   public async getSharedFile(req: Request, res: Response) {
     const pathPrefix = req.query.pathPrefix;
     const fileName = req.query.fileName;
-    if (!pathPrefix) {
-      this.sendBadRequest(res, "Query parameter for pathPrefix was not given");
-      return;
-    }
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
@@ -98,9 +96,10 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
+    const fullPath = pathPrefix ? `${pathPrefix}${fileName}` : fileName;
     const s3Params: AWS.S3.GetObjectRequest = {
       Bucket: this.bucket,
-      Key: `${pathPrefix}${fileName}`
+      Key: fullPath
     }
 
     this.s3.getObject(s3Params, (error, data) => {
@@ -203,7 +202,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     const folderName = req.query.folderName;
 
     if (!folderName) {
-      this.sendBadRequest(res, "Query parameter for fileName was not given");
+      this.sendBadRequest(res, "Query parameter for folderName was not given");
       return;
     }
 
@@ -282,7 +281,15 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     }
 
     const fullPath = pathPrefix ? `${pathPrefix}${fileName}` : fileName;
-    const s3Params: AWS.S3.GetObjectRequest = {
+
+    if (fileName.endsWith("/")) {
+      const isValid = await this.isDeletionAllowed(res, fullPath);
+      if (!isValid) {
+        return;
+      }
+    }
+
+    const s3Params: AWS.S3.DeleteObjectRequest = {
       Bucket: this.bucket,
       Key: fullPath
     }
@@ -336,6 +343,50 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
   }
 
   /**
+   * Checks if deletion of S3 object is allowed
+   *
+   * @param res response
+   * @param fullPath full path of S3 object
+   * @returns Promise of boolean
+   */
+  private isDeletionAllowed = (res: Response, fullPath: string): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      if (!this.bucket) {
+        return reject("S3 bucket name not found");
+      }
+
+      const s3ListParams: AWS.S3.ListObjectsV2Request = {
+        Bucket: this.bucket,
+        Prefix: fullPath,
+        Delimiter: "/"
+      }
+  
+      this.s3.listObjectsV2(s3ListParams, (error, data) => {
+        if (error) {
+          this.sendInternalServerError(res, error);
+          return reject(error);
+        }
+  
+        if (data.Contents && data.Contents.filter(item => item.Key !== fullPath).length > 0) {
+          this.sendForbidden(res, "Deleting non-empty folder is forbidden. Delete all its contents first");
+          return resolve(false);
+        }
+  
+        const folders = data.CommonPrefixes;
+        if (folders && folders.length > 0) {
+          const index = folders.findIndex(folder => this.parsePathFromKey(folder.Prefix || "") === fullPath);
+          if (index !== -1) {
+            this.sendForbidden(res, "Deleting non-empty folder is forbidden. Delete all its contents first");
+            return resolve(false);
+          }
+        }
+
+        resolve(true);
+      });
+    });
+  }
+
+  /**
    * Parses S3 object path from its key
    *
    * @param key S3 object key
@@ -349,7 +400,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
     const spliceIndex = key.endsWith("/") ? -2 : -1;
     const splitKey = key.split("/");
     splitKey.splice(spliceIndex);
-    return `${splitKey.join("/")}/`;
+    const joinedPath = splitKey.join("/");
+    return joinedPath ? `${joinedPath}/` : "";
   }
 
   /**
