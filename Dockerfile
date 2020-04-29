@@ -1,6 +1,5 @@
 FROM node:dubnium
 RUN apt update
-RUN apt install libssl1.0-dev -y
 RUN apt install redis-server sshfs -y
 WORKDIR /tmp
 RUN wget "https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.stretch_amd64.deb"

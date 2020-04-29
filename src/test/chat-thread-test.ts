@@ -494,9 +494,9 @@ test("Lists chat thread permissions", async (t) => {
     await createChatThread(token, createdGroups2[1].id!, "Thread 3.1")
   ]); 
   
-  await chatPermissions.createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "TRAVERSE");
-  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "TRAVERSE");
-  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[1].id!, userGroup2!.id!, "TRAVERSE");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "MANAGE");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "MANAGE");
+  await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[1].id!, userGroup2!.id!, "MANAGE");
   await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads1[0].id!, userGroup1!.id!, "ACCESS");
   await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads1[1].id!, userGroup1!.id!, "ACCESS");
   await chatPermissions.createChatThreadGroupPermission(token, createdChatThreads2[0].id!, userGroup2!.id!, "ACCESS");

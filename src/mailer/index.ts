@@ -49,7 +49,7 @@ export default new class Mailer {
         const path = `${parents.join("/")}/${folder}`;
 
         if (!fs.existsSync(path)) {
-          fs.mkdirSync(path);
+          fs.mkdirSync(path, { mode: 0o777 });
         }
 
         parents.push(folder);
