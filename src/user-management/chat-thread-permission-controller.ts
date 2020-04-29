@@ -9,7 +9,7 @@ import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import UserPolicyRepresentation from "keycloak-admin/lib/defs/userPolicyRepresentation";
 
-const CHAT_THREAD_SCOPES: ApplicationScope[] = ["chat-thread:access"];
+export const CHAT_THREAD_SCOPES: ApplicationScope[] = ["chat-thread:access"];
 
 /**
  * Permission controller for chat threads
@@ -169,6 +169,29 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
     }
 
     return null;
+  }
+
+  /**
+   * Resolves scopes for given user in given chat thread 
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   * @returns list of scopes for given user in given chat thread
+   */
+  public async getUserChatThreadScopes(chatThread: ThreadModel, user: UserRepresentation): Promise<string[]> {
+    const userPolicy = await this.resolveUserPolicy(user.id!);
+    if (!userPolicy) {
+      return [];
+    }
+
+    const scopes = [];
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+      if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], userPolicy)) {
+        scopes.push(CHAT_THREAD_SCOPES[i]);
+      }
+    }
+
+    return scopes;
   }
 
   /**

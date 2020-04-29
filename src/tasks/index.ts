@@ -10,9 +10,10 @@ import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
-import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
-import chatGroupPermissionController from "../user-management/chat-group-permission-controller";
+import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
+import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
+import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -29,6 +30,7 @@ export default new class TaskQueue {
   private sapContractSapIdSyncQueue: Queue;
   private sapContractDeliveredQuantityUpdateQueue: Queue;
   private questionGroupThreadsQueue: Queue;
+  private chatPermissionsCacheQueue: Queue;
 
   /**
    * Constructor
@@ -51,10 +53,11 @@ export default new class TaskQueue {
     this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
     this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
     this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
+    this.chatPermissionsCacheQueue = this.createQueue("chatPermissionsCacheQueue", this.cacheUsersChatPermissionsTask.bind(this));
 
     this.enqueueQuestionGroupUsersThreadsTask();
     this.enqueueContractDeliveredQuantityUpdateQueue();
-
+    this.enqueueCacheUsersChatPermissionsTask();
     // FIXME!
     // this.enqueueContractDocumentStatusBatchQueue();
   }
@@ -816,6 +819,107 @@ export default new class TaskQueue {
     return false;
   }
 
+    /**
+   * Adds task to chat permissions cache queue
+   */
+  private enqueueCacheUsersChatPermissionsTask() {
+    this.chatPermissionsCacheQueue.push({id: 1});
+  }
+
+  /**
+   * Task engine task for caching user permissions
+   * 
+   * @param data data
+   * @param callback callback
+   */
+  private async cacheUsersChatPermissionsTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+    try {
+      await this.cacheUsersChatPermissions();
+    } finally {
+      callback(null);
+    }
+  }
+
+  /**
+   * Caches users chat permissions
+   */
+  private async cacheUsersChatPermissions() {
+    this.logger.info("Updating users chat permissions");
+
+    const users = await userManagement.listAllUsers();
+    const chatGroups = await models.listChatGroups(null);
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const permittedGroupIds = [];
+      this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
+      for (let j = 0; j < chatGroups.length; j++) {
+        if (await this.cacheUserChatGroupPermissions(chatGroups[j], user)) {
+          permittedGroupIds.push(chatGroups[j].id);
+        }
+      }
+      const chatThreads = await models.listThreads(permittedGroupIds);
+      for (let n = 0; n < chatThreads.length; n++) {
+        await this.cacheUserChatThreadPermissions(chatThreads[n], user);
+      }
+    }
+
+    this.logger.info("Done caching user chat permissions");
+    this.enqueueCacheUsersChatPermissionsTask();
+  }
+
+  /**
+   * Caches users chat group permissions
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   */
+  private cacheUserChatGroupPermissions = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<boolean> => {
+    if (!user.id) {
+      return false;
+    }
+
+    const permittedScopes = await this.getChatGroupPermissionScopes(chatGroup, user);
+    const permissionName = chatGroupPermissionController.getChatGroupResourceName(chatGroup);
+    let hadAnyPermission = false;
+    for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) {
+      let scope = CHAT_GROUP_SCOPES[i];
+      let permission = false;
+      if (permittedScopes.indexOf(scope) > -1) {
+        permission = true;
+        hadAnyPermission = true;
+      }
+
+      await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+    }
+    return hadAnyPermission;
+  }
+
+  /**
+   * Caches users chat thread permissions
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   */
+  private cacheUserChatThreadPermissions = async (chatThread: ThreadModel, user: UserRepresentation) => {
+    if (!user.id) {
+      return;
+    }
+
+    const permittedScopes = await this.getChatThreadPermissionScopes(chatThread, user);
+    const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
+
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
+      let scope = CHAT_GROUP_SCOPES[i];
+      let permission = false;
+      if (permittedScopes.indexOf(scope) > -1) {
+        permission = true;
+      }
+
+      await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+    }
+  }
+
   /**
    * Adds task to sapContractDeliveredQuantityUpdateQueue
    */
@@ -843,7 +947,7 @@ export default new class TaskQueue {
   private async checkQuestionGroupUsersThreads() {
     this.logger.info("Checking question group user threads...");
 
-    const users = await userManagement.listUsers();
+    const users = await userManagement.listAllUsers();
     const questionGroups = await models.listChatGroups("QUESTION");
 
     for (let i = 0; i < users.length; i++) {
@@ -960,6 +1064,36 @@ export default new class TaskQueue {
     }
 
     return false;
+  }
+
+  /**
+   * Gets list of allowed scopes for groups resource
+   * 
+   * @param chatGroup chat group
+   * @param user user
+   * @returns list of allowed scopes for user
+   */
+  private getChatGroupPermissionScopes = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<string[]> => {
+    const userGroups = await userManagement.listUserUserGroups(user);
+    let allScopes: string[] = [];
+    for (let i = 0; i < userGroups.length; i++) {
+      const userGroup = userGroups[i];
+      let groupScopes = await chatGroupPermissionController.getUserGroupChatGroupScopes(chatGroup, userGroup);
+      allScopes = allScopes.concat(groupScopes);
+    }
+
+    return allScopes;
+  }
+
+  /**
+   * Gets list of allowed scopes for threads resource
+   * 
+   * @param chatThread chat thread
+   * @param user user
+   * @returns list of allowed scopes for user
+   */
+  private getChatThreadPermissionScopes = async (chatThread: ThreadModel, user: UserRepresentation): Promise<string[]> => {
+    return await chatThreadPermissionController.getUserChatThreadScopes(chatThread, user);
   }
 
   /**
