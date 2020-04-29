@@ -972,7 +972,7 @@ export default class ContractsServiceImpl extends ContractsService {
         return null;
       }
 
-      const year = (new Date()).getFullYear();
+      const year = this.inTestMode() ? 2019 : (new Date()).getFullYear();
       const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
       const taxCode = userManagement.getSingleAttribute(user, UserProperty.TAX_CODE);
       const prices = await models.listItemGroupPrices(contract.itemGroupId, year, 0, 1000, null, null);
@@ -1295,5 +1295,11 @@ export default class ContractsServiceImpl extends ContractsService {
       });
   }
 
-}
+  /**
+   * Returns whether service is running in test mode
+   */
+  private inTestMode() {
+    return config().mode === "TEST";
+  }
 
+}

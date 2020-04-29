@@ -5,6 +5,7 @@ import models, { ItemGroupModel, ItemGroupDocumentTemplateModel, DocumentTemplat
 
 import ItemGroupsService from "../api/itemGroups.service";
 import ApplicationRoles from "../application-roles";
+import { config } from "../../config";
 
 /**
  * Implementation for ItemGroups REST service
@@ -49,7 +50,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
 
     const createdItemGroup = await models.createItemGroup(null, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
     
-    const type = `${(new Date()).getFullYear()}`;  
+    const type = this.inTestMode() ? "2019" : `${(new Date()).getFullYear()}`;  
     const documentTemplate = await models.createDocumentTemplate("Insert Contents", null, null);
     await models.createItemGroupDocumentTemplate(type, createdItemGroup.id, documentTemplate.id); 
     
@@ -463,4 +464,12 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
 
     return result;
   }
+
+  /**
+   * Returns whether service is running in test mode
+   */
+  private inTestMode() {
+    return config().mode === "TEST";
+  }
+
 }
