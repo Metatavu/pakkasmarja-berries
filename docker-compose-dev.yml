@@ -1,0 +1,47 @@
+version: "3"
+services:
+  pm-mysql:
+    image: mysql:5.7
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pm
+      MYSQL_USER: pm
+      MYSQL_PASSWORD: random
+    ports:
+      - 3306:3306
+    volumes:
+      - ./test-volumes/pakkasmarja-api/pakkasmarja_database.sql:/docker-entrypoint-initdb.d/pakkasmarja_database.sql
+  test-keycloak:
+    image: jboss/keycloak:4.8.3.Final
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /opt/docker/pakkasmarja_realm.json
+      DB_VENDOR: h2
+    ports:
+      - 8080:8080
+    volumes:
+      - ./test-volumes/keycloak:/opt/docker
+  pakkasmarja-api:
+    build: .
+    env_file:
+      - .env
+    environment: 
+      STARTUP_DELAY: 35
+    ports:
+      - 3002:3000
+    depends_on:
+      - pm-mysql
+      - test-keycloak
+    healthcheck:
+        test: curl http://test-keycloak:8080
+        interval: 2s
+        timeout: 5s
+        retries: 30
+    volumes:
+      - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
+      - ./test-volumes/pakkasmarja-api/sap-files:/usr/src/pakkasmarja/sap-files
+      - /tmp/pakkasmail:/tmp/pakkasmail
+      - /tmp/pakkaspush:/tmp/pakkaspush
+      - /tmp/sapxml:/tmp/sapxml
