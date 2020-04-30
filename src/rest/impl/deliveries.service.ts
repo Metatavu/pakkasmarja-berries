@@ -492,29 +492,52 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         const itemGroup = await models.findItemGroupById(product.itemGroupId);
         const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
 
-        const deliveryInfo: string[] = [
+        const sender = `${config().mail.sender}@${config().mail.domain}`;
+        const contactConfig = config().contacts;
+
+        const deliveryNotes = await models.listDeliveryNotes(delivery.id);
+        const latestDeliveryNote = deliveryNotes.length > 0 ? deliveryNotes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0] : undefined;
+        const imageAttachment = latestDeliveryNote && latestDeliveryNote.image ? Buffer.from(latestDeliveryNote.image, "base64") : undefined;
+        
+        const additionalRejectionInfo = latestDeliveryNote ? `Lisätietoja hylkäyksestä: ${latestDeliveryNote.text}` : "";
+
+        const deliveryInfoToRecipient: string[] = [
           `Toimittaja: ${deliveryContact.firstName} ${deliveryContact.lastName}`,
-          `Toimitustunnus: ${databaseDelivery.id}`,
-          `Tuotetunnus: ${databaseDelivery.productId}`,
+          `Tuote: ${product.name}`,
           `Määrä: ${databaseDelivery.amount}`,
           `Toimituspaikka: ${deliveryPlace["name"]}`,
-          `Ajankohta: ${moment(databaseDelivery.time).format("YYYY-MM-DD")}`,
-          `Luomispäivä: ${moment(databaseDelivery.createdAt).format("YYYY-MM-DD")}`,
-          `Päivitetty: ${moment(databaseDelivery.updatedAt).format("YYYY-MM-DD")}`
+          `Ajankohta: ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`,
+          `Luomispäivä: ${moment(databaseDelivery.createdAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`,
+          `Päivitetty: ${moment(databaseDelivery.updatedAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`
+        ];
+
+        const deliveryInfoToShipper: string[] = [
+          `Toimittaja: ${deliveryContact.firstName} ${deliveryContact.lastName}`,
+          `Tuote: ${product.name}`,
+          `Määrä: ${databaseDelivery.amount}`,
+          `Toimituspaikka: ${deliveryPlace["name"]}`,
+          `Ajankohta: ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}\n`,
+          `Toimitus luotu appiin: ${moment(databaseDelivery.createdAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`,
+          `Toimitus viimeksi päivitetty: ${moment(databaseDelivery.updatedAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`
+        ]
+
+        const additionalInfotoShipper: string[] = category === "FRESH" ? [
+          "Tuoremarjatoimisto",
+          "puh. 020 709 9588",
+          contactConfig!.notifications!.fresh || ""
+        ] : [
+          "Pakastelaituri",
+          "puh. 020 709 9585",
+          contactConfig!.notifications!.frozen || ""
         ];
 
         /**Email data for shipper */
-        const subjectToShipper = `Toimitus ${databaseDelivery.id} on hylätty`;
-        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen ${databaseDelivery.id}. Toimituksen tiedot:\n\n${deliveryInfo.join("\n")}
-          \n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const subjectToShipper = `Marjatoimitus hylätty`;
+        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToShipper.join("\n")}\n\nLisätietoja:\n${additionalInfotoShipper.join("\n")}\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         /**Email data for recipient */
         const subjectToRecipient = `Ilmoitus toimituksen hylkäyksestä lähetetty`;
-        const contentsToRecipient = `Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä. Toimituksen tiedot:\n\n${deliveryInfo.join("\n")}
-          \n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
-
-        const sender = `${config().mail.sender}@${config().mail.domain}`;
-        const contactConfig = config().contacts;
+        const contentsToRecipient = `Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToRecipient.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         if (
           contactConfig &&
@@ -531,7 +554,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           });
 
           if (shipperEmail) {
-            mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper);
+            mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper, imageAttachment);
           }
         }
       }

@@ -55,7 +55,7 @@ export default new class UserManagement {
   
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
-    this.permissionCache = config().cache.enabled ? new PermissionCache(5 * 1000 * 60) : null;
+    this.permissionCache = config().cache.enabled ? new PermissionCache(6 * 1000 * 60 * 60) : null;
 
     this.client = new KcAdminClient({
       baseUrl: config().keycloak.rest["auth-server-url"]
@@ -1079,11 +1079,9 @@ export default new class UserManagement {
    * @param userId user id
    * @param permission permission
    */
-  private async updateCachedPermission(resourceName: string, scopes: string[], userId: string, permission: boolean): Promise<void> {
+  public async updateCachedPermission(resourceName: string, scopes: string[], userId: string, permission: boolean): Promise<void> {
     if (this.permissionCache) {
       await this.permissionCache.set(resourceName, scopes, userId, permission);
     }
   }
-
-  
 };

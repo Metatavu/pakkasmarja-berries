@@ -7,7 +7,7 @@ import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, ApplicationScope, CHAT_GROUP_TRAV
 import { ChatGroupModel } from "../models";
 import AbstractPermissionController from "./abstract-permission-controller";
 
-const CHAT_GROUP_SCOPES: ApplicationScope[] = ["chat-group:manage", "chat-group:access", "chat-group:traverse"];
+export const CHAT_GROUP_SCOPES: ApplicationScope[] = ["chat-group:manage", "chat-group:access", "chat-group:traverse"];
 
 export default new class ChatGroupPermissionController extends AbstractPermissionController {
 
@@ -59,6 +59,29 @@ export default new class ChatGroupPermissionController extends AbstractPermissio
     }
 
     return null;
+  }
+
+  /**
+   * Resolves scopes for given user group in given chat group 
+   * 
+   * @param chatGroup chat group
+   * @param userGroup user group
+   * @returns list of scopes for given user group in given chat group
+   */
+  public async getUserGroupChatGroupScopes(chatGroup: ChatGroupModel, userGroup: GroupRepresentation): Promise<string[]> {
+    const groupPolicy = await this.resolveGroupPolicy(userGroup.id!);
+    if (!groupPolicy) {
+      return [];
+    }
+
+    const scopes = [];
+    for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) { 
+      if (await this.hasChatGroupPermissionPolicy(chatGroup, CHAT_GROUP_SCOPES[i], groupPolicy)) {
+        scopes.push(CHAT_GROUP_SCOPES[i]);
+      }
+    }
+
+    return scopes;
   }
 
   /**

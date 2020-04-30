@@ -272,7 +272,7 @@ export default class OperationsServiceImpl extends OperationsService {
   private async createItemGroupDefaultDocumentTemplates() {
     const itemGroups = await models.listItemGroups(null);
     const operationReport = await models.createOperationReport("ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES");
-    const type = `${(new Date()).getFullYear()}`;
+    const type = this.inTestMode() ? "2019" : `${(new Date()).getFullYear()}`;
     
     Promise.all(itemGroups.map(async (itemGroup) => {
       try {
@@ -356,4 +356,12 @@ export default class OperationsServiceImpl extends OperationsService {
         return this.parseXml(data);
       });
   }
+
+  /**
+   * Returns whether system is running in test mode
+   */
+  private inTestMode() {
+    return config().mode === "TEST";
+  }
+
 }

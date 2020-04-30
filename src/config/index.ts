@@ -242,7 +242,7 @@ export interface Config {
 }
 
 export function config(): Config {
-  return { 
+  return {
     ... nconf.get(),
     mail: {
       api_key: nconf.get("mail:api_key"),
