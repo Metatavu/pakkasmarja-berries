@@ -234,4 +234,18 @@ export default class ApplicationRoles {
     return "manage-shared-files";
   }
 
+  /**
+   * Role that allows users to manage delivery place opening hours
+   */
+  static get MANAGE_OPENING_HOURS() {
+    return "manage-opening-hours";
+  }
+
+  /**
+   * Role that allows users to administrate opening hours of all delivery places
+   */
+  static get ADMINISTRATE_OPENING_HOURS() {
+    return "administrate-opening-hours";
+  }
+
 }

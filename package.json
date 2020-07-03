@@ -7,7 +7,7 @@
     "start": "node dist/app.js",
     "instrument": "node_modules/.bin/istanbul instrument . -o .instrument",
     "run-cover": "npm run build && node_modules/.bin/istanbul cover --report none dist/app.js -- --host localhost --port 3002",
-    "test": "node_modules/.bin/istanbul cover --report none --dir coverage/unit node_modules/.bin/tape -- dist/test/*-test.js|node_modules/.bin/tap-spec",
+    "test": "node_modules/.bin/istanbul cover --report none --dir coverage/unit node_modules/.bin/tape -- dist/test/opening-hours-test.js|node_modules/.bin/tap-spec",
     "coverage": "node_modules/.bin/istanbul report",
     "build": "tsc"
   },
@@ -81,7 +81,7 @@
     "@types/multer": "^1.3.7",
     "@types/mustache": "^0.8.32",
     "@types/nconf": "^0.10.0",
-    "@types/node": "^13.11.0",
+    "@types/node": "^13.13.12",
     "@types/node-fetch": "^2.1.6",
     "@types/node-xlsx": "^0.12.0",
     "@types/pug": "^2.0.4",

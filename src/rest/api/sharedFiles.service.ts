@@ -1,25 +1,22 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import AbstractService from "../abstract-service";
-import multer = require("multer");
 
 export default abstract class SharedFilesService extends AbstractService {
 
-  private storage = multer.memoryStorage();
-  private upload = multer({ storage: this.storage });
-
   /**
    * Constructor
-   *
+   * 
    * @param app Express app
    * @param keycloak Keycloak
    */
   constructor(app: Application, keycloak: Keycloak) {
     super();
+
     app.delete(`/rest/v1${this.toPath('/sharedFiles')}`, [ keycloak.protect() ], this.catchAsync(this.deleteSharedFile.bind(this)));
     app.get(`/rest/v1${this.toPath('/sharedFiles/download')}`, [ keycloak.protect() ], this.catchAsync(this.getSharedFile.bind(this)));
     app.get(`/rest/v1${this.toPath('/sharedFiles')}`, [ keycloak.protect() ], this.catchAsync(this.listSharedFiles.bind(this)));
-    app.post(`/rest/v1${this.toPath('/sharedFiles/upload/file')}`, [ keycloak.protect(), this.upload.single("file") ], this.catchAsync(this.uploadSharedFile.bind(this)));
+    app.post(`/rest/v1${this.toPath('/sharedFiles/upload/file')}`, [ keycloak.protect() ], this.catchAsync(this.uploadSharedFile.bind(this)));
     app.post(`/rest/v1${this.toPath('/sharedFiles/upload/folder')}`, [ keycloak.protect() ], this.catchAsync(this.uploadSharedFolder.bind(this)));
   }
 

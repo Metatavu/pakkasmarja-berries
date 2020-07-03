@@ -123,6 +123,59 @@ export interface DeliveryPlaceModel {
   updatedAt: Date
 }
 
+/**
+ * Interface for opening hour period
+ */
+export interface OpeningHourPeriodModel {
+  id: number
+  externalId: string
+  deliveryPlaceId: string
+  beginDate: Date
+  endDate: Date
+}
+
+/**
+ * Interface for opening hour day
+ */
+export interface OpeningHourDayModel {
+  id: number
+  externalId: string
+  periodId: string
+  dayType: string
+}
+
+/**
+ * Interface for opening hour day interval
+ */
+export interface OpeningHourDayIntervalModel {
+  id: number
+  externalId: string
+  dayId: number
+  opens: Date
+  closes: Date
+}
+
+/**
+ * Interface for opening hour exception
+ */
+export interface OpeningHourExceptionModel {
+  id: number
+  externalId: string
+  deliveryPlaceId: string
+  exceptionDate: Date
+}
+
+/**
+ * Interface describing opening hour exception interval
+ */
+export interface OpeningHourExceptionIntervalModel {
+  id: number
+  externalId: string
+  exceptionId: string
+  opens: Date
+  closes: Date
+}
+
 export interface ContractModel {
   id: number,
   externalId: string,
@@ -486,6 +539,44 @@ export class Models {
         unique: true,
         fields: ["externalId"]
       }]
+    });
+
+    this.defineModel("OpeningHourPeriod", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.DeliveryPlace, key: "id" } },
+      beginDate: { type: Sequelize.DATE, allowNull: false },
+      endDate: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    this.defineModel("OpeningHourDay", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+      periodId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OpeningHourPeriod, key: "id" } },
+      dayType: { type: Sequelize.STRING(191), allowNull: false }
+    });
+
+    this.defineModel("OpeningHourDayInterval", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+      dayId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OpeningHourDay, key: "id" } },
+      opens: { type: Sequelize.DATE, allowNull: false },
+      closes: { type: Sequelize.DATE, allowNull: false }
+    });
+
+    this.defineModel("OpeningHourException", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+      deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.DeliveryPlace, key: "id" } },
+      exceptionDate: { type: Sequelize.DATEONLY }
+    });
+
+    this.defineModel("OpeningHourExceptionInterval", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
+      exceptionId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.OpeningHourException, key: "id" } },
+      opens: { type: Sequelize.DATE, allowNull: false },
+      closes: { type: Sequelize.DATE, allowNull: false }
     });
     
     this.defineModel("Contract", {
@@ -1686,10 +1777,362 @@ export class Models {
    * Deletes an delivery place
    * 
    * @param {int} id delivery place id
-   * @return {Promise} promise that resolves on successful removal
+   * @returns {Promise} promise that resolves on successful removal
    */
   deleteDeliveryPlace(id: number) {
     return this.sequelize.models.DeliveryPlace.destroy({ where: { id : id } });
+  }
+
+  // Opening hours
+
+  /**
+   * Creates new opening hour period
+   * 
+   * @param {int} deliveryPlaceId delivery place id
+   * @param {Date} beginDate time when period begins
+   * @param {Date} endDate time when period ends
+   * @returns {Promise} promise for created opening hour period
+   */
+  createOpeningHourPeriod(deliveryPlaceId: number, beginDate: Date, endDate: Date): Bluebird<OpeningHourPeriodModel> {
+    return this.sequelize.models.OpeningHourPeriod.create({
+      deliveryPlaceId,
+      beginDate,
+      endDate
+    });
+  }
+
+  /**
+   * Lists opening hour periods
+   * 
+   * @param {number} deliveryPlaceId delivery place id
+   * @returns {Promise} promise for list of opening hours
+   */
+  listOpeningHourPeriods(deliveryPlaceId: number): Bluebird<OpeningHourPeriodModel[]> {
+    return this.sequelize.models.OpeningHourPeriod.findAll({ where: { deliveryPlaceId } });
+  }
+
+  /**
+   * Lists opening hour periods until given time
+   * 
+   * @param {number} deliveryPlaceId delivery place id
+   * @param {Date} until until which time periods are listed
+   * @returns {Promise} promise for list of matching opening hour periods
+   */
+  listOpeningHourPeriodsUntil(deliveryPlaceId: number, until: Date): Bluebird<OpeningHourPeriodModel[]> {
+    const Op = Sequelize.Op;
+    const where: any = {
+      deliveryPlaceId,
+      [Op.or]: [
+        {
+          beginDate: { [Op.lte]: Date.now },
+          endDate: { [Op.gte]: until }
+        },
+        {
+          beginDate: { [Op.lte]: Date.now },
+          endDate: { [Op.gte]: Date.now }
+        },
+        {
+          beginDate: { [Op.lte]: until },
+          endDate: { [Op.gte]: until }
+        },
+        {
+          beginDate: { [Op.gte]: Date.now },
+          endDate: { [Op.lte]: until }
+        }
+      ]
+    };
+
+    return this.sequelize.models.OpeningHourPeriod.findAll({ where });
+  }
+
+  /**
+   * Finds an opening hour period by externalId
+   * 
+   * @param {string} externalId opening hour period externalId
+   * @returns {Promise} promise for found opening hour period
+   */
+  findOpeningHourPeriod(externalId: string): Bluebird<OpeningHourPeriodModel> {
+    return this.sequelize.models.OpeningHourPeriod.findOne({ where: { externalId }});
+  }
+
+  /**
+   * Updates opening hour period
+   * 
+   * @param {number} id opening hour period id
+   * @param {Date} beginDate time when period begins
+   * @param {Date} endDate time when period ends
+   * @returns {Promise} promise for number of updated rows
+   */
+  updateOpeningHourPeriod(id: number, beginDate: Date, endDate: Date): Bluebird<[number, any]> {
+    return this.sequelize.models.OpeningHourPeriod.update(
+      { beginDate, endDate },
+      { where: { id } }
+    );
+  }
+
+  /**
+   * Deletes an opening hour period
+   * 
+   * @param {number} id opening hour period id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourPeriod(id: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourPeriod.destroy({
+      where: { id }
+    });
+  }
+
+  /**
+   * Creates new opening hour day
+   * 
+   * @param {number} periodId opening hour period id
+   * @param {string} dayType week day
+   */
+  createOpeningHourDay(periodId: number, dayType: string): Bluebird<OpeningHourDayModel> {
+    return this.sequelize.models.OpeningHourDay.create({
+      periodId,
+      dayType
+    });
+  }
+
+  /**
+   * Lists opening hour days
+   * 
+   * @param {number} periodId opening hour period id
+   * @returns {Promise} promise for list of opening hour days
+   */
+  listOpeningHourDays(periodId: number): Bluebird<OpeningHourDayModel[]> {
+    return this.sequelize.models.OpeningHourDay.findAll({ where: { periodId } });
+  }
+
+  /**
+   * Deletes opening hour days by period id
+   * 
+   * @param {number} periodId opening hour period id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourDays(periodId: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourDay.destroy({ where: { periodId } });
+  }
+
+  /**
+   * Creates new opening hour day interval
+   * 
+   * @param {number} dayId opening hour day id
+   * @param {Date} opens opening time
+   * @param {Date} closes closing time
+   * @returns {Promise} promise for created opening hour day interval
+   */
+  createOpeningHourDayInterval(dayId: number, opens: Date, closes: Date): Bluebird<OpeningHourDayIntervalModel> {
+    return this.sequelize.models.OpeningHourDayInterval.create({
+      dayId,
+      opens,
+      closes
+    });
+  }
+
+  /**
+   * Lists opening hour day intervals
+   * 
+   * @param {number} dayId opening hour day id
+   * @returns {Promise} promise for listed opening hour day intervals
+   */
+  listOpeningHourDayIntervals(dayId: number): Bluebird<OpeningHourDayIntervalModel[]> {
+    return this.sequelize.models.OpeningHourDayInterval.findAll({ where: { dayId } });
+  }
+
+  /**
+   * Finds opening hour day interval by external id
+   * 
+   * @param {string} externalId external id
+   * @returns {Promise} promise for found opening hour day interval
+   */
+  findOpeningHourDayInterval(externalId: string): Bluebird<OpeningHourDayIntervalModel> {
+    return this.sequelize.models.OpeningHourDayInterval.findOne({ where: { externalId } });
+  }
+
+  /**
+   * Updates an opening hour day interval
+   * 
+   * @param {number} externalId external id
+   * @param {Date} opens opening time
+   * @param {Date} closes closing time
+   * @returns {Promise} promise for number of updated rows
+   */
+  updateOpeningHourDayInterval(externalId: string, opens: Date, closes: Date): Bluebird<[number, any]> {
+    return this.sequelize.models.OpeningHourDayInterval.update(
+      { opens, closes },
+      { where: { externalId } }
+    );
+  }
+
+  /**
+   * Deletes an opening hour day interval
+   * 
+   * @param {number} id interval id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourDayInterval(id: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourDayInterval.destroy({ where: { id } });
+  }
+
+  /**
+   * Deletes an opening hour day intervals by day id
+   * 
+   * @param {number} dayId opening hour day id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourDayIntervals(dayId: number): Bluebird<number>  {
+    return this.sequelize.models.OpeningHourDayInterval.destroy({ where: { dayId } });
+  }
+
+  /**
+   * Creates new opening hour exception
+   * 
+   * @param {number} deliveryPlaceId delivery place id
+   * @param {Date} exceptionDate date of exception
+   * @returns {Promise} promise for created opening hour exception
+   */
+  createOpeningHourException(deliveryPlaceId: number, exceptionDate: Date): Bluebird<OpeningHourExceptionModel> {
+    return this.sequelize.models.OpeningHourException.create({
+      deliveryPlaceId,
+      exceptionDate
+    });
+  }
+
+  /**
+   * Lists opening hour exceptions
+   * 
+   * @param {number} deliveryPlaceId delivery place id
+   * @returns {Promise} promise for list of opening hour exceptions
+   */
+  listOpeningHourExceptions(deliveryPlaceId: number): Bluebird<OpeningHourExceptionModel[]> {
+    return this.sequelize.models.OpeningHourException.findAll({ where: { deliveryPlaceId } });
+  }
+
+  /**
+   * Lists opening hour exceptions until given time
+   * 
+   * @param {number} deliveryPlaceId delivery place id
+   * @param {Date} until until which time exceptions are listed
+   */
+  listOpeningHourExceptionsUntil(deliveryPlaceId: number, until: Date): Bluebird<OpeningHourExceptionModel[]> {
+    return this.sequelize.models.OpeningHourException.findAll({
+      where: {
+        deliveryPlaceId,
+        exceptionDate: {
+          [Sequelize.Op.gte]: Date.now,
+          [Sequelize.Op.lte]: until
+        }
+      }
+    });
+  }
+  
+  /**
+   * Finds an opening hour exception
+   * 
+   * @param {string} externalId external id
+   * @return {Promise} promise for found opening hour exception
+   */
+  findOpeningHourException(externalId: string): Bluebird<OpeningHourExceptionModel> {
+    return this.sequelize.models.OpeningHourException.findOne({
+      where: { externalId }
+    });
+  }
+
+  /**
+   * Updates an opening hour exception
+   * 
+   * @param {string} externalId external id
+   * @param {Date} exceptionDate date of exception
+   * @returns {Promise} promise for number of updated rows
+   */
+  updateOpeningHourException(externalId: string, exceptionDate: Date): Bluebird<[number, any]> {
+    return this.sequelize.models.OpeningHourException.update(
+      { exceptionDate },
+      { where: { externalId } }
+    );
+  }
+
+  /**
+   * Deletes an opening hour exception
+   * 
+   * @param {number} id id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourException(id: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourException.destroy({ where: { id } });
+  }
+
+  /**
+   * Creates new opening hour exception interval
+   * 
+   * @param {number} exceptionId exception id
+   * @param {Date} opens opening time
+   * @param {Date} closes closing time
+   * @returns {Promise} promise for created opening hour exception interval
+   */
+  createOpeningHourExceptionInterval(exceptionId: number, opens: Date, closes: Date): Bluebird<OpeningHourExceptionIntervalModel> {
+    return this.sequelize.models.OpeningHourExceptionInterval.create({
+      exceptionId,
+      opens,
+      closes
+    });
+  }
+
+  /**
+   * Lists opening hour exception intervals
+   * 
+   * @param {number} exceptionId opening hour exception id
+   * @returns {Promise} promise for list of opening hour exception intervals
+   */
+  listOpeningHourExceptionIntervals(exceptionId: number): Bluebird<OpeningHourExceptionIntervalModel[]> {
+    return this.sequelize.models.OpeningHourExceptionInterval.findAll({ where: { exceptionId } });
+  }
+
+  /**
+   * Finds opening hour exception interval
+   * 
+   * @param {number} id opening hour id
+   * @returns {Promise} promise for found opening hour exception interval
+   */
+  findOpeningHourExceptionInterval(externalId: string): Bluebird<OpeningHourExceptionIntervalModel> {
+    return this.sequelize.models.OpeningHourExceptionInterval.findOne({ where: { externalId } });
+  }
+
+  /**
+   * Updates an opening hour exception interval
+   * 
+   * @param {string} externalId external id
+   * @param {Date} opens opening time
+   * @param {Date} closes closing time
+   * @returns {Promise} promise for number of updated rows
+   */
+  updateOpeningHourExceptionInterval(externalId: string, opens: Date, closes: Date): Bluebird<[number, any]> {
+    return this.sequelize.models.OpeningHourExceptionInterval.update(
+      { opens, closes },
+      { where: { externalId }
+    });
+  }
+
+  /**
+   * Deletes an opening hour exception interval
+   * 
+   * @param {number} id id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourExceptionInterval(id: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourExceptionInterval.destroy({ where: { id } });
+  }
+
+  /**
+   * Deletes opening hour exception intervals by exception id
+   * 
+   * @param {number} exceptionId exception id
+   * @returns {Promise} promise that resolves on successful removal
+   */
+  deleteOpeningHourExceptionIntervals(exceptionId: number): Bluebird<number> {
+    return this.sequelize.models.OpeningHourExceptionInterval.destroy({ where: { exceptionId } });
   }
 
   // Contracts
