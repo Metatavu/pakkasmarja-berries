@@ -1846,6 +1846,20 @@ export class Models {
   }
 
   /**
+   * Finds the last opening hour period and returns it
+   * 
+   * @param {number} externalId delivery place id
+   * @returns {Promise} promise for found opening hour period
+   */
+  public async getLastOpeningHourPeriod(externalId: number): Promise<OpeningHourPeriodModel> {
+    const all = await this.sequelize.models.OpeningHourPeriod.findAll();
+    return all[0];
+    // return this.sequelize.models.OpeningHourPeriod.max('beginDate', { where: { externalId: externalId } }).then(max => {
+    //   return this.sequelize.models.OpeningHourPeriod.findOne({ where: { externalId: externalId } });
+    // });
+  }
+
+  /**
    * Finds an opening hour period by externalId
    * 
    * @param {string} externalId opening hour period externalId
