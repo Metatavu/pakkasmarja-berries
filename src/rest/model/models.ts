@@ -39,7 +39,6 @@ export * from './openingHourException';
 export * from './openingHourInterval';
 export * from './openingHourPeriod';
 export * from './openingHourWeekday';
-export * from './openingHours';
 export * from './operation';
 export * from './operationReport';
 export * from './operationReportItem';

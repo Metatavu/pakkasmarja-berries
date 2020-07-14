@@ -18,10 +18,8 @@ export default abstract class OpeningHoursService extends AbstractService {
     app.delete(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/exceptions/${encodeURIComponent(String(exceptionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteOpeningHourException.bind(this)));
     app.delete(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods/${encodeURIComponent(String(periodId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteOpeningHourPeriod.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods/${encodeURIComponent(String(periodId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findOpeningHourPeriod.bind(this)));
-    app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/lastPeriod')}`, [ keycloak.protect() ], this.catchAsync(this.getLastPeriod.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/exceptions')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHourExceptions.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHourPeriods.bind(this)));
-    app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHours.bind(this)));
     app.put(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/exceptions/${encodeURIComponent(String(exceptionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateOpeningHourException.bind(this)));
     app.put(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods/${encodeURIComponent(String(periodId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateOpeningHourPeriod.bind(this)));
   }
@@ -78,15 +76,6 @@ export default abstract class OpeningHoursService extends AbstractService {
 
 
   /**
-   * Finds last opening hour period
-   * @summary Find last opening hour period
-   * Accepted parameters:
-    * - (path) string deliveryPlaceId - delivery place id
-  */
-  public abstract getLastPeriod(req: Request, res: Response): Promise<void>;
-
-
-  /**
    * Lists opening hour exceptions
    * @summary List opening hour exceptions
    * Accepted parameters:
@@ -100,18 +89,12 @@ export default abstract class OpeningHoursService extends AbstractService {
    * @summary List opening hour periods
    * Accepted parameters:
     * - (path) string deliveryPlaceId - delivery place id
+    * - (query) string rangeStart - list date range start
+    * - (query) string rangeEnd - list date range end
+    * - (query) number firstResult - Offset of first result. Defaults to 0
+    * - (query) number maxResults - Max results. Defaults to unlimited
   */
   public abstract listOpeningHourPeriods(req: Request, res: Response): Promise<void>;
-
-
-  /**
-   * Lists opening hours
-   * @summary Lists opening hours
-   * Accepted parameters:
-    * - (path) string deliveryPlaceId - delivery place id
-    * - (query) string until - list hours until given time
-  */
-  public abstract listOpeningHours(req: Request, res: Response): Promise<void>;
 
 
   /**

@@ -38,79 +38,12 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
   /**
    * @inheritdoc
    */
-  async listOpeningHours(req: Request, res: Response) {
-    const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
-    const until: Date = req.query.until;
-
-    if (!deliveryPlaceExternalId) {
-      this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
-      return;
-    }
-
-    if (!until) {
-      this.sendBadRequest(res, "Missing required parameter from request: until");
-      return;
-    }
-
-    const deliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceExternalId);
-    if (!deliveryPlace) {
-      this.sendNotFound(res, "Delivery place with given id was not found");
-      return;
-    }
-
-    const periodModels = await models.listOpeningHourPeriodsUntil(deliveryPlace.id, until);
-    const periods = await Promise.all(
-      periodModels.map(periodModel => this.createPeriodRestStructure(periodModel))
-    );
-
-    const exceptionModels = await models.listOpeningHourExceptionsUntil(deliveryPlace.id, until);
-    const exceptions = await Promise.all(
-      exceptionModels.map(exceptionModel => this.createExceptionRestStructure(exceptionModel))
-    )
-
-    res.status(200).send({ periods, exceptions });
-  }
-
-  /**
-   * @inheritdoc
-   */
-  async getLastPeriod(req: Request, res: Response) {
-    const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
-
-    if (!deliveryPlaceExternalId) {
-      this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
-      return;
-    }
-
-    const deliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceExternalId);
-    if (!deliveryPlace) {
-      this.sendNotFound(res, "Delivery place with given id was not found");
-      return;
-    }
-
-    const lastPeriodModel = await models.getLastOpeningHourPeriod(deliveryPlace.id);
-
-    if (!lastPeriodModel) {
-      this.sendNotFound(res, "Period not found");
-      return;
-    }
-
-    //const lastPeriod = await this.createPeriodRestStructure(lastPeriod);
-
-    res.status(200).send(true);
-  }
-
-  /**
-   * @inheritdoc
-   */
   async listOpeningHourPeriods(req: Request, res: Response) {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
-    
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
-        !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
-      this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
-      return;
-    }
+    const rangeStart: Date = req.query.rangeStart;
+    const rangeEnd: Date = req.query.rangeEnd;
+    const firstResult: number = parseInt(req.query.firstResult) || 0;
+    const maxResults: number | undefined = parseInt(req.query.maxResults) || undefined;
 
     if (!deliveryPlaceExternalId) {
       this.sendBadRequest(res, "Missing required parameter deliveryPlaceId from request");
@@ -123,7 +56,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       return;
     }
 
-    const periodModels = await models.listOpeningHourPeriods(deliveryPlace.id);
+    const periodModels = await models.listOpeningHourPeriods(deliveryPlace.id, rangeStart, rangeEnd, firstResult, maxResults);
     const periods = await Promise.all(
       periodModels.map(periodModel => this.createPeriodRestStructure(periodModel))
     );
@@ -388,13 +321,6 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
    */
   async listOpeningHourExceptions(req: Request, res: Response) {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
-
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
-        !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
-      this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
-      return;
-    }
-
     if (!deliveryPlaceExternalId) {
       this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
       return;

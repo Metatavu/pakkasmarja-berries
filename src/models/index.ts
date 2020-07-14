@@ -1804,59 +1804,42 @@ export class Models {
   /**
    * Lists opening hour periods
    * 
-   * @param {number} deliveryPlaceId delivery place id
-   * @returns {Promise} promise for list of opening hours
+   * @param deliveryPlaceId delivery place
+   * @param rangeStart date range start. Ignored if null
+   * @param rangeEnd date range end. Ignored if null
+   * @param firstResult first result. Ignored if null
+   * @param maxResults max results. Ignored if null
+   * @returns promise for opening hours
    */
-  listOpeningHourPeriods(deliveryPlaceId: number): Bluebird<OpeningHourPeriodModel[]> {
-    return this.sequelize.models.OpeningHourPeriod.findAll({ where: { deliveryPlaceId } });
-  }
-
-  /**
-   * Lists opening hour periods until given time
-   * 
-   * @param {number} deliveryPlaceId delivery place id
-   * @param {Date} until until which time periods are listed
-   * @returns {Promise} promise for list of matching opening hour periods
-   */
-  listOpeningHourPeriodsUntil(deliveryPlaceId: number, until: Date): Bluebird<OpeningHourPeriodModel[]> {
+  public async listOpeningHourPeriods(deliveryPlaceId: number, rangeStart?: Date, rangeEnd?: Date, firstResult?: number, maxResults?: number): Promise<OpeningHourPeriodModel[]> {
     const Op = Sequelize.Op;
-    const where: any = {
-      deliveryPlaceId,
-      [Op.or]: [
-        {
-          beginDate: { [Op.lte]: Date.now },
-          endDate: { [Op.gte]: until }
-        },
-        {
-          beginDate: { [Op.lte]: Date.now },
-          endDate: { [Op.gte]: Date.now }
-        },
-        {
-          beginDate: { [Op.lte]: until },
-          endDate: { [Op.gte]: until }
-        },
-        {
-          beginDate: { [Op.gte]: Date.now },
-          endDate: { [Op.lte]: until }
-        }
-      ]
+
+    let where: any = {
+      deliveryPlaceId: deliveryPlaceId
     };
 
-    return this.sequelize.models.OpeningHourPeriod.findAll({ where });
-  }
+    if (rangeStart || rangeEnd) {
+      const range: any = {};
 
-  /**
-   * Finds the last opening hour period and returns it
-   * 
-   * @param {number} externalId delivery place id
-   * @returns {Promise} promise for found opening hour period
-   */
-  public async getLastOpeningHourPeriod(externalId: number): Promise<OpeningHourPeriodModel> {
-    const all = await this.sequelize.models.OpeningHourPeriod.findAll();
-    return all[0];
-    // return this.sequelize.models.OpeningHourPeriod.max('beginDate', { where: { externalId: externalId } }).then(max => {
-    //   return this.sequelize.models.OpeningHourPeriod.findOne({ where: { externalId: externalId } });
-    // });
+      if (rangeStart) {
+        range.endDate = { [Op.gte]: rangeStart };
+      }
+
+      if (rangeEnd) {
+        range.beginDate = { [Op.lte]: rangeEnd }
+      }
+
+      where = { ... where, [Op.or]: range };
+    }
+
+    const options: any = {
+      where: where,
+      order: [ [ "endDate", "DESC" ] ],
+      offset: firstResult || undefined,
+      limit: maxResults || undefined
+    };
+
+    return this.sequelize.models.OpeningHourPeriod.findAll(options);
   }
 
   /**
@@ -2025,11 +2008,31 @@ export class Models {
   }
 
   /**
+   * Lists opening hour exceptions by delivery place and date range.
+   * 
+   * @param deliveryPlaceId delivery place
+   * @param rangeStart date range start
+   * @param rangeEnd date range end
+   * @returns promise for opening hours in date range
+   */
+  public async listOpeningHourExceptionsByDateRange(deliveryPlaceId: number, rangeStart: Date, rangeEnd: Date): Promise<OpeningHourExceptionModel[]> {
+    const Op = Sequelize.Op;
+    const where: any = {
+      deliveryPlaceId,
+      exceptionDate: {
+        [Op.between]: [rangeStart, rangeEnd]
+      }
+    };
+
+    return this.sequelize.models.OpeningHourException.findAll({ where });
+  }
+
+  /**
    * Lists opening hour exceptions until given time
    * 
    * @param {number} deliveryPlaceId delivery place id
    * @param {Date} until until which time exceptions are listed
-   */
+   *//**
   listOpeningHourExceptionsUntil(deliveryPlaceId: number, until: Date): Bluebird<OpeningHourExceptionModel[]> {
     return this.sequelize.models.OpeningHourException.findAll({
       where: {
@@ -2041,7 +2044,7 @@ export class Models {
       }
     });
   }
-  
+   */
   /**
    * Finds an opening hour exception
    * 
