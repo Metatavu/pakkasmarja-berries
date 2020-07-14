@@ -74,6 +74,35 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
   /**
    * @inheritdoc
    */
+  async getLastPeriod(req: Request, res: Response) {
+    const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
+
+    if (!deliveryPlaceExternalId) {
+      this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
+      return;
+    }
+
+    const deliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceExternalId);
+    if (!deliveryPlace) {
+      this.sendNotFound(res, "Delivery place with given id was not found");
+      return;
+    }
+
+    const lastPeriodModel = await models.getLastOpeningHourPeriod(deliveryPlace.id);
+
+    if (!lastPeriodModel) {
+      this.sendNotFound(res, "Period not found");
+      return;
+    }
+
+    //const lastPeriod = await this.createPeriodRestStructure(lastPeriod);
+
+    res.status(200).send(true);
+  }
+
+  /**
+   * @inheritdoc
+   */
   async listOpeningHourPeriods(req: Request, res: Response) {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
     

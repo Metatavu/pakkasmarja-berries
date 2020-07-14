@@ -18,6 +18,7 @@ export default abstract class OpeningHoursService extends AbstractService {
     app.delete(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/exceptions/${encodeURIComponent(String(exceptionId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteOpeningHourException.bind(this)));
     app.delete(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods/${encodeURIComponent(String(periodId))}')}`, [ keycloak.protect() ], this.catchAsync(this.deleteOpeningHourPeriod.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods/${encodeURIComponent(String(periodId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findOpeningHourPeriod.bind(this)));
+    app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/lastPeriod')}`, [ keycloak.protect() ], this.catchAsync(this.getLastPeriod.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/exceptions')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHourExceptions.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}/periods')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHourPeriods.bind(this)));
     app.get(`/rest/v1${this.toPath('/openingHours/${encodeURIComponent(String(deliveryPlaceId))}')}`, [ keycloak.protect() ], this.catchAsync(this.listOpeningHours.bind(this)));
@@ -74,6 +75,15 @@ export default abstract class OpeningHoursService extends AbstractService {
     * - (path) string periodId - period id
   */
   public abstract findOpeningHourPeriod(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Finds last opening hour period
+   * @summary Find last opening hour period
+   * Accepted parameters:
+    * - (path) string deliveryPlaceId - delivery place id
+  */
+  public abstract getLastPeriod(req: Request, res: Response): Promise<void>;
 
 
   /**
