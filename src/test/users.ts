@@ -28,7 +28,7 @@ export default new class Users {
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
-        t.deepEqual(response.body, user);
+        t.deepEqual(response.body, user, "user should be reseted back to original state");
       });
   }
   
