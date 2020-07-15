@@ -1788,10 +1788,10 @@ export class Models {
   /**
    * Creates new opening hour period
    * 
-   * @param {int} deliveryPlaceId delivery place id
-   * @param {Date} beginDate time when period begins
-   * @param {Date} endDate time when period ends
-   * @returns {Promise} promise for created opening hour period
+   * @param deliveryPlaceId delivery place id
+   * @param beginDate time when period begins
+   * @param endDate time when period ends
+   * @returns promise for created opening hour period
    */
   public createOpeningHourPeriod(deliveryPlaceId: number, beginDate: Date, endDate: Date): PromiseLike<OpeningHourPeriodModel> {
     return this.sequelize.models.OpeningHourPeriod.create({
