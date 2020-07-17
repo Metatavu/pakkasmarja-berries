@@ -230,6 +230,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
     await models.updateOpeningHourPeriod(periodModel.id, period.beginDate, period.endDate);
     const weekdayModels = await models.listOpeningHourDays(periodModel.id);
+    const updatedModel = await models.findOpeningHourPeriod(periodModel.externalId);
 
     await Promise.all(
       weekdayModels.map(async dayModel => {
@@ -263,7 +264,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       })
     );
 
-    const updatedPeriod = await this.createPeriodRestStructure(periodModel);
+    const updatedPeriod = await this.createPeriodRestStructure(updatedModel);
 
     res.status(200).send(updatedPeriod);
   }
