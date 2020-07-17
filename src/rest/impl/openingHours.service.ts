@@ -452,7 +452,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       models.findOpeningHourExceptionInterval(interval.id!);
 
     const updateInterval = (interval: OpeningHourInterval) =>
-      models.updateOpeningHourExceptionInterval(interval.id!, interval.opens, interval.opens);
+      models.updateOpeningHourExceptionInterval(interval.id!, interval.opens, interval.closes);
 
     const deleteInterval = (intervalModel: OpeningHourExceptionIntervalModel) =>
       models.deleteOpeningHourExceptionInterval(intervalModel.id);
