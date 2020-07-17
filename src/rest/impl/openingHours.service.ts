@@ -248,7 +248,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
           models.findOpeningHourDayInterval(interval.id!);
 
         const updateInterval = (interval: OpeningHourInterval) =>
-          models.updateOpeningHourDayInterval(interval.id!, interval.opens, interval.opens);
+          models.updateOpeningHourDayInterval(interval.id!, interval.opens, interval.closes);
 
         const deleteInterval = (intervalModel: OpeningHourDayIntervalModel) =>
           models.deleteOpeningHourDayInterval(intervalModel.id);
