@@ -2319,6 +2319,16 @@ export class Models {
   public findContractById(id: number): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { id : id } });
   }
+
+  /**
+   * Finds a contract by contact id
+   * 
+   * @param {int} id contact id
+   * @return {Promise} promise for contract
+   */
+  public findContractByContactId(contactId: number): Bluebird<ContractModel> {
+    return this.sequelize.models.Contract.findOne({ where: { contactId : contactId } });
+  }
   
   /**
    * Finds a contract by externalId

@@ -187,6 +187,64 @@ export default class ContractsServiceImpl extends ContractsService {
   /**
    * @inheritdoc
    */
+  async getUserContract(req: Request, res: Response): Promise<void> {
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+    console.log("alsdkjfasdlkfjsadlkfjsdlfkjsdflksjdflksjdf");
+
+    const userId = this.getLoggedUserId(req);
+    if (!userId) {
+      this.sendNotFound(res);
+      return;
+    }
+    const databaseContract: ContractModel = await models.findContractByContactId(userId);
+    if (!databaseContract) {
+      this.sendNotFound(res);
+      return;
+    }
+    res.status(200).send(await this.translateDatabaseContract(databaseContract));
+  }
+
+  /**
+   * @inheritdoc
+   */
   async updateContract(req: Request, res: Response) {
     const contractId = req.params.id;
     if (!contractId) {
