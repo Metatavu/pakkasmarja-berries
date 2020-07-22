@@ -19,7 +19,7 @@ export default abstract class ContractsService extends AbstractService {
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates/${encodeURIComponent(String(contractDocumentTemplateId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContractDocumentTemplate.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
-    app.get(`/rest/v1${this.toPath('/contracts/userContract')}`, [ keycloak.protect() ], this.catchAsync(this.getUserContract.bind(this)), () => { console.log("wtf?") });
+    app.get(`/rest/v1${this.toPath('/contracts/userContract')}`, [ keycloak.protect() ], this.catchAsync(this.getUserContract.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.listContractDocumentTemplates.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.listContractPrices.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
