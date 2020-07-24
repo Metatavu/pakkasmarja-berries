@@ -40,21 +40,7 @@ export default new class Mailer {
     } else {
       const mockFolder = config().mail.mockFolder;
       const outbox = `${mockFolder}/outbox`;
-
-      const outboxFolders = outbox.split("/");
-      const parents = [];
-
-      while (outboxFolders.length) {
-        const folder = outboxFolders.shift();
-        const path = `${parents.join("/")}/${folder}`;
-
-        if (!fs.existsSync(path)) {
-          fs.mkdirSync(path, { mode: 0o777 });
-        }
-
-        parents.push(folder);
-      }
-
+      
       return new Promise((resolve, reject) => {
         fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), { mode: 0o777 }, (err) => {
           if (err) {
