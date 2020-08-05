@@ -70,7 +70,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
   async createOpeningHourPeriod(req: Request, res: Response) {
     const deliveryPlaceId: string = req.params.deliveryPlaceId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -131,7 +131,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
     const periodExternalId: string = req.params.periodId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -172,7 +172,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
     const periodExternalId: string = req.params.periodId;
     const period: OpeningHourPeriod = req.body;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -276,7 +276,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
     const periodExternalId: string = req.params.periodId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -349,7 +349,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
   async createOpeningHourException(req: Request, res: Response) {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -401,7 +401,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
     const exceptionExternalId: string = req.params.exceptionId;
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
@@ -478,7 +478,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
     const exceptionExternalId: string = req.params.exceptionId;
 
-    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) ||
+    if (!this.hasRealmRole(req, ApplicationRoles.MANAGE_OPENING_HOURS) &&
         !this.hasRealmRole(req, ApplicationRoles.ADMINISTRATE_OPENING_HOURS)) {
       this.sendForbidden(res, "You  do not have permission to manage opening hours for this delivery place");
       return;
