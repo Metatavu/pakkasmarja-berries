@@ -474,7 +474,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
 
-      if (databaseDelivery.status === "REJECTED") {
+      if (databaseDelivery.status === "REJECTED" || databaseDelivery.status === "NOT_ACCEPTED") {
         const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
         const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
