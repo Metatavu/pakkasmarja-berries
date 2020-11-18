@@ -1,5 +1,5 @@
 steps:
-- name: 'frapsoft/openssl'
+- name: 'ubuntu'
   entrypoint: 'bash'
   args:
   - '-c'
