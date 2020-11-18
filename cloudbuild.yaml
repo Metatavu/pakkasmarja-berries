@@ -12,6 +12,7 @@ steps:
       sh scripts/decrypt.sh
     fi
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'docker-build'
   entrypoint: 'bash'
   args: 
   - '-c'
@@ -48,3 +49,19 @@ steps:
       aws eks update-kubeconfig --name ${_CLUSTER} --region=${_AWS_DEFAULT_REGION} &&
       kubectl -n ${_NAMESPACE} set image deployment/${_DEPLOYMENT} ${_DEPLOYMENT}=${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8)
     fi
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'docker-up'
+  entrypoint: 'bash'
+  args: 
+  - '-c'
+  - docker-compose build && docker-compose up
+- name: 'node:dubnium'
+  waitFor: [ 'docker-up' ]
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      if [ -n "${_TEST}" ]; then
+        sh scripts/wait-api.sh
+        npm run test
+      fi
