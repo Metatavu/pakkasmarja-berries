@@ -1,4 +1,9 @@
 steps:
+- name: 'frapsoft/openssl'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - sh scripts/decrypt.sh
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args: 
