@@ -3,7 +3,9 @@ steps:
   entrypoint: 'bash'
   args:
   - '-c'
-  - sh scripts/decrypt.sh
+  - |
+    apt update && apt install -y openssl
+    sh scripts/decrypt.sh
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args: 
