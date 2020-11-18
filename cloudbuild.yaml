@@ -1,11 +1,16 @@
 steps:
 - name: 'ubuntu'
   entrypoint: 'bash'
+  env:
+    - "ENC_ITER=${_ENC_ITER}"
+    - "ENC_PASS=${_ENC_PASS}"
   args:
   - '-c'
   - |
-    apt update && apt install -y openssl
-    sh scripts/decrypt.sh
+    if [ -n "${_TEST}" ]; then
+      apt update && apt install -y openssl
+      sh scripts/decrypt.sh
+    fi
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args: 
