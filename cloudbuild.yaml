@@ -54,7 +54,7 @@ steps:
   entrypoint: 'bash'
   args: 
   - '-c'
-  - docker-compose build && docker-compose up
+  - apt-get update && apt-get install docker-compose && docker-compose build && docker-compose up
 - name: 'node:dubnium'
   waitFor: [ 'docker-up' ]
   entrypoint: 'bash'
