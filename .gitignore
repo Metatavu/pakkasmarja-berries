@@ -17,3 +17,4 @@ pakkasmarja_realm.json
 pakkasmarja_database.sql
 .env
 config-dev.json
+sap-api-wiremock/
