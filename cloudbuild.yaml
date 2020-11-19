@@ -49,12 +49,14 @@ steps:
       aws eks update-kubeconfig --name ${_CLUSTER} --region=${_AWS_DEFAULT_REGION} &&
       kubectl -n ${_NAMESPACE} set image deployment/${_DEPLOYMENT} ${_DEPLOYMENT}=${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8)
     fi
-- name: 'gcr.io/cloud-builders/docker'
+- name: 'ubuntu'
   id: 'docker-up'
   entrypoint: 'bash'
   args: 
   - '-c'
-  - apt-get update && apt-get install -y docker-compose && docker-compose build && docker-compose up
+  - |
+    curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose  
+    docker-compose up
 - name: 'node:dubnium'
   waitFor: [ 'docker-up' ]
   entrypoint: 'bash'
