@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -20,7 +21,7 @@ const deliveriesDataUpdate = require(`${testDataDir}/deliveries-update.json`);
 const createDelivery = (token: string, deliveryModel?: Delivery): Promise<Delivery> => {
   const payload: Delivery = deliveryModel || deliveriesData[0];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .post("/rest/v1/deliveries")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -40,7 +41,7 @@ const createDelivery = (token: string, deliveryModel?: Delivery): Promise<Delive
 const createDeliveryNote = (token: string, id: string, deliveryNoteModel?: DeliveryNote): Promise<DeliveryNote> => {
   const payload: Delivery = deliveryNoteModel || deliveryNotesData[0];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .post(`/rest/v1/deliveries/${id}/notes`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -62,7 +63,7 @@ const createDeliveryNote = (token: string, id: string, deliveryNoteModel?: Deliv
 const updateDeliveryNote = (token: string, deliveryId: string, noteId: string, deliveryNoteModel?: DeliveryNote): Promise<DeliveryNote> => {
   const payload: Delivery = deliveryNoteModel || deliveryNotesData[1];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/deliveries/${deliveryId}/notes/${noteId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -81,7 +82,7 @@ const updateDeliveryNote = (token: string, deliveryId: string, noteId: string, d
  * @returns promise for list of deliveries
  */
 const listDeliveryNotes = (token: string, deliveryId: string): Promise<DeliveryNote[]> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/deliveries/${deliveryId}/notes`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -100,7 +101,7 @@ const listDeliveryNotes = (token: string, deliveryId: string): Promise<DeliveryN
  */
 const updateDelivery = (token: string, id: string): Promise<Delivery> => {
   const payload: Delivery = deliveriesData[1];
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/deliveries/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -114,7 +115,7 @@ const updateDelivery = (token: string, id: string): Promise<Delivery> => {
 const updateDeliveryRejected = (token: string, id: string): Promise<Delivery> => {
   const payload: Delivery = deliveriesDataUpdate[0];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/deliveries/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -133,7 +134,7 @@ const updateDeliveryRejected = (token: string, id: string): Promise<Delivery> =>
  * @returns promise for delivery
  */
 const findDelivery = (token: string, id: string): Promise<Delivery> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/deliveries/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -161,7 +162,7 @@ const buildURLQuery = (obj: any) => {
  * @returns promise for list of deliveries
  */
 const listDeliveries = (token: string, params: any): Promise<Delivery[]> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/deliveries?${buildURLQuery(params)}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -268,13 +269,13 @@ test("Delete delivery", async (t) => {
 
   try {
     const createdDelivery = await createDelivery(token);
-    await request("http://localhost:3002")
+    await request(config.get("baseUrl"))
       .delete(`/rest/v1/deliveries/${createdDelivery.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204)
       .then((response) => {});
-    await request("http://localhost:3002")
+    await request(config.get("baseUrl"))
       .get(`/rest/v1/deliveries/${createdDelivery.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -322,7 +323,7 @@ test("List deliveries - Forbidden", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   try {
-    request("http://localhost:3002")
+    request(config.get("baseUrl"))
       .get(`/rest/v1/deliveries`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -423,13 +424,13 @@ test("Delete delivery note", async (t) => {
 
   try {
     const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
-    await request("http://localhost:3002")
+    await request(config.get("baseUrl"))
       .delete(`/rest/v1/deliveries/bad02318-1a44-11e8-87a4-c7808d590a08/notes/${createdDeliveryNote.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204)
       .then((response) => {});
-    await request("http://localhost:3002")
+    await request(config.get("baseUrl"))
       .get(`/rest/v1/deliveries/bad02318-1a44-11e8-87a4-c7808d590a08/notes/${createdDeliveryNote.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")

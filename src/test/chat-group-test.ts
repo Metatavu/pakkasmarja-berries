@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
@@ -28,7 +29,7 @@ const sorted = (list: any[]) => {
  * @returns promise for chat groups
  */
 const listUserGroups = (token: string): Promise<UserGroup[]> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/userGroups`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -54,7 +55,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
     imageUrl: null
   };
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .post("/rest/v1/chatGroups")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -74,7 +75,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
  * @returns promise for chat group
  */
 const findChatGroup = (token: string, id: number, expectStatus?: number): Promise<ChatGroup> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -91,7 +92,7 @@ const findChatGroup = (token: string, id: number, expectStatus?: number): Promis
  * @returns promise for chat groups
  */
 const listChatGroups = (token: string): Promise<ChatGroup[]> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/chatGroups`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -119,7 +120,7 @@ const updateChatGroup = (token: string, id: number, title: string, type: ChatGro
     imageUrl: imageUrl
   };
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -138,7 +139,7 @@ const updateChatGroup = (token: string, id: number, title: string, type: ChatGro
  * @returns promise for delete
  */
 const deleteChatGroup = async (token: string, id: number) => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .delete(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -148,16 +149,14 @@ const deleteChatGroup = async (token: string, id: number) => {
 test("Test group permission create", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
   const userGroups = await listUserGroups(token);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
   t.notEqual(createdChatGroup, null);
   t.notEqual(createdChatGroup.id, null);
 
   const createdPermission = await chatPermissions.createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[0].id!, "MANAGE");
   const foundPermissions = await chatPermissions.listChatGroupGroupPermissions(token, createdChatGroup.id!);
-
   t.deepEquals(foundPermissions, [createdPermission]);
-
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatGroups(token)).length, 0);

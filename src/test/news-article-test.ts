@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -23,7 +24,7 @@ const createNewsArticle = (token: string, title: string, contents: string): Prom
     imageUrl: null
   };
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .post("/rest/v1/newsArticles")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -43,7 +44,7 @@ const createNewsArticle = (token: string, title: string, contents: string): Prom
  * @returns promise for news article
  */
 const findNewsArticle = (token: string, id: number, expectStatus?: number): Promise<NewsArticle> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/newsArticles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -60,7 +61,7 @@ const findNewsArticle = (token: string, id: number, expectStatus?: number): Prom
  * @returns promise for news articles
  */
 const listNewsArticles = (token: string): Promise<NewsArticle[]> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/newsArticles`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -78,7 +79,7 @@ const listNewsArticles = (token: string): Promise<NewsArticle[]> => {
  * @returns promise for delete
  */
 const deleteNewsArticle = async (token: string, id: number) => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .delete(`/rest/v1/newsArticles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")

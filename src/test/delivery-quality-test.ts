@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -17,7 +18,7 @@ const deliveryQualityData = require(`${testDataDir}/delivery-quality.json`);
 const createDeliveryQuality = (token: string): Promise<DeliveryQuality> => {
   const payload: DeliveryQuality = deliveryQualityData[0];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .post("/rest/v1/deliveryQualities")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -38,7 +39,7 @@ const createDeliveryQuality = (token: string): Promise<DeliveryQuality> => {
 const updateDeliveryQuality = (token: string, id: string): Promise<DeliveryQuality> => {
   const payload: DeliveryQuality = deliveryQualityData[1];
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/deliveryQualities/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -57,7 +58,7 @@ const updateDeliveryQuality = (token: string, id: string): Promise<DeliveryQuali
  * @returns promise for delivery quality
  */
 const findDeliveryQuality = (token: string, id: string): Promise<DeliveryQuality> => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/deliveryQualities/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -84,7 +85,7 @@ const listDeliveryQualities = (token: string, category?: ItemGroupCategory, prod
     params = `?productId=${productId}`
   }
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/deliveryQualities${params}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")

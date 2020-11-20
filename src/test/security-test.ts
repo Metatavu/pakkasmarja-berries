@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -41,7 +42,7 @@ restPaths.forEach((restPath: RestPath) => {
         token = await auth.getToken(testSetting["with-user"], "test");
       }
 
-      let result: any = request("http://localhost:3002");
+      let result: any = request(config.get("baseUrl"));
 
       switch (method) {
         case "post":

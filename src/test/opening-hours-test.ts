@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -8,7 +9,7 @@ const testDataDir = `${__dirname}/../../src/test/data/`;
 test("Test listing opening hour periods", async (t) => {
   await database.executeFile(testDataDir, "opening-hours-setup.sql");
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/openingHours/bad02318-1a44-11e8-87a4-c7808d590a07/periods?rangeStart=2020-01-02&rangeEnd=2020-02-05`)
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -27,7 +28,7 @@ test("Test listing opening hour periods", async (t) => {
 test("Test listing opening hour exceptions", async (t) => {
   await database.executeFile(testDataDir, "opening-hours-setup.sql");
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/openingHours/bad02318-1a44-11e8-87a4-c7808d590a07/exceptions`)
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -44,7 +45,7 @@ test("Test listing opening hour exceptions", async (t) => {
 test("Test listing all opening hour periods", async (t) => {
   await database.executeFile(testDataDir, "opening-hours-setup.sql");
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/openingHours/bad02318-1a44-11e8-87a4-c7808d590a07/periods")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -63,7 +64,7 @@ test("Test listing all opening hour periods", async (t) => {
 test("Test finding last active opening hour", async (t) => {
   await database.executeFile(testDataDir, "opening-hours-setup.sql");
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/openingHours/bad02318-1a44-11e8-87a4-c7808d590a07/periods")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -82,7 +83,7 @@ test("Test finding last active opening hour", async (t) => {
 test("Test finding opening hour period", async (t) => {
   await database.executeFile(testDataDir, "opening-hours-setup.sql");
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/openingHours/bad02318-1a44-11e8-87a4-c7808d590a07/periods?maxResults=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")

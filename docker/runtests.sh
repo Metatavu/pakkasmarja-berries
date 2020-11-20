@@ -2,11 +2,11 @@
 
 npm run build
 
-HOST=http://pakkasmarja-api:3002
-echo "Waiting for $HOST"
-until $(curl --output /dev/null --silent --head --fail $HOST); do
+URL=http://pakkasmarja-api:3000/system/ping
+echo "Waiting for $URL"
+until $(curl --output /dev/null --silent --fail $URL); do
   echo '.'
   sleep 5
 done
 
-npm run test
+npm t

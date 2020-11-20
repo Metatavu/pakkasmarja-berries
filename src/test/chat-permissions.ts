@@ -1,3 +1,4 @@
+import config from "./config";
 import * as request from "supertest";
 import { ChatGroupGroupPermission } from "../rest/model/chatGroupGroupPermission";
 import { ChatThreadPermissionScope, ChatGroupPermissionScope, ChatThreadGroupPermission, ChatThreadUserPermission } from "../rest/model/models";
@@ -20,7 +21,7 @@ export default new class ChatPermissions {
       scope: scope
     };
 
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .post(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -40,7 +41,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public updateChatGroupGroupPermission = (token: string, chatGroupId: number, payload: ChatGroupGroupPermission): Promise<ChatGroupGroupPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .put(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${payload.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -60,7 +61,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public findChatGroupGroupPermission = (token: string, chatGroupId: number, id: string): Promise<ChatGroupGroupPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -79,7 +80,7 @@ export default new class ChatPermissions {
    * @returns promise for chat group group permissions
    */
   public listChatGroupGroupPermissions = (token: string, id: number, expectStatus?: number): Promise<ChatGroupGroupPermission[]> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatGroups/${id}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -97,7 +98,7 @@ export default new class ChatPermissions {
    * @returns promise for delete permission
    */
   public deleteChatGroupGroupPermission = (token: string, chatGroupId: number, id: string): Promise<void> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .delete(`/rest/v1/chatGroups/${chatGroupId}/groupPermissions/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -123,7 +124,7 @@ export default new class ChatPermissions {
       scope: scope
     };
 
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .post(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -143,7 +144,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public updateChatThreadGroupPermission = (token: string, chatThreadId: number, payload: ChatThreadGroupPermission): Promise<ChatThreadGroupPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .put(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions/${payload.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -163,7 +164,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public findChatThreadGroupPermission = (token: string, chatThreadId: number, id: string): Promise<ChatThreadGroupPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -182,7 +183,7 @@ export default new class ChatPermissions {
    * @returns promise for chat group group permissions
    */
   public listChatThreadGroupPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadGroupPermission[]> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -208,7 +209,7 @@ export default new class ChatPermissions {
       scope: scope
     };
 
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .post(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -228,7 +229,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public updateChatThreadUserPermission = (token: string, chatThreadId: number, payload: ChatThreadUserPermission): Promise<ChatThreadUserPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .put(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${payload.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -248,7 +249,7 @@ export default new class ChatPermissions {
    * @returns promise for updated permission
    */
   public findChatThreadUserPermission = (token: string, chatThreadId: number, id: string): Promise<ChatThreadUserPermission> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -267,7 +268,7 @@ export default new class ChatPermissions {
    * @returns promise for chat user user permissions
    */
   public listChatThreadUserPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadUserPermission[]> => {
-    return request("http://localhost:3002")
+    return request(config.get("baseUrl"))
       .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")

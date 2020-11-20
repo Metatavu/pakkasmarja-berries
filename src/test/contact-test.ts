@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -17,7 +18,7 @@ test("Test listing contacts", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
   const token = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -40,7 +41,7 @@ test("Test listing contacts", async (t) => {
 test("Test listing contacts - search", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts?search=test1@testrealm1.com")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .set("Accept", "application/json")
@@ -53,14 +54,14 @@ test("Test listing contacts - search", async (t) => {
 });
 
 test("Test listing contacts - without token", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts")
     .set("Accept", "application/json")
     .expect(403);
 });
 
 test("Test listing contacts - invalid token", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -70,7 +71,7 @@ test("Test listing contacts - invalid token", async () => {
 test("Test find contact", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .set("Accept", "application/json")
@@ -84,7 +85,7 @@ test("Test find basic contact", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
   const id = "677e99fd-b854-479f-afa6-74f295052770";
 
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get(`/rest/v1/contacts/${id}/basic`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .set("Accept", "application/json")
@@ -101,14 +102,14 @@ test("Test find basic contact", async (t) => {
 });
 
 test("Test find contact - without token", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
     .set("Accept", "application/json")
     .expect(403);
 });
 
 test("Test find contact - invalid token", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -116,7 +117,7 @@ test("Test find contact - invalid token", async () => {
 });
 
 test("Test find contact - not found", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/a0b445c6-0f05-11e8-8e96-5ffcb5929488")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .set("Accept", "application/json")
@@ -127,7 +128,7 @@ test("Test find contact - not found", async () => {
 });
 
 test("Test find contact - invalid id", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .set("Accept", "application/json")
@@ -159,7 +160,7 @@ test("Test update contact", async (t) => {
     "displayName": "Updated first name Updated last name Updated company name"
   });
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .send(updateData)
@@ -195,7 +196,7 @@ test("Test update contact without changes", async (t) => {
     "displayName": "Updated first name Updated last name Updated company name"
   });
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .send(updateData)
@@ -229,7 +230,7 @@ test("Test update contact - without token", async () => {
     "audit": "No"
   });
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/${updateData.id}`)
     .send(updateData)
     .set("Accept", "application/json")
@@ -254,7 +255,7 @@ test("Test update contact - invalid token", async () => {
     "audit": "No"
   });
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", "Bearer FAKE")
     .send(updateData)
@@ -263,7 +264,7 @@ test("Test update contact - invalid token", async () => {
 });
 
 test("Test update contact - not found", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/5ddca0e8-0f2f-11e8-aaee-fbf8db060bc5`)
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .set("Accept", "application/json")
@@ -273,7 +274,7 @@ test("Test update contact - not found", async () => {
 });
 
 test("Test update contact - malformed", async () => {
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put(`/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .send("malformed data")
@@ -288,7 +289,7 @@ test("Test sync contact", async (t) => {
   const accessToken = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
   await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_CONTACT_SYNC");
   
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .get("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6")
     .set("Authorization", `Bearer ${accessToken}`)
     .set("Accept", "application/json")
@@ -306,7 +307,7 @@ test("Test sync contact", async (t) => {
 
 test("Test update contact password change", async (t) => {
   t.notOk(await auth.getToken("test1-testrealm1", "fake-password"), "fake password should not return token");
-  return request("http://localhost:3002")
+  return request(config.get("baseUrl"))
     .put("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6/credentials")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .send({ "password": "fake-password" })
