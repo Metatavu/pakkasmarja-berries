@@ -1,8 +1,8 @@
 #/bin/sh
 
 HOST=http://localhost:3002
-printf "Waiting for $HOST"
+echo "Waiting for $HOST"
 until $(curl --output /dev/null --silent --head --fail $HOST); do
-  printf '.'
+  echo '.'
   sleep 5
 done

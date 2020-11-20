@@ -38,6 +38,7 @@ steps:
     - '-c'
     - |
       if [ -n "${_TEST}" ]; then
+        echo "Running tests..."
         sh scripts/wait-api.sh
         npm run test
       fi
