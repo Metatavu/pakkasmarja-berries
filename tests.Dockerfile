@@ -2,7 +2,7 @@ FROM node:dubnium
 
 WORKDIR /usr/src/pakkasmarja
 ADD . .
-COPY ../package*.json ./
+COPY package*.json ./
 RUN npm install
 
 ADD docker/runtests.sh /opt/docker/entrypoint.sh
