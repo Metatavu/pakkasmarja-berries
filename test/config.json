@@ -1,6 +1,7 @@
 {
   "mode": "TEST",
   "session-secret": "sekriet",
+  "baseUrl": "http://pakkasmarja-api:3000",
   "cache": {
     "enabled": true,
     "expire-time": 60000
@@ -65,7 +66,7 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "127.0.0.1",
+    "host": "pm-mysql",
     "database": "pm",
     "username": "pm",
     "password": "random",
