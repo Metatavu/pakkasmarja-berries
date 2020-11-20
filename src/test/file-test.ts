@@ -151,6 +151,9 @@ const deletePublicFile = (token: string, id: string) => {
 test("Create file", async (t) => {
   const token = await auth.getTokenUser1();
   const createdImage = await createFile(token);
+
+  console.log("CREATE FILE TEST", createdImage.url);
+
   const imageData = await findFile(token, createdImage.url);
   const imageDataBuffer = Buffer.from(imageData);
   const fileDataBuffer = fs.readFileSync(`${testDataDir}logo.png`);
