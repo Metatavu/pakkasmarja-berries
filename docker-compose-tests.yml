@@ -45,4 +45,13 @@ services:
     build:
       context: .
       dockerfile: tests.Dockerfile
+    depends_on:
+      - pm-mysql
+      - test-keycloak
+    volumes:
+      - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
+      - ./test-volumes/pakkasmarja-api/sap-files:/usr/src/pakkasmarja/sap-files
+      - /tmp/pakkasmail:/tmp/pakkasmail
+      - /tmp/pakkaspush:/tmp/pakkaspush
+      - /tmp/sapxml:/tmp/sapxml
     

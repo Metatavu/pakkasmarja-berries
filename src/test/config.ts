@@ -6,6 +6,7 @@ import * as config from "nconf";
 export default new class TestConfig {
 
   constructor() {
+    config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
   }
 
   /**
@@ -15,7 +16,6 @@ export default new class TestConfig {
    * @returns value
    */
   public get = (key: string) => {
-    config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
     return config.get(key);
   }
 
