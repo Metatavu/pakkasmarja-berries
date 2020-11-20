@@ -1,6 +1,8 @@
 #/bin/sh
 
-until $(curl --output /dev/null --silent --head --fail http://pakkasmarja-api:3002); do
+HOST=http://localhost:3002
+printf "Waiting for $HOST"
+until $(curl --output /dev/null --silent --head --fail $HOST); do
   printf '.'
   sleep 5
 done
