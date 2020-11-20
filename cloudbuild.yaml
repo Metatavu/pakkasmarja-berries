@@ -15,6 +15,7 @@ steps:
 - name: 'ubuntu'
   id: 'docker-up'
   waitFor: [ 'test-data' ]
+  timeout: '600s'
   entrypoint: 'bash'
   args: 
   - '-c'
