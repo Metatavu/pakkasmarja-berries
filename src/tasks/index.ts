@@ -13,7 +13,7 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
+import { SapItemGroup } from "src/sap/client/types";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -149,11 +149,11 @@ export default new class TaskQueue {
    * 
    * @param {Object} itemGroup SAP item group object 
    */
-  async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SAPExportItemGroup) {
+  async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SapItemGroup) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapItemGroupUpdateQueue.push({
-      id: itemGroup.ItemGroupCode,
+      id: itemGroup.Number,
       itemGroup: itemGroup,
       operationReportItemId: operationReportItem.id
     });
@@ -599,8 +599,8 @@ export default new class TaskQueue {
   private async sapItemGroupUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
       const sapItemGroup = data.itemGroup;
-      const sapId = sapItemGroup.ItemGroupCode;
-      const name = sapItemGroup.ItemGroupName;
+      const sapId = sapItemGroup.Number;
+      const name = sapItemGroup.GroupName;
       const displayName = this.resolveSapItemGroupDisplayName(sapId);
 
       const category = this.resolveSapItemGroupCategory(sapId);

@@ -11,6 +11,7 @@ import OperationsService from "../api/operations.service";
 import tasks from "../../tasks";
 import { SAPExportRoot } from "../../sap/export";
 import { SAPImportFile, config } from "../../config";
+import SapClient from "src/sap/client";
 
 const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
 const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
@@ -133,7 +134,7 @@ export default class OperationsServiceImpl extends OperationsService {
         case OPERATION_SAP_DELIVERY_PLACE_SYNC:
           return this.readSapImportDeliveryPlaces(activeSapData.data);
         case OPERATION_SAP_ITEM_GROUP_SYNC:
-          return this.readSapImportItemGroups(activeSapData.data);
+          return this.readSapImportItemGroups();
         case OPERATION_SAP_CONTRACT_SYNC:
           return this.readSapImportContracts(sapDatas);
       }
@@ -152,13 +153,13 @@ export default class OperationsServiceImpl extends OperationsService {
    */
   private async readSapImportBusinessPartners(sap: any) {
     if (!sap.BusinessPartners) {
-      this.logger.error("Failed to read SAP business parterns");
+      this.logger.error("Failed to read SAP business partners");
       return;
     }
 
     const businessPartners = sap.BusinessPartners.BusinessPartners;
     if (!businessPartners) {
-      this.logger.error("Failed to read SAP business parterns list");
+      this.logger.error("Failed to read SAP business partners list");
       return;
     }
 
@@ -201,25 +202,20 @@ export default class OperationsServiceImpl extends OperationsService {
    * 
    * @param {Object} sap SAP data object 
    */
-  private async readSapImportItemGroups(sap: SAPExportRoot) {
-    if (!sap.ItemGroups) {
-      this.logger.error("Failed to read SAP item groups");
+  private async readSapImportItemGroups() {
+    try {
+      const itemGroups = await new SapClient().listItemGroups();
+      const operationReport = await models.createOperationReport("SAP_ITEM_GROUP_SYNC");
+
+      itemGroups.forEach((itemGroup) => {
+        tasks.enqueueSapItemGroupUpdate(operationReport.id, itemGroup);
+      });
+
+      return operationReport;
+    } catch (e) {
+      this.logger.error(`Failed to read SAP item groups. error: ${e}`);
       return;
     }
-
-    const itemGroups = sap.ItemGroups.ItemGroup;
-    if (!itemGroups) {
-      this.logger.error("Failed to read SAP item group list");
-      return;
-    }
-
-    const operationReport = await models.createOperationReport("SAP_ITEM_GROUP_SYNC");
-
-    itemGroups.forEach((itemGroup) => {
-      tasks.enqueueSapItemGroupUpdate(operationReport.id, itemGroup);
-    });
-
-    return operationReport;
   }
 
   /**

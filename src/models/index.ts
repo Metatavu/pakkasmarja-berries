@@ -19,6 +19,18 @@ export interface ConnectSessionModel {
   updatedAt: Date
 }
 
+/**
+ * Interface describing SAP Service Layer session
+ */
+export interface SapServiceLayerSessionModel {
+  id: number,
+  sessionId: string,
+  routeId: string,
+  expires: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+
 export interface UserSettingsModel {
   id: number,
   userId: string,
@@ -391,6 +403,7 @@ const PRINT_MODEL_INTERFACES = false;
 export class Models { 
 
   private sequelize: Sequelize.Sequelize;
+  private SapServiceLayerSession: Sequelize.Model<any, SapServiceLayerSessionModel>;
   private Thread: Sequelize.Model<any, ThreadModel>;
   private ChatGroup: Sequelize.Model<any, ChatGroupModel>;
   private Message: Sequelize.Model<any, MessageModel>;
@@ -423,6 +436,13 @@ export class Models {
       userId: { type: Sequelize.STRING(191) },
       expires: { type: Sequelize.DATE },
       data: { type: Sequelize.TEXT }
+    });
+
+    this.SapServiceLayerSession = this.defineModel("SapServiceLayerSession", {
+      id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
+      sessionId: { type: Sequelize.STRING(191), allowNull: false },
+      routeId: { type: Sequelize.STRING(191), allowNull: false },
+      expires: { type: Sequelize.DATE, allowNull: false }
     });
     
     this.defineModel("UserSettings", {
@@ -852,6 +872,34 @@ export class Models {
   
   deleteSession(id: number) {
     return this.sequelize.models.Session.destroy({ where: { id : id } });
+  }
+
+  /**
+   * Finds SAP session
+   * 
+   * @param id id
+   * @returns promise for found session
+   */
+  findSapServiceLayerSession(id: number): Bluebird<SapServiceLayerSessionModel | null> {
+    return this.SapServiceLayerSession.findOne({ where: { id } });
+  }
+
+  /**
+   * Updates or inserts new SAP session
+   * 
+   * @param id id
+   * @param sessionId session id
+   * @param routeId route id
+   * @param expires expires
+   * @returns promise for successful update or insert
+   */
+  upsertSapServiceLayerSession(id: number, sessionId: string, routeId: string, expires: Date): Bluebird<boolean> {
+    return this.SapServiceLayerSession.upsert({
+      id,
+      sessionId,
+      routeId,
+      expires
+    } as any);
   }
 
   /**

@@ -140,6 +140,13 @@ export interface Wkhtmltopdf {
   command: string;
 }
 
+export interface SAPServiceLayer {
+  apiUrl: string;
+  companyDb: string;
+  user: string;
+  pass: string;
+}
+
 export interface SAPImportFile {
   file: string;
   status: string;
@@ -231,6 +238,7 @@ export interface Config {
   mysql: Mysql;
   wkhtmltopdf: Wkhtmltopdf;
   sap: SAP;
+  sapServiceLayer: SAPServiceLayer;
   "visma-sign"?: VismaSign;
   mail: Mail;
   contacts?: Contacts;

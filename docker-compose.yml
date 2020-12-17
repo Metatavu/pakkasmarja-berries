@@ -21,6 +21,12 @@ services:
       - 8080:8080
     volumes:
       - ./test-volumes/keycloak:/opt/docker
+  sap-api-wiremock:
+    image: rodolpheche/wiremock
+    ports:
+      - 1234:8080
+    volumes:
+      - ./test/sap-api-wiremock:/home/wiremock
   pakkasmarja-api:
     build: .
     environment: 
