@@ -468,8 +468,8 @@ test("Test sync contracts", async (t) => {
       contractDatasSync.forEach((expectedContract: any, contractIndex: number) => {
         Object.keys(expectedContract).forEach((expectKey) => {
           const expectValue = expectedContract[expectKey];
-          const actualValue = response.body[contractIndex][expectKey];
-          t.deepEqual(expectValue, actualValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
+          const actualValue = actualContracts[contractIndex][expectKey];
+          t.deepEqual(actualValue, expectValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
         });
       });
     });

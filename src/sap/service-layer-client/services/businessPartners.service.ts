@@ -16,24 +16,28 @@ export default class SapBusinessPartnersService extends AbstractService {
   public async listBusinessPartners(): Promise<SapBusinessPartner[]> {
     try {
       const config = await this.getConfig();
-      const session = await this.getSession();
+      const session = await this.createSession();
       const baseUrl = `${config.apiUrl}/BusinessPartners`;
-      const countUrl = `${baseUrl}/$count`;
+      const filter = "$filter=CardType%20eq%20%27cSupplier%27";
+      const countUrl = `${baseUrl}/$count?${filter}`;
       const options: RequestInit = {
         method: "GET",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Prefer": "odata.maxpagesize=100"
         }
       }
 
       const countResponse = await fetch(countUrl, options);
       const count = await this.parseCountFromResponse(countResponse);
-      const baseItemUrl = `${baseUrl}?$select=GroupName,Number`;
+      const select = "$select=CardCode,CardType,CardName,CardForeignName,Phone1,Phone2,EmailAddress,BPAddresses,BPBankAccounts,FederalTaxID,VatLiable,U_audit,U_muu";
+      const baseItemUrl = `${baseUrl}?${filter}&${select}`;
       const itemUrls = this.getItemUrls(baseItemUrl, count);
-      const responses = await Promise.all(
+      const responses: ListBusinessPartnersResponse[] = await Promise.all(
         itemUrls.map(url => this.asyncFetch(url, options))
       );
 
+      await this.endSession(session);
       return this.translateListItemsResponses(responses);
     } catch (e) {
       return Promise.reject(e);
@@ -42,12 +46,14 @@ export default class SapBusinessPartnersService extends AbstractService {
 
   /**
    * Get list of request URLs fetching all items
-   * 
+   *
+   * @param baseUrl request base URL
+   * @param count count of all items
    * @returns list of item URLs
    */
   private getItemUrls = (baseUrl: string, count: number) => {
     const itemUrls: string[] = [];
-    for (let i = 0; i < count; i += 20) {
+    for (let i = 0; i < count; i += 100) {
       itemUrls.push(`${baseUrl}&$skip=${i}`);
     }
 
@@ -59,9 +65,9 @@ export default class SapBusinessPartnersService extends AbstractService {
    * 
    * @param url url to fetch from
    * @param options options to request
-   * @returns Promise of list item group response
+   * @returns Promise of response from SAP service layer
    */
-  private async asyncFetch(url: string, options: RequestInit): Promise<ListBusinessPartnersResponse> {
+  private async asyncFetch(url: string, options: RequestInit): Promise<any> {
     try {
       return await fetch(url, options)
         .then(response => response.json());

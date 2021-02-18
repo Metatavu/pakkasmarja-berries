@@ -1,10 +1,7 @@
 import fetch, { RequestInit, Response } from "node-fetch";
-import models, { SapServiceLayerSessionModel } from "../../models";
-import * as moment from "moment";
 import { config } from "../../config";
 import { SapConfig, SapLoginRequestBody, SapSession } from "./types";
-
-
+import { getLogger } from "log4js";
 
 /**
  * Abstract service for SAP client
@@ -12,27 +9,35 @@ import { SapConfig, SapLoginRequestBody, SapSession } from "./types";
 export default class SapAbstractService {
 
   /**
-   * Provides SAP session data
+   * Creates new session with SAP Service Layer
    * 
    * @returns promise of SAP session data
    */
-  protected async getSession(): Promise<SapSession> {
+  protected async createSession(): Promise<SapSession> {
     try {
-      const sessionModel = await models.findSapServiceLayerSession(1);
-      const valid = sessionModel && moment(sessionModel.expires).isSameOrAfter(moment().add(10, "minutes"));
-      if (sessionModel) {
-        if (valid) {
-          return this.translateDatabaseSapSession(sessionModel);
-        } else {
-          await this.logout(sessionModel);
-        }
-      }
 
       const sapSession = await this.login();
-      await models.upsertSapServiceLayerSession(1, sapSession.sessionId, sapSession.routeId, moment().add(30, "minutes").toDate());
+      getLogger().info(JSON.stringify(sapSession, null, 2));
       return sapSession;
     } catch (error) {
       return Promise.reject(error);
+    }
+  }
+
+  /**
+   * Ends given session with SAP Service Layer
+   * 
+   * @param session session data
+   * @returns Promise that session has ended successfully
+   */
+  protected async endSession(session: SapSession): Promise<void> {
+    try {
+      const config = await this.getConfig();
+      const response = await this.requestLogout(session, config);
+      getLogger().info(JSON.stringify(session, null, 2));
+      return await this.parseLogoutResponse(response);
+    } catch (e) {
+      return Promise.reject(e);
     }
   }
 
@@ -42,19 +47,11 @@ export default class SapAbstractService {
    * @returns Promise of SAP config object
    */
   protected getConfig(): Promise<SapConfig> {
-    return new Promise((resolve, reject) => {
-      const inTestMode = config().mode === "TEST";
-      const apiUrl = inTestMode ? process.env.SAP_SERVICE_LAYER_API_URL : "http://localhost:1234";
-      const companyDb = process.env.SAP_SERVICE_LAYER_COMPANY_DB;
-      const user = process.env.SAP_SERVICE_LAYER_USER;
-      const pass = process.env.SAP_SERVICE_LAYER_PASS;
-
-      if (apiUrl && companyDb && user && pass) {
-        resolve({ apiUrl, companyDb, user, pass });
-      }
-
-      reject("No config for SAP Service Layer found");
-    });
+    try {
+      return Promise.resolve({ ...config().sapServiceLayer });
+    } catch (e) {
+      return Promise.reject(`Failed to get config for Sap Service Layer client: ${e}`);
+    }
   }
 
   /**
@@ -65,13 +62,13 @@ export default class SapAbstractService {
   private async login(): Promise<SapSession> {
     try {
       const config = await this.getConfig();
-      const response = await this.doLogin(config);
+      const response = await this.requestLogin(config);
       if (response.status !== 200) {
         const json = await response.json();
         return Promise.reject(`Error doing login to SAP Service Layer: ${json.error.message.value}`);
       }
 
-      return await this.parseSessionInfo(response);
+      return await this.parseLoginResponse(response);
     } catch (e) {
       return Promise.reject(e);
     }
@@ -83,20 +80,19 @@ export default class SapAbstractService {
    * @param config SAP config
    * @returns Promise of response to request
    */
-  private doLogin(config: SapConfig): Promise<Response> {
+  private requestLogin(config: SapConfig): Promise<Response> {
     const url = `${config.apiUrl}/Login`;
     const body: SapLoginRequestBody = {
       CompanyDB: config.companyDb,
-      UserName: config.user,
-      Password: config.pass
+      UserName: config.username,
+      Password: config.password
     };
 
     const options: RequestInit = {
       method: "POST",
       body: JSON.stringify(body),
       headers: {
-        "Content-Type": "application/json",
-        "Cookie": "ROUTEID=.node1"
+        "Content-Type": "application/json"
       }
     }
 
@@ -104,12 +100,12 @@ export default class SapAbstractService {
   }
 
   /**
-   * Parses session info from login response
+   * Parses login response
    * 
    * @param response login response
    * @returns Promise of SAP session object
    */
-  private async parseSessionInfo(response: Response): Promise<SapSession> {
+  private async parseLoginResponse(response: Response): Promise<SapSession> {
     try {
       const rawHeaders = response.headers.raw();
       const cookies = rawHeaders["set-cookie"];
@@ -122,26 +118,15 @@ export default class SapAbstractService {
         return Promise.reject(`No session cookie found from SAP Service Layer login response`);
       }
 
+      const routeCookie = cookies.find(cookie => cookie.startsWith("ROUTEID"));
+      if (!routeCookie) {
+        return Promise.reject(`No route cookie found from SAP Service Layer login response`);
+      }
+
       return {
         sessionId: this.parseIdFromCookie(sessionCookie),
-        routeId: ".node1"
+        routeId: this.parseIdFromCookie(routeCookie)
       };
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-
-  /**
-   * Logs out from SAP Service Layer
-   * 
-   * @param session expired session
-   * @returns Promise of successful logout
-   */
-  private async logout(session: SapServiceLayerSessionModel): Promise<void> {
-    try {
-      const config = await this.getConfig();
-      const response = await this.doLogout(session, config);
-      await this.parseLogout(response);
     } catch (e) {
       return Promise.reject(e);
     }
@@ -154,12 +139,12 @@ export default class SapAbstractService {
    * @param config SAP config
    * @returns Promise of response to request
    */
-  private doLogout = (session: SapSession, config: SapConfig): Promise<Response> => {
+  private requestLogout = (session: SapSession, config: SapConfig): Promise<Response> => {
     const url = `${config.apiUrl}/Logout`;
     const options: RequestInit = {
       method: "POST",
       headers: {
-        "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=.node1`
+        "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
       }
     }
 
@@ -172,7 +157,7 @@ export default class SapAbstractService {
    * @param response response
    * @returns Promise of correct response to logout request
    */
-  private async parseLogout(response: Response): Promise<void> {
+  private async parseLogoutResponse(response: Response): Promise<void> {
     try {
       if (response.status !== 204) {
         const json = await response.json();
@@ -184,17 +169,6 @@ export default class SapAbstractService {
       return Promise.reject(`Error doing logout to SAP Service Layer: ${e}`);
     }
   }
-
-  /**
-   * Translates database SAP Service Layer session model to SAP session
-   * 
-   * @param model database session model
-   * @returns session model translated to SAP session
-   */
-  private translateDatabaseSapSession = (model: SapServiceLayerSessionModel): SapSession => ({
-    sessionId: model.sessionId,
-    routeId: model.routeId
-  });
 
   /**
    * Parses ID from set-cookie header of SAP Service Layer login response

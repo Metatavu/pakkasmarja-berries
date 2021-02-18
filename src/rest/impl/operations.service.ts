@@ -10,8 +10,8 @@ import ApplicationRoles from "../application-roles";
 import OperationsService from "../api/operations.service";
 import tasks from "../../tasks";
 import { SAPExportRoot } from "../../sap/export";
-import { SAPImportFile, config } from "../../config";
-import SapClient from "src/sap/client";
+import { config } from "../../config";
+import SapServiceFactory from "../../sap/service-layer-client";
 
 const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
 const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
@@ -101,110 +101,67 @@ export default class OperationsServiceImpl extends OperationsService {
    * Reads import file from sap and fills tasks queues with data from file
    */
   private async readSapImportFileTask(type: string) {
-    try {
-      const importFiles: SAPImportFile[] = config().sap["import-files"];
-      const datas = await Promise.all(this.parseXmlFiles(importFiles.map((importFile: SAPImportFile) => {
-        return importFile.file;
-      })));
-
-      if (!datas) {
-        this.logger.error("Failed to read SAP import files");
-        return;
-      }
-
-      const sapDatas: SAPData[] = datas.map((data: any, index: number) => {
-        return {
-          data: data.SAP,
-          status: importFiles[index].status
-        };
-      });
-      
-      if (!sapDatas) {
-        this.logger.error("Could not find SAP root entry");
+    switch (type) {
+      case OPERATION_SAP_CONTACT_SYNC:
+        return this.readSapImportBusinessPartners();
+      case OPERATION_SAP_DELIVERY_PLACE_SYNC:
+        return this.readSapImportDeliveryPlaces();
+      case OPERATION_SAP_ITEM_GROUP_SYNC:
+        return this.readSapImportItemGroups();
+      case OPERATION_SAP_CONTRACT_SYNC:
+        return this.readSapImportContracts();
+      default:
         return null;
-      }
+    }
+  }
 
-      const activeSapData: any = sapDatas.filter((sapData) => {
-        return sapData.status === "APPROVED";
-      }).pop();
+  /**
+   * Reads business partners from sap and fills related task queue with data
+   */
+  private async readSapImportBusinessPartners() {
+    try {
+      const sapBusinessPartnersService = SapServiceFactory.getBusinessPartnersService();
+      const businessPartners = await sapBusinessPartnersService.listBusinessPartners();
+      const operationReport = await models.createOperationReport("SAP_CONTACT_SYNC");
 
-      switch (type) {
-        case OPERATION_SAP_CONTACT_SYNC:
-          return this.readSapImportBusinessPartners(activeSapData.data);
-        case OPERATION_SAP_DELIVERY_PLACE_SYNC:
-          return this.readSapImportDeliveryPlaces(activeSapData.data);
-        case OPERATION_SAP_ITEM_GROUP_SYNC:
-          return this.readSapImportItemGroups();
-        case OPERATION_SAP_CONTRACT_SYNC:
-          return this.readSapImportContracts(sapDatas);
-      }
+      businessPartners.forEach((businessPartner: any) => {
+        tasks.enqueueSapContactUpdate(operationReport.id, businessPartner);
+      });
 
+      return operationReport;
     } catch (e) {
-      this.logger.error(`Failed to parse SAP import file ${e}`);
+      this.logger.error(`Failed to read SAP item groups. error: ${e}`);
+      return;
     }
-
-    return null;
   }
 
   /**
-   * Reads business partners from sap and fills related task queue with data from file
-   * 
-   * @param {Object} sap SAP data object 
+   * Reads delivery places from sap and fills related task queue with data
    */
-  private async readSapImportBusinessPartners(sap: any) {
-    if (!sap.BusinessPartners) {
-      this.logger.error("Failed to read SAP business partners");
+  private async readSapImportDeliveryPlaces() {
+    try {
+      const sapDeliveryPlacesService = SapServiceFactory.getDeliveryPlacesService();
+      const deliveryPlaces = await sapDeliveryPlacesService.listDeliveryPlaces();
+      const operationReport = await models.createOperationReport(OPERATION_SAP_DELIVERY_PLACE_SYNC);
+
+      deliveryPlaces.forEach((deliveryPlace) => {
+        tasks.enqueueSapDeliveryPlaceUpdate(operationReport.id, deliveryPlace);
+      });
+  
+      return operationReport;
+    } catch (e) {
+      this.logger.error(`Failed to read SAP item groups. error: ${e}`);
       return;
     }
-
-    const businessPartners = sap.BusinessPartners.BusinessPartners;
-    if (!businessPartners) {
-      this.logger.error("Failed to read SAP business partners list");
-      return;
-    }
-
-    const operationReport = await models.createOperationReport("SAP_CONTACT_SYNC");
-
-    businessPartners.forEach((businessPartner: any) => {
-      tasks.enqueueSapContactUpdate(operationReport.id, businessPartner);
-    });
-
-    return operationReport;
   }
 
   /**
-   * Reads delivery places from sap and fills related task queue with data from file
-   * 
-   * @param {Object} sap SAP data object 
-   */
-  private async readSapImportDeliveryPlaces(sap: SAPExportRoot) {
-    if (!sap.DeliveryPlaces) {
-      this.logger.error("Failed to read SAP item groups");
-      return;
-    }
-
-    const deliveryPlaces = sap.DeliveryPlaces.DeliveryPlaces;
-    if (!deliveryPlaces) {
-      this.logger.error("Failed to read SAP delivery places list");
-      return;
-    }
-
-    const operationReport = await models.createOperationReport(OPERATION_SAP_DELIVERY_PLACE_SYNC);
-    deliveryPlaces.forEach((deliveryPlace) => {
-      tasks.enqueueSapDeliveryPlaceUpdate(operationReport.id, deliveryPlace);
-    });
-
-    return operationReport;
-  }
-
-  /**
-   * Reads item groups from sap and fills related task queue with data from file
-   * 
-   * @param {Object} sap SAP data object 
+   * Reads item groups from sap and fills related task queue with data
    */
   private async readSapImportItemGroups() {
     try {
-      const itemGroups = await new SapClient().listItemGroups();
+      const sapItemGroupsService = SapServiceFactory.getItemGroupsService();
+      const itemGroups = await sapItemGroupsService.listItemGroups();
       const operationReport = await models.createOperationReport("SAP_ITEM_GROUP_SYNC");
 
       itemGroups.forEach((itemGroup) => {
@@ -219,29 +176,18 @@ export default class OperationsServiceImpl extends OperationsService {
   }
 
   /**
-   * Reads contracts from SAP and fills related task queue with data from file
-   * 
-   * @param {Object[]} sapDatas Array of SAP data objects
+   * Reads contracts from SAP and fills related task queue with data
    */
-  private async readSapImportContracts(sapDatas: SAPData[]) {
+  private async readSapImportContracts() {
+    const sapContractsService = SapServiceFactory.getContractsService();
+    const contracts = await sapContractsService.listContracts();
     const operationReport = await models.createOperationReport("SAP_CONTRACT_SYNC");
-    sapDatas.forEach((sapData) => {
-      const sap = sapData.data;
-      const status = sapData.status;
-      if (sap.Contracts) {
-        const contracts = sap.Contracts.Contracts;
-        if (!contracts) {
-          this.logger.error("Failed to read SAP contracts list");
-          return;
-        }
-  
-        contracts.forEach((contract) => {
-          for (let i = 0; i < contract.ContractLines.ContractLine.length; i++) {
-            tasks.enqueueSapContractUpdate(operationReport.id, contract, i, status);
-          }
-        });
-      }
-    });
+
+    contracts.forEach(contract =>
+      contract.BlanketAgreements_ItemsLines.forEach(contractLine =>
+        tasks.enqueueSapContractUpdate(operationReport.id, contract, contractLine)
+      )
+    );
 
     return operationReport;
   }

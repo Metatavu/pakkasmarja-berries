@@ -21,7 +21,6 @@ import { getLogger, Logger, configure as log4jsConfigure } from "log4js";
 import mqtt from "./mqtt";
 import FileRoutes from "./routes/file-routes";
 import taskQueue from "./tasks";
-//import SapClient from "./sap/client";
 
 log4jsConfigure({
   appenders: { console: { type: 'console' } },
@@ -115,12 +114,5 @@ process.on("unhandledRejection", (error) => {
   mqtt.connect();
   taskQueue.start();
 
-  // const sapClient = new SapClient();
-  // try {
-  //   const itemGroups = await sapClient.listItemGroups();
-  //   logger.info(JSON.stringify(itemGroups, null, 2));
-  // } catch (e) {
-  //   logger.error(e);
-  // }
 
 })();

@@ -61,7 +61,7 @@ export default class Migration {
   private obtainMigrationLock() {
     const lockFile = config().migrations["lock-file"];
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       fs.open(lockFile, "wx", (err) => {
         if (err) {
           if (err.code === "EEXIST") {
@@ -84,7 +84,7 @@ export default class Migration {
   private releaseMigrationLock() {
     const lockFile = config().migrations["lock-file"];
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       fs.unlink(lockFile, (err) => {
         if (err) {
           reject(err);
@@ -103,7 +103,7 @@ export default class Migration {
   private waitMigrationLock() {
     const lockFile = config().migrations["lock-file"];
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       fs.exists(lockFile, (exists) => {
         if (exists) {
           setTimeout(() => {

@@ -143,8 +143,8 @@ export interface Wkhtmltopdf {
 export interface SAPServiceLayer {
   apiUrl: string;
   companyDb: string;
-  user: string;
-  pass: string;
+  username: string;
+  password: string;
 }
 
 export interface SAPImportFile {
@@ -227,7 +227,7 @@ export interface ClientConfig {
 }
 
 export interface Config {
-  mode: string;
+  mode: "PRODUCTION" | "TEST";
   port: number;
   "session-secret": string;
   cache: Cache;
