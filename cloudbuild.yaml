@@ -57,7 +57,7 @@ steps:
   entrypoint: 'bash'
   args: 
   - '-c'
-  - apt-get update && apt-get install -y docker-compose && docker-compose build && docker-compose up
+  - curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && docker-compose build && docker-compose up
 - name: 'node:dubnium'
   waitFor: [ 'docker-up' ]
   entrypoint: 'bash'
