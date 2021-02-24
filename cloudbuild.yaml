@@ -63,6 +63,7 @@ steps:
       curl -fsSL https://deb.nodesource.com/setup_10.x | bash -
       apt-get install -y nodejs
       curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && docker-compose build && docker-compose up -d
+      sleep 30
       docker-compose logs -f &
       docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -q --filter ancestor=node:dubnium) >> /etc/hosts
       echo "Waiting for the API to start up...."
