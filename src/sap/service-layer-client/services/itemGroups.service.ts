@@ -62,22 +62,6 @@ export default class SapItemGroupsService extends AbstractService {
   }
 
   /**
-   * Asynchronously fetch data from SAP Service Layer
-   * 
-   * @param url url to fetch from
-   * @param options options to request
-   * @returns Promise of list item group response
-   */
-  private async asyncFetch(url: string, options: RequestInit): Promise<ListItemGroupsResponse> {
-    try {
-      return await fetch(url, options)
-        .then(response => response.json());
-    } catch(e) {
-      return Promise.reject(e);
-    }
-  }
-
-  /**
    * Translates SAP Service Layer responses to list of item groups
    * 
    * @param responses list item groups responses to translate

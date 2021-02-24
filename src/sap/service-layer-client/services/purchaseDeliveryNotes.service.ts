@@ -42,10 +42,15 @@ export default class SapPurchaseDeliveryNotesService extends AbstractService {
    * @param options options to request
    * @returns Promise of response from SAP service Layer
    */
-  private async asyncFetch(url: string, options: RequestInit): Promise<any> {
+  protected async asyncFetch(url: string, options: RequestInit): Promise<any> {
     try {
-      return await fetch(url, options)
-        .then(response => response.json());
+      const response = await fetch(url, options);
+
+      if (response.status !== 201) {
+        return Promise.reject(`Could not create delivery purchase note to SAP Service Layer. Error: ${await response.json()}`);
+      }
+
+      return await response.json();
     } catch(e) {
       return Promise.reject(e);
     }

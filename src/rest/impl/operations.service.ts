@@ -179,17 +179,23 @@ export default class OperationsServiceImpl extends OperationsService {
    * Reads contracts from SAP and fills related task queue with data
    */
   private async readSapImportContracts() {
-    const sapContractsService = SapServiceFactory.getContractsService();
-    const contracts = await sapContractsService.listContracts();
-    const operationReport = await models.createOperationReport("SAP_CONTRACT_SYNC");
-
-    contracts.forEach(contract =>
-      contract.BlanketAgreements_ItemsLines.forEach(contractLine =>
-        tasks.enqueueSapContractUpdate(operationReport.id, contract, contractLine)
-      )
-    );
-
-    return operationReport;
+    try {
+      const sapContractsService = SapServiceFactory.getContractsService();
+      const contracts = await sapContractsService.listContracts();
+      const operationReport = await models.createOperationReport("SAP_CONTRACT_SYNC");
+  
+      contracts.forEach(contract =>
+        contract.BlanketAgreements_ItemsLines.forEach(contractLine =>
+          tasks.enqueueSapContractUpdate(operationReport.id, contract, contractLine)
+        )
+      );
+  
+      return operationReport;
+    } catch (e) {
+      this.logger.error(`Failed to read SAP contracts. error: ${e}`);
+      return;
+    }
+    
   }
 
   /**

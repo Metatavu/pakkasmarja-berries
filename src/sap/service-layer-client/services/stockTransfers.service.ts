@@ -43,7 +43,7 @@ export default class SapSapStockTransfersService extends AbstractService {
    * @param options options to request
    * @returns Promise of response from SAP service Layer
    */
-  private async asyncFetch(url: string, options: RequestInit): Promise<any> {
+  protected async asyncFetch(url: string, options: RequestInit): Promise<any> {
     try {
       const response = await fetch(url, options);
 

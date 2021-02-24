@@ -140,6 +140,9 @@ export interface Wkhtmltopdf {
   command: string;
 }
 
+/**
+ * Interface describing SAP Service Layer configs
+ */
 export interface SAPServiceLayer {
   apiUrl: string;
   companyDb: string;

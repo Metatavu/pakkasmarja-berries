@@ -62,22 +62,6 @@ export default class SapContractsService extends AbstractService {
   }
 
   /**
-   * Asynchronously fetch data from SAP Service Layer
-   * 
-   * @param url url to fetch from
-   * @param options options to request
-   * @returns Promise of response from SAP service layer
-   */
-  private async asyncFetch(url: string, options: RequestInit): Promise<any> {
-    try {
-      return await fetch(url, options)
-        .then(response => response.json());
-    } catch(e) {
-      return Promise.reject(e);
-    }
-  }
-
-  /**
    * Translates SAP Service Layer responses to list of contracts
    * 
    * @param responses list contracts responses to translate

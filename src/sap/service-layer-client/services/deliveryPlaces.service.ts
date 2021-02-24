@@ -58,22 +58,6 @@ export default class SapDeliveryPlacesService extends AbstractService {
   }
 
   /**
-   * Asynchronously fetch data from SAP Service Layer
-   * 
-   * @param url url to fetch from
-   * @param options options to request
-   * @returns Promise of list delivery places response
-   */
-  private async asyncFetch(url: string, options: RequestInit): Promise<ListDeliveryPlacesResponse> {
-    try {
-      return await fetch(url, options)
-        .then(response => response.json());
-    } catch(e) {
-      return Promise.reject(e);
-    }
-  }
-
-  /**
    * Translates SAP Service Layer responses to list of delivery places
    * 
    * @param responses list delivery places responses to translate

@@ -610,12 +610,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param delivery delivery
    * @param product product
    * @param deliveryPlace delivery place
-   * @param price total price of delivery
-   * @param unitPrice unit price for single sale unit
+   * @param unitPriceWithBonus unit price with bonus
    * @param deliveryContactSapId CardCode of the Supplier
    * @param sapSalesPersonCode Receiving person code
    * @param loans loans
-   * @return promise for success
+   * @param itemGroupCategory item group category
+   * @return promise of successful creation
    */
   private async createDeliveryDocumentsToSap(
     delivery: DeliveryModel,

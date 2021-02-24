@@ -9,6 +9,22 @@ import { getLogger } from "log4js";
 export default class SapAbstractService {
 
   /**
+   * Asynchronously fetch data from SAP Service Layer
+   * 
+   * @param url url to fetch from
+   * @param options options to request
+   * @returns Promise of response from SAP service Layer
+   */
+  protected async asyncFetch(url: string, options: RequestInit): Promise<any> {
+    try {
+      return await fetch(url, options)
+        .then(response => response.json());
+    } catch(e) {
+      return Promise.reject(e);
+    }
+  }
+
+  /**
    * Creates new session with SAP Service Layer
    * 
    * @returns promise of SAP session data
