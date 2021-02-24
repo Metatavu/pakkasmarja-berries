@@ -4,6 +4,6 @@ ADD . .
 COPY package*.json ./
 RUN npm install
 RUN npm run build
-ADD ./docker/run-tests.sh /opt/docker/entrypoint.sh 
-RUN chmod a+x /opt/docker/entrypoint.sh
-CMD "/opt/docker/entrypoint.sh"
+ADD ./docker/run-tests.sh /opt/docker/run-tests.sh
+RUN chmod a+x /opt/docker/run-tests.sh
+CMD "/opt/docker/run-tests.sh"

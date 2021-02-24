@@ -65,7 +65,7 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "127.0.0.1",
+    "host": "pm-mysql",
     "database": "pm",
     "username": "pm",
     "password": "random",

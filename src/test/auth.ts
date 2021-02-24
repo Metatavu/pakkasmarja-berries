@@ -260,8 +260,11 @@ export default new class Auth {
    * @returns client
    */
   private async getClient(): Promise<KcAdminClient> {
-    const client: KcAdminClient = new KcAdminClient();
     const keycloakConfig = config.get("keycloak:admin");
+
+    const client: KcAdminClient = new KcAdminClient({
+      baseUrl: keycloakConfig.baseUrl
+    });
 
     await client.auth({
       username: keycloakConfig.username,
