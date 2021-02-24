@@ -50,8 +50,8 @@
   },
   "client": {
     "server": {
-      "host": "localhost",
-      "port": "3002",
+      "host": "pakkasmarja-api",
+      "port": "3000",
       "secure": false
     }
   },
