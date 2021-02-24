@@ -63,16 +63,7 @@ steps:
       set -e
       curl -fsSL https://deb.nodesource.com/setup_10.x | bash -
       apt-get install -y nodejs
-      curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && docker-compose build && docker-compose up -d
-      docker-compose logs -f &
-      export SERVER_DOCKER_ID=$(docker ps -q --filter ancestor=node:dubnium)
-      export SERVER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$SERVER_DOCKER_ID)
-      echo "$$SERVER_IP pakkasmarja-api" >> /etc/hosts
-      echo "Hosts:"
-      cat /etc/hosts
-      echo "Waiting for the API to start up...."
-      sh scripts/wait-api.sh
-      echo "API is up, running tests..."
-      npm run test
-      echo "Tests done."
+      curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose &&
+      docker-compose -f ./docker-compose-tests.yml build && 
+      docker-compose -f ./docker-compose-tests.yml up --exit-code-from pakkasmarja-tests
     fi
