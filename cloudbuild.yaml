@@ -60,14 +60,14 @@ steps:
   - '-c'
   - |
     if [ -n "${_TEST}" ]; then
-      curl -fsSL https://deb.nodesource.com/setup_10.x | bash - &&
-      apt-get install -y nodejs &&
-      curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && docker-compose build && docker-compose up -d &&
+      curl -fsSL https://deb.nodesource.com/setup_10.x | bash -
+      apt-get install -y nodejs
+      curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose && docker-compose build && docker-compose up -d
       docker-compose logs -f &
-      echo 127.0.0.1 pakkasmarja-api >> /etc/hosts &&
-      echo "Waiting for the API to start up...." && 
-      sh scripts/wait-api.sh && 
-      echo "API is up, running tests..." && 
-      npm run test && 
+      echo 127.0.0.1 pakkasmarja-api >> /etc/hosts
+      echo "Waiting for the API to start up...."
+      sh scripts/wait-api.sh
+      echo "API is up, running tests..."
+      npm run test
       echo "Tests done."
     fi
