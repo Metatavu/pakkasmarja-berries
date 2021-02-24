@@ -21,6 +21,7 @@ import signature from "../../signature";
 import excel from "../../excel";
 import pdf from "../../pdf";
 import { config } from "../../config";
+import xlsx from "node-xlsx";
 
 /**
  * Implementation for Contracts REST service
@@ -138,6 +139,23 @@ export default class ContractsServiceImpl extends ContractsService {
     }
     
     res.status(200).send(await this.translateDatabaseContract(databaseContract));
+  }
+
+  /**
+   * @inheritdoc
+   */
+  async importContracts(req: Request, res: Response) {
+    if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CONTRACT)) {
+      this.sendForbidden(res, "You have no permission to create contracts");
+      return;
+    }
+
+    try {
+      const buffer = req.body as ArrayBuffer;
+      const workSheets = xlsx.parse(buffer);
+    } catch (e) {
+      this.sendInternalServerError(res, `Failed to parse file: ${e}`);
+    }
   }
   
   /**

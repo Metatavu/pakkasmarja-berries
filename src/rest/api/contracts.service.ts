@@ -19,6 +19,7 @@ export default abstract class ContractsService extends AbstractService {
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates/${encodeURIComponent(String(contractDocumentTemplateId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContractDocumentTemplate.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
+    app.post(`/rest/v1${this.toPath('/contracts/import')}`, [ keycloak.protect() ], this.catchAsync(this.importContracts.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.listContractDocumentTemplates.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.listContractPrices.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
@@ -89,6 +90,15 @@ export default abstract class ContractsService extends AbstractService {
     * - (query) string format - document format (HTML or PDF)
   */
   public abstract getContractDocument(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Imports contracts via XLSX file
+   * @summary Import contracts via XLSX file
+   * Accepted parameters:
+    * - (body) Object body - 
+  */
+  public abstract importContracts(req: Request, res: Response): Promise<void>;
 
 
   /**
