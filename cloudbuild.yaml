@@ -16,7 +16,10 @@ steps:
   entrypoint: 'bash'
   args: 
   - '-c'
-  - docker build -t ${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8) .
+  - |
+    if [ -n "${_DEPLOYMENT}" ]; then
+      docker build -t ${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8) .
+    fi
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   env:
