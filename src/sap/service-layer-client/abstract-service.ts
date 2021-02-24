@@ -15,7 +15,6 @@ export default class SapAbstractService {
    */
   protected async createSession(): Promise<SapSession> {
     try {
-
       const sapSession = await this.login();
       getLogger().info(JSON.stringify(sapSession, null, 2));
       return sapSession;
