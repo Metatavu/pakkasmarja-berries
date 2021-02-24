@@ -2,6 +2,7 @@ import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 
@@ -41,7 +42,7 @@ restPaths.forEach((restPath: RestPath) => {
         token = await auth.getToken(testSetting["with-user"], "test");
       }
 
-      let result: any = request("http://localhost:3002");
+      let result: any = request(TestConfig.HOST);
 
       switch (method) {
         case "post":

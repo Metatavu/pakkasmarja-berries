@@ -3,6 +3,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import ApplicationRoles from "../rest/application-roles";
 import { DataSheet } from "../rest/model/models";
+import TestConfig from "./test-config";
 
 /**
  * Creates data sheet
@@ -19,7 +20,7 @@ const createDataSheet = (token: string, name: string, data: string[][]): Promise
     data: data
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post("/rest/v1/dataSheets")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -46,7 +47,7 @@ const updateDataSheet = (token: string, id: string, name: string, data: string[]
     data: data
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .put(`/rest/v1/dataSheets/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -66,7 +67,7 @@ const updateDataSheet = (token: string, id: string, name: string, data: string[]
  * @returns promise for data sheet
  */
 const findDataSheet = (token: string, id: string, expectStatus?: number): Promise<DataSheet> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/dataSheets/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -83,7 +84,7 @@ const findDataSheet = (token: string, id: string, expectStatus?: number): Promis
  * @returns promise for data sheets
  */
 const listDataSheets = (token: string, name: string): Promise<DataSheet[]> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/dataSheets?name=${name}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -101,7 +102,7 @@ const listDataSheets = (token: string, name: string): Promise<DataSheet[]> => {
  * @returns promise for delete
  */
 const deleteDataSheet = async (token: string, id: string) => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/dataSheets/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")

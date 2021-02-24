@@ -3,6 +3,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";
 import ApplicationRoles from "../rest/application-roles";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const operationReportDatas = require(`${testDataDir}/operation-reports.json`);
@@ -11,7 +12,7 @@ const operationReportItemDatas = require(`${testDataDir}/operation-report-items.
 test("Test listing operation reports", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -29,7 +30,7 @@ test("Test listing operation reports", async (t) => {
 test("Test listing operation reports - sort created asc", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports?sortBy=CREATED&sortDir=ASC")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -47,7 +48,7 @@ test("Test listing operation reports - sort created asc", async (t) => {
 test("Test listing operation reports - firstResult", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports?firstResult=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -64,7 +65,7 @@ test("Test listing operation reports - firstResult", async (t) => {
 test("Test listing operation reports - maxResults", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports?maxResults=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -79,14 +80,14 @@ test("Test listing operation reports - maxResults", async (t) => {
 });
 
 test("Test listing operation reports - without token", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports")
     .set("Accept", "application/json")
     .expect(403);
 });
 
 test("Test listing operation reports - invalid token", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -96,7 +97,7 @@ test("Test listing operation reports - invalid token", async () => {
 test("Test find operation report", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -110,14 +111,14 @@ test("Test find operation report", async (t) => {
 });
 
 test("Test find operation report - without token", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Accept", "application/json")
     .expect(403);
 });
 
 test("Test find operation report - invalid token", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -125,7 +126,7 @@ test("Test find operation report - invalid token", async () => {
 });
 
 test("Test find operation report - not found", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -136,7 +137,7 @@ test("Test find operation report - not found", async () => {
 });
 
 test("Test find operation report - invalid id", async () => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
@@ -148,7 +149,7 @@ test("Test find operation report - invalid id", async () => {
 test("Test listing operation report items", async (t) => {
   await database.executeFiles(testDataDir, ["operation-reports-teardown.sql", "operation-reports-setup.sql"]);
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e/items")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_OPERATION_REPORTS)}`)
     .set("Accept", "application/json")
