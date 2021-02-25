@@ -14,7 +14,7 @@ steps:
     fi
 - name: 'ubuntu'
   id: 'docker-up'
-  waitFor: [ 'test-data' ]
+  waitFor: [ 'decrypt' ]
   timeout: '600s'
   entrypoint: 'bash'
   args: 
