@@ -52,7 +52,7 @@
   "client": {
     "server": {
       "host": "pakkasmarja-api",
-      "port": "3002",
+      "port": "3000",
       "secure": false
     }
   },

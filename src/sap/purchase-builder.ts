@@ -12,7 +12,7 @@ export interface PurchaseReceiptHeader {
 }
 
 /**
- * Interface describing purchase receipt header 
+ * Interface describing purchase receipt line
  */
 export interface PurchaseReceiptLine {
   ItemCode: string,
@@ -31,7 +31,7 @@ export interface PurchaseReceipt {
 }
 
 /**
- * Interface describing transer header 
+ * Interface describing transfer header 
  */
 export interface TransferHeader {
   DocDate: string;
@@ -43,7 +43,7 @@ export interface TransferHeader {
 }
 
 /**
- * Interface describing purchase receipt header 
+ * Interface describing transfer line bin allocation
  */
 export interface TransferLineBinAllocation {
   BinAbsEntry: number,
@@ -52,7 +52,7 @@ export interface TransferLineBinAllocation {
 }
 
 /**
- * Interface describing purchase receipt header 
+ * Interface describing transfer line
  */
 export interface TransferLine {
   ItemCode: string,
@@ -61,7 +61,7 @@ export interface TransferLine {
 }
 
 /**
- * Interface describing a purchase receipt
+ * Interface describing a transfer
  */
 export interface Transfer {
   Header: TransferHeader,
@@ -97,7 +97,7 @@ export default class PurchaseMessageBuilder {
   };
 
   /**
-   * Ses purchse receipt header
+   * Set purchase receipt header
    * 
    * @param header header
    * @return builder instance
@@ -107,7 +107,7 @@ export default class PurchaseMessageBuilder {
   }
 
   /**
-   * Adds purchse receipt line
+   * Adds purchase receipt line
    * 
    * @param line line
    * @return builder instance

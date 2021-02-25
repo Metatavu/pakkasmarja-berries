@@ -3,6 +3,7 @@ import { Test } from "blue-tape";
 import * as request from "supertest";
 import * as path from "path";
 import auth from "./auth";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contactDatas = require(path.resolve(testDataDir, 'contacts.json'));
@@ -22,7 +23,7 @@ export default new class Users {
   async resetUser(userId: string, t: Test) {
     const user = contactDatas[userId];
   
-    return request(config.get("baseUrl"))
+    return request(TestConfig.HOST)
       .put(`/rest/v1/contacts/${user.id}`)
       .set("Authorization", `Bearer ${await auth.getAdminToken()}`)
       .send(user)
@@ -43,7 +44,7 @@ export default new class Users {
    * @return {Promise} promise
    */
   async resetUserPassword(userId: string, userName: string, oldPassword: string, newPassword: string) {
-    return request(config.get("baseUrl"))
+    return request(TestConfig.HOST)
       .put(`/rest/v1/contacts/${userId}/credentials`)
       .set("Authorization", `Bearer ${await auth.getToken(userName, oldPassword)}`)
       .send({ "password": newPassword })

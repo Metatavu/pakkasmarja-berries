@@ -21,6 +21,12 @@ services:
       - 8080:8080
     volumes:
       - ./test-volumes/keycloak:/opt/docker
+  sap-api-wiremock:
+    image: rodolpheche/wiremock
+    ports:
+      - 1234:8080
+    volumes:
+      - ./test/sap-api-wiremock:/home/wiremock
   pakkasmarja-api:
     build: .
     environment: 
@@ -41,11 +47,14 @@ services:
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml
-  pakkasmarja-test:
+  pakkasmarja-tests:
     build:
       context: .
-      dockerfile: tests.Dockerfile
+      dockerfile: Dockerfile.tests
+    environment:
+      TEST_HOST: http://pakkasmarja-api:3000
     depends_on:
+      - pakkasmarja-api
       - pm-mysql
       - test-keycloak
     volumes:
@@ -54,4 +63,3 @@ services:
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml
-    

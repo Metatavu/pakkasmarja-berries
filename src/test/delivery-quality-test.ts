@@ -1,10 +1,10 @@
-import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
 import { DeliveryQuality, ItemGroupCategory } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveryQualityData = require(`${testDataDir}/delivery-quality.json`);
@@ -18,7 +18,7 @@ const deliveryQualityData = require(`${testDataDir}/delivery-quality.json`);
 const createDeliveryQuality = (token: string): Promise<DeliveryQuality> => {
   const payload: DeliveryQuality = deliveryQualityData[0];
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post("/rest/v1/deliveryQualities")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -39,7 +39,7 @@ const createDeliveryQuality = (token: string): Promise<DeliveryQuality> => {
 const updateDeliveryQuality = (token: string, id: string): Promise<DeliveryQuality> => {
   const payload: DeliveryQuality = deliveryQualityData[1];
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .put(`/rest/v1/deliveryQualities/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -58,7 +58,7 @@ const updateDeliveryQuality = (token: string, id: string): Promise<DeliveryQuali
  * @returns promise for delivery quality
  */
 const findDeliveryQuality = (token: string, id: string): Promise<DeliveryQuality> => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/deliveryQualities/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -85,7 +85,7 @@ const listDeliveryQualities = (token: string, category?: ItemGroupCategory, prod
     params = `?productId=${productId}`
   }
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/deliveryQualities${params}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")

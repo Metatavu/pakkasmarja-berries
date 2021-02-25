@@ -5,6 +5,7 @@ import auth from "./auth";
 import { Product, ProductPrice } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const productData = require(`${testDataDir}/product.json`);
@@ -18,7 +19,7 @@ const productData = require(`${testDataDir}/product.json`);
 const createProduct = (token: string): Promise<Product> => {
   const payload: Product = productData[0];
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post("/rest/v1/products")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -46,7 +47,7 @@ const createProductPrice = async (token: string, product: Product) => {
     updatedAt: new Date()
   };
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post(`/rest/v1/products/${product.id}/prices`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -67,7 +68,7 @@ const createProductPrice = async (token: string, product: Product) => {
 const updateProduct = (token: string, id: string): Promise<Product> => {
   const payload: Product = productData[1];
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .put(`/rest/v1/products/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -86,7 +87,7 @@ const updateProduct = (token: string, id: string): Promise<Product> => {
  * @returns promise for product
  */
 const findProduct = (token: string, id: string): Promise<Product> => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/products/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -109,7 +110,7 @@ const listProducts = (token: string, userId?: string): Promise<Product[]> => {
     params = `?userId=${userId}`
   }
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/products${params}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -206,7 +207,7 @@ test("Delete product", async (t) => {
 
   try {
     const createdProduct = await createProduct(token);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/products/${createdProduct.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -225,7 +226,7 @@ test("Delete product - Forbidden", async (t) => {
 
   try {
     const createdProduct = await createProduct(token);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/products/${createdProduct.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -245,7 +246,7 @@ test("Delete product created by other user", async (t) => {
 
   try {
     const createdProduct = await createProduct(token2);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/products/${createdProduct.id}`)
       .set("Authorization", `Bearer ${token1}`)
       .set("Accept", "application/json")
@@ -266,7 +267,7 @@ test("Delete product - Forbidden", async (t) => {
 
   try {
     const createdProduct = await createProduct(token1);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/products/${createdProduct.id}`)
       .set("Authorization", `Bearer ${token2}`)
       .set("Accept", "application/json")
@@ -314,7 +315,7 @@ test("Delete product price", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -339,7 +340,7 @@ test("Find product price", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    const foundPrice = await request(config.get("baseUrl"))
+    const foundPrice = await request(TestConfig.HOST)
       .get(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -373,7 +374,7 @@ test("List product prices", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    let prices = await request(config.get("baseUrl"))
+    let prices = await request(TestConfig.HOST)
       .get(`/rest/v1/products/${createdProduct.id}/prices?sort=CREATED_AT_ASC`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -387,7 +388,7 @@ test("List product prices", async (t) => {
 
     await createProductPrice(token, createdProduct);
 
-    prices = await request(config.get("baseUrl"))
+    prices = await request(TestConfig.HOST)
       .get(`/rest/v1/products/${createdProduct.id}/prices?sort=CREATED_AT_ASC`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -410,7 +411,7 @@ test("List product prices - 400 - no product id", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_PRODUCTS, ApplicationRoles.MANAGE_PRODUCT_PRICES]);
 
   try {
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .get(`/rest/v1/products/${undefined}/prices`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -437,7 +438,7 @@ test("Update product price", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    const updatedProductPrice = await request(config.get("baseUrl"))
+    const updatedProductPrice = await request(TestConfig.HOST)
       .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -469,7 +470,7 @@ test("Update product price - 404 - wrong product id", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .put(`/rest/v1/products/fake-uuid/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -495,7 +496,7 @@ test("Update product price - 404 - wrong product price id", async (t) => {
     t.notEqual(createdProductPrice, null);
     t.notEqual(createdProductPrice.id, null);
 
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .put(`/rest/v1/products/${createdProduct.id}/prices/fake-uuid`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -527,7 +528,7 @@ test("Update product price - 400 - no price", async (t) => {
       productId: createdProduct.id
     };
 
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -559,7 +560,7 @@ test("Update product price - 400 - no unit", async (t) => {
       price: "200"
     };
 
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .put(`/rest/v1/products/${createdProduct.id}/prices/${createdProductPrice.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
