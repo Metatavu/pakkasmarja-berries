@@ -1,8 +1,4 @@
 version: "3"
-networks:
-  default:
-    external:
-      name: cloudbuild
 services:
   pm-mysql:
     image: mysql:5.7
