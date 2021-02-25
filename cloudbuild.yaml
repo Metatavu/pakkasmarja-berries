@@ -65,3 +65,4 @@ steps:
       docker-compose -f ./docker-compose-tests.yml build && 
       docker-compose -f ./docker-compose-tests.yml up --exit-code-from pakkasmarja-tests
     fi
+timeout: 900s
