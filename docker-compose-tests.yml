@@ -48,7 +48,7 @@ services:
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml
   pakkasmarja-tests:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.tests
     environment:

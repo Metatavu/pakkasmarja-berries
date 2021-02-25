@@ -1,6 +1,7 @@
 {
   "mode": "TEST",
   "session-secret": "sekriet",
+  "baseUrl": "http://pakkasmarja-api:3000",
   "cache": {
     "enabled": true,
     "expire-time": 60000

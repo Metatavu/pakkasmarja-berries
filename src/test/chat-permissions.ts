@@ -1,3 +1,4 @@
+import config from "./config";
 import * as request from "supertest";
 import { ChatGroupGroupPermission } from "../rest/model/chatGroupGroupPermission";
 import { ChatThreadPermissionScope, ChatGroupPermissionScope, ChatThreadGroupPermission, ChatThreadUserPermission } from "../rest/model/models";

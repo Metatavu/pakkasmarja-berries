@@ -1,3 +1,4 @@
+import config from "./config";
 import { Test } from "blue-tape"; 
 import * as request from "supertest";
 import * as path from "path";

@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -445,4 +446,3 @@ test("Delete delivery note", async (t) => {
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
 });
-

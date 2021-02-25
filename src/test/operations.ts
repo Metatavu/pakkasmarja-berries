@@ -1,3 +1,4 @@
+import config from "./config";
 import * as request from "supertest";
 import { Operation } from "../rest/model/models";
 import TestConfig from "./test-config";

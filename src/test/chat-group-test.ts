@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
@@ -155,9 +156,7 @@ test("Test group permission create", async (t) => {
 
   const createdPermission = await chatPermissions.createChatGroupGroupPermission(token, createdChatGroup.id!, userGroups[0].id!, "MANAGE");
   const foundPermissions = await chatPermissions.listChatGroupGroupPermissions(token, createdChatGroup.id!);
-
   t.deepEquals(foundPermissions, [createdPermission]);
-
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatGroups(token)).length, 0);

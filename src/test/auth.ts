@@ -1,12 +1,9 @@
+import config from "./config";
 import * as request from "request";
-import * as config from "nconf";
 import KcAdminClient from "keycloak-admin";
 import { RoleMappingPayload } from "keycloak-admin/lib/defs/roleRepresentation";
 
-config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
-
-
-const keyclockSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
+const keycloakSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
 
 /**
  * Auth utility class for tests
@@ -173,7 +170,7 @@ export default new class Auth {
    * Returns setup for test realm
    */
   getRealmSetup() {
-    return keyclockSetup.filter((realmSetup: any) => {
+    return keycloakSetup.filter((realmSetup: any) => {
       return realmSetup.id === "pm";
     })[0];
   }
@@ -261,12 +258,11 @@ export default new class Auth {
    */
   private async getClient(): Promise<KcAdminClient> {
     const keycloakConfig = config.get("keycloak:admin");
-
     const client: KcAdminClient = new KcAdminClient({
       baseUrl: keycloakConfig.baseUrl
     });
 
-    await client.auth({
+    await client.auth({      
       username: keycloakConfig.username,
       password: keycloakConfig.password,
       grantType: keycloakConfig.grant_type,
