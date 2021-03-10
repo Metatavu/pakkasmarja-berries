@@ -244,7 +244,6 @@ export default class ContractsServiceImpl extends ContractsService {
             key: "contractQuantity",
             message: this.getImportedContractErrorMessage("contractQuantityNotFound")
           });
-
         } else if (invalidQuantity) {
           contractErrors.push({
             key: "contractQuantity",
