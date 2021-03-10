@@ -226,6 +226,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("itemGroupNotFound")
           });
         }
+
         const itemGroupId = itemGroup ? itemGroup.externalId : undefined;
         const itemGroupName = itemGroup ? itemGroup.name : undefined;
         contract.itemGroupId = itemGroupId;
