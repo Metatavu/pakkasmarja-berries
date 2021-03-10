@@ -269,6 +269,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("deliverAllNotAllowed")
           });
         }
+
         contract.deliverAll = !!deliverAll;
         importedContract.deliverAll = deliverAll ? `${deliverAll}` : "";
 
