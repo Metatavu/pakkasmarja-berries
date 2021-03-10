@@ -1,7 +1,6 @@
 import fetch, { RequestInit, Response } from "node-fetch";
 import { config } from "../../config";
 import { SapConfig, SapLoginRequestBody, SapSession } from "./types";
-import { getLogger } from "log4js";
 
 /**
  * Abstract service for SAP client
@@ -48,7 +47,6 @@ export default class SapAbstractService {
     try {
       const config = await this.getConfig();
       const response = await this.requestLogout(session, config);
-      getLogger().info(JSON.stringify(session, null, 2));
       return await this.parseLogoutResponse(response);
     } catch (e) {
       return Promise.reject(e);

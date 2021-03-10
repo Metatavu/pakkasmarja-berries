@@ -145,7 +145,7 @@ export default class ContractsServiceImpl extends ContractsService {
   /**
    * @inheritdoc
    */
-  async importContracts(req: Request, res: Response) {
+  async createContractPreviews(req: Request, res: Response) {
     if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CONTRACT)) {
       this.sendForbidden(res, "You have no permission to import contracts");
       return;

@@ -68,7 +68,7 @@ test("Test contract sign - missing prerequisite", async (t) => {
 test("Test importing contracts", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
   return request(TestConfig.HOST)
-    .post("/rest/v1/contracts/import")
+    .post("/rest/v1/contractPreviews")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
     .set("Accept", "application/json")
@@ -84,7 +84,7 @@ test("Test importing contracts", async (t) => {
 test("Test importing contracts - forbidden", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
   return request(TestConfig.HOST)
-    .post("/rest/v1/contracts/import")
+    .post("/rest/v1/contractPreviews")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -98,7 +98,7 @@ test("Test importing contracts - forbidden", async (t) => {
 test("Test importing contracts - no file", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
   return request(TestConfig.HOST)
-    .post("/rest/v1/contracts/import")
+    .post("/rest/v1/contractPreviews")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
     .set("Accept", "application/json")
@@ -112,7 +112,7 @@ test("Test importing contracts - no file", async (t) => {
 test("Test importing contracts - no data rows in file", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
   return request(TestConfig.HOST)
-    .post("/rest/v1/contracts/import")
+    .post("/rest/v1/contractPreviews")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
     .set("Accept", "application/json")
@@ -127,7 +127,7 @@ test("Test importing contracts - no data rows in file", async (t) => {
 test("Test importing contracts - false data", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
   return request(TestConfig.HOST)
-    .post("/rest/v1/contracts/import")
+    .post("/rest/v1/contractPreviews")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
     .set("Accept", "application/json")
