@@ -259,11 +259,11 @@ export default class ContractsServiceImpl extends ContractsService {
         importedContract.quantityComment = `${quantityComment}`;
 
         const deliverAll = this.getContractRowValue(contractRow, 4);
-        const allowed = itemGroupId ?
+        const deliverAllAllowed = itemGroupId ?
           await this.deliverAllAllowed(itemGroupId) :
           false;
 
-        if (deliverAll && !allowed) {
+        if (deliverAll && !deliverAllAllowed) {
           contractErrors.push({
             key: "deliverAll",
             message: this.getImportedContractErrorMessage("deliverAllNotAllowed")
@@ -1290,12 +1290,12 @@ export default class ContractsServiceImpl extends ContractsService {
    * @param itemGroupId item group ID
    */
   private deliverAllAllowed = (itemGroupId: string) => {
-    return new Promise<boolean>(resolve => {
+    return new Promise<boolean>((resolve, reject) => {
       fs.readFile(`${__dirname}/../../../app-config.json`, (error, file) => {
         const logger = getLogger();
         if (error) {
           logger.error(`Could not read app-config.json. Reason: ${error}`);
-          return resolve(false);
+          return reject();
         }
 
         try {
@@ -1303,20 +1303,20 @@ export default class ContractsServiceImpl extends ContractsService {
           const itemGroups = config["item-groups"];
           if (!itemGroups) {
             logger.error("Could not read item groups from app-config.json");
-            return resolve(false);
+            return reject();
           }
 
           const foundItemGroup = itemGroups[itemGroupId];
           if (!foundItemGroup) {
             logger.warn("Could not find item group from app-config.json");
-            return resolve(false);
+            return reject();
           }
 
           const allowDeliveryAll = foundItemGroup["allow-delivery-all"];
           return resolve(allowDeliveryAll || false);
         } catch (e) {
           logger.error(`Could not read contents of app-config.json. Reason: ${e}`);
-          return resolve(false);
+          return reject();
         }
       });
     });
