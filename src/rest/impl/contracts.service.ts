@@ -212,6 +212,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("deliveryPlaceNotFound")
           });
         }
+
         const deliveryPlaceId = deliveryPlace ? deliveryPlace.externalId : undefined;
         const deliveryPlaceName = deliveryPlace ? deliveryPlace.name : undefined;
         contract.deliveryPlaceId = deliveryPlaceId;
