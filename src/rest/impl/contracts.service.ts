@@ -197,6 +197,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("userNotFound")
           });
         }
+
         const userId = user ? user.id : undefined;
         const firstName = user ? user.firstName : undefined;
         const lastName = user ? user.lastName : undefined;
