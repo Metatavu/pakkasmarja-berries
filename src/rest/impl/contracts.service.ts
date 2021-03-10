@@ -250,6 +250,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("contractQuantityNotValid")
           });
         }
+
         contract.contractQuantity = !invalidQuantity ? contractQuantity || 0 : 0;
         importedContract.contractQuantity = contractQuantity ? `${contractQuantity}` : "";
 
