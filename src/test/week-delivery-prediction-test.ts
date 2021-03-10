@@ -5,6 +5,7 @@ import auth from "./auth";
 import { WeekDeliveryPrediction } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const weeklyDeliveryPredictionData = require(`${testDataDir}/week-delivery-predictions.json`);
@@ -18,7 +19,7 @@ const weeklyDeliveryPredictionData = require(`${testDataDir}/week-delivery-predi
 const createWeekDeliveryPrediction = (token: string): Promise<WeekDeliveryPrediction> => {
   const payload: WeekDeliveryPrediction = weeklyDeliveryPredictionData[0];
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post("/rest/v1/weekDeliveryPredictions")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -38,7 +39,7 @@ const createWeekDeliveryPrediction = (token: string): Promise<WeekDeliveryPredic
  */
 const updateWeekDeliveryPrediction = (token: string, id: string): Promise<WeekDeliveryPrediction> => {
   const payload: WeekDeliveryPrediction = weeklyDeliveryPredictionData[1];
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .put(`/rest/v1/weekDeliveryPredictions/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -57,7 +58,7 @@ const updateWeekDeliveryPrediction = (token: string, id: string): Promise<WeekDe
  * @returns promise for week delivery prediction
  */
 const findWeekDeliveryPrediction = (token: string, id: string): Promise<WeekDeliveryPrediction> => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/weekDeliveryPredictions/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -80,7 +81,7 @@ const listWeekDeliveryPredictions = (token: string, userId?: string): Promise<We
     params = `?userId=${userId}`
   }
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/weekDeliveryPredictions${params}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -210,7 +211,7 @@ test("Find week delivery prediction - Forbidden", async (t) => {
 
   try {
     const createdWeekDeliveryPrediction = await createWeekDeliveryPrediction(token1);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .get(`/rest/v1/weekDeliveryPredictions/${createdWeekDeliveryPrediction.id}`)
       .set("Authorization", `Bearer ${token2}`)
       .set("Accept", "application/json")
@@ -244,7 +245,7 @@ test("Delete week delivery prediction created by same user", async (t) => {
 
   try {
     const createdWeekDeliveryPrediction = await createWeekDeliveryPrediction(token);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/weekDeliveryPredictions/${createdWeekDeliveryPrediction.id}`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
@@ -264,7 +265,7 @@ test("Delete week delivery prediction created by other user", async (t) => {
 
   try {
     const createdWeekDeliveryPrediction = await createWeekDeliveryPrediction(token2);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/weekDeliveryPredictions/${createdWeekDeliveryPrediction.id}`)
       .set("Authorization", `Bearer ${token1}`)
       .set("Accept", "application/json")
@@ -285,7 +286,7 @@ test("Delete week delivery prediction - Forbidden", async (t) => {
 
   try {
     const createdWeekDeliveryPrediction = await createWeekDeliveryPrediction(token1);
-    await request(config.get("baseUrl"))
+    await request(TestConfig.HOST)
       .delete(`/rest/v1/weekDeliveryPredictions/${createdWeekDeliveryPrediction.id}`)
       .set("Authorization", `Bearer ${token2}`)
       .set("Accept", "application/json")

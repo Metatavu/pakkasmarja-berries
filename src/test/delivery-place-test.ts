@@ -4,6 +4,7 @@ import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";
 import operations from "./operations";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveryPlaceDatas = require(`${testDataDir}/delivery-places.json`);
@@ -12,7 +13,7 @@ const deliveryPlaceSyncDatas = require(`${testDataDir}/delivery-places-sync.json
 test("Test listing delivery places", async (t) => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -29,7 +30,7 @@ test("Test listing delivery places", async (t) => {
 test("Test listing delivery places - without token", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces")
     .set("Accept", "application/json")
     .expect(403)
@@ -41,7 +42,7 @@ test("Test listing delivery places - without token", async () => {
 test("Test listing delivery places - invalid token", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -54,7 +55,7 @@ test("Test listing delivery places - invalid token", async () => {
 test("Test finding delivery place", async (t) => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces/bad02318-1a44-11e8-87a4-c7808d590a07")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -68,7 +69,7 @@ test("Test finding delivery place", async (t) => {
 test("Test finding delivery place - without token", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces/bad02318-1a44-11e8-87a4-c7808d590a07")
     .set("Accept", "application/json")
     .expect(403)
@@ -80,7 +81,7 @@ test("Test finding delivery place - without token", async () => {
 test("Test finding delivery place - invalid token", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces/bad02318-1a44-11e8-87a4-c7808d590a07")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
@@ -93,7 +94,7 @@ test("Test finding delivery place - invalid token", async () => {
 test("Test finding delivery place - not found", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -106,7 +107,7 @@ test("Test finding delivery place - not found", async () => {
 test("Test finding delivery place - malformed id", async () => {
   await database.executeFile(testDataDir, "delivery-places-setup.sql");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
@@ -121,7 +122,7 @@ test("Test sync delivery places", async (t) => {
   
   await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_DELIVERY_PLACE_SYNC");
   
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get("/rest/v1/deliveryPlaces")
     .set("Authorization", `Bearer ${accessToken}`)
     .set("Accept", "application/json")

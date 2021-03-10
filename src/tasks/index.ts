@@ -5,7 +5,7 @@ import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
 import * as Queue from "better-queue"; 
 import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
-import { SAPExportBusinessPartner, SAPExportItemGroup, SAPExportDeliveryPlace, SAPExportContract, SAPExport, SAPExportRoot } from "../sap/export"; 
+import { SAPExportBusinessPartner, SAPExportContract, SAPExport, SAPExportRoot } from "../sap/export"; 
 import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
@@ -13,7 +13,8 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
+import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup, SapVatLiableEnum } from "../sap/service-layer-client/types";
+import * as moment from "moment";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -149,11 +150,11 @@ export default new class TaskQueue {
    * 
    * @param {Object} itemGroup SAP item group object 
    */
-  async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SAPExportItemGroup) {
+  async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SapItemGroup) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapItemGroupUpdateQueue.push({
-      id: itemGroup.ItemGroupCode,
+      id: itemGroup.Number,
       itemGroup: itemGroup,
       operationReportItemId: operationReportItem.id
     });
@@ -164,11 +165,11 @@ export default new class TaskQueue {
    * 
    * @param {Object} deliveryPlace SAP delivery place object 
    */
-  async enqueueSapDeliveryPlaceUpdate(operationReportId: number, deliveryPlace: SAPExportDeliveryPlace) {
+  async enqueueSapDeliveryPlaceUpdate(operationReportId: number, deliveryPlace: SapDeliveryPlace) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapDeliveryPlaceUpdateQueue.push({
-      id: deliveryPlace.PlaceCode,
+      id: deliveryPlace.Code,
       deliveryPlace: deliveryPlace,
       operationReportItemId: operationReportItem.id
     });
@@ -179,16 +180,14 @@ export default new class TaskQueue {
    * 
    * @param {String} operationReportId operationReportId
    * @param {Object} contract SAP contract object
-   * @param {int} lineIndex contract line index
-   * @param {String} status contract status
+   * @param {Object} contractLine SAP contract line object
    */
-  async enqueueSapContractUpdate(operationReportId: number, contract: SAPExportContract, lineIndex: number, status: string) {
+  async enqueueSapContractUpdate(operationReportId: number, contract: SapContract, contractLine: SapContractLine) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapContractUpdateQueue.push({
       contract: contract,
-      lineIndex: lineIndex,
-      status: status,
+      contractLine: contractLine,
       operationReportItemId: operationReportItem.id
     });
   }
@@ -263,23 +262,26 @@ export default new class TaskQueue {
    */
   async sapContactUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
-      const businessPartner = data.businessPartner;
-      const sapId = businessPartner.CardCode.trim();
-      const email = businessPartner.Email.trim();
-      const companyName = businessPartner.CardName.trim();
-      const phone1 = businessPartner.Phone1.trim();
-      const phone2 = businessPartner.Phone2.trim();
-      const billStreet = businessPartner.BillStreet.trim();
-      const billZip = businessPartner.BillZipCode.trim();
-      const billCity = businessPartner.BillCity.trim();
-      const shipStreet = businessPartner.ShipStreet.trim();
-      const shipZip = businessPartner.ShipZipCode.trim();
-      const shipCity = businessPartner.ShipCity.trim();
-      const iban = businessPartner.IBAN.trim();
-      const bic = businessPartner.BIC.trim();
-      const taxCode = businessPartner.FederalTaxID.trim();
-      const sapVatLiable = businessPartner.VatLiable.trim();
-      const audit = businessPartner.Audit.trim();
+      const businessPartner: SapBusinessPartner = data.businessPartner;
+      const sapId = businessPartner.CardCode;
+      const email = businessPartner.EmailAddress;
+      const companyName = businessPartner.CardName;
+      const phone1 = businessPartner.Phone1;
+      const phone2 = businessPartner.Phone2;
+      const billingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.BILLING);
+      const billStreet = billingInfo ? billingInfo.Street : null;
+      const billZip = billingInfo ? billingInfo.ZipCode : null;
+      const billCity = billingInfo ? billingInfo.City : null;
+      const shippingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.SHIPPING);
+      const shipStreet = shippingInfo ? shippingInfo.Street : null;
+      const shipZip = shippingInfo ? shippingInfo.ZipCode : null;
+      const shipCity = shippingInfo ? shippingInfo.City : null;
+      const bankAccountInfo = businessPartner.BPBankAccounts.length > 0 ? businessPartner.BPBankAccounts[0] : undefined;
+      const iban = bankAccountInfo ? bankAccountInfo.IBAN : null;
+      const bic = bankAccountInfo ? bankAccountInfo.BICSwiftCode : null;
+      const taxCode = businessPartner.FederalTaxID;
+      const sapVatLiable = businessPartner.VatLiable;
+      const audit = businessPartner.U_audit;
       const vatLiable = this.translateSapVatLiable(sapVatLiable);
 
       if (!email) {
@@ -306,7 +308,7 @@ export default new class TaskQueue {
         });
         return;
       }
-      
+
       userManagement.setSingleAttribute(user, UserProperty.SAP_ID, sapId);
       userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phone1);
       userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phone2);
@@ -530,26 +532,21 @@ export default new class TaskQueue {
   /**
    * Translates vat liable value from SAP into format used by application
    * 
-   * @param {String} sapVatLiable vat liable from SAP
-   * @requires {String} vat liable in appilcation format
+   * @param {SapVatLiableEnum | null} sapVatLiable vat liable from SAP
+   * @requires {String} vat liable in application format
    */
-  private translateSapVatLiable(sapVatLiable: string) {
-    if (!sapVatLiable) {
-      return null; 
-    }
-    
+  private translateSapVatLiable(sapVatLiable: SapVatLiableEnum | null) {
     switch (sapVatLiable) {
-      case "Y":
+      case SapVatLiableEnum.Y:
         return "YES";
-      case "N":
+      case SapVatLiableEnum.N:
         return "NO";
-      case "EU":
+      case SapVatLiableEnum.EU:
         return "EU";
+      case null:
+      default:
+        return null;
     }
-
-    this.logger.error(`Failed to translate ${sapVatLiable} into vat liable value`);
-
-    return null;
   }
 
   /**
@@ -560,23 +557,40 @@ export default new class TaskQueue {
    */
   private async sapDeliveryPlaceUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
-      const sapDeliveryPlace = data.deliveryPlace;
-      const sapId = sapDeliveryPlace.PlaceCode;
-      const name = sapDeliveryPlace.PlaceName;
+      const sapDeliveryPlace: SapDeliveryPlace = data.deliveryPlace;
+      const sapId = sapDeliveryPlace.Code;
+      if (!sapId) {
+        this.logger.error(`Could not find SapId from delivery place`);
+        callback({
+          message: "Could not find SapId from delivery place",
+          operationReportItemId: data.operationReportItemId
+        });
+        return;
+      }
+
+      const name = sapDeliveryPlace.Name;
+      if (!name) {
+        this.logger.error(`Could not find name from delivery place with SapId ${sapId}`);
+        callback({
+          message: `Could not find name from delivery place with SapId ${sapId}`,
+          operationReportItemId: data.operationReportItemId
+        });
+        return;
+      }
 
       const deliveryPlace = await models.findDeliveryPlaceBySapId(sapId);
       if (deliveryPlace) {
         models.updateDeliveryPlace(deliveryPlace.id, name);
         
         callback(null, {
-          message: `Updated devivery place from SAP ${name} / ${sapId}`,
+          message: `Updated delivery place from SAP ${name} / ${sapId}`,
           operationReportItemId: data.operationReportItemId
         });
       } else {
         models.createDeliveryPlace(sapId, name);
 
         callback(null, {
-          message: `Created new devivery place from SAP ${name} / ${sapId}`,
+          message: `Created new delivery place from SAP ${name} / ${sapId}`,
           operationReportItemId: data.operationReportItemId
         });
       }
@@ -598,9 +612,17 @@ export default new class TaskQueue {
    */
   private async sapItemGroupUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
-      const sapItemGroup = data.itemGroup;
-      const sapId = sapItemGroup.ItemGroupCode;
-      const name = sapItemGroup.ItemGroupName;
+      const sapItemGroup: SapItemGroup = data.itemGroup;
+      const sapId = `${sapItemGroup.Number}`;
+      const name = sapItemGroup.GroupName;
+      if (!name) {
+        callback({
+          message: `Failed to resolve SAP item group ${sapId} name`,
+          operationReportItemId: data.operationReportItemId
+        });
+        return;
+      }
+
       const displayName = this.resolveSapItemGroupDisplayName(sapId);
 
       const category = this.resolveSapItemGroupCategory(sapId);
@@ -650,20 +672,20 @@ export default new class TaskQueue {
    * Executes a SAP contract update task
    * 
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   private async sapContractUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
-      const sapContract = data.contract;
-      const sapContractLine = sapContract.ContractLines.ContractLine[data.lineIndex];
-      const status = data.status;
-      const sapItemGroupId = sapContractLine.ItemGroupCode;
-      const sapDeliveryPlaceId = sapContractLine.PlaceCode;
-      const sapUserId = sapContractLine.CardCode;
-      const year = parseInt(sapContract.Year);
-      const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
+      const sapContract: SapContract = data.contract;
+      const sapContractLine: SapContractLine = data.contractLine;
+      const status = this.resolveSapContractStatus(sapContract);
+      const sapItemGroupId = `${sapContractLine.ItemGroup}`;
+      const sapDeliveryPlaceId = sapContractLine.U_PFZ_ToiP;
+      const sapUserId = sapContract.BPCode;
+      const year = moment(sapContract.StartDate ? sapContract.StartDate : undefined).year();
+      const sapId = `${year}-${sapContract.AgreementNo}-${sapItemGroupId}`;
       
-      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId);
+      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId || "");
       if (!deliveryPlace) {
         callback({
           message: `Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`,
@@ -673,7 +695,7 @@ export default new class TaskQueue {
         return;
       }
 
-      const itemGroup = await models.findItemGroupBySapId(sapItemGroupId);
+      const itemGroup = await models.findItemGroupBySapId(`${sapItemGroupId}`);
       if (!itemGroup) {
         callback({
           message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`,
@@ -693,15 +715,24 @@ export default new class TaskQueue {
         return;
       }
 
-      const contractQuantity = sapContractLine.ContractQuantity;
-      const deliveredQuantity = sapContractLine.DeliveredQuantity;
+      const contractQuantity = this.resolveSapContractQuantity(sapContract, sapContractLine);
+      if (!contractQuantity) {
+        callback({
+          message: `Failed to synchronize SAP contract ${sapId} because planned quantity of item group ${sapItemGroupId} was not found from SAP contract`,
+          operationReportItemId: data.operationReportItemId
+        });
+        
+        return;
+      }
+
+      const deliveredQuantity = sapContractLine.CumulativeQuantity || 0;
       const userId = user.id;
       const itemGroupId = itemGroup.id;
       const deliveryPlaceId = deliveryPlace.id;
-      const startDate = null;
-      const endDate = null;
-      const signDate = null;
-      const termDate = null;
+      const startDate = sapContract.StartDate ? moment(sapContract.StartDate).toDate() : null;
+      const endDate = sapContract.EndDate ? moment(sapContract.EndDate).toDate() : null;
+      const signDate = sapContract.SigningDate ? moment(sapContract.SigningDate).toDate() : null;
+      const termDate = sapContract.TerminateDate ? moment(sapContract.TerminateDate).toDate() : null;
       let remarks = null;
       let proposedQuantity = contractQuantity;
       let deliveryPlaceComment = null;
@@ -723,7 +754,7 @@ export default new class TaskQueue {
       } else {
         if (contract.proposedQuantity !== null) {
           proposedQuantity = contract.proposedQuantity;
-        }         
+        }
         
         deliveryPlaceComment = contract.deliveryPlaceComment;
         quantityComment = contract.quantityComment;
@@ -732,27 +763,29 @@ export default new class TaskQueue {
         deliverAll = contract.deliverAll;
         remarks = contract.remarks;
   
-        await models.updateContract(contract.id, 
-          year, 
-          deliveryPlaceId, 
-          contract.proposedDeliveryPlaceId, 
-          itemGroupId, 
+        await models.updateContract(
+          contract.id, 
+          year,
+          deliveryPlaceId,
+          contract.proposedDeliveryPlaceId,
+          itemGroupId,
           sapId,
-          contractQuantity, 
-          deliveredQuantity, 
-          proposedQuantity, 
-          startDate, 
-          endDate, 
-          signDate, 
-          termDate, 
-          status, 
-          areaDetails, 
-          deliverAll, 
+          contractQuantity,
+          deliveredQuantity,
+          proposedQuantity,
+          startDate,
+          endDate,
+          signDate,
+          termDate,
+          status,
+          areaDetails,
+          deliverAll,
           proposedDeliverAll,
-          remarks, 
-          deliveryPlaceComment, 
+          remarks,
+          deliveryPlaceComment,
           quantityComment,
-          rejectComment);
+          rejectComment
+        );
       
         callback(null, {
           message: `Updated contract details from SAP ${sapId}`,
@@ -799,6 +832,43 @@ export default new class TaskQueue {
   }
 
   /**
+   * Resolves status for given SAP contract
+   * 
+   * @param contract SAP contract
+   * @returns status as string
+   */
+  private resolveSapContractStatus(contract: SapContract) {
+    switch (contract.Status) {
+      case SapContractStatusEnum.TERMINATED:
+        return "TERMINATED";
+      case SapContractStatusEnum.APPROVED:
+      default:
+        return "APPROVED";
+    }
+  }
+
+  /**
+   * Resolves contract quantity from given SAP contract and SAP contract line
+   * 
+   * @param sapContract SAP contract object
+   * @param sapContractLine SAP contract line object
+   */
+  private resolveSapContractQuantity(sapContract: SapContract, sapContractLine: SapContractLine) {
+    const itemGroup = sapContractLine.ItemGroup;
+    if (!itemGroup) {
+      return undefined;
+    }
+
+    const quantityPropertyKey = `U_TR_${itemGroup}`;
+    const quantity: number | undefined = sapContract[quantityPropertyKey];
+    if (!quantity || typeof quantity !== "number") {
+      return undefined;
+    }
+
+    return quantity;
+  }
+
+  /**
    * Resolves prerequisite contract item group id for given SAP id or null if not specified
    * 
    * @param {String} sapId sapId
@@ -819,7 +889,7 @@ export default new class TaskQueue {
     return false;
   }
 
-    /**
+  /**
    * Adds task to chat permissions cache queue
    */
   private enqueueCacheUsersChatPermissionsTask() {

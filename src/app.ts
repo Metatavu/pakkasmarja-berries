@@ -8,6 +8,7 @@ import * as i18n from "i18n";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
 import * as path from "path";
+import dotenv = require("dotenv");
 
 import Migration from "./migration";
 import { initializeModels } from "./models";
@@ -32,6 +33,8 @@ process.on("unhandledRejection", (error) => {
 
 (async () => {
   const logger: Logger = getLogger();
+
+  dotenv.config();
 
   const sequelize = new Sequelize(config().mysql.database, config().mysql.username, config().mysql.password, {
     logging: false,
@@ -110,5 +113,6 @@ process.on("unhandledRejection", (error) => {
 
   mqtt.connect();
   taskQueue.start();
+
 
 })();

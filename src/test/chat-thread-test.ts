@@ -6,6 +6,7 @@ import auth from "./auth";
 import { ChatGroup, ChatGroupType, ChatThread, ChatThreadGroupPermission, UserGroup, ChatThreadUserPermission } from "../rest/model/models";
 import mqtt from "./mqtt";
 import ApplicationRoles from "../rest/application-roles";
+import TestConfig from "./test-config";
 
 /**
  * Sorts list by id
@@ -28,7 +29,7 @@ const sorted = (list: any[]) => {
  * @returns promise for chat groups
  */
 const listUserGroups = (token: string): Promise<UserGroup[]> => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/userGroups`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -54,7 +55,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
     imageUrl: null
   };
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post("/rest/v1/chatGroups")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -99,7 +100,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
     title: title
   };
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .post(`/rest/v1/chatThreads/`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -119,7 +120,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
  * @returns promise for chat group
  */
 const findChatThread = (token: string, id: number, expectStatus?: number): Promise<ChatGroup> => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/chatThreads/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -146,7 +147,7 @@ const listChatThreads = (token: string, groupId?: number, groupType?: ChatGroupT
     params.append("groupType", groupType);
   }
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .get(`/rest/v1/chatThreads?${params.toString()}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -189,7 +190,7 @@ const updateChatThread = (token: string, id: number, groupId: number, title: str
     title: title
   };
 
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .put(`/rest/v1/chatThreads/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -208,7 +209,7 @@ const updateChatThread = (token: string, id: number, groupId: number, title: str
  * @returns promise for delete
  */
 const deleteChatGroup = async (token: string, id: number) => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -223,7 +224,7 @@ const deleteChatGroup = async (token: string, id: number) => {
  * @returns promise for delete
  */
 const deleteChatThread = async (token: string, threadId: number) => {
-  return request(config.get("baseUrl"))
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/chatThreads/${threadId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
