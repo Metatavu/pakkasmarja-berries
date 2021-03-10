@@ -262,6 +262,7 @@ export default class ContractsServiceImpl extends ContractsService {
         const allowed = itemGroupId ?
           await this.deliverAllAllowed(itemGroupId) :
           false;
+
         if (deliverAll && !allowed) {
           contractErrors.push({
             key: "deliverAll",
