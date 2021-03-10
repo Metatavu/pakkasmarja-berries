@@ -186,6 +186,7 @@ export default class ContractsServiceImpl extends ContractsService {
             message: this.getImportedContractErrorMessage("sapIdNotFound")
           });
         }
+
         const sapId = rawSapId ? `${rawSapId}` : "";
         contract.sapId = sapId;
         importedContract.sapId = sapId;
