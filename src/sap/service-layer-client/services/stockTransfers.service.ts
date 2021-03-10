@@ -48,7 +48,7 @@ export default class SapSapStockTransfersService extends AbstractService {
       const response = await fetch(url, options);
 
       if (response.status !== 201) {
-        return Promise.reject(`Could not create stock transfer to SAP Service Layer. Error: ${await response.json()}`);
+        return Promise.reject(`Could not create stock transfer to SAP Service Layer. Error: ${JSON.stringify(await response.json(), null, 2)}`);
       }
 
       return await response.json();

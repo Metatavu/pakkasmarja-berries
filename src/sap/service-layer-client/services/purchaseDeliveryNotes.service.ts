@@ -47,7 +47,7 @@ export default class SapPurchaseDeliveryNotesService extends AbstractService {
       const response = await fetch(url, options);
 
       if (response.status !== 201) {
-        return Promise.reject(`Could not create delivery purchase note to SAP Service Layer. Error: ${await response.json()}`);
+        return Promise.reject(`Could not create delivery purchase note to SAP Service Layer. Error: ${JSON.stringify(await response.json(), null, 2)}`);
       }
 
       return await response.json();
