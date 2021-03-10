@@ -9,33 +9,28 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
-import { ContractStatus } from './contractStatus';
 
 
-export interface ContractPreview { 
+export interface ImportedContract { 
     sapId: string ;
     contactName: string ;
     deliveryPlaceName: string ;
     deliveryPlaceComment: string ;
     itemGroupName: string ;
-    year: number ;
-    contractQuantity: number ;
+    contractQuantity: string ;
     quantityComment: string ;
-    deliverAll: boolean ;
-    status: ContractStatus ;
+    deliverAll: string ;
     remarks: string ;
 }    
 
-export interface ContractPreviewOpt { 
+export interface ImportedContractOpt { 
     sapId?: string;
     contactName?: string;
     deliveryPlaceName?: string;
     deliveryPlaceComment?: string;
     itemGroupName?: string;
-    year?: number;
-    contractQuantity?: number;
+    contractQuantity?: string;
     quantityComment?: string;
-    deliverAll?: boolean;
-    status?: ContractStatus;
+    deliverAll?: string;
     remarks?: string;
 }

@@ -10,18 +10,18 @@
  * Do not edit the class manually.
  */
 import { Contract } from './contract';
-import { ContractPreview } from './contractPreview';
-import { ContractPreviewError } from './contractPreviewError';
+import { ImportedContract } from './importedContract';
+import { ImportedContractError } from './importedContractError';
 
 
 export interface ContractPreviewData { 
     contract: Contract ;
-    preview: ContractPreview ;
-    errors: Array<ContractPreviewError> ;
+    importedContract: ImportedContract  | null;
+    errors: Array<ImportedContractError> ;
 }    
 
 export interface ContractPreviewDataOpt { 
     contract?: Contract;
-    preview?: ContractPreview;
-    errors?: Array<ContractPreviewError>;
+    importedContract?: ImportedContract;
+    errors?: Array<ImportedContractError>;
 }

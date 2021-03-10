@@ -1,0 +1,40 @@
+[
+  {
+    "contract": {
+      "id": null,
+      "sapId": "tusap1",
+      "year": 2021,
+      "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
+      "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
+      "proposedDeliveryPlaceId": null,
+      "deliveryPlaceComment": "Test comment",
+      "itemGroupId": "89723408-0f51-11e8-baa0-dfe7c7eae257",
+      "contractQuantity": 10000,
+      "proposedQuantity": null,
+      "deliveredQuantity": null,
+      "quantityComment": "Test comment",
+      "deliverAll": true,
+      "proposedDeliverAll": false,
+      "status": "DRAFT",
+      "areaDetails": null,
+      "startDate": null,
+      "endDate": null,
+      "signDate": null,
+      "termDate": null,
+      "rejectComment": null,
+      "remarks": "Test remark"
+    },
+    "importedContract": {
+      "sapId": "tusap1",
+      "contactName": "Test 1 User 1",
+      "deliveryPlaceName": "Test Place 1",
+      "deliveryPlaceComment": "Test comment",
+      "itemGroupName": "123456/Test Group 1",
+      "contractQuantity": "10000",
+      "quantityComment": "Test comment",
+      "deliverAll": "Y",
+      "remarks": "Test remark"
+    },
+    "errors": []
+  }
+]

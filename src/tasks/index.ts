@@ -684,7 +684,7 @@ export default new class TaskQueue {
       }
 
       const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapUserId);
-      if (!user) {
+      if (!user || !user.id) {
         callback({
           message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,
           operationReportItemId: data.operationReportItemId

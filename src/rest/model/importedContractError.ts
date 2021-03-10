@@ -9,15 +9,14 @@
  * https://github.com/swagger-api/swagger-codegen.git
  * Do not edit the class manually.
  */
-import { ContractPreviewErrorType } from './contractPreviewErrorType';
 
 
-export interface ContractPreviewError { 
+export interface ImportedContractError { 
     key: string ;
-    type: ContractPreviewErrorType ;
+    message: string ;
 }    
 
-export interface ContractPreviewErrorOpt { 
+export interface ImportedContractErrorOpt { 
     key?: string;
-    type?: ContractPreviewErrorType;
+    message?: string;
 }

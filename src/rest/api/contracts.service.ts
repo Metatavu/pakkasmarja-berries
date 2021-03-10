@@ -1,8 +1,12 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
+import multer = require("multer");
 import AbstractService from "../abstract-service";
 
 export default abstract class ContractsService extends AbstractService {
+
+  private storage = multer.memoryStorage();
+  private upload = multer({ storage: this.storage });
 
   /**
    * Constructor
@@ -19,7 +23,7 @@ export default abstract class ContractsService extends AbstractService {
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates/${encodeURIComponent(String(contractDocumentTemplateId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContractDocumentTemplate.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
-    app.post(`/rest/v1${this.toPath('/contracts/import')}`, [ keycloak.protect() ], this.catchAsync(this.importContracts.bind(this)));
+    app.post(`/rest/v1${this.toPath('/contracts/import')}`, [ keycloak.protect(), this.upload.single("file") ], this.catchAsync(this.importContracts.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.listContractDocumentTemplates.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.listContractPrices.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
@@ -93,10 +97,10 @@ export default abstract class ContractsService extends AbstractService {
 
 
   /**
-   * Imports contracts via XLSX file
-   * @summary Import contracts via XLSX file
+   * Imports draft contracts via XLSX file
+   * @summary Import draft contracts via XLSX file
    * Accepted parameters:
-    * - (body) Object body - 
+    * - (form) string file - 
   */
   public abstract importContracts(req: Request, res: Response): Promise<void>;
 

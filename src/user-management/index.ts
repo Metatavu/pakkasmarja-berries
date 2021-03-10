@@ -96,7 +96,7 @@ export default new class UserManagement {
    * @param {String} name attribute name 
    * @param {String} value attribute value 
    */
-  public async findUserByProperty(name: UserProperty, value: string): Promise<any> {
+  public async findUserByProperty(name: UserProperty, value: string): Promise<UserRepresentation | null> {
     let page  = 0;
     let size = 25;
     const maxPages = 50;

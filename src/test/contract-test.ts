@@ -15,6 +15,8 @@ import requestUtils from "./request-utils";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contractDatas = require(`${testDataDir}/contracts.json`);
+const contractsImport = require(`${testDataDir}/contracts-import.json`);
+const contractsImportFalseData = require(`${testDataDir}/contracts-import-false-data.json`);
 const contractDatasSync = require(`${testDataDir}/contracts-sync.json`);
 const contractDataCreate = require(`${testDataDir}/contracts-create.json`);
 const contractDatasUpdate = require(`${testDataDir}/contracts-update.json`);
@@ -60,6 +62,81 @@ test("Test contract sign - missing prerequisite", async (t) => {
         "code": 400,
         "message": "Missing prerequisite contracts" 
       });
+    });
+});
+
+test("Test importing contracts", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  return request(config.get("baseUrl"))
+    .post("/rest/v1/contracts/import")
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
+    .set("Accept", "application/json")
+    .attach('file', `${testDataDir}contracts-import.xlsx`)
+    .expect(200)
+    .then(async response => {
+      await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT ]);
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      t.deepEqual(response.body, contractsImport, "response data is equal to validation data");
+    });
+});
+
+test("Test importing contracts - forbidden", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  return request(config.get("baseUrl"))
+    .post("/rest/v1/contracts/import")
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
+    .set("Accept", "application/json")
+    .attach('file', `${testDataDir}contracts-import.xlsx`)
+    .expect(403)
+    .then(async () => {
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    });
+});
+
+test("Test importing contracts - no file", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  return request(config.get("baseUrl"))
+    .post("/rest/v1/contracts/import")
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
+    .set("Accept", "application/json")
+    .expect(400)
+    .then(async () => {
+      await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT ]);
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    });
+});
+
+test("Test importing contracts - no data rows in file", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  return request(config.get("baseUrl"))
+    .post("/rest/v1/contracts/import")
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
+    .set("Accept", "application/json")
+    .attach('file', `${testDataDir}contracts-import-empty.xlsx`)
+    .expect(400)
+    .then(async () => {
+      await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT ]);
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    });
+});
+
+test("Test importing contracts - false data", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  return request(config.get("baseUrl"))
+    .post("/rest/v1/contracts/import")
+    .set("Content-Type", "application/x-www-form-urlencoded")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
+    .set("Accept", "application/json")
+    .attach('file', `${testDataDir}contracts-import-false-data.xlsx`)
+    .expect(200)
+    .then(async response => {
+      await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT ]);
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      t.deepEqual(response.body, contractsImportFalseData, "response data is equal to validation data");
     });
 });
 
