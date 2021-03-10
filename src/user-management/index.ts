@@ -96,7 +96,7 @@ export default new class UserManagement {
    * @param {String} name attribute name 
    * @param {String} value attribute value 
    */
-  public async findUserByProperty(name: UserProperty, value: string | null): Promise<any> {
+  public async findUserByProperty(name: UserProperty, value: string | null): Promise<UserRepresentation | null> {
     if (value === null) {
       return null;
     }

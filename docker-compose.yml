@@ -43,6 +43,7 @@ services:
         retries: 30
     volumes:
       - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
+      - ./test-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json
       - ./test-volumes/pakkasmarja-api/sap-files:/usr/src/pakkasmarja/sap-files
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush

@@ -1,0 +1,57 @@
+[
+  {
+    "contract": {
+      "id": null,
+      "sapId": "301274",
+      "year": 2021,
+      "contactId": null,
+      "deliveryPlaceId": "",
+      "proposedDeliveryPlaceId": null,
+      "deliveryPlaceComment": null,
+      "itemGroupId": "",
+      "contractQuantity": 1000,
+      "proposedQuantity": null,
+      "deliveredQuantity": null,
+      "quantityComment": "Ei kommenttia",
+      "deliverAll": true,
+      "proposedDeliverAll": false,
+      "status": "DRAFT",
+      "areaDetails": null,
+      "startDate": null,
+      "endDate": null,
+      "signDate": null,
+      "termDate": null,
+      "rejectComment": null,
+      "remarks": "Ei kommenttia"
+    },
+    "importedContract": {
+      "sapId": "301274",
+      "contactName": "",
+      "deliveryPlaceName": "",
+      "deliveryPlaceComment": "",
+      "itemGroupName": "",
+      "contractQuantity": "1000",
+      "quantityComment": "Ei kommenttia",
+      "deliverAll": "Kyllä",
+      "remarks": "Ei kommenttia"
+    },
+    "errors": [
+      {
+        "key": "contactId",
+        "message": "Käyttäjää ei löytynyt SAP-tunnuksella"
+      },
+      {
+        "key": "deliveryPlaceId",
+        "message": "Toimituspaikkaa ei löytynyt toimituspaikan SAP-tunnuksella"
+      },
+      {
+        "key": "itemGroupId",
+        "message": "Marjalajia ei löytynyt marjalajin SAP-tunnuksella"
+      },
+      {
+        "key": "deliverAll",
+        "message": "Marjalaji ei salli 100% toimitusta"
+      }
+    ]
+  }
+]

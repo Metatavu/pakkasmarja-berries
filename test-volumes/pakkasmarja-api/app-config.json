@@ -1,0 +1,11 @@
+{
+  "item-groups": {
+    "89723408-0f51-11e8-baa0-dfe7c7eae257": {
+      "allow-delivery-all": true,
+      "require-area-details": true
+    },
+    "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20": {
+      "require-area-details": true
+    }
+  }
+}

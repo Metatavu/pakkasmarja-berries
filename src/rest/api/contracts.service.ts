@@ -1,8 +1,12 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
+import multer = require("multer");
 import AbstractService from "../abstract-service";
 
 export default abstract class ContractsService extends AbstractService {
+
+  private storage = multer.memoryStorage();
+  private upload = multer({ storage: this.storage });
 
   /**
    * Constructor
@@ -16,6 +20,7 @@ export default abstract class ContractsService extends AbstractService {
     app.post(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.createContract.bind(this)));
     app.post(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}/signRequests')}`, [ keycloak.protect() ], this.catchAsync(this.createContractDocumentSignRequest.bind(this)));
     app.post(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.createContractDocumentTemplate.bind(this)));
+    app.post(`/rest/v1${this.toPath('/contractPreviews')}`, [ keycloak.protect(), this.upload.single("file") ], this.catchAsync(this.createContractPreviews.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContract.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates/${encodeURIComponent(String(contractDocumentTemplateId))}')}`, [ keycloak.protect() ], this.catchAsync(this.findContractDocumentTemplate.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
@@ -58,6 +63,15 @@ export default abstract class ContractsService extends AbstractService {
     * - (path) string contractId - contract id
   */
   public abstract createContractDocumentTemplate(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Creates contract previews via XLSX file
+   * @summary create contract previews via XLSX file
+   * Accepted parameters:
+    * - (form) string file - 
+  */
+  public abstract createContractPreviews(req: Request, res: Response): Promise<void>;
 
 
   /**
