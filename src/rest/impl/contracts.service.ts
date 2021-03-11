@@ -130,8 +130,7 @@ export default class ContractsServiceImpl extends ContractsService {
       deliveryPlaceComment, 
       quantityComment, 
       rejectComment);
-    
-    
+
     if (databaseContract.status === "DRAFT") {
       this.sendContractChangePushNotification(
         userId,
@@ -175,23 +174,15 @@ export default class ContractsServiceImpl extends ContractsService {
 
       for (let i = 0; i < contractRows.length; i++) {
         const contractRow = contractRows[i];
+        if (contractRow.every(column => !column)) {
+          continue;
+        }
+
         const contract: ContractOpt = {};
         const contractErrors: { key: keyof Contract, message: string }[] = [];
         const importedContract: ImportedContractOpt = {};
 
-        const rawSapId = this.getContractRowValue(contractRow, 0);
-        if (!rawSapId) {
-          contractErrors.push({
-            key: "sapId",
-            message: this.getImportedContractErrorMessage("sapIdNotFound")
-          });
-        }
-
-        const sapId = rawSapId ? `${rawSapId}` : "";
-        contract.sapId = sapId;
-        importedContract.sapId = sapId;
-
-        const contactSapId = this.getContractRowValue(contractRow, 1);
+        const contactSapId = this.getContractRowValue(contractRow, 0);
         if (!contactSapId) {
           contractErrors.push({
             key: "contactId",
@@ -213,7 +204,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.contactId = userId || undefined;
         importedContract.contactName = firstName && lastName ? `${firstName} ${lastName}` : "";
 
-        const deliveryPlaceSapId = this.getContractRowValue(contractRow, 6);
+        const deliveryPlaceSapId = this.getContractRowValue(contractRow, 5);
         const deliveryPlace = await models.findDeliveryPlaceBySapId(`${deliveryPlaceSapId}`);
         if (!deliveryPlace) {
           contractErrors.push({
@@ -227,7 +218,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.deliveryPlaceId = deliveryPlaceId;
         importedContract.deliveryPlaceName = deliveryPlaceName;
 
-        const itemGroupSapId = this.getContractRowValue(contractRow, 2);
+        const itemGroupSapId = this.getContractRowValue(contractRow, 1);
         const itemGroup = await models.findItemGroupBySapId(`${itemGroupSapId}`);
         if (!itemGroup) {
           contractErrors.push({
@@ -241,11 +232,11 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.itemGroupId = itemGroupId;
         importedContract.itemGroupName = itemGroupName;
 
-        const deliveryPlaceComment = this.getContractRowValue(contractRow, 7);
+        const deliveryPlaceComment = this.getContractRowValue(contractRow, 6);
         contract.deliveryPlaceComment = deliveryPlaceComment;
         importedContract.deliveryPlaceComment = deliveryPlaceComment;
 
-        const contractQuantity = this.getContractRowValue(contractRow, 3);
+        const contractQuantity = this.getContractRowValue(contractRow, 2);
         const invalidQuantity = Number.isNaN(contractQuantity);
         if (!contractQuantity) {
           contractErrors.push({
@@ -262,11 +253,11 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.contractQuantity = !invalidQuantity ? contractQuantity || 0 : 0;
         importedContract.contractQuantity = contractQuantity ? `${contractQuantity}` : "";
 
-        const quantityComment = this.getContractRowValue(contractRow, 4);
+        const quantityComment = this.getContractRowValue(contractRow, 3);
         contract.quantityComment = `${quantityComment}`;
         importedContract.quantityComment = `${quantityComment}`;
 
-        const deliverAll = this.getContractRowValue(contractRow, 5);
+        const deliverAll = this.getContractRowValue(contractRow, 4);
         const deliverAllAllowed = itemGroupId ?
           await this.deliverAllAllowed(itemGroupId) :
           false;
@@ -281,14 +272,14 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.deliverAll = !!deliverAll;
         importedContract.deliverAll = deliverAll ? `${deliverAll}` : "";
 
-        const remarks = this.getContractRowValue(contractRow, 8);
+        const remarks = this.getContractRowValue(contractRow, 7);
         contract.remarks = remarks ? `${remarks}` : "";
         importedContract.remarks = remarks ? `${remarks}` : "";
 
         const contractPreviewData: ContractPreviewData = {
           contract: {
             id: null,
-            sapId: contract.sapId || null,
+            sapId: null,
             year: this.inTestMode() ? 2021 : new Date().getFullYear(),
             contactId: contract.contactId || null,
             deliveryPlaceId: contract.deliveryPlaceId || "",
@@ -311,7 +302,6 @@ export default class ContractsServiceImpl extends ContractsService {
             remarks: contract.remarks || null
           },
           importedContract: {
-            sapId: importedContract.sapId || "",
             contactName: importedContract.contactName || "",
             deliveryPlaceName: importedContract.deliveryPlaceName || "",
             deliveryPlaceComment: importedContract.deliveryPlaceComment || "",

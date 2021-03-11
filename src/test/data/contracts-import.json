@@ -2,7 +2,7 @@
   {
     "contract": {
       "id": null,
-      "sapId": "tcsap1",
+      "sapId": null,
       "year": 2021,
       "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
       "deliveryPlaceId": "bad02318-1a44-11e8-87a4-c7808d590a07",
@@ -25,7 +25,6 @@
       "remarks": "Test remark"
     },
     "importedContract": {
-      "sapId": "tcsap1",
       "contactName": "Test 1 User 1",
       "deliveryPlaceName": "Test Place 1",
       "deliveryPlaceComment": "Test comment",
