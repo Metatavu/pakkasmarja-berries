@@ -191,7 +191,15 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.sapId = sapId;
         importedContract.sapId = sapId;
 
-        const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapId);
+        const contactSapId = this.getContractRowValue(contractRow, 1);
+        if (!contactSapId) {
+          contractErrors.push({
+            key: "contactId",
+            message: this.getImportedContractErrorMessage("userSapIdNotFound")
+          });
+        }
+
+        const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, `${contactSapId}`);
         if (!user) {
           contractErrors.push({
             key: "contactId",
@@ -205,7 +213,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.contactId = userId || undefined;
         importedContract.contactName = firstName && lastName ? `${firstName} ${lastName}` : "";
 
-        const deliveryPlaceSapId = this.getContractRowValue(contractRow, 5);
+        const deliveryPlaceSapId = this.getContractRowValue(contractRow, 6);
         const deliveryPlace = await models.findDeliveryPlaceBySapId(`${deliveryPlaceSapId}`);
         if (!deliveryPlace) {
           contractErrors.push({
@@ -219,7 +227,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.deliveryPlaceId = deliveryPlaceId;
         importedContract.deliveryPlaceName = deliveryPlaceName;
 
-        const itemGroupSapId = this.getContractRowValue(contractRow, 1);
+        const itemGroupSapId = this.getContractRowValue(contractRow, 2);
         const itemGroup = await models.findItemGroupBySapId(`${itemGroupSapId}`);
         if (!itemGroup) {
           contractErrors.push({
@@ -233,11 +241,11 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.itemGroupId = itemGroupId;
         importedContract.itemGroupName = itemGroupName;
 
-        const deliveryPlaceComment = this.getContractRowValue(contractRow, 6);
+        const deliveryPlaceComment = this.getContractRowValue(contractRow, 7);
         contract.deliveryPlaceComment = deliveryPlaceComment;
         importedContract.deliveryPlaceComment = deliveryPlaceComment;
 
-        const contractQuantity = this.getContractRowValue(contractRow, 2);
+        const contractQuantity = this.getContractRowValue(contractRow, 3);
         const invalidQuantity = Number.isNaN(contractQuantity);
         if (!contractQuantity) {
           contractErrors.push({
@@ -254,11 +262,11 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.contractQuantity = !invalidQuantity ? contractQuantity || 0 : 0;
         importedContract.contractQuantity = contractQuantity ? `${contractQuantity}` : "";
 
-        const quantityComment = this.getContractRowValue(contractRow, 3);
+        const quantityComment = this.getContractRowValue(contractRow, 4);
         contract.quantityComment = `${quantityComment}`;
         importedContract.quantityComment = `${quantityComment}`;
 
-        const deliverAll = this.getContractRowValue(contractRow, 4);
+        const deliverAll = this.getContractRowValue(contractRow, 5);
         const deliverAllAllowed = itemGroupId ?
           await this.deliverAllAllowed(itemGroupId) :
           false;
@@ -273,7 +281,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contract.deliverAll = !!deliverAll;
         importedContract.deliverAll = deliverAll ? `${deliverAll}` : "";
 
-        const remarks = this.getContractRowValue(contractRow, 7);
+        const remarks = this.getContractRowValue(contractRow, 8);
         contract.remarks = remarks ? `${remarks}` : "";
         importedContract.remarks = remarks ? `${remarks}` : "";
 

@@ -2,7 +2,7 @@
   {
     "contract": {
       "id": null,
-      "sapId": "301274",
+      "sapId": "fakeSapContractId",
       "year": 2021,
       "contactId": null,
       "deliveryPlaceId": "",
@@ -25,7 +25,7 @@
       "remarks": "Ei kommenttia"
     },
     "importedContract": {
-      "sapId": "301274",
+      "sapId": "fakeSapContractId",
       "contactName": "",
       "deliveryPlaceName": "",
       "deliveryPlaceComment": "",
