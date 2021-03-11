@@ -658,14 +658,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         Quantity: null,
         FromWarehouseCode: loanWarehouse,
         WarehouseCode: loanWarehouse,
-        DocumentLinesBinAllocations: []
+        StockTransferLinesBinAllocations: []
       };
 
       if (loan.returned > 0) {
         stockTransferLines.push({
           ...stockTransferLine,
           Quantity: loan.returned,
-          DocumentLinesBinAllocations: [
+          StockTransferLinesBinAllocations: [
             {
               BinAbsEntry: 2,
               Quantity: loan.returned,
@@ -684,7 +684,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         stockTransferLines.push({
           ...stockTransferLine,
           Quantity: loan.loaned,
-          DocumentLinesBinAllocations: [
+          StockTransferLinesBinAllocations: [
             {
               BinAbsEntry: 3,
               Quantity: loan.loaned,

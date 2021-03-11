@@ -222,7 +222,7 @@ export interface SapStockTransferLine {
   Quantity: number | null;
   WarehouseCode: string | null;
   FromWarehouseCode: string | null;
-  DocumentLinesBinAllocations: BinAllocation[];
+  StockTransferLinesBinAllocations: BinAllocation[];
 }
 
 /**
