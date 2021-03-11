@@ -12,7 +12,6 @@
 
 
 export interface ImportedContract { 
-    sapId: string ;
     contactName: string ;
     deliveryPlaceName: string ;
     deliveryPlaceComment: string ;
@@ -24,7 +23,6 @@ export interface ImportedContract {
 }    
 
 export interface ImportedContractOpt { 
-    sapId?: string;
     contactName?: string;
     deliveryPlaceName?: string;
     deliveryPlaceComment?: string;
