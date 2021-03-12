@@ -710,8 +710,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       StockTransferLines: stockTransferLines
     };
 
-    getLogger().info(`Created StockTransfer: ${JSON.stringify(stockTransfer, null, 2)}`);
-
     try {
       const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
       const sapStockTransfersService = SapServiceFactory.getStockTransfersService();
