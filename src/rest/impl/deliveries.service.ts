@@ -13,7 +13,7 @@ import * as _ from "lodash";
 import mailer from "../../mailer";
 import { BinActionTypeEnum, SapDocObjectCodeEnum, SapPurchaseDeliveryNote, SapStockTransfer, SapStockTransferLine } from "../../sap/service-layer-client/types";
 import SapServiceFactory from "../../sap/service-layer-client";
-import { getLogger } from "log4js";
+import { getLogger, Logger } from "log4js";
 
 /**
  * Implementation for Deliveries REST service
@@ -709,6 +709,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       ToWarehouse: loanWarehouse,
       StockTransferLines: stockTransferLines
     };
+
+    getLogger().info(`Created StockTransfer: ${JSON.stringify(stockTransfer, null, 2)}`);
 
     try {
       const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
