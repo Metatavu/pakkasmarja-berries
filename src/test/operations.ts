@@ -1,5 +1,7 @@
+import config from "./config";
 import * as request from "supertest";
 import { Operation } from "../rest/model/models";
+import TestConfig from "./test-config";
 
 /**
  * Operations utility class for tests
@@ -27,7 +29,7 @@ export default new class Operations {
    * @param {String} type operation type
    */
   createOperation(accessToken: string, type: string) {
-    return request("http://localhost:3002")
+    return request(TestConfig.HOST)
       .post("/rest/v1/operations/")
       .set("Authorization", `Bearer ${accessToken}`)
       .set("Accept", "application/json")
@@ -81,7 +83,7 @@ export default new class Operations {
    * @param {int} operationReportId operation report id
    */
   checkOperationReport(accessToken: string, operationReportId: string) {
-    return request("http://localhost:3002")
+    return request(TestConfig.HOST)
       .get(`/rest/v1/operationReports/${operationReportId}`)
       .set("Authorization", `Bearer ${accessToken}`)
       .set("Accept", "application/json")
@@ -95,7 +97,7 @@ export default new class Operations {
    * @param {int} operationReportId operation report id
    */
   getOperationItems(accessToken: string, operationReportId: string) {
-    return request("http://localhost:3002")
+    return request(TestConfig.HOST)
       .get(`/rest/v1/operationReports/${operationReportId}/items`)
       .set("Authorization", `Bearer ${accessToken}`)
       .set("Accept", "application/json")

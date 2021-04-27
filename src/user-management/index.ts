@@ -96,7 +96,11 @@ export default new class UserManagement {
    * @param {String} name attribute name 
    * @param {String} value attribute value 
    */
-  public async findUserByProperty(name: UserProperty, value: string): Promise<any> {
+  public async findUserByProperty(name: UserProperty, value: string | null): Promise<UserRepresentation | null> {
+    if (value === null) {
+      return null;
+    }
+
     let page  = 0;
     let size = 25;
     const maxPages = 50;
@@ -111,7 +115,7 @@ export default new class UserManagement {
         } else if (result.users.length > 1) {
           throw new Error(`Found ${result.users.length} users with attribute ${name} === ${value}`);
         } else {
-          page++; 
+          page++;
         }
       }
     }
@@ -165,7 +169,7 @@ export default new class UserManagement {
   /**
    * Lists users in specified page by property  
    * 
-   * @param {String} name propery name
+   * @param {String} name property name
    * @param {String} value  property value
    * @param {Integer} first first result
    * @param {Integer} maxResults maxResults
@@ -189,7 +193,7 @@ export default new class UserManagement {
   /**
    * Updates user into Keycloak
    * 
-   * @param {Object} user user object
+   * @param {UserRepresentation} user user object
    * @return {Promise} promise that resolves on success and rejects on failure
    */
   public async updateUser(user: UserRepresentation ) {
@@ -211,7 +215,7 @@ export default new class UserManagement {
    * 
    * @param {string} userId User id of keycloak user
    * @param {string} password New password for the user
-   * @param {boolean} temporary if passoword is temporary or not
+   * @param {boolean} temporary if password is temporary or not
    * @return {Promise} promise that resolves on success and rejects on failure
    */
   public async resetUserPassword(userId: string, password: string, temporary: boolean) {
@@ -576,10 +580,10 @@ export default new class UserManagement {
   }
 
   /**
-   * Lists users for given permision
+   * Lists users for given permission
    * 
    * @param permissions permissions
-   * @returns users for given permision
+   * @returns users for given permission
    */
   public async listPermissionsUsers(permissions: PolicyRepresentation[]) {
     const client = await this.getClient();
@@ -729,7 +733,7 @@ export default new class UserManagement {
    * Deletes an permission
    * 
    * @param permissionId permission id
-   * @return Promise for succesful deletion
+   * @return Promise for successful deletion
    */
   public async deletePermission(permissionId: string) {
     const client = await this.getClient();
@@ -814,7 +818,7 @@ export default new class UserManagement {
    * Categorizes policy by types for given list of policies
    * 
    * @param policies policies
-   * @param result categoried policies
+   * @param result categorized policies
    */
   private async resolvePolicyTypes(policies: PolicyRepresentation[], result: PolicyResolveResult) {
     for (let i = 0; i < policies.length; i++) {
@@ -975,7 +979,7 @@ export default new class UserManagement {
    * Find user from Keycloak
    * 
    * @param id id
-   * @retrn promise for user or null if not found 
+   * @return promise for user or null if not found 
    */
   private async findKeycloakUser(id: string): Promise<UserRepresentation> {
     const client = await this.getClient(); 

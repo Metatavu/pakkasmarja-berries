@@ -1,8 +1,10 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
 import * as fs from "fs";
 import { PublicFile } from "src/rest/model/models";
+import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 
@@ -20,7 +22,7 @@ interface FileUploadResponse {
  * @returns promise for file
  */
 const createFile = (token: string): Promise<FileUploadResponse> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post("/upload")
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${token}`)
@@ -61,7 +63,7 @@ const createPublicFile = (token: string, url: string): Promise<PublicFile> => {
     url: url
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post("/rest/v1/publicFiles")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -86,7 +88,7 @@ const updatePublicFile = (token: string, id: string, url: string): Promise<Publi
     url: url
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .put(`/rest/v1/publicFiles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -105,7 +107,7 @@ const updatePublicFile = (token: string, id: string, url: string): Promise<Publi
  * @returns promise for publicFile
  */
 const findPublicFile = (token: string, id: string): Promise<PublicFile> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/publicFiles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -123,7 +125,7 @@ const findPublicFile = (token: string, id: string): Promise<PublicFile> => {
  */
 const listPublicFiles = (token: string): Promise<PublicFile[]> => {
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/publicFiles`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -140,7 +142,7 @@ const listPublicFiles = (token: string): Promise<PublicFile[]> => {
  * @param id id
  */
 const deletePublicFile = (token: string, id: string) => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/publicFiles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")

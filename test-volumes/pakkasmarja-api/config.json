@@ -50,8 +50,8 @@
   },
   "client": {
     "server": {
-      "host": "localhost",
-      "port": "3002",
+      "host":  "pakkasmarja-api",
+      "port": "3000",
       "secure": false
     }
   },
@@ -103,6 +103,12 @@
     },
     "xml-fileupload-path": "/tmp/sapxml"
   },
+  "sapServiceLayer": {
+    "apiUrl": "http://sap-api-wiremock:8080/b1s/v1",
+    "companyDb": "pm",
+    "username": "pm",
+    "password": "random"
+  },
   "uploadDirectory": "/tmp/",
   "contacts": {
     "notifications": {
@@ -113,4 +119,3 @@
     }
   }
 }
-

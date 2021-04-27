@@ -10,6 +10,7 @@
  * Do not edit the class manually.
  */
 import { AreaDetail } from './areaDetail';
+import { ContractStatus } from './contractStatus';
 
 
 export interface Contract { 
@@ -33,7 +34,7 @@ export interface Contract {
     areaDetails: Array<AreaDetail>  | null;
     deliverAll: boolean ;
     proposedDeliverAll: boolean ;
-    status: Contract.StatusEnum ;
+    status: ContractStatus ;
     remarks: string  | null;
 }    
 
@@ -58,16 +59,6 @@ export interface ContractOpt {
     areaDetails?: Array<AreaDetail>;
     deliverAll?: boolean;
     proposedDeliverAll?: boolean;
-    status?: Contract.StatusEnum;
+    status?: ContractStatus;
     remarks?: string;
-}
-export namespace Contract {
-    export type StatusEnum = 'APPROVED' | 'ON_HOLD' | 'DRAFT' | 'TERMINATED' | 'REJECTED';
-    export const StatusEnum = {
-        APPROVED: 'APPROVED' as StatusEnum,
-        ONHOLD: 'ON_HOLD' as StatusEnum,
-        DRAFT: 'DRAFT' as StatusEnum,
-        TERMINATED: 'TERMINATED' as StatusEnum,
-        REJECTED: 'REJECTED' as StatusEnum
-    };
 }

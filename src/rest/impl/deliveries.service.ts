@@ -5,14 +5,15 @@ import DeliveriesService from "../api/deliveries.service";
 import { Delivery, DeliveryNote, DeliveryLoan, ItemGroupCategory } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
-import PurchaseMessageBuilder, { TransferLine, TransferLineBinAllocation } from "../../sap/purchase-builder";
 import moment = require("moment");
 import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
-import * as fs from "fs";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as _ from "lodash";
 import mailer from "../../mailer";
+import { BinActionTypeEnum, SapDocObjectCodeEnum, SapPurchaseDeliveryNote, SapStockTransfer, SapStockTransferLine } from "../../sap/service-layer-client/types";
+import SapServiceFactory from "../../sap/service-layer-client";
+import { getLogger, Logger } from "log4js";
 
 /**
  * Implementation for Deliveries REST service
@@ -132,16 +133,21 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
  
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;  
+        return;
       }
 
       if (!sapSalesPersonCode) {
         this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
-        return;  
+        return;
       }
 
       const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
+
+      try {
+        await this.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
+      } catch (e) {
+        getLogger().error(e);
+      }
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
       const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id);
@@ -456,7 +462,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
- 
+
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
         return;  
@@ -469,12 +475,16 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
-      await this.buildPurchaseXML(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
+      try {
+        await this.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
+      } catch (e) {
+        getLogger().error(e);
+      }
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
 
-      if (databaseDelivery.status === "REJECTED") {
+      if (databaseDelivery.status === "REJECTED" || databaseDelivery.status === "NOT_ACCEPTED") {
         const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
         const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
@@ -595,114 +605,119 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   }
 
   /**
-   * Build purchase XML
+   * Create delivery documents to SAP
    * 
    * @param delivery delivery
    * @param product product
    * @param deliveryPlace delivery place
-   * @param price total price of delivery
-   * @param unitPrice unit price for single sale unit
+   * @param unitPriceWithBonus unit price with bonus
    * @param deliveryContactSapId CardCode of the Supplier
    * @param sapSalesPersonCode Receiving person code
-   * @param loans
-   * @return promise for success
+   * @param loans loans
+   * @param itemGroupCategory item group category
+   * @return promise of successful creation
    */
-  private async buildPurchaseXML(delivery: DeliveryModel, product: ProductModel, deliveryPlace: DeliveryPlaceModel, unitPriceWithBonus: number, deliveryContactSapId: string, sapSalesPersonCode: string, loans: DeliveryLoan[], itemGroupCategory: string) {
-    const builder = new PurchaseMessageBuilder();
-
-    const date: string = moment(delivery.time).format("YYYYMMDD");
+  private async createDeliveryDocumentsToSap(
+    delivery: DeliveryModel,
+    product: ProductModel,
+    deliveryPlace: DeliveryPlaceModel,
+    unitPriceWithBonus: number,
+    deliveryContactSapId: string,
+    sapSalesPersonCode: string,
+    loans: DeliveryLoan[],
+    itemGroupCategory: string
+  ): Promise<void> {
+    const date: string = moment(delivery.time).format("YYYY-MM-DD");
     const notes = await this.getNotesString(delivery.id);
     const sapItemCode = product.sapItemCode;
+    const salesPersonCode = parseInt(sapSalesPersonCode, 10);
     const loanWarehouse = "100";
     const warehouseCode = deliveryPlace.sapId == "01" && itemGroupCategory == "FRESH" ? "02" : deliveryPlace.sapId;
 
-    builder.setPurchaseReceiptHeader({
+    const purchaseDeliveryNote: SapPurchaseDeliveryNote = {
+      DocObjectCode: SapDocObjectCodeEnum.PURCHASE_DELIVERY_NOTE,
       DocDate: date,
       CardCode: deliveryContactSapId,
       Comments: notes,
-      WarehouseCode: warehouseCode,
-      SalesPersonCode: sapSalesPersonCode,
-    });
+      SalesPersonCode: salesPersonCode,
+      DocumentLines: [{
+        ItemCode: sapItemCode,
+        Quantity: delivery.amount,
+        UnitPrice: unitPriceWithBonus,
+        WarehouseCode: warehouseCode,
+        U_PFZ_REF: this.compressUUID(delivery.id!)
+      }]
+    };
 
-    builder.addPurchaseReceiptLine({
-      ItemCode: sapItemCode,
-      Quantity: delivery.amount,
-      UnitPrice: unitPriceWithBonus,
-      WarehouseCode: warehouseCode,
-      U_PFZ_REF: this.compressUUID(delivery.id!)
-    });
+    const stockTransferLines: SapStockTransferLine[] = [];
+    loans.forEach(loan => {
+      const itemCode = config().sap.loanProductIds[loan.item];
 
-    builder.setTransferHeader({
-      CardCode: deliveryContactSapId,
-      DocDate: date,
-      Comments: notes,
-      WarehouseCode: loanWarehouse,
-      FromWarehouseCode: loanWarehouse,
-      SalesPersonCode: sapSalesPersonCode,
-    });
-
-    loans.forEach((loan) => {
-      const itemCode: string = config().sap.loanProductIds[loan.item];
+      const stockTransferLine: SapStockTransferLine = {
+        ItemCode: itemCode,
+        Quantity: null,
+        FromWarehouseCode: loanWarehouse,
+        WarehouseCode: loanWarehouse,
+        StockTransferLinesBinAllocations: []
+      };
 
       if (loan.returned > 0) {
-        const binAllocations: TransferLineBinAllocation[] = [];
-        binAllocations.push({
-          BinAbsEntry: 2,
+        stockTransferLines.push({
+          ...stockTransferLine,
           Quantity: loan.returned,
-          BinActionType: "batToWarehouse"
+          StockTransferLinesBinAllocations: [
+            {
+              BinAbsEntry: 2,
+              Quantity: loan.returned,
+              BinActionType: BinActionTypeEnum.TO_WAREHOUSE,
+            },
+            {
+              BinAbsEntry: 3,
+              Quantity: loan.returned,
+              BinActionType: BinActionTypeEnum.FROM_WAREHOUSE
+            },
+          ]
         });
-        binAllocations.push({
-          BinAbsEntry: 3,
-          Quantity: loan.returned,
-          BinActionType: "batFromWarehouse"
-        });
-
-        const line: TransferLine = {
-          ItemCode: itemCode,
-          Quantity: loan.returned,
-          BinAllocations: binAllocations
-        };
-  
-        builder.addTransferLine(line);
       }
 
       if (loan.loaned > 0) {
-        const binAllocations: TransferLineBinAllocation[] = [];
-        binAllocations.push({
-          BinAbsEntry: 3,
+        stockTransferLines.push({
+          ...stockTransferLine,
           Quantity: loan.loaned,
-          BinActionType: "batToWarehouse"
+          StockTransferLinesBinAllocations: [
+            {
+              BinAbsEntry: 3,
+              Quantity: loan.loaned,
+              BinActionType: BinActionTypeEnum.TO_WAREHOUSE
+            },
+            {
+              BinAbsEntry: 2,
+              Quantity: loan.loaned,
+              BinActionType: BinActionTypeEnum.FROM_WAREHOUSE
+            },
+          ]
         });
-        binAllocations.push({
-          BinAbsEntry: 2,
-          Quantity: loan.loaned,
-          BinActionType: "batFromWarehouse"
-        });
-
-        const line: TransferLine = {
-          ItemCode: itemCode,
-          Quantity: loan.loaned,
-          BinAllocations: binAllocations
-        };
-  
-        builder.addTransferLine(line);
       }
-
-
     });
 
-    const xml = builder.buildXML();
-    const filePath = `${config().sap["xml-fileupload-path"]}/${delivery.id ? delivery.id : Date.now().toString()}.xml`;
+    const stockTransfer: SapStockTransfer = {
+      DocDate: date,
+      CardCode: deliveryContactSapId,
+      Comments: notes,
+      SalesPersonCode: salesPersonCode,
+      FromWarehouse: loanWarehouse,
+      ToWarehouse: loanWarehouse,
+      StockTransferLines: stockTransferLines
+    };
 
-    return new Promise((resolve, reject) => {
-      fs.writeFile(filePath, xml, (err: any) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    try {
+      const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
+      const sapStockTransfersService = SapServiceFactory.getStockTransfersService();
+      await sapPurchaseDeliveryNotesService.createPurchaseDeliveryNote(purchaseDeliveryNote);
+      await sapStockTransfersService.createStockTransfer(stockTransfer);
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   /**

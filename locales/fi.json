@@ -8,5 +8,13 @@
   "contracts.exports.signDate": "Viljelijän allekirjoituspäivä",
   "contracts.exports.approvalDate": "Pakkasmarjan hyväksyntäpäivä",
   "chatThreadSummaryReport.answer": "Vastaus",
-  "chatThreadSummaryReport.count": "Määrä"
+  "chatThreadSummaryReport.count": "Määrä",
+  "contracts.imports.errors.sapIdNotFound": "Sopimuksen SAP-tunnus puuttuu",
+  "contracts.imports.errors.userSapIdNotFound": "Käyttäjän SAP-tunnus puuttuu",
+  "contracts.imports.errors.userNotFound": "Käyttäjää ei löytynyt SAP-tunnuksella",
+  "contracts.imports.errors.deliveryPlaceNotFound": "Toimituspaikkaa ei löytynyt toimituspaikan SAP-tunnuksella",
+  "contracts.imports.errors.itemGroupNotFound": "Marjalajia ei löytynyt marjalajin SAP-tunnuksella",
+  "contracts.imports.errors.contractQuantityNotFound": "Toimitusmäärä puuttuu",
+  "contracts.imports.errors.contractQuantityNotValid": "Toimitusmäärä ei ole käypä numero",
+  "contracts.imports.errors.deliverAllNotAllowed": "Marjalaji ei salli 100% toimitusta"
 }

@@ -8,7 +8,7 @@ import ContractsService from "../api/contracts.service";
 import ApplicationRoles from "../application-roles";
 import models, { ContractModel, ItemGroupModel, ContractDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel } from "../../models";
 import { getLogger, Logger } from "log4js";
-import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, ItemGroupPrice } from "../model/models";
+import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, ItemGroupPrice, ContractStatus, ContractPreviewData, ImportedContractOpt, ContractOpt } from "../model/models";
 import * as toArray from "stream-to-array";
 import * as pug from "pug";
 import * as Mustache from "mustache";
@@ -21,6 +21,8 @@ import signature from "../../signature";
 import excel from "../../excel";
 import pdf from "../../pdf";
 import { config } from "../../config";
+import xlsx from "node-xlsx";
+import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Implementation for Contracts REST service
@@ -128,8 +130,7 @@ export default class ContractsServiceImpl extends ContractsService {
       deliveryPlaceComment, 
       quantityComment, 
       rejectComment);
-    
-    
+
     if (databaseContract.status === "DRAFT") {
       this.sendContractChangePushNotification(
         userId,
@@ -139,7 +140,190 @@ export default class ContractsServiceImpl extends ContractsService {
     
     res.status(200).send(await this.translateDatabaseContract(databaseContract));
   }
-  
+
+  /**
+   * @inheritdoc
+   */
+  async createContractPreviews(req: Request, res: Response) {
+    if (!this.hasRealmRole(req, ApplicationRoles.CREATE_CONTRACT)) {
+      this.sendForbidden(res, "You have no permission to import contracts");
+      return;
+    }
+
+    try {
+      const importFile = req.file;
+      if (!importFile) {
+        this.sendBadRequest(res, "No import file attached");
+        return;
+      }
+
+      const workSheets = xlsx.parse(req.file.buffer);
+      if (!_.isObject(workSheets) || !workSheets.length) {
+        this.sendBadRequest(res, "No worksheets in imported xlsx file");
+        return;
+      }
+
+      const { data } = workSheets[0];
+      if (data.length < 2) {
+        this.sendBadRequest(res, "Worksheet does not contain any rows");
+        return;
+      }
+
+      const contractRows = data.slice(1);
+      const contractDataList: ContractPreviewData[] = [];
+
+      for (let i = 0; i < contractRows.length; i++) {
+        const contractRow = contractRows[i];
+        if (contractRow.every(column => !column)) {
+          continue;
+        }
+
+        const contract: ContractOpt = {};
+        const contractErrors: { key: keyof Contract, message: string }[] = [];
+        const importedContract: ImportedContractOpt = {};
+
+        const contactSapId = this.getContractRowValue(contractRow, 0);
+        if (!contactSapId) {
+          contractErrors.push({
+            key: "contactId",
+            message: this.getImportedContractErrorMessage("userSapIdNotFound")
+          });
+        }
+
+        const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, `${contactSapId}`);
+        if (!user) {
+          contractErrors.push({
+            key: "contactId",
+            message: this.getImportedContractErrorMessage("userNotFound")
+          });
+        }
+
+        const userId = user ? user.id : undefined;
+        const firstName = user ? user.firstName : undefined;
+        const lastName = user ? user.lastName : undefined;
+        contract.contactId = userId || undefined;
+        importedContract.contactName = firstName && lastName ? `${firstName} ${lastName}` : "";
+
+        const deliveryPlaceSapId = this.getContractRowValue(contractRow, 5);
+        const deliveryPlace = await models.findDeliveryPlaceBySapId(`${deliveryPlaceSapId}`);
+        if (!deliveryPlace) {
+          contractErrors.push({
+            key: "deliveryPlaceId",
+            message: this.getImportedContractErrorMessage("deliveryPlaceNotFound")
+          });
+        }
+
+        const deliveryPlaceId = deliveryPlace ? deliveryPlace.externalId : undefined;
+        const deliveryPlaceName = deliveryPlace ? deliveryPlace.name : undefined;
+        contract.deliveryPlaceId = deliveryPlaceId;
+        importedContract.deliveryPlaceName = deliveryPlaceName;
+
+        const itemGroupSapId = this.getContractRowValue(contractRow, 1);
+        const itemGroup = await models.findItemGroupBySapId(`${itemGroupSapId}`);
+        if (!itemGroup) {
+          contractErrors.push({
+            key: "itemGroupId",
+            message: this.getImportedContractErrorMessage("itemGroupNotFound")
+          });
+        }
+
+        const itemGroupId = itemGroup ? itemGroup.externalId : undefined;
+        const itemGroupName = itemGroup ? itemGroup.name : undefined;
+        contract.itemGroupId = itemGroupId;
+        importedContract.itemGroupName = itemGroupName;
+
+        const deliveryPlaceComment = this.getContractRowValue(contractRow, 6);
+        contract.deliveryPlaceComment = deliveryPlaceComment;
+        importedContract.deliveryPlaceComment = deliveryPlaceComment;
+
+        const contractQuantity = this.getContractRowValue(contractRow, 2);
+        const invalidQuantity = Number.isNaN(contractQuantity);
+        if (!contractQuantity) {
+          contractErrors.push({
+            key: "contractQuantity",
+            message: this.getImportedContractErrorMessage("contractQuantityNotFound")
+          });
+        } else if (invalidQuantity) {
+          contractErrors.push({
+            key: "contractQuantity",
+            message: this.getImportedContractErrorMessage("contractQuantityNotValid")
+          });
+        }
+
+        contract.contractQuantity = !invalidQuantity ? contractQuantity || 0 : 0;
+        importedContract.contractQuantity = contractQuantity ? `${contractQuantity}` : "";
+
+        const quantityComment = this.getContractRowValue(contractRow, 3);
+        contract.quantityComment = `${quantityComment}`;
+        importedContract.quantityComment = `${quantityComment}`;
+
+        const deliverAll = this.getContractRowValue(contractRow, 4);
+        const deliverAllAllowed = itemGroupId ?
+          await this.deliverAllAllowed(itemGroupId) :
+          false;
+
+        if (deliverAll && !deliverAllAllowed) {
+          contractErrors.push({
+            key: "deliverAll",
+            message: this.getImportedContractErrorMessage("deliverAllNotAllowed")
+          });
+        }
+
+        contract.deliverAll = !!deliverAll;
+        importedContract.deliverAll = deliverAll ? `${deliverAll}` : "";
+
+        const remarks = this.getContractRowValue(contractRow, 7);
+        contract.remarks = remarks ? `${remarks}` : "";
+        importedContract.remarks = remarks ? `${remarks}` : "";
+
+        const contractPreviewData: ContractPreviewData = {
+          contract: {
+            id: null,
+            sapId: null,
+            year: this.inTestMode() ? 2021 : new Date().getFullYear(),
+            contactId: contract.contactId || null,
+            deliveryPlaceId: contract.deliveryPlaceId || "",
+            proposedDeliveryPlaceId: null,
+            deliveryPlaceComment: contract.deliveryPlaceComment || null,
+            itemGroupId: contract.itemGroupId || "",
+            contractQuantity: contract.contractQuantity || null,
+            proposedQuantity: null,
+            deliveredQuantity: null,
+            quantityComment: contract.quantityComment || null,
+            deliverAll: contract.deliverAll || false,
+            proposedDeliverAll: false,
+            status: ContractStatus.DRAFT,
+            areaDetails: null,
+            startDate: null,
+            endDate: null,
+            signDate: null,
+            termDate: null,
+            rejectComment: null,
+            remarks: contract.remarks || null
+          },
+          importedContract: {
+            contactName: importedContract.contactName || "",
+            deliveryPlaceName: importedContract.deliveryPlaceName || "",
+            deliveryPlaceComment: importedContract.deliveryPlaceComment || "",
+            itemGroupName: importedContract.itemGroupName || "",
+            contractQuantity: importedContract.contractQuantity || "",
+            quantityComment: importedContract.quantityComment || "",
+            deliverAll: importedContract.deliverAll || "",
+            remarks: importedContract.remarks || ""
+          },
+          errors: contractErrors
+        };
+
+        contractDataList.push(contractPreviewData);
+      }
+
+      res.send(contractDataList);
+    } catch (e) {
+      this.sendInternalServerError(res, `Failed to import contracts. Reason: ${e}`);
+      return;
+    }
+  }
+
   /**
    * @inheritdoc
    */
@@ -778,7 +962,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return result;
     }) : [];  
 
-    let status: Contract.StatusEnum | null = null;
+    let status: ContractStatus | null = null;
     switch (contract.status) {
       case 'APPROVED':
         status = 'APPROVED';
@@ -1081,6 +1265,68 @@ export default class ContractsServiceImpl extends ContractsService {
     } else {
       return models.listContractDocumentTemplateByContractId(contractId);
     }
+  }
+
+  /**
+   * Returns contract row value or undefined if not found
+   *
+   * @param contractRow contract row
+   * @param index index
+   * @returns value of index or undefined if not found
+   */
+  private getContractRowValue(contractRow: any[], index: number) {
+    if (contractRow.length <= index || contractRow[index] === null) {
+      return undefined;
+    }
+
+    return contractRow[index];
+  }
+
+  /**
+   * Returns whether deliverAll is allowed for given item group 
+   *
+   * @param itemGroupId item group ID
+   */
+  private deliverAllAllowed = (itemGroupId: string) => {
+    return new Promise<boolean>((resolve, reject) => {
+      fs.readFile(`${__dirname}/../../../app-config.json`, (error, file) => {
+        const logger = getLogger();
+        if (error) {
+          logger.error(`Could not read app-config.json. Reason: ${error}`);
+          return reject();
+        }
+
+        try {
+          const config = JSON.parse(file.toString());
+          const itemGroups = config["item-groups"];
+          if (!itemGroups) {
+            logger.error("Could not read item groups from app-config.json");
+            return reject();
+          }
+
+          const foundItemGroup = itemGroups[itemGroupId];
+          if (!foundItemGroup) {
+            logger.warn("Could not find item group from app-config.json");
+            return reject();
+          }
+
+          const allowDeliveryAll = foundItemGroup["allow-delivery-all"];
+          return resolve(allowDeliveryAll || false);
+        } catch (e) {
+          logger.error(`Could not read contents of app-config.json. Reason: ${e}`);
+          return reject();
+        }
+      });
+    });
+  }
+
+  /**
+   * Returns localized imported contract error message
+   *
+   * @param key message key in localization file
+   */
+  private getImportedContractErrorMessage = (key: string) => {
+    return i18n.__(`contracts.imports.errors.${key}`);
   }
 
   /**

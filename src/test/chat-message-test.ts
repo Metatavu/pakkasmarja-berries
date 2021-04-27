@@ -1,3 +1,4 @@
+import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
@@ -6,6 +7,7 @@ import { ChatGroup, ChatGroupType, ChatThread, ChatMessage, UserGroup, Unread } 
 import mqtt from "./mqtt";
 import database from "./database";
 import ApplicationRoles from "../rest/application-roles";
+import TestConfig from "./test-config";
 
 /**
  * Sorts list by id
@@ -28,7 +30,7 @@ const sorted = (list: any[]) => {
  * @returns promise for chat groups
  */
 const listUserGroups = (token: string): Promise<UserGroup[]> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/userGroups`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -45,7 +47,7 @@ const listUserGroups = (token: string): Promise<UserGroup[]> => {
  * @returns promise for unreads
  */
 const listUnreads = (token: string, pathPrefix: string): Promise<Unread[]> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/unreads?pathPrefix=${pathPrefix}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -71,7 +73,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
     imageUrl: null
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post("/rest/v1/chatGroups")
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -107,7 +109,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
     title: title
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post(`/rest/v1/chatThreads/`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -137,7 +139,7 @@ const createChatMessage = (token: string, threadId: number, contents: string): P
     userId: null
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .post(`/rest/v1/chatThreads/${threadId}/messages`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -158,7 +160,7 @@ const createChatMessage = (token: string, threadId: number, contents: string): P
  * @returns promise for chat group
  */
 const findChatMessage = (token: string, threadId: number, messageId: number, expectStatus?: number): Promise<ChatMessage> => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/chatThreads/${threadId}/messages/${messageId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -186,7 +188,7 @@ const listChatMessages = (token: string, threadId: number, createdBefore?: Date,
     query.push(`createdAfter=${createdAfter.toISOString()}`);
   }
   
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .get(`/rest/v1/chatThreads/${threadId}/messages?${query.join("&")}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -221,7 +223,7 @@ const updateChatMessage = (token: string, id: number, threadId: number, contents
     userId: null
   };
 
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .put(`/rest/v1/chatThreads/${threadId}/messages/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -240,7 +242,7 @@ const updateChatMessage = (token: string, id: number, threadId: number, contents
  * @returns promise for delete
  */
 const deleteChatGroup = async (token: string, id: number) => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -255,7 +257,7 @@ const deleteChatGroup = async (token: string, id: number) => {
  * @returns promise for delete
  */
 const deleteChatThread = async (token: string, threadId: number) => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/chatThreads/${threadId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -271,7 +273,7 @@ const deleteChatThread = async (token: string, threadId: number) => {
  * @returns promise for delete
  */
 const deleteChatMessage = async (token: string, threadId: number, messageId: number) => {
-  return request("http://localhost:3002")
+  return request(TestConfig.HOST)
     .delete(`/rest/v1/chatThreads/${threadId}/messages/${messageId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
@@ -307,7 +309,7 @@ const getDate = (year: number, month: number, date: number) => {
   return result;
 }
 
-const waitAsync = (timeout: number) => {
+const waitAsync = (timeout: number): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve();
