@@ -35,29 +35,4 @@ export default class SapSapStockTransfersService extends AbstractService {
       return Promise.reject(e);
     }
   }
-
-  /**
-   * Asynchronously fetch data from SAP Service Layer
-   * 
-   * @param url url to fetch from
-   * @param options options to request
-   * @returns Promise of response from SAP service Layer
-   */
-  protected async asyncFetch(url: string, options: RequestInit): Promise<any> {
-    try {
-      const response = await fetch(url, options);
-
-      if (response.status !== 201) {
-        const errorResponse = JSON.stringify(await response.json(), null, 2);
-        const requestBody = options.body ? JSON.parse(options.body.toString()) : "";
-        const stringifiedBody = JSON.stringify(requestBody, null, 2);
-        return Promise.reject(`Could not create stock transfer to SAP Service Layer. Error:\n${errorResponse}\nSent request body:\n${stringifiedBody}`);
-      }
-
-      return await response.json();
-    } catch(e) {
-      return Promise.reject(e);
-    }
-  }
-
 }

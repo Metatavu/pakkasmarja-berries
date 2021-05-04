@@ -12,6 +12,7 @@ import xlsx from "./xlsx";
 import users from "./users";
 import requestUtils from "./request-utils";
 import TestConfig from "./test-config";
+import sapWireMockTestClient from "./wiremock-test-client";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contractDatas = require(`${testDataDir}/contracts.json`);
@@ -19,6 +20,7 @@ const contractsImport = require(`${testDataDir}/contracts-import.json`);
 const contractsImportFalseData = require(`${testDataDir}/contracts-import-false-data.json`);
 const contractDatasSync = require(`${testDataDir}/contracts-sync.json`);
 const contractDataCreate = require(`${testDataDir}/contracts-create.json`);
+const contractSapCreate = require(`${testDataDir}/contract-sap-create.json`);
 const contractDatasUpdate = require(`${testDataDir}/contracts-update.json`);
 const contractExcelSingle = require(`${testDataDir}/contract-xlsx-single.json`);
 const contractExcelMultiple = require(`${testDataDir}/contract-xlsx-multiple.json`);
@@ -159,6 +161,27 @@ test("Test creating contracts", async (t) => {
         const actualValue = response.body[expectKey];
         t.deepEqual(expectValue, actualValue, `[${expectKey}] is ${actualValue}`);
       });
+    });
+});
+
+test("Test creating contract to SAP", async (t) => {
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  push.clearOutbox();
+  await sapWireMockTestClient.empty();
+
+  await request(TestConfig.HOST)
+    .post("/rest/v1/contracts")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT, ApplicationRoles.UPDATE_OTHER_CONTRACTS ])}`)
+    .set("Accept", "application/json")
+    .send(contractSapCreate)
+    .expect(200)
+    .then(async () => {
+      t.equal(await sapWireMockTestClient.verify("POST", "/BlanketAgreements"), 1, "Create SAP contract request found");
+    }).finally(async () => {
+      await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT, ApplicationRoles.UPDATE_OTHER_CONTRACTS ]);
+      await database.executeFiles(testDataDir, [ "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql" ]);
+      await sapWireMockTestClient.empty();
+      push.clearOutbox();
     });
 });
 

@@ -54,6 +54,7 @@ services:
       dockerfile: Dockerfile.tests
     environment:
       TEST_HOST: http://pakkasmarja-api:3000
+      SAP_TEST_CLIENT_HOST: http://sap-api-wiremock:1234
     depends_on:
       - pakkasmarja-api
       - pm-mysql

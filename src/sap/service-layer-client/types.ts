@@ -137,10 +137,10 @@ export interface ListContractsResponse {
  * Interface describing SAP Contract
  */
 export interface SapContract {
-  AgreementNo: string | null;
-  DocNum: string | null;
-  BPCode: string | null;
-  BPName: string | null;
+  AgreementNo?: string | null;
+  DocNum?: string | null;
+  BPCode: string;
+  BPName?: string | null;
   ContactPersonCode: number | null;
   StartDate: string | null;
   EndDate: string | null;
@@ -148,6 +148,7 @@ export interface SapContract {
   SigningDate: string | null;
   Status: SapContractStatusEnum | null;
   U_PFZ_Toi: string | null;
+  Remarks: string | null;
   BlanketAgreements_ItemsLines: SapContractLine[];
   [key: string]: any;
 }
@@ -166,9 +167,11 @@ export enum SapContractStatusEnum {
  * Interface describing SAP contract line
  */
 export interface SapContractLine {
+  ItemNo: string | null;
   ItemGroup: number | null;
   CumulativeQuantity: number | null;
   U_PFZ_ToiP: string | null;
+  ShippingType: number | null;
 }
 
 /**

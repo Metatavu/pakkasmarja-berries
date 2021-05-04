@@ -130,7 +130,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
- 
+
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
         return;

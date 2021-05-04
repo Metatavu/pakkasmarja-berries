@@ -5,7 +5,7 @@ import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
 import * as Queue from "better-queue"; 
 import * as SQLStore from "better-queue-sql";
 import * as xml2js from "xml2js";
-import { SAPExportBusinessPartner, SAPExportContract, SAPExport, SAPExportRoot } from "../sap/export"; 
+import { SAPExportBusinessPartner, SAPExport, SAPExportRoot } from "../sap/export"; 
 import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
 import { SAPImportFile, config } from "../config";  
@@ -15,6 +15,7 @@ import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-manage
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup, SapVatLiableEnum } from "../sap/service-layer-client/types";
 import * as moment from "moment";
+import SapServiceFactory from "../sap/service-layer-client";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -444,33 +445,29 @@ export default new class TaskQueue {
     }
 
     try {
-      const importFiles: SAPImportFile[] = config().sap["import-files"] || [];
-      const approvedFile = importFiles.filter((importFile: SAPImportFile) => {
-        return importFile.status === "APPROVED";
-      })[0];
-
-      if (!approvedFile) {
-        return failTask("Could not find SAP file with APPROVED status");
-      }
-
-      const sapXml = await this.parseXml(await this.readFile(approvedFile.file));
-      const sapData = sapXml.SAP;
-      const sapContracts: SAPExportContract[] = sapData.Contracts ? sapData.Contracts.Contracts : null;
-
-      if (!sapContracts) {
-        return failTask("SAP file does not contain contracts");
-      }
+      const sapContractsService = SapServiceFactory.getContractsService();
+      const sapContracts = await sapContractsService.listContracts();
 
       const sapDeliveredQuantities = {};
 
       sapContracts.forEach((sapContract) => {
-        const sapContractLines = Array.isArray(sapContract.ContractLines.ContractLine) ? sapContract.ContractLines.ContractLine : [sapContract.ContractLines.ContractLine];
-        sapContractLines.forEach((sapContractLine) => {
-          const sapItemGroupId = sapContractLine.ItemGroupCode;
-          const year = sapContract.Year;
-          const sapId = `${year}-${sapContract.ContractId}-${sapItemGroupId}`;
-          const deliveredQuantity = sapContractLine.DeliveredQuantity;
-          sapDeliveredQuantities[sapId] = deliveredQuantity;
+        const sapContractLines = sapContract.BlanketAgreements_ItemsLines;
+        sapContractLines.forEach(sapContractLine => {
+          const { AgreementNo, StartDate } = sapContract;
+          const { ItemGroup, CumulativeQuantity } = sapContractLine;
+
+          if (!AgreementNo || !StartDate || !ItemGroup) {
+            return;
+          }
+
+          const year = moment(StartDate).format("YYYY");
+          const sapId = `${year}-${AgreementNo}-${ItemGroup}`;
+
+          if (CumulativeQuantity && CumulativeQuantity > 0) {
+            sapDeliveredQuantities[sapId] = sapDeliveredQuantities[sapId] ?
+              sapDeliveredQuantities[sapId] + CumulativeQuantity :
+              CumulativeQuantity;
+          }
         });
       });
       
@@ -495,7 +492,7 @@ export default new class TaskQueue {
       });
 
       if (failedSapIds.length > 0) {
-        this.logger.error(`Could not find following contracts from sap file ${failedSapIds.join(",")}`);
+        this.logger.error(`Could not find following contracts from SAP ${failedSapIds.join(",")}`);
       }
 
       const successMessage = `Synchronized contract ${syncCount} / ${totalCount} delivered quantities from SAP`;
