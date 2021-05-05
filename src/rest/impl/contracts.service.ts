@@ -102,7 +102,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const userId = contract.contactId;
     const deliveryPlaceId = deliveryPlace.id;
-    const proposedDeliveryPlaceId = proposedDeliveryPlace.id;
+    const proposedDeliveryPlaceId = proposedDeliveryPlace.id || deliveryPlace.id;
     const itemGroupId = itemGroup.id;
     const sapId = contract.sapId || null;
     const contractQuantity = contract.contractQuantity;
