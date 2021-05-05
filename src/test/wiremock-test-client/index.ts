@@ -8,27 +8,28 @@ import TestConfig from "../test-config";
 export default new class SapWireMockTestClient {
 
   /**
-   * Verifies request to WireMock
+   * Verifies matching request count to WireMock
    *
    * @param method request method
    * @param path request path
-   * @param count request count
-   * @returns promise of whether request is verified or not
+   * @returns promise of number of matching requests
    */
-  verify = async (method: RequestMethod, path: string) => {
+  verify = async (method: RequestMethod, path: string): Promise<number> => {
     const response = await request(TestConfig.SAP_TEST_CLIENT_HOST)
       .post("/__admin/requests/count")
       .send(JSON.stringify({ method: method, url: `/b1s/v1${path}` }));
 
     return response.status === 200 ?
       (response.body as WireMockRequestCountResponse).count :
-      false;
+      0;
   }
 
   /**
    * Lists all requests received by WireMock
+   *
+   * @returns promise of all requests response if query is successful, or undefined if query fails
    */
-  list = async () => {
+  list = async (): Promise<WireMockAllRequestsResponse | undefined> => {
     const response = await request(TestConfig.SAP_TEST_CLIENT_HOST)
       .get("/__admin/requests");
 

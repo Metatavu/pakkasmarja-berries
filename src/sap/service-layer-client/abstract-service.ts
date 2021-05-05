@@ -18,7 +18,7 @@ export default class SapAbstractService {
     try {
       const response = await fetch(url, options);
       if (response.status === 404) {
-        return undefined;
+        return;
       }
 
       const json = await response.json();

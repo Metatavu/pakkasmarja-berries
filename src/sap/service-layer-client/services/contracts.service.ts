@@ -136,7 +136,7 @@ export default class SapContractsService extends AbstractService {
   public async updateContract(contract: SapContract): Promise<SapContract> {
     try {
       if (!contract.AgreementNo) {
-        return Promise.reject("sapContractsService.updateContract: no agreementNo in contract");
+        return Promise.reject("sapContractsService.updateContract: no agreement number in contract");
       }
 
       const config = await this.getConfig();
@@ -155,7 +155,7 @@ export default class SapContractsService extends AbstractService {
 
       const updatedContract = await this.findContract(contract.AgreementNo);
       if (!updatedContract) {
-        return Promise.reject("could not find updated contract");
+        return Promise.reject(`could not find updated contract with agreement number "${contract.AgreementNo}"`);
       }
 
       return updatedContract;
