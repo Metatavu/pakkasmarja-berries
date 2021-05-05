@@ -3166,7 +3166,7 @@ export class Models {
    * @param maxResults 
    * @return Promise that resolves list of week delivery predictions
    */
-  public listProducts(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
+  public listProducts(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string | null, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
     const where = this.createListProductsWhere(itemGroupId, itemGroupCategory, contractUserId);
 
     return this.Product.findAll({ 
@@ -3198,9 +3198,10 @@ export class Models {
     if (contractUserId) {
       contractUserSQL = this.sequelize.getQueryInterface().QueryGenerator.selectQuery("Contracts", {
         attributes: ["itemGroupId"],
-        where: { userId: contractUserId,
-                 status: "APPROVED"
-                }
+        where: {
+          userId: contractUserId,
+          status: "APPROVED"
+        }
       }).slice(0, -1);
     }
 

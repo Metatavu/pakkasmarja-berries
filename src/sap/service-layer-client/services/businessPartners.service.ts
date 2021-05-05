@@ -18,7 +18,7 @@ export default class SapBusinessPartnersService extends AbstractService {
       const config = await this.getConfig();
       const session = await this.createSession();
       const baseUrl = `${config.apiUrl}/BusinessPartners`;
-      const filter = "$filter=CardType%20eq%20%27cSupplier%27";
+      const filter = this.escapeSapQuery("$filter=CardType eq 'cSupplier'");
       const countUrl = `${baseUrl}/$count?${filter}`;
       const options: RequestInit = {
         method: "GET",

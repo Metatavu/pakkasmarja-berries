@@ -14,10 +14,36 @@ export default class SapAbstractService {
    * @param options options to request
    * @returns Promise of response from SAP service Layer
    */
-  protected async asyncFetch(url: string, options: RequestInit): Promise<any> {
+  protected async asyncFetch(url: string, options: RequestInit): Promise<any | undefined> {
     try {
-      return await fetch(url, options)
-        .then(response => response.json());
+      const response = await fetch(url, options);
+      if (response.status === 404) {
+        return;
+      }
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        const messageParts = [ `Failed to fetch ${url}` ];
+
+        if (json) {
+          messageParts.push(`
+            \nError:
+            \n${JSON.stringify(json, null, 2)}
+          `);
+        }
+
+        if (options.body) {
+          messageParts.push(`
+            \nSent request body:
+            \n${JSON.stringify(JSON.parse(options.body.toString()), null, 2)}
+          `);
+        }
+
+        return Promise.reject(messageParts.join(""));
+      }
+
+      return json;
     } catch(e) {
       return Promise.reject(e);
     }
@@ -64,6 +90,16 @@ export default class SapAbstractService {
     } catch (e) {
       return Promise.reject(`Failed to get config for Sap Service Layer client: ${e}`);
     }
+  }
+
+  /**
+   * Creates escaped SAP query string from given human readable string
+   *
+   * @param query human readable query string
+   * @returns escaped query string
+   */
+  protected escapeSapQuery = (query: string) => {
+    return query.replace(/ /g, "%20").replace(/'/g, "%27");
   }
 
   /**

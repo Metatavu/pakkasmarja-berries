@@ -1,9 +1,10 @@
 import * as config from "nconf";
+import { Config } from "../config";
 
 /**
  * Test config
  */
-export default new class TestConfig {
+export class TestConfig {
 
   constructor() {
     config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
@@ -19,4 +20,15 @@ export default new class TestConfig {
     return config.get(key);
   }
 
+  /**
+   * Lists entire test config
+   *
+   * @returns test config object
+   */
+  public list = () => {
+    return config.get() as Config;
+  }
+
 };
+
+export default new TestConfig;
