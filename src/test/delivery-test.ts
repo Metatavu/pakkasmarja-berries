@@ -1,4 +1,3 @@
-import config from "./config";
 import * as test from "blue-tape"; 
 import * as request from "supertest";
 import auth from "./auth";
@@ -7,6 +6,7 @@ import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
 import mail from "./mail";
 import TestConfig from "./test-config";
+import sapWireMockTestClient from "./wiremock-test-client";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveriesData = require(`${testDataDir}/deliveries.json`);
@@ -181,12 +181,12 @@ test("Create delivery", async (t) => {
     const createdDelivery = await createDelivery(token);
     t.notEqual(createdDelivery, null);
     t.notEqual(createdDelivery.id, null);
-    t.equal(createdDelivery.status, deliveriesData[0].status)
-    t.equal(createdDelivery.amount, deliveriesData[0].amount)
-    t.equal(createdDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId)
-    t.equal(createdDelivery.price, deliveriesData[0].price)
-    t.equal(createdDelivery.productId, deliveriesData[0].productId)
-    t.equal(createdDelivery.time, deliveriesData[0].time)
+    t.equal(createdDelivery.status, deliveriesData[0].status);
+    t.equal(createdDelivery.amount, deliveriesData[0].amount);
+    t.equal(createdDelivery.deliveryPlaceId, deliveriesData[0].deliveryPlaceId);
+    t.equal(createdDelivery.price, deliveriesData[0].price);
+    t.equal(createdDelivery.productId, deliveriesData[0].productId);
+    t.equal(createdDelivery.time, deliveriesData[0].time);
   } finally {
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
@@ -195,12 +195,15 @@ test("Create delivery", async (t) => {
 });
 
 test("Update delivery", async (t) => {
+  await sapWireMockTestClient.empty();
   await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
 
   try {
     const createdDelivery = await createDelivery(token);
     const updatedDelivery = await updateDelivery(token, createdDelivery.id || "");
+    t.true(await sapWireMockTestClient.verify("POST", "/PurchaseDeliveryNotes"), "Purchase delivery note request found");
+    t.true(await sapWireMockTestClient.verify("POST", "/StockTransfers"), "Stock transfer request found");
     t.notEqual(updatedDelivery, null);
     t.notEqual(updatedDelivery.id, null);
     t.equal(updatedDelivery.status, deliveriesData[1].status)
@@ -210,6 +213,7 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.productId, deliveriesData[1].productId)
     t.equal(updatedDelivery.time, deliveriesData[1].time)
   } finally {
+    await sapWireMockTestClient.empty();
     await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
   }
 
