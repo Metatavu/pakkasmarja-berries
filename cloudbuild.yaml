@@ -1,3 +1,5 @@
+options:
+  machineType: N1_HIGHCPU_32
 steps:
 - name: 'ubuntu'
   id: 'decrypt'
