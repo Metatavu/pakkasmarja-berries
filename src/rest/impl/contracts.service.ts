@@ -1702,7 +1702,7 @@ export default class ContractsServiceImpl extends ContractsService {
           const foundItemGroup = itemGroups[itemGroupId];
           if (!foundItemGroup) {
             this.logger.warn("Could not find item group from app-config.json");
-            return false;
+            return resolve(false);
           }
 
           const allowDeliveryAll = foundItemGroup["allow-delivery-all"];
