@@ -24,7 +24,7 @@ import { config } from "../../config";
 import xlsx from "node-xlsx";
 import { SapContract, SapContractLine, SapContractStatusEnum } from "../../sap/service-layer-client/types";
 import SapServiceFactory from "../../sap/service-layer-client";
-import { createStackedReject, logReject } from "src/utils";
+import { createStackedReject, logReject } from "../../utils";
 
 /**
  * Implementation for Contracts REST service
@@ -213,26 +213,26 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
+    const importFile = req.file;
+    if (!importFile) {
+      this.sendBadRequest(res, "No import file attached");
+      return;
+    }
+
+    const workSheets = xlsx.parse(req.file.buffer);
+    if (!_.isObject(workSheets) || !workSheets.length) {
+      this.sendBadRequest(res, "No worksheets in imported xlsx file");
+      return;
+    }
+
+    const { data } = workSheets[0];
+    if (data.length < 2) {
+      this.sendBadRequest(res, "Worksheet does not contain any rows");
+      return;
+    }
+
     try {
-      const importFile = req.file;
-      if (!importFile) {
-        this.sendBadRequest(res, "No import file attached");
-        return;
-      }
-
-      const workSheets = xlsx.parse(req.file.buffer);
-      if (!_.isObject(workSheets) || !workSheets.length) {
-        this.sendBadRequest(res, "No worksheets in imported xlsx file");
-        return;
-      }
-
-      const { data } = workSheets[0];
-      if (data.length < 2) {
-        this.sendBadRequest(res, "Worksheet does not contain any rows");
-        return;
-      }
-
-      const contractRows = data.slice(1);
+      const contractRows: string[][] = data.slice(1);
       const contractDataList: ContractPreviewData[] = [];
 
       for (let i = 0; i < contractRows.length; i++) {
@@ -1702,7 +1702,7 @@ export default class ContractsServiceImpl extends ContractsService {
           const foundItemGroup = itemGroups[itemGroupId];
           if (!foundItemGroup) {
             this.logger.warn("Could not find item group from app-config.json");
-            return reject();
+            return false;
           }
 
           const allowDeliveryAll = foundItemGroup["allow-delivery-all"];

@@ -1,8 +1,8 @@
 import AbstractService from "../abstract-service";
-import fetch, { RequestInit } from "node-fetch";
+import { RequestInit } from "node-fetch";
 import * as _ from "lodash";
 import { SapStockTransfer } from "../types";
-import { createStackedReject } from "src/utils";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing stock transfers from SAP

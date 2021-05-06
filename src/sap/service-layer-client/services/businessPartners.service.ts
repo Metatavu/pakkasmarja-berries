@@ -2,7 +2,7 @@ import AbstractService from "../abstract-service";
 import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListBusinessPartnersResponse, SapBusinessPartner } from "../types";
-import { createStackedReject } from "src/utils";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing business partners from SAP

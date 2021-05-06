@@ -5,7 +5,6 @@ import { Logger } from "log4js";
  *
  * @param message message
  * @param prevError possible previous error object or message string
- *
  * @returns stacked error object
  */
 export const createStackedReject = (message: string | Error, prevError?: string | Error) => {
@@ -15,7 +14,7 @@ export const createStackedReject = (message: string | Error, prevError?: string 
   if (prevError) {
     reason.stack += `\nCaused By:\n`;
     reason.stack += prevError instanceof Error ?
-      prevError.stack ?? prevError.message :
+      prevError.stack || prevError.message :
       prevError;
   }
 

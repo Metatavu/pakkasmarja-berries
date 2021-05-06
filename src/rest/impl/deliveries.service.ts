@@ -14,7 +14,7 @@ import mailer from "../../mailer";
 import { BinActionTypeEnum, SapDocObjectCodeEnum, SapPurchaseDeliveryNote, SapStockTransfer, SapStockTransferLine } from "../../sap/service-layer-client/types";
 import SapServiceFactory from "../../sap/service-layer-client";
 import { getLogger } from "log4js";
-import { createStackedReject, logReject } from "src/utils";
+import { createStackedReject, logReject } from "../../utils";
 
 /**
  * Implementation for Deliveries REST service

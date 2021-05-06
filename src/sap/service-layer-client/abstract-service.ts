@@ -1,5 +1,5 @@
 import fetch, { RequestInit, Response } from "node-fetch";
-import { createStackedReject } from "src/utils";
+import { createStackedReject } from "../../utils";
 import { config } from "../../config";
 import { SapConfig, SapLoginRequestBody, SapSession } from "./types";
 

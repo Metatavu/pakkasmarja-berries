@@ -3,7 +3,7 @@ import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListContractsResponse, SapContract, SapContractStatusEnum } from "../types";
 import * as moment from "moment";
-import { createStackedReject } from "src/utils";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing contracts from SAP

@@ -2,7 +2,7 @@ import AbstractService from "../abstract-service";
 import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListDeliveryPlacesResponse, SapDeliveryPlace } from "../types";
-import { createStackedReject } from "src/utils";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing delivery places from SAP
