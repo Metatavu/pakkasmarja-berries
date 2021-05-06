@@ -317,8 +317,8 @@ export default class ContractsServiceImpl extends ContractsService {
         importedContract.contractQuantity = contractQuantity ? `${contractQuantity}` : "";
 
         const quantityComment = this.getContractRowValue(contractRow, 3);
-        contract.quantityComment = `${quantityComment}`;
-        importedContract.quantityComment = `${quantityComment}`;
+        contract.quantityComment = quantityComment ? `${quantityComment}` : undefined;
+        importedContract.quantityComment = quantityComment ? `${quantityComment}` : undefined;
 
         const deliverAll = this.getContractRowValue(contractRow, 4);
         const deliverAllAllowed = itemGroupId ?
