@@ -16,6 +16,7 @@ import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup, SapVatLiableEnum } from "../sap/service-layer-client/types";
 import * as moment from "moment";
 import SapServiceFactory from "../sap/service-layer-client";
+import { createStackedReject, logReject } from "../utils";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -942,24 +943,29 @@ export default new class TaskQueue {
    * @param user user
    */
   private cacheUserChatGroupPermissions = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<boolean> => {
-    if (!user.id) {
-      return false;
-    }
-
-    const permittedScopes = await this.getChatGroupPermissionScopes(chatGroup, user);
-    const permissionName = chatGroupPermissionController.getChatGroupResourceName(chatGroup);
-    let hadAnyPermission = false;
-    for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) {
-      let scope = CHAT_GROUP_SCOPES[i];
-      let permission = false;
-      if (permittedScopes.indexOf(scope) > -1) {
-        permission = true;
-        hadAnyPermission = true;
+    try {
+      if (!user.id) {
+        return false;
       }
-
-      await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+  
+      const permittedScopes = await this.getChatGroupPermissionScopes(chatGroup, user);
+      const permissionName = chatGroupPermissionController.getChatGroupResourceName(chatGroup);
+      let hadAnyPermission = false;
+      for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) {
+        let scope = CHAT_GROUP_SCOPES[i];
+        let permission = false;
+        if (permittedScopes.indexOf(scope) > -1) {
+          permission = true;
+          hadAnyPermission = true;
+        }
+  
+        await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+      }
+      return hadAnyPermission;
+    } catch (error) {
+      logReject(createStackedReject(`Failed to cache chat group permissions for user ${user.id}`, error), this.logger);
+      return Promise.reject(error);
     }
-    return hadAnyPermission;
   }
 
   /**
@@ -969,21 +975,25 @@ export default new class TaskQueue {
    * @param user user
    */
   private cacheUserChatThreadPermissions = async (chatThread: ThreadModel, user: UserRepresentation) => {
-    if (!user.id) {
-      return;
-    }
-
-    const permittedScopes = await this.getChatThreadPermissionScopes(chatThread, user);
-    const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
-
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
-      let scope = CHAT_GROUP_SCOPES[i];
-      let permission = false;
-      if (permittedScopes.indexOf(scope) > -1) {
-        permission = true;
+    try {
+      if (!user.id) {
+        return;
       }
-
-      await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+  
+      const permittedScopes = await this.getChatThreadPermissionScopes(chatThread, user);
+      const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
+  
+      for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
+        let scope = CHAT_GROUP_SCOPES[i];
+        let permission = false;
+        if (permittedScopes.indexOf(scope) > -1) {
+          permission = true;
+        }
+  
+        await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+      }
+    } catch (error) {
+      logReject(createStackedReject(`Failed to cache chat thread permissions for user ${user.id}`, error), this.logger);
     }
   }
 
