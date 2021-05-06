@@ -24,6 +24,7 @@ import { config } from "../../config";
 import xlsx from "node-xlsx";
 import { SapContract, SapContractLine, SapContractStatusEnum } from "../../sap/service-layer-client/types";
 import SapServiceFactory from "../../sap/service-layer-client";
+import { createStackedReject, logReject } from "../../utils";
 
 /**
  * Implementation for Contracts REST service
@@ -195,7 +196,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
           return;
         } catch (e) {
-          this.logger.error(`Could not add contract to SAP: ${e}`);
+          logReject(createStackedReject("Could not add contract to SAP", e), this.logger);
         }
       }
     }
@@ -212,26 +213,26 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
+    const importFile = req.file;
+    if (!importFile) {
+      this.sendBadRequest(res, "No import file attached");
+      return;
+    }
+
+    const workSheets = xlsx.parse(req.file.buffer);
+    if (!_.isObject(workSheets) || !workSheets.length) {
+      this.sendBadRequest(res, "No worksheets in imported xlsx file");
+      return;
+    }
+
+    const { data } = workSheets[0];
+    if (data.length < 2) {
+      this.sendBadRequest(res, "Worksheet does not contain any rows");
+      return;
+    }
+
     try {
-      const importFile = req.file;
-      if (!importFile) {
-        this.sendBadRequest(res, "No import file attached");
-        return;
-      }
-
-      const workSheets = xlsx.parse(req.file.buffer);
-      if (!_.isObject(workSheets) || !workSheets.length) {
-        this.sendBadRequest(res, "No worksheets in imported xlsx file");
-        return;
-      }
-
-      const { data } = workSheets[0];
-      if (data.length < 2) {
-        this.sendBadRequest(res, "Worksheet does not contain any rows");
-        return;
-      }
-
-      const contractRows = data.slice(1);
+      const contractRows: string[][] = data.slice(1);
       const contractDataList: ContractPreviewData[] = [];
 
       for (let i = 0; i < contractRows.length; i++) {
@@ -565,7 +566,55 @@ export default class ContractsServiceImpl extends ContractsService {
     this.sendContractChangePushNotification(
       updatedDatabaseContract.userId,
       `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
-      `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`);
+      `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
+    );
+
+    if (updatedDatabaseContract.status === "APPROVED") {
+      const salesPerson = await userManagement.findUser(this.getLoggedUserId(req));
+      const sapSalesPersonCode = userManagement.getSingleAttribute(salesPerson, UserProperty.SAP_SALES_PERSON_CODE);
+      if (!sapSalesPersonCode) {
+        const { username, email } = salesPerson || {};
+        this.logger.error(`Could not update contract to SAP: user ${username || email} has no sapSalesPersonCode`);
+      } else {
+        try {
+          const sapContract = await this.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup, sapSalesPersonCode);
+
+          await models.updateContract(
+            updatedDatabaseContract.id,
+            year,
+            deliveryPlaceId,
+            proposedDeliveryPlaceId,
+            itemGroupId,
+            sapId || `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
+            contractQuantity || null,
+            deliveredQuantity || null,
+            proposedQuantity || null,
+            startDate || null,
+            endDate || null,
+            signDate || null,
+            termDate || null,
+            status,
+            areaDetails ? JSON.stringify(areaDetails) : "",
+            deliverAll,
+            proposedDeliverAll,
+            remarks || null,
+            deliveryPlaceComment || null,
+            quantityComment || null,
+            rejectComment || null
+          );
+
+          res.status(200).send(
+            await this.translateDatabaseContract(
+              await models.findContractById(updatedDatabaseContract.id)
+            )
+          );
+
+          return;
+        } catch (e) {
+          logReject(createStackedReject("Could not update contract to SAP", e), this.logger);
+        }
+      }
+    }
 
     res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
   }
@@ -1330,12 +1379,12 @@ export default class ContractsServiceImpl extends ContractsService {
 
       const user = await userManagement.findUser(contract.userId);
       if (!user) {
-        return Promise.reject(`Contract user with ID "${contract.userId}" could not be found`);
+        return Promise.reject(`createOrUpdateSapContract: Contract user with ID "${contract.userId}" could not be found`);
       }
 
       const businessPartnerCode = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
       if (!businessPartnerCode) {
-        return Promise.reject(`Contract user SAP ID could not be found`);
+        return Promise.reject(`createOrUpdateSapContract: Contract user SAP ID could not be found`);
       }
 
       const existingSapContracts = await sapContractsService.listActiveContractsByBusinessPartner(businessPartnerCode);
@@ -1357,17 +1406,17 @@ export default class ContractsServiceImpl extends ContractsService {
       }
 
       if (!sapSalesPersonCode) {
-        return Promise.reject("SAP sales person code not found");
+        return Promise.reject("createOrUpdateSapContract: SAP sales person code not found");
       }
 
       const sapSalesPersonNumber = Number(sapSalesPersonCode);
       if (Number.isNaN(sapSalesPersonNumber)) {
-        return Promise.reject(`SAP sales person code "${sapSalesPersonCode}" is invalid`);
+        return Promise.reject(`createOrUpdateSapContract: SAP sales person code "${sapSalesPersonCode}" is invalid`);
       }
 
       return await this.createNewSapContract(contract, itemGroup, deliveryPlace, sapSalesPersonNumber);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to create or update SAP contract", e));
     }
   }
 
@@ -1386,41 +1435,45 @@ export default class ContractsServiceImpl extends ContractsService {
     deliveryPlace: DeliveryPlaceModel,
     sapSalesPersonCode: number
   ): Promise<SapContract> => {
-    const user = await userManagement.findUser(contract.userId);
-    if (!user) {
-      return Promise.reject(`Contract user with ID "${contract.userId}" could not be found`);
+    try {
+      const user = await userManagement.findUser(contract.userId);
+      if (!user) {
+        return Promise.reject(`createNewSapContract: Contract user with ID "${contract.userId}" could not be found`);
+      }
+  
+      const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
+      if (!userSapId) {
+        return Promise.reject("createNewSapContract: Contract user SAP ID could not be found");
+      }
+  
+      const itemGroupSapId = Number(itemGroup.sapId);
+      if (Number.isNaN(itemGroupSapId)) {
+        return Promise.reject(`createNewSapContract: Item group's SAP ID "${itemGroup.sapId}" is invalid`);
+      }
+  
+      const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
+      const itemGroupProducts = await models.listProducts(itemGroup.id, null, null);
+      const contractLines = this.updateSapContractLines([], itemGroupProducts, itemGroup, deliveryPlace);
+      const startDate = `${moment().year()}-05-01`;
+      const endDate = `${moment().year() + 1}-01-31`;
+      const sapContractsService = SapServiceFactory.getContractsService();
+  
+      return await sapContractsService.createContract({
+        BPCode: userSapId,
+        ContactPersonCode: sapSalesPersonCode,
+        BlanketAgreements_ItemsLines: contractLines,
+        StartDate: startDate,
+        EndDate: endDate,
+        SigningDate: contract.signDate ? moment(contract.signDate).format("YYYY-MM-DD") : null,
+        TerminateDate: endDate,
+        Status: SapContractStatusEnum.DRAFT,
+        [itemGroupPlannedAmountKey]: contract.contractQuantity,
+        U_PFZ_Toi: deliveryPlace.sapId,
+        Remarks: contract.remarks ? contract.remarks : null
+      });
+    } catch (e) {
+      return Promise.reject(createStackedReject("Failed to create new SAP contract", e));
     }
-
-    const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
-    if (!userSapId) {
-      return Promise.reject("Contract user SAP ID could not be found");
-    }
-
-    const itemGroupSapId = Number(itemGroup.sapId);
-    if (Number.isNaN(itemGroupSapId)) {
-      return Promise.reject(`Item group's SAP ID "${itemGroup.sapId}" is invalid`);
-    }
-
-    const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
-    const itemGroupProducts = await models.listProducts(itemGroup.id, null, null);
-    const contractLines = this.updateSapContractLines([], itemGroupProducts, itemGroup, deliveryPlace);
-    const startDate = `${moment().year()}-05-01`;
-    const endDate = `${moment().year() + 1}-01-31`;
-    const sapContractsService = SapServiceFactory.getContractsService();
-
-    return await sapContractsService.createContract({
-      BPCode: userSapId,
-      ContactPersonCode: sapSalesPersonCode,
-      BlanketAgreements_ItemsLines: contractLines,
-      StartDate: startDate,
-      EndDate: endDate,
-      SigningDate: contract.signDate ? moment(contract.signDate).format("YYYY-MM-DD") : null,
-      TerminateDate: endDate,
-      Status: SapContractStatusEnum.DRAFT,
-      [itemGroupPlannedAmountKey]: contract.contractQuantity,
-      U_PFZ_Toi: deliveryPlace.sapId,
-      Remarks: contract.remarks ? contract.remarks : null
-    });
   }
 
   /**
@@ -1446,7 +1499,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
       const itemGroupSapId = Number(itemGroup.sapId);
       if (Number.isNaN(itemGroupSapId)) {
-        return Promise.reject(`SAP ID "${itemGroup.sapId}" in item group "${itemGroup.name}" is invalid`);
+        return Promise.reject(`updateExistingSapContract: SAP ID "${itemGroup.sapId}" in item group "${itemGroup.name}" is invalid`);
       }
 
       if (contractLines.every(line => `${line.ItemGroup}` !== itemGroup.sapId)) {
@@ -1475,7 +1528,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
       return await sapContractsService.updateContract(updatedContract);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to update existing SAP contract", e));
     }
   }
 
@@ -1500,17 +1553,17 @@ export default class ContractsServiceImpl extends ContractsService {
       const itemGroupSapIdValid = !Number.isNaN(itemGroupSapId);
 
       if (!itemGroupSapIdValid) {
-        this.logger.info(`Item group SAP ID ${itemGroupSapId} was not valid and thus was not added to SAP contract`);
+        this.logger.info(`updateSapContractLines: Item group SAP ID ${itemGroupSapId} was not valid and thus was not added to SAP contract`);
       }
 
       const correctItemGroup = product.itemGroupId === itemGroup.id;
       if (!correctItemGroup) {
-        this.logger.info(`Product item group ${product.itemGroupId} was not equal to item group ID ${itemGroup.id} and thus was not added to SAP contract`);
+        this.logger.info(`updateSapContractLines: Product item group ${product.itemGroupId} was not equal to item group ID ${itemGroup.id} and thus was not added to SAP contract`);
       }
 
       const notInList = contractLines.every(line => line.ItemNo !== product.sapItemCode);
       if (!notInList) {
-        this.logger.info(`Product with SAP ID ${product.sapItemCode} was already found from contract and thus was not added`);
+        this.logger.info(`updateSapContractLines: Product with SAP ID ${product.sapItemCode} was already found from contract and thus was not added`);
       }
 
       if (itemGroupSapIdValid && correctItemGroup && notInList) {
@@ -1538,24 +1591,24 @@ export default class ContractsServiceImpl extends ContractsService {
     try {
       const { sapId } = contract;
       if (!sapId) {
-        return Promise.reject("Contract has no SAP ID");
+        return Promise.reject("removeContractFromSapContract: Contract has no SAP ID");
       }
 
       const agreementNo = await this.getAgreementNoFromContractSapId(sapId);
       if (!agreementNo) {
-        return Promise.reject(`Contract SAP ID "${sapId}" is invalid`);
+        return Promise.reject(`removeContractFromSapContract: Contract SAP ID "${sapId}" is invalid`);
       }
 
       const sapContractsService = SapServiceFactory.getContractsService();
       const existingSapContract = await sapContractsService.findContract(agreementNo);
 
       if (!existingSapContract) {
-        return Promise.reject(`SAP contract with agreement number "${agreementNo}" could not be found`);
+        return Promise.reject(`removeContractFromSapContract: SAP contract with agreement number "${agreementNo}" could not be found`);
       }
 
       const itemGroupSapId = Number(itemGroup.sapId);
       if (Number.isNaN(itemGroupSapId)) {
-        return Promise.reject(`SAP ID "${itemGroup.sapId}" in item group "${itemGroup.name}" is invalid`);
+        return Promise.reject(`removeContractFromSapContract: SAP ID "${itemGroup.sapId}" in item group "${itemGroup.name}" is invalid`);
       }
 
       const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
@@ -1564,7 +1617,7 @@ export default class ContractsServiceImpl extends ContractsService {
         [itemGroupPlannedAmountKey]: 0
       });
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to remove contract data from SAP contract", e));
     }
   }
 
@@ -1649,7 +1702,7 @@ export default class ContractsServiceImpl extends ContractsService {
           const foundItemGroup = itemGroups[itemGroupId];
           if (!foundItemGroup) {
             this.logger.warn("Could not find item group from app-config.json");
-            return reject();
+            return false;
           }
 
           const allowDeliveryAll = foundItemGroup["allow-delivery-all"];

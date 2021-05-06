@@ -3,6 +3,7 @@ import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListContractsResponse, SapContract, SapContractStatusEnum } from "../types";
 import * as moment from "moment";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing contracts from SAP
@@ -41,7 +42,7 @@ export default class SapContractsService extends AbstractService {
       await this.endSession(session);
       return this.translateListItemsResponses(responses);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to list SAP contracts", e));
     }
   }
 
@@ -70,7 +71,7 @@ export default class SapContractsService extends AbstractService {
       await this.endSession(session);
       return this.translateListItemsResponses([ response ]);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to list active SAP contracts by business partner", e));
     }
   }
 
@@ -96,7 +97,7 @@ export default class SapContractsService extends AbstractService {
       await this.endSession(session);
       return response;
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to find SAP contract", e));
     }
   }
 
@@ -123,7 +124,7 @@ export default class SapContractsService extends AbstractService {
       await this.endSession(session);
       return response;
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to create SAP contract", e));
     }
   }
 
@@ -136,7 +137,7 @@ export default class SapContractsService extends AbstractService {
   public async updateContract(contract: SapContract): Promise<SapContract> {
     try {
       if (!contract.AgreementNo) {
-        return Promise.reject("sapContractsService.updateContract: no agreement number in contract");
+        return Promise.reject(createStackedReject("Failed to update SAP contract - no agreement number in contract"));
       }
 
       const config = await this.getConfig();
@@ -155,12 +156,12 @@ export default class SapContractsService extends AbstractService {
 
       const updatedContract = await this.findContract(contract.AgreementNo);
       if (!updatedContract) {
-        return Promise.reject(`could not find updated contract with agreement number "${contract.AgreementNo}"`);
+        return Promise.reject(createStackedReject(`could not find updated SAP contract with agreement number "${contract.AgreementNo}`));
       }
 
       return updatedContract;
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to update SAP contract", e));
     }
   }
 
@@ -189,7 +190,7 @@ export default class SapContractsService extends AbstractService {
       await this.endSession(session);
       return Promise.resolve();
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to update SAP contract status", e));
     }
   }
 
@@ -230,12 +231,12 @@ export default class SapContractsService extends AbstractService {
       const countString = await response.text();
       const count = Number(countString);
       if (Number.isNaN(count)) {
-        return Promise.reject("Item count was not number");
+        return Promise.reject(createStackedReject("Item count was not number"));
       }
 
       return count;
     } catch(e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to parse count from response", e));
     }
   }
 

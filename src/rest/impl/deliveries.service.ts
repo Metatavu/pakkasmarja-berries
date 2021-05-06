@@ -13,7 +13,8 @@ import * as _ from "lodash";
 import mailer from "../../mailer";
 import { BinActionTypeEnum, SapDocObjectCodeEnum, SapPurchaseDeliveryNote, SapStockTransfer, SapStockTransferLine } from "../../sap/service-layer-client/types";
 import SapServiceFactory from "../../sap/service-layer-client";
-import { getLogger, Logger } from "log4js";
+import { getLogger } from "log4js";
+import { createStackedReject, logReject } from "../../utils";
 
 /**
  * Implementation for Deliveries REST service
@@ -146,7 +147,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       try {
         await this.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
       } catch (e) {
-        getLogger().error(e);
+        logReject(e, getLogger());
       }
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
@@ -478,7 +479,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       try {
         await this.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
       } catch (e) {
-        getLogger().error(e);
+        logReject(e, getLogger());
       }
     } else {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
@@ -716,7 +717,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       await sapPurchaseDeliveryNotesService.createPurchaseDeliveryNote(purchaseDeliveryNote);
       await sapStockTransfersService.createStockTransfer(stockTransfer);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to create delivery documents to SAP", e));
     }
   }
 

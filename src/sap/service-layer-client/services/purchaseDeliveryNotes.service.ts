@@ -1,7 +1,8 @@
 import AbstractService from "../abstract-service";
-import fetch, { RequestInit } from "node-fetch";
+import { RequestInit } from "node-fetch";
 import * as _ from "lodash";
 import { SapPurchaseDeliveryNote } from "../types";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing purchase delivery notes from SAP
@@ -31,7 +32,7 @@ export default class SapPurchaseDeliveryNotesService extends AbstractService {
       await this.endSession(session);
       return response;
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to create SAP purchase delivery note", e));
     }
   }
 }

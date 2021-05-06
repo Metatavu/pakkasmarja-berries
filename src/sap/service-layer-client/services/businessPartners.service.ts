@@ -2,6 +2,7 @@ import AbstractService from "../abstract-service";
 import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListBusinessPartnersResponse, SapBusinessPartner } from "../types";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing business partners from SAP
@@ -40,7 +41,7 @@ export default class SapBusinessPartnersService extends AbstractService {
       await this.endSession(session);
       return this.translateListItemsResponses(responses);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to list SAP business partners", e));
     }
   }
 
@@ -81,12 +82,12 @@ export default class SapBusinessPartnersService extends AbstractService {
       const countString = await response.text();
       const count = Number(countString);
       if (Number.isNaN(count)) {
-        return Promise.reject("Item count was not number");
+        return Promise.reject(createStackedReject("Item count was not number"));
       }
 
       return count;
     } catch(e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to parse count from response", e));
     }
   }
 
