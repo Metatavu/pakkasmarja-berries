@@ -2,6 +2,7 @@ import AbstractService from "../abstract-service";
 import fetch, { RequestInit } from "node-fetch";
 import * as _ from "lodash";
 import { SapStockTransfer } from "../types";
+import { createStackedReject } from "src/utils";
 
 /**
  * Service providing stock transfers from SAP
@@ -32,7 +33,7 @@ export default class SapSapStockTransfersService extends AbstractService {
       await this.endSession(session);
       return response;
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to create stock transfer", e));
     }
   }
 }
