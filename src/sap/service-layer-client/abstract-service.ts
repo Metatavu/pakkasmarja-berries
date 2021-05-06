@@ -1,4 +1,5 @@
 import fetch, { RequestInit, Response } from "node-fetch";
+import { createStackedReject } from "../../utils";
 import { config } from "../../config";
 import { SapConfig, SapLoginRequestBody, SapSession } from "./types";
 
@@ -45,7 +46,7 @@ export default class SapAbstractService {
 
       return json;
     } catch(e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject(e));
     }
   }
 
@@ -59,7 +60,7 @@ export default class SapAbstractService {
       const sapSession = await this.login();
       return sapSession;
     } catch (error) {
-      return Promise.reject(error);
+      return Promise.reject(createStackedReject("Failed to create session to SAP Service Layer", error));
     }
   }
 
@@ -75,7 +76,7 @@ export default class SapAbstractService {
       const response = await this.requestLogout(session, config);
       return await this.parseLogoutResponse(response);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to end session to SAP Service Layer", e));
     }
   }
 
@@ -88,7 +89,7 @@ export default class SapAbstractService {
     try {
       return Promise.resolve({ ...config().sapServiceLayer });
     } catch (e) {
-      return Promise.reject(`Failed to get config for Sap Service Layer client: ${e}`);
+      return Promise.reject(createStackedReject("Failed to get config for Sap Service Layer client", e));
     }
   }
 
@@ -113,12 +114,12 @@ export default class SapAbstractService {
       const response = await this.requestLogin(config);
       if (response.status !== 200) {
         const json = await response.json();
-        return Promise.reject(`Error doing login to SAP Service Layer: ${json.error.message.value}`);
+        return Promise.reject(createStackedReject(`Error doing login to SAP Service Layer: ${json.error.message.value}`));
       }
 
       return await this.parseLoginResponse(response);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to login to SAP Service Layer", e));
     }
   }
 
@@ -158,17 +159,17 @@ export default class SapAbstractService {
       const rawHeaders = response.headers.raw();
       const cookies = rawHeaders["set-cookie"];
       if (!cookies) {
-        return Promise.reject("No set-cookie header found from SAP Service Layer login response");
+        return Promise.reject(createStackedReject("No set-cookie header found from SAP Service Layer login response"));
       }
 
       const sessionCookie = cookies.find(cookie => cookie.startsWith("B1SESSION"));
       if (!sessionCookie) {
-        return Promise.reject(`No session cookie found from SAP Service Layer login response`);
+        return Promise.reject(createStackedReject("No session cookie found from SAP Service Layer login response"));
       }
 
       const routeCookie = cookies.find(cookie => cookie.startsWith("ROUTEID"));
       if (!routeCookie) {
-        return Promise.reject(`No route cookie found from SAP Service Layer login response`);
+        return Promise.reject(createStackedReject("No route cookie found from SAP Service Layer login response"));
       }
 
       return {
@@ -176,7 +177,7 @@ export default class SapAbstractService {
         routeId: this.parseIdFromCookie(routeCookie)
       };
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to parse login response", e));
     }
   }
 
@@ -209,12 +210,12 @@ export default class SapAbstractService {
     try {
       if (response.status !== 204) {
         const json = await response.json();
-        return Promise.reject(`Error doing logout to SAP Service Layer: ${json.error.message.value}`);
+        return Promise.reject(createStackedReject(`Error doing logout to SAP Service Layer: ${json.error.message.value}`));
       }
 
       return Promise.resolve();
     } catch (e) {
-      return Promise.reject(`Error doing logout to SAP Service Layer: ${e}`);
+      return Promise.reject(createStackedReject("Error doing logout to SAP Service Layer", e));
     }
   }
 

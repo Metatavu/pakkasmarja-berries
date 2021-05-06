@@ -2,6 +2,7 @@ import AbstractService from "../abstract-service";
 import fetch, { RequestInit, Response } from "node-fetch";
 import * as _ from "lodash";
 import { ListDeliveryPlacesResponse, SapDeliveryPlace } from "../types";
+import { createStackedReject } from "../../../utils";
 
 /**
  * Service providing delivery places from SAP
@@ -37,7 +38,7 @@ export default class SapDeliveryPlacesService extends AbstractService {
       await this.endSession(session);
       return this.translateListItemsResponses(responses);
     } catch (e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to list SAP delivery places", e));
     }
   }
 
@@ -78,12 +79,12 @@ export default class SapDeliveryPlacesService extends AbstractService {
       const countString = await response.text();
       const count = Number(countString);
       if (Number.isNaN(count)) {
-        return Promise.reject("Item count was not number");
+        return Promise.reject(createStackedReject("Item count was not number"));
       }
 
       return count;
     } catch(e) {
-      return Promise.reject(e);
+      return Promise.reject(createStackedReject("Failed to parse count from response", e));
     }
   }
 
