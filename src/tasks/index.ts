@@ -928,6 +928,7 @@ export default new class TaskQueue {
             permittedGroupIds.push(chatGroups[j].id);
           }
         }
+
         const chatThreads = await models.listThreads(permittedGroupIds);
         for (let n = 0; n < chatThreads.length; n++) {
           await this.cacheUserChatThreadPermissions(chatThreads[n], user);
