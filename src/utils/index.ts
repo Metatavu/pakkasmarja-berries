@@ -15,7 +15,7 @@ export const createStackedReject = (message: string | Error, prevError?: string 
     reason.stack += `\nCaused By:\n`;
     reason.stack += prevError instanceof Error ?
       prevError.stack || prevError.message :
-      prevError;
+      JSON.stringify(prevError, null, 2);
   }
 
   return reason;
