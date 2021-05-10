@@ -1570,6 +1570,7 @@ export default class ContractsServiceImpl extends ContractsService {
         contractLines.push({
           ItemGroup: itemGroupSapId,
           ItemNo: product.sapItemCode,
+          PlannedQuantity: 1,
           CumulativeQuantity: 0,
           ShippingType: -1,
           U_PFZ_ToiP: deliveryPlace.sapId
