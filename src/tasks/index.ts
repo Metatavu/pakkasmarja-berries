@@ -914,25 +914,33 @@ export default new class TaskQueue {
   private async cacheUsersChatPermissions() {
     this.logger.info("Updating users chat permissions");
 
-    const users = await userManagement.listAllUsers();
-    const chatGroups = await models.listChatGroups(null);
+    try {
+      const users = await userManagement.listAllUsers();
+      const chatGroups = await models.listChatGroups(null);
+  
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const permittedGroupIds = [];
+        this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
 
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
-      const permittedGroupIds = [];
-      this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
-      for (let j = 0; j < chatGroups.length; j++) {
-        if (await this.cacheUserChatGroupPermissions(chatGroups[j], user)) {
-          permittedGroupIds.push(chatGroups[j].id);
+        for (let j = 0; j < chatGroups.length; j++) {
+          if (await this.cacheUserChatGroupPermissions(chatGroups[j], user)) {
+            permittedGroupIds.push(chatGroups[j].id);
+          }
+        }
+
+        const chatThreads = await models.listThreads(permittedGroupIds);
+        for (let n = 0; n < chatThreads.length; n++) {
+          await this.cacheUserChatThreadPermissions(chatThreads[n], user);
         }
       }
-      const chatThreads = await models.listThreads(permittedGroupIds);
-      for (let n = 0; n < chatThreads.length; n++) {
-        await this.cacheUserChatThreadPermissions(chatThreads[n], user);
-      }
+  
+      this.logger.info("Done caching user chat permissions");
+    } catch (error) {
+      logReject(createStackedReject("Permission caching failed", error), this.logger);
     }
 
-    this.logger.info("Done caching user chat permissions");
+    this.logger.info("Starting new task for updating user permissions cache");
     this.enqueueCacheUsersChatPermissionsTask();
   }
 
