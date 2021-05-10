@@ -169,6 +169,7 @@ export enum SapContractStatusEnum {
 export interface SapContractLine {
   ItemNo: string | null;
   ItemGroup: number | null;
+  PlannedQuantity: number | null;
   CumulativeQuantity: number | null;
   U_PFZ_ToiP: string | null;
   ShippingType: number | null;
