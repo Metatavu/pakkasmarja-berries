@@ -922,6 +922,7 @@ export default new class TaskQueue {
         const user = users[i];
         const permittedGroupIds = [];
         this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
+
         for (let j = 0; j < chatGroups.length; j++) {
           if (await this.cacheUserChatGroupPermissions(chatGroups[j], user)) {
             permittedGroupIds.push(chatGroups[j].id);
