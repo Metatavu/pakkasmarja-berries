@@ -18,7 +18,7 @@ export default class SapAbstractService {
   protected async asyncFetch(url: string, options: RequestInit): Promise<any | undefined> {
     try {
       const response = await fetch(url, options);
-      if (response.status === 404) {
+      if (response.status === 404 || response.status === 204) {
         return;
       }
 
@@ -45,7 +45,7 @@ export default class SapAbstractService {
 
       return await response.json();
     } catch(e) {
-      return Promise.reject(createStackedReject(e));
+      return Promise.reject(createStackedReject(`Failed to fetch ${url}`, e));
     }
   }
 
