@@ -22,15 +22,14 @@ export default class SapAbstractService {
         return;
       }
 
-      const json = await response.json();
-
       if (!response.ok) {
         const messageParts = [ `Failed to fetch ${url}` ];
 
-        if (json) {
+        const responseText = response.text();
+        if (responseText) {
           messageParts.push(`
             \nError:
-            \n${JSON.stringify(json, null, 2)}
+            \n${JSON.stringify(responseText, null, 2)}
           `);
         }
 
@@ -44,7 +43,7 @@ export default class SapAbstractService {
         return Promise.reject(messageParts.join(""));
       }
 
-      return json;
+      return await response.json();
     } catch(e) {
       return Promise.reject(createStackedReject(e));
     }
