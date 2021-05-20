@@ -30,7 +30,6 @@ export default class SapAbstractService {
           messageParts.push(" ");
           messageParts.push("Error response:");
           messageParts.push(JSON.stringify(responseText, null, 2));
-          messageParts.push(" ");
         }
 
         if (options.body) {
