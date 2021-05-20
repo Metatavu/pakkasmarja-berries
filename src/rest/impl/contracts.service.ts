@@ -156,48 +156,41 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     if (contract.status === "APPROVED") {
-      const salesPerson = await userManagement.findUser(this.getLoggedUserId(req));
-      const sapSalesPersonCode = userManagement.getSingleAttribute(salesPerson, UserProperty.SAP_SALES_PERSON_CODE);
-      if (!sapSalesPersonCode) {
-        const { username, email } = salesPerson || {};
-        this.logger.error(`Could not add contract to SAP: user ${username || email} has no sapSalesPersonCode`);
-      } else {
-        try {
-          const sapContract = await this.createOrUpdateSapContract(databaseContract, deliveryPlace, itemGroup, sapSalesPersonCode);
+      try {
+        const sapContract = await this.createOrUpdateSapContract(databaseContract, deliveryPlace, itemGroup);
 
-          await models.updateContract(databaseContract.id,
-            year,
-            deliveryPlaceId,
-            proposedDeliveryPlaceId,
-            itemGroupId,
-            `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
-            contractQuantity,
-            deliveredQuantity,
-            proposedQuantity,
-            startDate,
-            endDate,
-            signDate,
-            termDate,
-            status,
-            areaDetails ? JSON.stringify(areaDetails) : null,
-            deliverAll,
-            proposedDeliverAll,
-            remarks,
-            deliveryPlaceComment,
-            quantityComment,
-            rejectComment
-          );
+        await models.updateContract(databaseContract.id,
+          year,
+          deliveryPlaceId,
+          proposedDeliveryPlaceId,
+          itemGroupId,
+          `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
+          contractQuantity,
+          deliveredQuantity,
+          proposedQuantity,
+          startDate,
+          endDate,
+          signDate,
+          termDate,
+          status,
+          areaDetails ? JSON.stringify(areaDetails) : null,
+          deliverAll,
+          proposedDeliverAll,
+          remarks,
+          deliveryPlaceComment,
+          quantityComment,
+          rejectComment
+        );
 
-          res.status(200).send(
-            await this.translateDatabaseContract(
-              await models.findContractById(databaseContract.id)
-            )
-          );
+        res.status(200).send(
+          await this.translateDatabaseContract(
+            await models.findContractById(databaseContract.id)
+          )
+        );
 
-          return;
-        } catch (e) {
-          logReject(createStackedReject("Could not add contract to SAP", e), this.logger);
-        }
+        return;
+      } catch (e) {
+        logReject(createStackedReject("Could not add contract to SAP", e), this.logger);
       }
     }
 
@@ -570,49 +563,42 @@ export default class ContractsServiceImpl extends ContractsService {
     );
 
     if (updatedDatabaseContract.status === "APPROVED") {
-      const salesPerson = await userManagement.findUser(this.getLoggedUserId(req));
-      const sapSalesPersonCode = userManagement.getSingleAttribute(salesPerson, UserProperty.SAP_SALES_PERSON_CODE);
-      if (!sapSalesPersonCode) {
-        const { username, email } = salesPerson || {};
-        this.logger.error(`Could not update contract to SAP: user ${username || email} has no sapSalesPersonCode`);
-      } else {
-        try {
-          const sapContract = await this.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup, sapSalesPersonCode);
+      try {
+        const sapContract = await this.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup);
 
-          await models.updateContract(
-            updatedDatabaseContract.id,
-            year,
-            deliveryPlaceId,
-            proposedDeliveryPlaceId,
-            itemGroupId,
-            sapId || `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
-            contractQuantity || null,
-            deliveredQuantity || null,
-            proposedQuantity || null,
-            startDate || null,
-            endDate || null,
-            signDate || null,
-            termDate || null,
-            status,
-            areaDetails ? JSON.stringify(areaDetails) : "",
-            deliverAll,
-            proposedDeliverAll,
-            remarks || null,
-            deliveryPlaceComment || null,
-            quantityComment || null,
-            rejectComment || null
-          );
+        await models.updateContract(
+          updatedDatabaseContract.id,
+          year,
+          deliveryPlaceId,
+          proposedDeliveryPlaceId,
+          itemGroupId,
+          sapId || `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
+          contractQuantity || null,
+          deliveredQuantity || null,
+          proposedQuantity || null,
+          startDate || null,
+          endDate || null,
+          signDate || null,
+          termDate || null,
+          status,
+          areaDetails ? JSON.stringify(areaDetails) : "",
+          deliverAll,
+          proposedDeliverAll,
+          remarks || null,
+          deliveryPlaceComment || null,
+          quantityComment || null,
+          rejectComment || null
+        );
 
-          res.status(200).send(
-            await this.translateDatabaseContract(
-              await models.findContractById(updatedDatabaseContract.id)
-            )
-          );
+        res.status(200).send(
+          await this.translateDatabaseContract(
+            await models.findContractById(updatedDatabaseContract.id)
+          )
+        );
 
-          return;
-        } catch (e) {
-          logReject(createStackedReject("Could not update contract to SAP", e), this.logger);
-        }
+        return;
+      } catch (e) {
+        logReject(createStackedReject("Could not update contract to SAP", e), this.logger);
       }
     }
 
@@ -1371,8 +1357,7 @@ export default class ContractsServiceImpl extends ContractsService {
   private createOrUpdateSapContract = async (
     contract: ContractModel,
     deliveryPlace: DeliveryPlaceModel,
-    itemGroup: ItemGroupModel,
-    sapSalesPersonCode?: string
+    itemGroup: ItemGroupModel
   ): Promise<SapContract> => {
     try {
       const sapContractsService = SapServiceFactory.getContractsService();
@@ -1405,16 +1390,7 @@ export default class ContractsServiceImpl extends ContractsService {
         }
       }
 
-      if (!sapSalesPersonCode) {
-        return Promise.reject("createOrUpdateSapContract: SAP sales person code not found");
-      }
-
-      const sapSalesPersonNumber = Number(sapSalesPersonCode);
-      if (Number.isNaN(sapSalesPersonNumber)) {
-        return Promise.reject(`createOrUpdateSapContract: SAP sales person code "${sapSalesPersonCode}" is invalid`);
-      }
-
-      return await this.createNewSapContract(contract, itemGroup, deliveryPlace, sapSalesPersonNumber);
+      return await this.createNewSapContract(contract, itemGroup, deliveryPlace);
     } catch (e) {
       return Promise.reject(createStackedReject("Failed to create or update SAP contract", e));
     }
@@ -1432,8 +1408,7 @@ export default class ContractsServiceImpl extends ContractsService {
   private createNewSapContract = async (
     contract: ContractModel,
     itemGroup: ItemGroupModel,
-    deliveryPlace: DeliveryPlaceModel,
-    sapSalesPersonCode: number
+    deliveryPlace: DeliveryPlaceModel
   ): Promise<SapContract> => {
     try {
       const user = await userManagement.findUser(contract.userId);
@@ -1460,7 +1435,7 @@ export default class ContractsServiceImpl extends ContractsService {
   
       return await sapContractsService.createContract({
         BPCode: userSapId,
-        ContactPersonCode: sapSalesPersonCode,
+        ContactPersonCode: 2,
         BlanketAgreements_ItemsLines: contractLines,
         StartDate: startDate,
         EndDate: endDate,
