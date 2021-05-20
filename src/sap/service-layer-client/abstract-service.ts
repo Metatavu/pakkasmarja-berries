@@ -23,24 +23,23 @@ export default class SapAbstractService {
       }
 
       if (!response.ok) {
-        const messageParts = [ `Failed to fetch ${url}` ];
+        const messageParts = [ `Failed to fetch ${url} with status ${response.status}` ];
 
         const responseText = response.text();
         if (responseText) {
-          messageParts.push(`
-            \nError:
-            \n${JSON.stringify(responseText, null, 2)}
-          `);
+          messageParts.push(" ");
+          messageParts.push("Error response:");
+          messageParts.push(JSON.stringify(responseText, null, 2));
+          messageParts.push(" ");
         }
 
         if (options.body) {
-          messageParts.push(`
-            \nSent request body:
-            \n${JSON.stringify(JSON.parse(options.body.toString()), null, 2)}
-          `);
+          messageParts.push(" ");
+          messageParts.push("Sent request body:");
+          messageParts.push(JSON.stringify(JSON.parse(options.body.toString()), null, 2));
         }
 
-        return Promise.reject(messageParts.join(""));
+        return Promise.reject(createStackedReject(messageParts.join("\n")));
       }
 
       return await response.json();
