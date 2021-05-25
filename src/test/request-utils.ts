@@ -15,7 +15,7 @@ export default new class RequestUtils {
       });
       
       res.on("end", () => {
-        callback(null, new Buffer(res.data, "binary"));
+        callback(null, Buffer.from(res.data, "binary"));
       });
     };
   }

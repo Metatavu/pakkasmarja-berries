@@ -1,7 +1,5 @@
 import * as _ from "lodash";
 import * as Keycloak from "keycloak-connect";
-import * as fs from "fs";
-import * as xml2js from "xml2js";
 import { Response, Request, Application } from "express";
 import { getLogger, Logger } from "log4js";
 import { Operation } from "../model/models";
@@ -9,7 +7,6 @@ import models from "../../models";
 import ApplicationRoles from "../application-roles";
 import OperationsService from "../api/operations.service";
 import tasks from "../../tasks";
-import { SAPExportRoot } from "../../sap/export";
 import { config } from "../../config";
 import SapServiceFactory from "../../sap/service-layer-client";
 
@@ -19,11 +16,6 @@ const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
 const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
 const OPERATION_SAP_CONTRACT_SAPID_SYNC = "SAP_CONTRACT_SAPID_SYNC";
 const OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES = "ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES";
-
-interface SAPData {
-  data: SAPExportRoot,
-  status: string
-}
 
 /**
  * Implementation for Operation REST service
@@ -68,20 +60,26 @@ export default class OperationsServiceImpl extends OperationsService {
 
     switch (type) {
       case OPERATION_SAP_CONTACT_SYNC:
+        operationReport = await this.readSapImportBusinessPartners();
+      break;
       case OPERATION_SAP_DELIVERY_PLACE_SYNC:
-      case OPERATION_SAP_ITEM_GROUP_SYNC:        
+        operationReport = await this.readSapImportDeliveryPlaces();
+      break;
+      case OPERATION_SAP_ITEM_GROUP_SYNC:
+        operationReport = await this.readSapImportItemGroups();
+      break;
       case OPERATION_SAP_CONTRACT_SYNC:
-        operationReport = await this.readSapImportFileTask(type);
-        break;
+        operationReport = await this.readSapImportContracts();
+      break;
       case OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES:
         operationReport = await this.createItemGroupDefaultDocumentTemplates();
-        break;
+      break;
       case OPERATION_SAP_CONTRACT_SAPID_SYNC:
         operationReport = await this.createSapContractSapIds();
-        break;
+      break;
       default:
         this.sendBadRequest(res, `Invalid type ${type}`);
-        return;
+      return;
     }
 
     if (!operationReport) {
@@ -98,25 +96,7 @@ export default class OperationsServiceImpl extends OperationsService {
   }
 
   /**
-   * Reads import file from sap and fills tasks queues with data from file
-   */
-  private async readSapImportFileTask(type: string) {
-    switch (type) {
-      case OPERATION_SAP_CONTACT_SYNC:
-        return this.readSapImportBusinessPartners();
-      case OPERATION_SAP_DELIVERY_PLACE_SYNC:
-        return this.readSapImportDeliveryPlaces();
-      case OPERATION_SAP_ITEM_GROUP_SYNC:
-        return this.readSapImportItemGroups();
-      case OPERATION_SAP_CONTRACT_SYNC:
-        return this.readSapImportContracts();
-      default:
-        return null;
-    }
-  }
-
-  /**
-   * Reads business partners from sap and fills related task queue with data
+   * Reads business partners from SAP and fills related task queue with data
    */
   private async readSapImportBusinessPartners() {
     try {
@@ -124,9 +104,9 @@ export default class OperationsServiceImpl extends OperationsService {
       const businessPartners = await sapBusinessPartnersService.listBusinessPartners();
       const operationReport = await models.createOperationReport("SAP_CONTACT_SYNC");
 
-      businessPartners.forEach((businessPartner: any) => {
-        tasks.enqueueSapContactUpdate(operationReport.id, businessPartner);
-      });
+      businessPartners.forEach(businessPartner =>
+        tasks.enqueueSapContactUpdate(operationReport.id, businessPartner)
+      );
 
       return operationReport;
     } catch (e) {
@@ -136,7 +116,7 @@ export default class OperationsServiceImpl extends OperationsService {
   }
 
   /**
-   * Reads delivery places from sap and fills related task queue with data
+   * Reads delivery places from SAP and fills related task queue with data
    */
   private async readSapImportDeliveryPlaces() {
     try {
@@ -156,7 +136,7 @@ export default class OperationsServiceImpl extends OperationsService {
   }
 
   /**
-   * Reads item groups from sap and fills related task queue with data
+   * Reads item groups from SAP and fills related task queue with data
    */
   private async readSapImportItemGroups() {
     try {
@@ -199,7 +179,7 @@ export default class OperationsServiceImpl extends OperationsService {
   }
 
   /**
-   * Creates missing SAP ids into approved contracts 
+   * Creates missing SAP IDs into approved contracts
    */
   private async createSapContractSapIds() {
     const operationReport = await models.createOperationReport("SAP_CONTRACT_SAPID_SYNC");
@@ -238,71 +218,6 @@ export default class OperationsServiceImpl extends OperationsService {
     }));
 
     return operationReport;
-  }
-
-  /**
-   * Read a file as Promise
-   * 
-   * @param {String} file path to file
-   * @return {Promise} promise for file data 
-   */
-  private readFile(file: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      fs.readFile(file, (err: NodeJS.ErrnoException, data: Buffer) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
-        }
-      });
-    });
-  }
-
-  /**
-   * Parses XML string into object
-   * 
-   * @param {String} data XML string
-   * @returns {Promise} promise for parsed object  
-   */
-  private parseXml(data: Buffer): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const options = {
-        explicitArray: false
-      };
-
-      xml2js.parseString(data, options, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  }
-  
-  /**
-   * Parses XML files into array of objects
-   * 
-   * @param {String} file path to file
-   * @returns {Promise} promise for parsed objects
-   */
-  private parseXmlFiles(files: string[]): Promise<any>[] {
-    return files.map((file) => {
-      return this.parseXmlFile(file);
-    });
-  }
-  
-  /**
-   * Parses XML file into object
-   * 
-   * @param {String} file path to file
-   * @returns {Promise} promise for parsed object 
-   */
-  private parseXmlFile(file: string): Promise<any> {
-    return this.readFile(file)
-      .then((data: Buffer) => {
-        return this.parseXml(data);
-      });
   }
 
   /**

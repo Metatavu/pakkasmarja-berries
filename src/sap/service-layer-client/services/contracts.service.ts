@@ -78,14 +78,15 @@ export default class SapContractsService extends AbstractService {
   /**
    * Finds contract from SAP Service Layer
    *
-   * @param sapId SAP ID of contract
+   * @param docNum Document number of contract
    * @returns promise of found SAP contract or undefined
    */
-  public async findContract(agreementNo: string): Promise<SapContract | undefined> {
+  public async findContract(docNum: number): Promise<SapContract | undefined> {
     try {
       const config = await this.getConfig();
       const session = await this.createSession();
-      const url = `${config.apiUrl}/BlanketAgreements(${agreementNo})`;
+      const baseUrl = `${config.apiUrl}/BlanketAgreements`;
+      const filter = this.escapeSapQuery(`$filter=DocNum eq ${docNum}`);
       const options: RequestInit = {
         method: "GET",
         headers: {
@@ -93,9 +94,9 @@ export default class SapContractsService extends AbstractService {
         }
       }
 
-      const response = await this.asyncFetch(url, options) as SapContract | undefined;
+      const response = await this.asyncFetch(`${baseUrl}?${filter}`, options) as ListContractsResponse;
       await this.endSession(session);
-      return response;
+      return response.value.length ? response.value[0] : undefined;
     } catch (e) {
       return Promise.reject(createStackedReject("Failed to find SAP contract", e));
     }
@@ -140,9 +141,13 @@ export default class SapContractsService extends AbstractService {
         return Promise.reject(createStackedReject("Failed to update SAP contract - no agreement number in contract"));
       }
 
+      if (!contract.DocNum) {
+        return Promise.reject(createStackedReject("Failed to update SAP contract - no document number in contract"));
+      }
+
       const config = await this.getConfig();
       const session = await this.createSession();
-      const url = `${config.apiUrl}/BlanketAgreements(${contract.AgreementNo})`;
+      const url = `${config.apiUrl}/BlanketAgreements${contract.AgreementNo}`;
       const options: RequestInit = {
         method: "PATCH",
         headers: {
@@ -154,7 +159,7 @@ export default class SapContractsService extends AbstractService {
       await this.asyncFetch(url, options);
       await this.endSession(session);
 
-      const updatedContract = await this.findContract(contract.AgreementNo);
+      const updatedContract = await this.findContract(contract.DocNum);
       if (!updatedContract) {
         return Promise.reject(createStackedReject(`could not find updated SAP contract with agreement number "${contract.AgreementNo}`));
       }
