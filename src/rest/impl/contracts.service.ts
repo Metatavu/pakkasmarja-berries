@@ -1420,32 +1420,32 @@ export default class ContractsServiceImpl extends ContractsService {
       if (!user) {
         return Promise.reject(`createNewSapContract: Contract user with ID "${contract.userId}" could not be found`);
       }
-  
+
       const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
       if (!userSapId) {
         return Promise.reject("createNewSapContract: Contract user SAP ID could not be found");
       }
-  
+
       const itemGroupSapId = Number(itemGroup.sapId);
       if (Number.isNaN(itemGroupSapId)) {
         return Promise.reject(`createNewSapContract: Item group's SAP ID "${itemGroup.sapId}" is invalid`);
       }
-  
+
       const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
       const itemGroupProducts = await models.listProducts(itemGroup.id, null, null);
       const contractLines = this.updateSapContractLines([], itemGroupProducts, itemGroup, deliveryPlace);
       const startDate = `${moment().year()}-05-01`;
       const endDate = `${moment().year() + 1}-01-31`;
       const sapContractsService = SapServiceFactory.getContractsService();
-  
+
       return await sapContractsService.createContract({
         BPCode: userSapId,
-        ContactPersonCode: 2,
+        ContactPersonCode: 0,
         BlanketAgreements_ItemsLines: contractLines,
         StartDate: startDate,
         EndDate: endDate,
         SigningDate: contract.signDate ? moment(contract.signDate).format("YYYY-MM-DD") : null,
-        TerminateDate: endDate,
+        TerminateDate: null,
         Status: SapContractStatusEnum.DRAFT,
         [itemGroupPlannedAmountKey]: contract.contractQuantity,
         U_PFZ_Toi: deliveryPlace.sapId,
