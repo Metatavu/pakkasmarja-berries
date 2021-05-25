@@ -17,7 +17,13 @@ export default class SapAbstractService {
    */
   protected async asyncFetch(url: string, options: RequestInit): Promise<any | undefined> {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          "Accept": "*/*"
+        }
+      });
       if (response.status === 404 || response.status === 204) {
         return;
       }
