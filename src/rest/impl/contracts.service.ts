@@ -1374,11 +1374,14 @@ export default class ContractsServiceImpl extends ContractsService {
 
       const existingSapContracts = await sapContractsService.listActiveContractsByBusinessPartner(businessPartnerCode);
       if (existingSapContracts.length > 0) {
+        this.logger.info("Existing SAP contracts found: ", JSON.stringify(existingSapContracts, null, 2));
         const approvedContract = existingSapContracts.find(contract => contract.Status === SapContractStatusEnum.APPROVED);
         const onHoldContract = existingSapContracts.find(contract => contract.Status === SapContractStatusEnum.ON_HOLD);
         const draftContract = existingSapContracts.find(contract => contract.Status === SapContractStatusEnum.DRAFT);
 
         const existingContract = approvedContract || onHoldContract || draftContract;
+
+        this.logger.info("EXISTING CONTRACT: ", JSON.stringify(existingContract, null, 2));
 
         if (existingContract) {
           return await this.updateExistingSapContract(
@@ -1389,6 +1392,8 @@ export default class ContractsServiceImpl extends ContractsService {
           );
         }
       }
+
+      this.logger.info("No existing SAP contracts found, creating a new one.");
 
       return await this.createNewSapContract(contract, itemGroup, deliveryPlace);
     } catch (e) {
