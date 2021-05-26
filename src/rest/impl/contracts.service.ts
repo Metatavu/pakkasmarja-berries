@@ -164,7 +164,7 @@ export default class ContractsServiceImpl extends ContractsService {
           deliveryPlaceId,
           proposedDeliveryPlaceId,
           itemGroupId,
-          `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
+          `${year}-${sapContract.DocNum}-${itemGroup.sapId}`,
           contractQuantity,
           deliveredQuantity,
           proposedQuantity,
@@ -1570,16 +1570,16 @@ export default class ContractsServiceImpl extends ContractsService {
         return Promise.reject("removeContractFromSapContract: Contract has no SAP ID");
       }
 
-      const agreementNo = await this.getAgreementNoFromContractSapId(sapId);
-      if (!agreementNo) {
+      const docNum = await this.getDocNumFromContractSapId(sapId);
+      if (!docNum) {
         return Promise.reject(`removeContractFromSapContract: Contract SAP ID "${sapId}" is invalid`);
       }
 
       const sapContractsService = SapServiceFactory.getContractsService();
-      const existingSapContract = await sapContractsService.findContract(agreementNo);
+      const existingSapContract = await sapContractsService.findContract(docNum);
 
       if (!existingSapContract) {
-        return Promise.reject(`removeContractFromSapContract: SAP contract with agreement number "${agreementNo}" could not be found`);
+        return Promise.reject(`removeContractFromSapContract: SAP contract with document number "${docNum}" could not be found`);
       }
 
       const itemGroupSapId = Number(itemGroup.sapId);
@@ -1620,13 +1620,13 @@ export default class ContractsServiceImpl extends ContractsService {
   }
 
   /**
-   * Returns agreement number from given contract SAP ID
+   * Returns document number from given contract SAP ID
    *
    * @param contractSapId contract SAP ID
-   * @returns promise of contracts agreement number in SAP or undefined if SAP ID is undefined
+   * @returns promise of contracts document number in SAP or undefined if SAP ID is undefined
    * @throws rejected promise if contract SAP ID is invalid
    */
-  private getAgreementNoFromContractSapId = async (contractSapId?: string): Promise<string | undefined> => {
+  private getDocNumFromContractSapId = async (contractSapId?: string): Promise<number | undefined> => {
     if (!contractSapId) {
       return;
     }
@@ -1636,7 +1636,13 @@ export default class ContractsServiceImpl extends ContractsService {
       return Promise.reject(`SAP ID "${contractSapId}" is invalid`);
     }
 
-    return splitSapId[1];
+    const docNum = Number(splitSapId[1]);
+
+    if (Number.isNaN(docNum)) {
+      return Promise.reject(`SAP ID "${contractSapId}" is invalid`);
+    }
+
+    return docNum;
   }
 
   /**

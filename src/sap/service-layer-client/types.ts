@@ -138,7 +138,7 @@ export interface ListContractsResponse {
  */
 export interface SapContract {
   AgreementNo?: string | null;
-  DocNum?: string | null;
+  DocNum?: number | null;
   BPCode: string;
   BPName?: string | null;
   ContactPersonCode: number | null;
