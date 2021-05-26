@@ -1,14 +1,11 @@
 import * as _ from "lodash";
-import * as fs from "fs";
 import { getLogger, Logger } from "log4js";
 import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
 import * as Queue from "better-queue"; 
 import * as SQLStore from "better-queue-sql";
-import * as xml2js from "xml2js";
-import { SAPExportBusinessPartner, SAPExport, SAPExportRoot } from "../sap/export"; 
 import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
-import { SAPImportFile, config } from "../config";  
+import { config } from "../config";  
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
@@ -137,7 +134,7 @@ export default new class TaskQueue {
    * 
    * @param {Object} businessPartner SAP business partner object 
    */
-  async enqueueSapContactUpdate(operationReportId: number, businessPartner: SAPExportBusinessPartner) {
+  async enqueueSapContactUpdate(operationReportId: number, businessPartner: SapBusinessPartner) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapContactUpdateQueue.push({
@@ -355,64 +352,61 @@ export default new class TaskQueue {
         message: reason,
         operationReportItemId: data.operationReportItemId
       });
-      this.enqueueContractDeliveredQuantityUpdateQueue();
     };
 
     try {
-      const sapData = await this.loadSapApprovedData();
-      if (!sapData) {
-        this.logger.error("Could not find approved SAP data");
-        return;
-      }
-
-      const sapContracts = sapData.Contracts ? sapData.Contracts.Contracts : null;
-      if (!sapContracts) {
-        this.logger.error("SAP file does not contain contracts");
-        return;
-      }
-
       const contract = await models.findContractById(data.id);
       const userId = contract.userId;
       const year = contract.year;
 
       const itemGroup = await models.findItemGroupById(contract.itemGroupId);
       if (!itemGroup) {
-        return failTask(`Contract ${contract.id} SAP creation failed because item group could not be found`);
+        throw new Error(`Item group with ID ${contract.itemGroupId} could not be found`);
       }
 
       const user = await userManagement.findUser(userId);
       if (!user) {
-        return failTask(`Contract ${contract.id} SAP creation failed because user could not be found`);
+        throw new Error(`User with user ID "${userId}" could not be found`);
       }
 
       const itemGroupSapId = itemGroup.sapId;
       if (!itemGroupSapId) {
-        return failTask(`Contract ${contract.id} SAP creation failed because SAP item group id could not be resolved`);
+        throw new Error(`Item group SAP ID could not be resolved`);
       }
       
       const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
       if (!userSapId) {
-        return failTask(`Contract ${contract.id} SAP creation failed because user SAP id could not be resolved`);
+        throw new Error(`User SAP ID could not be resolved`);
       }
 
-      const sapContract = sapContracts
-        .filter((sapContract) => {
-          return userSapId === sapContract.CardCode;
-        })
-        .filter((sapContract) => {
-          const sapContractLines = Array.isArray(sapContract.ContractLines.ContractLine) ? sapContract.ContractLines.ContractLine : [sapContract.ContractLines.ContractLine];
-          return sapContractLines.filter((sapContractLine) => {
-            return sapContractLine.ItemGroupCode === itemGroupSapId;
-          }).length > 0;      
-        })[0];
+      const sapContractsService = SapServiceFactory.getContractsService();
+      const userActiveSapContracts = await sapContractsService.listActiveContractsByBusinessPartner(userSapId);
+      if (!userActiveSapContracts) {
+        throw new Error(`Failed to list SAP contracts for user with SAP ID "${userSapId}"`);
+      }
+
+      const sapContract = (
+        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.APPROVED) ||
+        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.ON_HOLD) ||
+        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.DRAFT)
+      );
 
       if (!sapContract) {
-        return failTask(`Contract ${contract.id} SAP creation failed because sap contract could not be resolved`);
+        throw new Error(`Active SAP contract could not be found`);
       }
 
-      const contractSapId = `${year}-${sapContract.ContractId}-${itemGroupSapId}`;
+      const contractLines = sapContract.BlanketAgreements_ItemsLines;
+      if (contractLines.every(line => line.ItemGroup !== Number(itemGroupSapId))) {
+        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not contain lines for item group in App contract`);
+      }
+
+      if (!sapContract.DocNum) {
+        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not have document number`);
+      }
+
+      const contractSapId = `${year}-${sapContract.DocNum}-${itemGroupSapId}`;
       if (!contractSapId) {
-        return failTask(`Contract ${contract.id} SAP creation failed because contract SAP id could not be resolved`);
+        throw new Error(`Contract SAP ID could not be resolved`);
       }
 
       await models.updateContractSapId(contract.id, contractSapId);
@@ -424,8 +418,8 @@ export default new class TaskQueue {
         message: successMessage,
         operationReportItemId: data.operationReportItemId
       });
-    } catch (e) {
-      return failTask(`Contract ${data.id} SAP creation failed on error ${e}`);
+    } catch (error) {
+      return failTask(`Contract ${data.id} SAP ID creation failed. Reason: ${error}`);
     }
   }
 
@@ -436,15 +430,6 @@ export default new class TaskQueue {
    * @param {Function} callback task callback 
    */
   async sapContractDeliveredQuantityUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    const failTask = (reason: string) => {
-      this.logger.error(reason);
-      callback({
-        message: reason,
-        operationReportItemId: data.operationReportItemId
-      });
-      this.enqueueContractDeliveredQuantityUpdateQueue();
-    }
-
     try {
       const sapContractsService = SapServiceFactory.getContractsService();
       const sapContracts = await sapContractsService.listContracts();
@@ -503,28 +488,16 @@ export default new class TaskQueue {
         message: successMessage,
         operationReportItemId: data.operationReportItemId
       });
-
-      this.enqueueContractDeliveredQuantityUpdateQueue();
-    } catch (err) {
-      return failTask(`Error processing queue ${err}`);
-    }
-  }
-
-  /**
-   * Loads SAP data from the approved file
-   */
-  private async loadSapApprovedData(): Promise<SAPExportRoot | null> {
-    const importFiles: SAPImportFile[] = config().sap["import-files"] || [];
-    const approvedFile = importFiles.filter((importFile: any) => {
-      return importFile.status === "APPROVED";
-    })[0];
-
-    if (!approvedFile) {
-      return null;
+    } catch (error) {
+      const reason = `Error processing queue ${error}`;
+      this.logger.error(reason);
+      callback({
+        message: reason,
+        operationReportItemId: data.operationReportItemId
+      });
     }
 
-    const sapXml: SAPExport = await this.parseXml(await this.readFile(approvedFile.file));
-    return sapXml.SAP;
+    this.enqueueContractDeliveredQuantityUpdateQueue();
   }
 
   /**
@@ -681,7 +654,7 @@ export default new class TaskQueue {
       const sapDeliveryPlaceId = sapContractLine.U_PFZ_ToiP;
       const sapUserId = sapContract.BPCode;
       const year = moment(sapContract.StartDate ? sapContract.StartDate : undefined).year();
-      const sapId = `${year}-${sapContract.AgreementNo}-${sapItemGroupId}`;
+      const sapId = `${year}-${sapContract.DocNum}-${sapItemGroupId}`;
       
       const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId || "");
       if (!deliveryPlace) {
@@ -836,12 +809,10 @@ export default new class TaskQueue {
    * @returns status as string
    */
   private resolveSapContractStatus(contract: SapContract) {
-    switch (contract.Status) {
-      case SapContractStatusEnum.TERMINATED:
-        return "TERMINATED";
-      case SapContractStatusEnum.APPROVED:
-      default:
-        return "APPROVED";
+    if (contract.Status === SapContractStatusEnum.TERMINATED) {
+      return "TERMINATED";
+    } else {
+      return "APPROVED";
     }
   }
 
@@ -1200,46 +1171,6 @@ export default new class TaskQueue {
   private resolveSapItemGroupDisplayName(sapId: string) {
     const displayNames = config().sap["item-group-display-names"] || {};
     return displayNames[sapId];
-  }
-
-  /**
-   * Read a file as Promise
-   * 
-   * @param {String} file path to file
-   * @return {Promise} promise for file data 
-   */
-  private readFile(file: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      fs.readFile(file, (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
-        }
-      });
-    });
-  }
-
-  /**
-   * Parses XML string into object
-   * 
-   * @param {String} data XML string
-   * @returns {Promise} promise for parsed object  
-   */
-  private parseXml(data: string): any {
-    return new Promise((resolve, reject) => {
-      const options = {
-        explicitArray: false
-      };
-
-      xml2js.parseString(data, options, (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
   }
 
 }
