@@ -572,7 +572,7 @@ export default class ContractsServiceImpl extends ContractsService {
           deliveryPlaceId,
           proposedDeliveryPlaceId,
           itemGroupId,
-          sapId || `${year}-${sapContract.AgreementNo}-${itemGroup.sapId}`,
+          sapId || `${year}-${sapContract.DocNum}-${itemGroup.sapId}`,
           contractQuantity || null,
           deliveredQuantity || null,
           proposedQuantity || null,
