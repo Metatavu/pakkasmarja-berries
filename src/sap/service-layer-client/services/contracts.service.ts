@@ -147,7 +147,7 @@ export default class SapContractsService extends AbstractService {
 
       const config = await this.getConfig();
       const session = await this.createSession();
-      const url = `${config.apiUrl}/BlanketAgreements${contract.AgreementNo}`;
+      const url = `${config.apiUrl}/BlanketAgreements(${contract.AgreementNo})`;
       const options: RequestInit = {
         method: "PATCH",
         headers: {
@@ -161,7 +161,7 @@ export default class SapContractsService extends AbstractService {
 
       const updatedContract = await this.findContract(contract.DocNum);
       if (!updatedContract) {
-        return Promise.reject(createStackedReject(`could not find updated SAP contract with agreement number "${contract.AgreementNo}`));
+        return Promise.reject(createStackedReject(`could not find updated SAP contract with document number "${contract.DocNum}`));
       }
 
       return updatedContract;
