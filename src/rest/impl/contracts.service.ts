@@ -1492,6 +1492,7 @@ export default class ContractsServiceImpl extends ContractsService {
       const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
       updatedContract[itemGroupPlannedAmountKey] = contractQuantity;
       updatedContract.U_PFZ_Toi = deliveryPlace.sapId;
+      updatedContract.Remarks = contract.remarks;
 
       /**
        * If SAP contract already has status of approved, we need to also change
