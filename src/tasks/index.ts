@@ -14,6 +14,8 @@ import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapC
 import * as moment from "moment";
 import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
+import { ContractStatus } from "../rest/model/contractStatus";
+import SapContractsServiceImpl from "../sap/impl/contracts";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -27,6 +29,7 @@ export default new class TaskQueue {
   private sapDeliveryPlaceUpdateQueue: Queue;
   private sapItemGroupUpdateQueue: Queue;
   private sapContractUpdateQueue: Queue;
+  private updateCurrentYearApprovedContractsToSapQueue: Queue;
   private sapContractSapIdSyncQueue: Queue;
   private sapContractDeliveredQuantityUpdateQueue: Queue;
   private questionGroupThreadsQueue: Queue;
@@ -50,6 +53,7 @@ export default new class TaskQueue {
     this.sapDeliveryPlaceUpdateQueue = this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
     this.sapItemGroupUpdateQueue = this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
     this.sapContractUpdateQueue = this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
+    this.updateCurrentYearApprovedContractsToSapQueue = this.createQueue("updateCurrentYearApprovedContractsToSap", this.updateCurrentYearApprovedContractsToSapTask.bind(this));
     this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
     this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
     this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
@@ -162,6 +166,7 @@ export default new class TaskQueue {
   /**
    * Enqueues SAP delivery place update task
    * 
+   * @param operationReportId operation report ID
    * @param {Object} deliveryPlace SAP delivery place object 
    */
   async enqueueSapDeliveryPlaceUpdate(operationReportId: number, deliveryPlace: SapDeliveryPlace) {
@@ -187,6 +192,21 @@ export default new class TaskQueue {
     this.sapContractUpdateQueue.push({
       contract: contract,
       contractLine: contractLine,
+      operationReportItemId: operationReportItem.id
+    });
+  }
+
+  /**
+   * Enqueues update current year approved contracts to SAP task
+   * 
+   * @param {String} operationReportId operation report ID
+   * @param {Object} contract contract model object
+   */
+  async enqueueUpdateCurrentYearApprovedContractsToSap(operationReportId: number, contract: ContractModel) {
+    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
+
+    this.updateCurrentYearApprovedContractsToSapQueue.push({
+      contract: contract,
       operationReportItemId: operationReportItem.id
     });
   }
@@ -773,6 +793,57 @@ export default new class TaskQueue {
   }
 
   /**
+   * Updates current year approved contracts to SAP
+   *
+   * @param {object} data task data
+   * @param {function} callback task callback
+   */
+  private updateCurrentYearApprovedContractsToSapTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
+    const contract: ContractModel | undefined = data.contract;
+    if (!contract) {
+      return logReject(createStackedReject("updateCurrentYearApprovedContractsToSap task failed: no contract found from task data"), this.logger);
+    }
+
+    const failTask = (reason: string) => {
+      callback({
+        message: `Failed to update contract ${contract.externalId} because ${reason}`,
+        operationReportItemId: data.operationReportItemId
+      });
+    };
+
+    if (contract.status !== ContractStatus.APPROVED) {
+      return failTask("contract status was not APPROVED");
+    }
+
+    if (contract.year !== new Date().getFullYear()) {
+      return failTask("contract year was not current year");
+    }
+
+    const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
+    if (!deliveryPlace) {
+      return failTask("contract delivery place was not found");
+    }
+
+    const itemGroup = await models.findDeliveryPlaceById(contract.itemGroupId);
+    if (!itemGroup) {
+      return failTask("contract item group was not found");
+    }
+
+    const itemGroupSapId = itemGroup.sapId;
+    if (!itemGroupSapId) {
+      return failTask(`Item group SAP ID could not be resolved`);
+    }
+
+    try {
+      const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
+      await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
+    } catch (error) {
+      logReject(createStackedReject("Could not update contract to SAP", error), this.logger);
+      return failTask(error);
+    }
+  }
+
+  /**
    * Resolves item group category for given SAP id
    * 
    * @param {String} sapId sapId
@@ -885,12 +956,13 @@ export default new class TaskQueue {
   private async cacheUsersChatPermissions() {
     this.logger.info("Updating users chat permissions");
 
-    try {
-      const users = await userManagement.listAllUsers();
-      const chatGroups = await models.listChatGroups(null);
-  
-      for (let i = 0; i < users.length; i++) {
-        const user = users[i];
+    const users = await userManagement.listAllUsers();
+    const chatGroups = await models.listChatGroups(null);
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+
+      try {
         const permittedGroupIds = [];
         this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
 
@@ -904,12 +976,12 @@ export default new class TaskQueue {
         for (let n = 0; n < chatThreads.length; n++) {
           await this.cacheUserChatThreadPermissions(chatThreads[n], user);
         }
+      } catch (error) {
+        logReject(createStackedReject(`Permission caching failed for user ${user.username}`, error), this.logger);
       }
-  
-      this.logger.info("Done caching user chat permissions");
-    } catch (error) {
-      logReject(createStackedReject("Permission caching failed", error), this.logger);
     }
+
+    this.logger.info("Done caching user chat permissions");
 
     this.logger.info("Starting new task for updating user permissions cache");
     this.enqueueCacheUsersChatPermissionsTask();

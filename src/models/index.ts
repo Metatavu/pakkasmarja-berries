@@ -2370,6 +2370,21 @@ export class Models {
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
+  public listContractsByStatusAndYear(status: string, year: number): Bluebird<ContractModel[]> {
+    return this.sequelize.models.Contract.findAll({ 
+      where: {
+        status: status,
+        year: year
+      }
+    });
+  }
+
+  /**
+   * Lists contracts sap id is not null and have a specified status
+   * 
+   * @param {String} status status
+   * @return {Promise} promise for contracts
+   */
   public listContractsByStatusAndSapIdNotNull(status: string): Bluebird<ContractModel[]> {
     return this.sequelize.models.Contract.findAll({ 
       where: {
