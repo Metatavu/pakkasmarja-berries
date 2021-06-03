@@ -824,7 +824,7 @@ export default new class TaskQueue {
       return failTask("contract delivery place was not found");
     }
 
-    const itemGroup = await models.findDeliveryPlaceById(contract.itemGroupId);
+    const itemGroup = await models.findItemGroupById(contract.itemGroupId);
     if (!itemGroup) {
       return failTask("contract item group was not found");
     }
