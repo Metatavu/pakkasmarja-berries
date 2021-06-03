@@ -58,8 +58,8 @@ export default class SapContractsServiceImpl {
       }
 
       return await SapContractsServiceImpl.createNewSapContract(contract, itemGroup, deliveryPlace);
-    } catch (e) {
-      return Promise.reject(createStackedReject("Failed to create or update SAP contract", e));
+    } catch (error) {
+      return Promise.reject(createStackedReject("Failed to create or update SAP contract", error));
     }
   }
 
