@@ -80,6 +80,7 @@ export default class OperationsServiceImpl extends OperationsService {
       break;
       case OPERATION_UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP:
         operationReport = await this.updateCurrentYearApprovedContractsToSap();
+      break;
       default:
         this.sendBadRequest(res, `Invalid type ${type}`);
       return;
