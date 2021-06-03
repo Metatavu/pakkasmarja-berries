@@ -795,8 +795,8 @@ export default new class TaskQueue {
   /**
    * Updates current year approved contracts to SAP
    *
-   * @param {object} data task data
-   * @param {function} callback task callback
+   * @param data task data
+   * @param callback task callback
    */
   private updateCurrentYearApprovedContractsToSapTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     const contract: ContractModel | undefined = data.contract;
