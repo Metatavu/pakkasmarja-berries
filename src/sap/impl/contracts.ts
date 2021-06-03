@@ -122,7 +122,6 @@ export default class SapContractsServiceImpl {
    * @param contract contract database model
    * @param itemGroup item group database model
    * @param deliveryPlace delivery place database model
-   *
    * @returns promise of updated SAP contract
    */
   static updateExistingSapContract = async (
