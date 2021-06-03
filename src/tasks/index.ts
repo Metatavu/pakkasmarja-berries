@@ -804,9 +804,11 @@ export default new class TaskQueue {
       return logReject(createStackedReject("updateCurrentYearApprovedContractsToSap task failed: no contract found from task data"), this.logger);
     }
 
-    const failTask = (reason: string) => {
+    const failTask = async (reason: string) => {
+      const user = await userManagement.findUser(contract.userId);
+      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
       callback({
-        message: `Failed to update contract ${contract.externalId} because ${reason}`,
+        message: `Failed to update contract for user ${user?.firstName} ${user?.lastName} with item group ${itemGroup.name} because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
     };
@@ -839,7 +841,7 @@ export default new class TaskQueue {
       await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
     } catch (error) {
       logReject(createStackedReject("Could not update contract to SAP", error), this.logger);
-      return failTask(error);
+      return failTask("SAP error");
     }
   }
 
