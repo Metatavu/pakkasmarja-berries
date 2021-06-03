@@ -16,6 +16,7 @@ const OPERATION_SAP_ITEM_GROUP_SYNC = "SAP_ITEM_GROUP_SYNC";
 const OPERATION_SAP_CONTRACT_SYNC = "SAP_CONTRACT_SYNC";
 const OPERATION_SAP_CONTRACT_SAPID_SYNC = "SAP_CONTRACT_SAPID_SYNC";
 const OPERATION_ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES = "ITEM_GROUP_DEFAULT_DOCUMENT_TEMPLATES";
+const OPERATION_UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP = "UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP";
 
 /**
  * Implementation for Operation REST service
@@ -77,6 +78,8 @@ export default class OperationsServiceImpl extends OperationsService {
       case OPERATION_SAP_CONTRACT_SAPID_SYNC:
         operationReport = await this.createSapContractSapIds();
       break;
+      case OPERATION_UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP:
+        operationReport = await this.updateCurrentYearApprovedContractsToSap();
       default:
         this.sendBadRequest(res, `Invalid type ${type}`);
       return;
@@ -187,6 +190,21 @@ export default class OperationsServiceImpl extends OperationsService {
     for (let i = 0; i < contracts.length; i++) {
       const contract = contracts[i];
       tasks.enqueueSapContractSapIdSyncTask(operationReport.id, contract.id);
+    }
+
+    return operationReport;
+  }
+
+/**
+ * Updates current year approved contracts to SAP
+ *
+ * @returns created operation report
+ */
+  private updateCurrentYearApprovedContractsToSap = async () => {
+    const operationReport = await models.createOperationReport("UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP");
+    const contracts = await models.listContractsByStatusAndYear("APPROVED", new Date().getFullYear());
+    for (const contract of contracts) {
+      tasks.enqueueUpdateCurrentYearApprovedContractsToSap(operationReport.id, contract);
     }
 
     return operationReport;

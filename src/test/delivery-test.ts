@@ -203,7 +203,6 @@ test("Update delivery", async (t) => {
     const createdDelivery = await createDelivery(token);
     const updatedDelivery = await updateDelivery(token, createdDelivery.id || "");
     t.true(await sapWireMockTestClient.verify("POST", "/PurchaseDeliveryNotes"), "Purchase delivery note request found");
-    t.true(await sapWireMockTestClient.verify("POST", "/StockTransfers"), "Stock transfer request found");
     t.notEqual(updatedDelivery, null);
     t.notEqual(updatedDelivery.id, null);
     t.equal(updatedDelivery.status, deliveriesData[1].status)
