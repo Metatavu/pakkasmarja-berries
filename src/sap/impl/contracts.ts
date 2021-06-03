@@ -17,8 +17,6 @@ export default class SapContractsServiceImpl {
    * @param contractModel contract database model
    * @param deliveryPlace delivery place database model
    * @param itemGroup item group database model
-   * @param sapSalesPersonCode SAP sales person code for contract
-   *
    * @returns promise of created or updated SAP contract
    */
   static createOrUpdateSapContract = async (
