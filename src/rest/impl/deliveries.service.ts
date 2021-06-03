@@ -144,7 +144,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
 
       try {
-        await SapDeliveriesServiceImpl.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, req.body.loans || [], itemGroup.category);
+        await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
+
+        if (req.body.loans.length > 0) {
+          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, req.body.loans || []);
+        }
       } catch (e) {
         logReject(e, getLogger());
       }
@@ -476,7 +480,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
       try {
-        await SapDeliveriesServiceImpl.createDeliveryDocumentsToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, payload.loans || [], itemGroup.category);
+        await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
+
+        if (req.body.loans.length > 0) {
+          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, req.body.loans || []);
+        }
       } catch (e) {
         logReject(e, getLogger());
       }

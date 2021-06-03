@@ -13,67 +13,78 @@ import _ = require("lodash");
 export default class SapDeliveriesServiceImpl {
 
   /**
-   * Create delivery documents to SAP
-   * 
-   * @param delivery delivery
-   * @param product product
-   * @param deliveryPlace delivery place
+   * Create delivery purchase receipt to SAP
+   *
+   * @param delivery delivery model
+   * @param product product model
+   * @param deliveryPlace delivery place model
    * @param unitPriceWithBonus unit price with bonus
-   * @param deliveryContactSapId CardCode of the Supplier
-   * @param sapSalesPersonCode Receiving person code
-   * @param loans loans
+   * @param deliveryContactSapId delivery contact SAP ID
+   * @param sapSalesPersonCode SAP sales person code
    * @param itemGroupCategory item group category
-   * @return promise of successful creation
+   * @returns promise of successful creation
    */
-  static createDeliveryDocumentsToSap = async (
+  static createDeliveryPurchaseReceiptToSap = async (
     delivery: DeliveryModel,
     product: ProductModel,
     deliveryPlace: DeliveryPlaceModel,
     unitPriceWithBonus: number,
     deliveryContactSapId: string,
     sapSalesPersonCode: string,
-    loans: DeliveryLoan[],
     itemGroupCategory: string
   ): Promise<void> => {
     try {
-      const date: string = moment(delivery.time).format("YYYY-MM-DD");
-      const notes = await SapDeliveriesServiceImpl.getNotesString(delivery.id);
-      const sapItemCode = product.sapItemCode;
-      const salesPersonCode = parseInt(sapSalesPersonCode, 10);
-      const loanWarehouse = "100";
-      const warehouseCode = deliveryPlace.sapId == "01" && itemGroupCategory == "FRESH" ? "02" : deliveryPlace.sapId;
-
-      const purchaseDeliveryNote: SapPurchaseDeliveryNote = {
+      const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
+      await sapPurchaseDeliveryNotesService.createPurchaseDeliveryNote({
         DocObjectCode: SapDocObjectCodeEnum.PURCHASE_DELIVERY_NOTE,
-        DocDate: date,
+        DocDate: moment(delivery.time).format("YYYY-MM-DD"),
         CardCode: deliveryContactSapId,
-        Comments: notes,
-        SalesPersonCode: salesPersonCode,
+        Comments: await SapDeliveriesServiceImpl.getNotesString(delivery.id),
+        SalesPersonCode: parseInt(sapSalesPersonCode, 10),
         DocumentLines: [{
-          ItemCode: sapItemCode,
+          ItemCode: product.sapItemCode,
           Quantity: delivery.amount,
           UnitPrice: unitPriceWithBonus,
-          WarehouseCode: warehouseCode,
+          WarehouseCode: deliveryPlace.sapId == "01" && itemGroupCategory == "FRESH" ? "02" : deliveryPlace.sapId,
           U_PFZ_REF: SapDeliveriesServiceImpl.compressUUID(delivery.id!)
         }]
-      };
+      });
+    } catch (error) {
+      return Promise.reject(createStackedReject("Failed to create delivery purchase receipt to SAP", error));
+    }
+  }
 
-      const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
-      await sapPurchaseDeliveryNotesService.createPurchaseDeliveryNote(purchaseDeliveryNote);
-
+  /**
+   * Create stock transfer to SAP
+   * 
+   * @param delivery delivery
+   * @param deliveryContactSapId CardCode of the Supplier
+   * @param sapSalesPersonCode Receiving person code
+   * @param loans loans
+   * @return promise of successful creation
+   */
+  static createStockTransferToSap = async (
+    delivery: DeliveryModel,
+    deliveryContactSapId: string,
+    sapSalesPersonCode: string,
+    loans: DeliveryLoan[]
+  ): Promise<void> => {
+    try {
       if (loans.length < 1) {
         return;
       }
 
+      const loadWarehouseCode = "100";
       const stockTransferLines: SapStockTransferLine[] = [];
+
       loans.forEach(loan => {
         const itemCode = config().sap.loanProductIds[loan.item];
 
         const stockTransferLine: SapStockTransferLine = {
           ItemCode: itemCode,
           Quantity: null,
-          FromWarehouseCode: loanWarehouse,
-          WarehouseCode: loanWarehouse,
+          FromWarehouseCode: loadWarehouseCode,
+          WarehouseCode: loadWarehouseCode,
           StockTransferLinesBinAllocations: []
         };
 
@@ -116,20 +127,18 @@ export default class SapDeliveriesServiceImpl {
         }
       });
 
-      const stockTransfer: SapStockTransfer = {
-        DocDate: date,
-        CardCode: deliveryContactSapId,
-        Comments: notes,
-        SalesPersonCode: salesPersonCode,
-        FromWarehouse: loanWarehouse,
-        ToWarehouse: loanWarehouse,
-        StockTransferLines: stockTransferLines
-      };
-
       const sapStockTransfersService = SapServiceFactory.getStockTransfersService();
-      await sapStockTransfersService.createStockTransfer(stockTransfer);
+      await sapStockTransfersService.createStockTransfer({
+        DocDate: moment(delivery.time).format("YYYY-MM-DD"),
+        CardCode: deliveryContactSapId,
+        Comments: await SapDeliveriesServiceImpl.getNotesString(delivery.id),
+        SalesPersonCode: parseInt(sapSalesPersonCode, 10),
+        FromWarehouse: loadWarehouseCode,
+        ToWarehouse: loadWarehouseCode,
+        StockTransferLines: stockTransferLines
+      });
     } catch (e) {
-      return Promise.reject(createStackedReject("Failed to create delivery documents to SAP", e));
+      return Promise.reject(createStackedReject("Failed to create stock transfer to SAP", e));
     }
   }
 
