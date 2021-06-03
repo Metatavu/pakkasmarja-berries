@@ -178,7 +178,6 @@ export default class SapContractsServiceImpl {
    * @param itemGroupProducts item group products
    * @param itemGroup item group database model
    * @param deliveryPlace delivery place database model
-   *
    * @returns updated list of contract lines
    */
   static updateSapContractLines = (
