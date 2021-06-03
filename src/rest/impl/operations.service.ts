@@ -197,6 +197,8 @@ export default class OperationsServiceImpl extends OperationsService {
 
 /**
  * Updates current year approved contracts to SAP
+ *
+ * @returns created operation report
  */
   private updateCurrentYearApprovedContractsToSap = async () => {
     const operationReport = await models.createOperationReport("UPDATE_CURRENT_YEAR_APPROVED_CONTRACTS_TO_SAP");
