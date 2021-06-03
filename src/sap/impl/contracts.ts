@@ -112,8 +112,8 @@ export default class SapContractsServiceImpl {
         U_PFZ_Toi: deliveryPlace.sapId,
         Remarks: contract.remarks ? contract.remarks : null
       });
-    } catch (e) {
-      return Promise.reject(createStackedReject("Failed to create new SAP contract", e));
+    } catch (error) {
+      return Promise.reject(createStackedReject("Failed to create new SAP contract", error));
     }
   }
 
