@@ -199,8 +199,8 @@ export default new class TaskQueue {
   /**
    * Enqueues update current year approved contracts to SAP task
    * 
-   * @param {String} operationReportId operation report ID
-   * @param {Object} contract contract model object
+   * @param operationReportId operation report ID
+   * @param contract contract model object
    */
   async enqueueUpdateCurrentYearApprovedContractsToSap(operationReportId: number, contract: ContractModel) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
