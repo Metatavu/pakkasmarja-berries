@@ -808,7 +808,7 @@ export default new class TaskQueue {
       const user = await userManagement.findUser(contract.userId);
       const itemGroup = await models.findItemGroupById(contract.itemGroupId);
       callback({
-        message: `Failed to update contract for user ${user?.firstName} ${user?.lastName} with item group ${itemGroup.name} because ${reason}`,
+        message: `Failed to update contract for user ${user ? user.firstName : ""} ${ user? user.lastName : ""} with item group ${itemGroup.name} because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
     };
