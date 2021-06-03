@@ -105,7 +105,7 @@ export default class SapContractsServiceImpl {
         EndDate: endDate,
         SigningDate: contract.signDate ? moment(contract.signDate).format("YYYY-MM-DD") : null,
         TerminateDate: null,
-        Status: SapContractStatusEnum.DRAFT,
+        Status: SapContractStatusEnum.APPROVED,
         [itemGroupPlannedAmountKey]: contract.contractQuantity,
         U_PFZ_Toi: deliveryPlace.sapId,
         Remarks: contract.remarks ? contract.remarks : null

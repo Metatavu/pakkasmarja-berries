@@ -29,14 +29,12 @@ export default class SapAbstractService {
       }
 
       if (!response.ok) {
-        const messageParts = [ `Failed to fetch ${url} with status ${response.status}` ];
+        const messageParts = [];
 
-        const responseText = response.text();
-        if (responseText) {
-          messageParts.push(" ");
-          messageParts.push("Error response:");
-          messageParts.push(JSON.stringify(responseText, null, 2));
-        }
+        messageParts.push(`Failed to fetch ${url} with status ${response.status}:`);
+        messageParts.push(" ");
+        messageParts.push("Response from Service Layer:");
+        messageParts.push(JSON.stringify(response, null, 2));
 
         if (options.body) {
           messageParts.push(" ");
