@@ -166,8 +166,8 @@ export default class SapContractsServiceImpl {
       }
 
       return await sapContractsService.updateContract(updatedContract);
-    } catch (e) {
-      return Promise.reject(createStackedReject("Failed to update existing SAP contract", e));
+    } catch (error) {
+      return Promise.reject(createStackedReject("Failed to update existing SAP contract", error));
     }
   }
 
