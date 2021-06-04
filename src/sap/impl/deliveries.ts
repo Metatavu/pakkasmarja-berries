@@ -4,8 +4,9 @@ import { config } from "../../config";
 import models, { DeliveryModel, DeliveryPlaceModel, ProductModel } from "../../models";
 import { DeliveryLoan } from "../../rest/model/deliveryLoan";
 import SapServiceFactory from "../service-layer-client";
-import { BinActionTypeEnum, SapDocObjectCodeEnum, SapPurchaseDeliveryNote, SapStockTransfer, SapStockTransferLine } from "../service-layer-client/types";
+import { BinActionTypeEnum, SapDocObjectCodeEnum, SapStockTransferLine } from "../service-layer-client/types";
 import _ = require("lodash");
+import mailer from "../../mailer";
 
 /**
  * Class for SAP deliveries service implementation
@@ -33,13 +34,15 @@ export default class SapDeliveriesServiceImpl {
     sapSalesPersonCode: string,
     itemGroupCategory: string
   ): Promise<void> => {
+    const deliveryComments = await SapDeliveriesServiceImpl.getNotesString(delivery.id);
+
     try {
       const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
       await sapPurchaseDeliveryNotesService.createPurchaseDeliveryNote({
         DocObjectCode: SapDocObjectCodeEnum.PURCHASE_DELIVERY_NOTE,
         DocDate: moment(delivery.time).format("YYYY-MM-DD"),
         CardCode: deliveryContactSapId,
-        Comments: await SapDeliveriesServiceImpl.getNotesString(delivery.id),
+        Comments: deliveryComments,
         SalesPersonCode: parseInt(sapSalesPersonCode, 10),
         DocumentLines: [{
           ItemCode: product.sapItemCode,
@@ -50,6 +53,35 @@ export default class SapDeliveriesServiceImpl {
         }]
       });
     } catch (error) {
+      if (itemGroupCategory === "FRESH") {
+        const foundConfig = config();
+
+        if (
+          foundConfig.contacts &&
+          foundConfig.contacts.notifications &&
+          foundConfig.contacts.notifications.errors &&
+          foundConfig.contacts.notifications.errors.fresh
+        ) {
+          const description: string[] = [];
+          description.push(`
+            Toimituksen tiedot:\n\n
+            Päiväys: ${moment(delivery.time).format("DD.MM.YYYY [klo] HH.mm")}\n
+            Viljelijän SAP-tunnus: ${deliveryContactSapId}\n
+            Toimitetun marjan SAP-tunnus: ${product.sapItemCode}\n
+            Toimitettu määrä: ${delivery.amount}\n
+            Yksikköhinta: ${unitPriceWithBonus}\n
+            Kommentti: ${deliveryComments || ""}
+          `);
+
+          SapDeliveriesServiceImpl.sendErrorMails(
+            foundConfig.contacts.notifications.errors.fresh,
+            "Appi-toimituksen vienti SAP:iin epäonnistui",
+            description,
+            error instanceof Error ? error.stack || error.message : error.toString()
+          );
+        }
+      }
+
       return Promise.reject(createStackedReject("Failed to create delivery purchase receipt to SAP", error));
     }
   }
@@ -137,8 +169,8 @@ export default class SapDeliveriesServiceImpl {
         ToWarehouse: loadWarehouseCode,
         StockTransferLines: stockTransferLines
       });
-    } catch (e) {
-      return Promise.reject(createStackedReject("Failed to create stock transfer to SAP", e));
+    } catch (error) {
+      return Promise.reject(createStackedReject("Failed to create stock transfer to SAP", error));
     }
   }
 
@@ -171,5 +203,32 @@ export default class SapDeliveriesServiceImpl {
     const notesJoined = notes.join(" ; ");
 
     return _.truncate(notesJoined, { "length": 253 });
+  }
+
+  /**
+   * Send email messages about logged error
+   *
+   * @param recipients message recipients
+   * @param subject message subject
+   * @param description message description as list of paragraphs
+   * @param errorStack possible error stack
+   */
+  static sendErrorMails = (
+    recipients: string[],
+    subject: string,
+    description: string[],
+    errorStack?: string
+  ) => {
+    const contentParts: string[] = Array.from(description);
+
+    if (errorStack) {
+      contentParts.push("===============================================");
+      contentParts.push("Tekninen virhekooste:");
+      contentParts.push(errorStack);
+    }
+
+    for (const recipient of recipients) {
+      mailer.send(config().mail.sender, recipient, subject, contentParts.join("\n\n"));
+    }
   }
 }

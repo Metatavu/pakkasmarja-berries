@@ -801,47 +801,75 @@ export default new class TaskQueue {
   private updateCurrentYearApprovedContractsToSapTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     const contract: ContractModel | undefined = data.contract;
     if (!contract) {
-      return logReject(createStackedReject("updateCurrentYearApprovedContractsToSap task failed: no contract found from task data"), this.logger);
-    }
-
-    const failTask = async (reason: string) => {
-      const user = await userManagement.findUser(contract.userId);
-      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-      callback({
-        message: `Failed to update contract for user ${user ? user.firstName : ""} ${ user? user.lastName : ""} with item group ${itemGroup.name} because ${reason}`,
+      const reason = "no contract found from task data";
+      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
+      return callback({
+        message: `Failed to update contract because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
-    };
-
-    if (contract.status !== ContractStatus.APPROVED) {
-      return failTask("contract status was not APPROVED");
     }
 
-    if (contract.year !== new Date().getFullYear()) {
-      return failTask("contract year was not current year");
+    const user = await userManagement.findUser(contract.userId);
+    if (!user) {
+      const reason = "Contract user not found";
+      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
+      return callback({
+        message: `Failed to update contract because ${reason}`,
+        operationReportItemId: data.operationReportItemId
+      });
     }
 
-    const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
-    if (!deliveryPlace) {
-      return failTask("contract delivery place was not found");
-    }
+    const userName = user.firstName && user.lastName ?
+      `${user.firstName} ${user.lastName}` :
+      user.username || user.email;
 
     const itemGroup = await models.findItemGroupById(contract.itemGroupId);
     if (!itemGroup) {
-      return failTask("contract item group was not found");
-    }
-
-    const itemGroupSapId = itemGroup.sapId;
-    if (!itemGroupSapId) {
-      return failTask(`Item group SAP ID could not be resolved`);
+      const reason = "Item group not found";
+      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
+      return callback({
+        message: `Failed to update contract for user ${userName} because ${reason}`,
+        operationReportItemId: data.operationReportItemId
+      });
     }
 
     try {
+      if (contract.status !== ContractStatus.APPROVED) {
+        throw new Error("contract status was not APPROVED");
+      }
+
+      if (contract.year !== new Date().getFullYear()) {
+        throw new Error("contract year was not current year");
+      }
+
+      const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
+      if (!deliveryPlace) {
+        throw new Error("contract delivery place was not found");
+      }
+
+      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
+      if (!itemGroup) {
+        throw new Error("contract item group was not found");
+      }
+
+      const itemGroupSapId = itemGroup.sapId;
+      if (!itemGroupSapId) {
+        throw new Error(`Item group SAP ID could not be resolved`);
+      }
+
       const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
       await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
     } catch (error) {
-      logReject(createStackedReject("Could not update contract to SAP", error), this.logger);
-      return failTask("SAP error");
+      logReject(createStackedReject(
+        `updateCurrentYearApprovedContractsToSapTask failed for contract ${contract.externalId}`, error),
+        this.logger
+      );
+
+      const errorMessage = error instanceof Error ? error.message : error;
+      callback({
+        message: `Failed to update contract for user ${userName} with item group ${itemGroup.name} because ${errorMessage}`,
+        operationReportItemId: data.operationReportItemId
+      });
     }
   }
 
