@@ -2,7 +2,7 @@ import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
 import models, { DeliveryModel, DeliveryNoteModel, ProductModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
-import { Delivery, DeliveryNote, ItemGroupCategory } from "../model/models";
+import { Delivery, DeliveryLoan, DeliveryNote, ItemGroupCategory } from "../model/models";
 import ApplicationRoles from "../application-roles";
 import * as uuid from "uuid/v4";
 import moment = require("moment");
@@ -146,8 +146,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       try {
         await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
 
-        if (req.body.loans.length > 0) {
-          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, req.body.loans || []);
+        const loans: DeliveryLoan[] = req.body.loans;
+        if (!!loans && Array.isArray(loans) && loans.length) {
+          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, loans);
         }
       } catch (e) {
         logReject(e, getLogger());
@@ -482,8 +483,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       try {
         await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
 
-        if (req.body.loans.length > 0) {
-          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, req.body.loans || []);
+        const loans: DeliveryLoan[] = req.body.loans;
+        if (!!loans && Array.isArray(loans) && loans.length) {
+          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, loans);
         }
       } catch (e) {
         logReject(e, getLogger());

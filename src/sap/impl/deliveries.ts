@@ -102,11 +102,11 @@ export default class SapDeliveriesServiceImpl {
     loans: DeliveryLoan[]
   ): Promise<void> => {
     try {
-      if (loans.length < 1) {
+      if (!loans.length) {
         return;
       }
 
-      const loadWarehouseCode = "100";
+      const loanWarehouseCode = "100";
       const stockTransferLines: SapStockTransferLine[] = [];
 
       loans.forEach(loan => {
@@ -115,8 +115,8 @@ export default class SapDeliveriesServiceImpl {
         const stockTransferLine: SapStockTransferLine = {
           ItemCode: itemCode,
           Quantity: null,
-          FromWarehouseCode: loadWarehouseCode,
-          WarehouseCode: loadWarehouseCode,
+          FromWarehouseCode: loanWarehouseCode,
+          WarehouseCode: loanWarehouseCode,
           StockTransferLinesBinAllocations: []
         };
 
@@ -159,14 +159,18 @@ export default class SapDeliveriesServiceImpl {
         }
       });
 
+      if (stockTransferLines.length < 1) {
+        throw new Error(`Stock transfer lines could not be constructed from loans: ${JSON.stringify(loans, null, 2)}`);
+      }
+
       const sapStockTransfersService = SapServiceFactory.getStockTransfersService();
       await sapStockTransfersService.createStockTransfer({
         DocDate: moment(delivery.time).format("YYYY-MM-DD"),
         CardCode: deliveryContactSapId,
         Comments: await SapDeliveriesServiceImpl.getNotesString(delivery.id),
         SalesPersonCode: parseInt(sapSalesPersonCode, 10),
-        FromWarehouse: loadWarehouseCode,
-        ToWarehouse: loadWarehouseCode,
+        FromWarehouse: loanWarehouseCode,
+        ToWarehouse: loanWarehouseCode,
         StockTransferLines: stockTransferLines
       });
     } catch (error) {
@@ -187,8 +191,8 @@ export default class SapDeliveriesServiceImpl {
   /**
    * Get notes as string
    * 
-   * @param deliveryId deliveryId
-   * @return notes
+   * @param deliveryId delivery ID
+   * @return constructed notes string
    */
   static getNotesString = async (deliveryId: string | null) => {
     if (!deliveryId) {
@@ -196,13 +200,15 @@ export default class SapDeliveriesServiceImpl {
     }
 
     const deliveryNotes = await models.listDeliveryNotes(deliveryId);
-    const notes = deliveryNotes.map((deliveryNote) => {
-      return deliveryNote.text;
-    });
+    const constructedNote = deliveryNotes.reduce((previous, { text }) => {
+      if (text) {
+        return previous ? `${previous} ; ${text}` : text;
+      } else {
+        return previous;
+      }
+    }, "");
 
-    const notesJoined = notes.join(" ; ");
-
-    return _.truncate(notesJoined, { "length": 253 });
+    return _.truncate(constructedNote, { "length": 253 });
   }
 
   /**
