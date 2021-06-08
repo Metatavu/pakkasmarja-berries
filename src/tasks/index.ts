@@ -803,20 +803,24 @@ export default new class TaskQueue {
     if (!contract) {
       const reason = "no contract found from task data";
       logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      return callback({
+      callback({
         message: `Failed to update contract because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
+
+      return;
     }
 
     const user = await userManagement.findUser(contract.userId);
     if (!user) {
       const reason = "Contract user not found";
       logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      return callback({
+      callback({
         message: `Failed to update contract because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
+
+      return;
     }
 
     const userName = user.firstName && user.lastName ?
@@ -827,10 +831,12 @@ export default new class TaskQueue {
     if (!itemGroup) {
       const reason = "Item group not found";
       logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      return callback({
+      callback({
         message: `Failed to update contract for user ${userName} because ${reason}`,
         operationReportItemId: data.operationReportItemId
       });
+
+      return;
     }
 
     try {
@@ -859,6 +865,11 @@ export default new class TaskQueue {
 
       const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
       await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
+
+      callback(null, {
+        message: `Successfully updated contract for user ${userName} with item group ${itemGroup.name} to SAP`,
+        operationReportItemId: data.operationReportItemId
+      });
     } catch (error) {
       logReject(createStackedReject(
         `updateCurrentYearApprovedContractsToSapTask failed for contract ${contract.externalId}`, error),
