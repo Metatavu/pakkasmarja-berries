@@ -37,6 +37,11 @@
         "concurrent": 1,
         "afterProcessDelay": 1000,
         "maxTimeout": 20000
+      },
+      "updateCurrentYearApprovedContractsToSapQueue": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
       }
     }
   },
