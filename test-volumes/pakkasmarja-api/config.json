@@ -105,6 +105,7 @@
   },
   "sapServiceLayer": {
     "apiUrl": "http://sap-api-wiremock:8080/b1s/v1",
+    "host": "sap-api-wiremock:8080",
     "companyDb": "pm",
     "username": "pm",
     "password": "random"

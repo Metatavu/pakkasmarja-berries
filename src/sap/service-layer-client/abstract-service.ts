@@ -17,24 +17,29 @@ export default class SapAbstractService {
    */
   protected async asyncFetch(url: string, options: RequestInit): Promise<any | undefined> {
     try {
+      const { host } = await this.getConfig();
+      if (!host) {
+        throw Error("Host not defined in SAP Service Layer configuration");
+      }
+
       const response = await fetch(url, {
         ...options,
         headers: {
           ...options.headers,
-          "Accept": "*/*"
+          "Host": host
         }
       });
+
       if (response.status === 404 || response.status === 204) {
         return;
       }
 
       if (!response.ok) {
         const messageParts = [];
-
         messageParts.push(`Failed to fetch ${url} with status ${response.status}:`);
         messageParts.push(" ");
         messageParts.push("Response from Service Layer:");
-        messageParts.push(JSON.stringify(response, null, 2));
+        messageParts.push(await response.text());
 
         if (options.body) {
           messageParts.push(" ");
