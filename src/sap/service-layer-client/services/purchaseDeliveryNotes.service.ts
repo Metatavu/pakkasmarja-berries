@@ -19,13 +19,14 @@ export default class SapPurchaseDeliveryNotesService extends AbstractService {
       const config = await this.getConfig();
       const session = await this.createSession();
       const baseUrl = `${config.apiUrl}/PurchaseDeliveryNotes`;
-      const requestBody = JSON.stringify(purchaseDeliveryNote);
+      const content = JSON.stringify(purchaseDeliveryNote);
       const options: RequestInit = {
         method: "POST",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Content-Length": content.length.toString()
         },
-        body: requestBody
+        body: content
       }
 
       const response = await this.asyncFetch(baseUrl, options) as SapPurchaseDeliveryNote;

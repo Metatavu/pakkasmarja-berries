@@ -113,12 +113,14 @@ export default class SapContractsService extends AbstractService {
       const config = await this.getConfig();
       const session = await this.createSession();
       const url = `${config.apiUrl}/BlanketAgreements`;
+      const content = JSON.stringify(contract);
       const options: RequestInit = {
         method: "POST",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Content-Length": content.length.toString()
         },
-        body: JSON.stringify(contract)
+        body: content
       }
 
       const response = await this.asyncFetch(url, options) as SapContract;
@@ -148,12 +150,14 @@ export default class SapContractsService extends AbstractService {
       const config = await this.getConfig();
       const session = await this.createSession();
       const url = `${config.apiUrl}/BlanketAgreements(${contract.AgreementNo})`;
+      const content = JSON.stringify(contract);
       const options: RequestInit = {
         method: "PATCH",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Content-Length": content.length.toString()
         },
-        body: JSON.stringify(contract)
+        body: content
       }
 
       await this.asyncFetch(url, options);
@@ -183,12 +187,14 @@ export default class SapContractsService extends AbstractService {
       const session = await this.createSession();
       const url = `${config.apiUrl}/BlanketAgreements(${agreementNo})`;
       const contract: Partial<SapContract> = { Status: status };
+      const content = JSON.stringify(contract);
       const options: RequestInit = {
         method: "PATCH",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Content-Length": content.length.toString()
         },
-        body: JSON.stringify(contract)
+        body: content
       }
 
       await this.asyncFetch(url, options);

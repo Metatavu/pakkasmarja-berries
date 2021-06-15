@@ -199,6 +199,7 @@ export interface Wkhtmltopdf {
  */
 export interface SAPServiceLayer {
   apiUrl: string;
+  host: string;
   companyDb: string;
   username: string;
   password: string;
@@ -285,8 +286,8 @@ export interface Mail {
  * Error notification email addresses
  */
 export interface ErrorNotifications {
-  fresh: string[];
-  frozen: string[];
+  fresh?: string[];
+  frozen?: string[];
 }
 
 /**

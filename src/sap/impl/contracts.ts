@@ -92,6 +92,10 @@ export default class SapContractsServiceImpl {
 
       const itemGroupPlannedAmountKey = `U_TR_${itemGroupSapId}`;
       const itemGroupProducts = await models.listProducts(itemGroup.id, null, null);
+      if (!itemGroupProducts.length) {
+        throw new Error(`No products found for item group "${itemGroup.name}"`);
+      }
+
       const contractLines = SapContractsServiceImpl.updateSapContractLines([], itemGroupProducts, itemGroup, deliveryPlace);
       const startDate = `${moment().year()}-05-01`;
       const endDate = `${moment().year() + 1}-01-31`;

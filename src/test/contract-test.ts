@@ -165,7 +165,7 @@ test("Test creating contracts", async (t) => {
 });
 
 test("Test creating contract to SAP", async (t) => {
-  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql" ]);
+  await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "products-setup.sql", "contracts-setup.sql" ]);
   push.clearOutbox();
   await sapWireMockTestClient.empty();
 
@@ -179,7 +179,7 @@ test("Test creating contract to SAP", async (t) => {
       t.equal(await sapWireMockTestClient.verify("POST", "/BlanketAgreements"), 1, "Create SAP contract request found");
     }).finally(async () => {
       await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT, ApplicationRoles.UPDATE_OTHER_CONTRACTS ]);
-      await database.executeFiles(testDataDir, [ "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql" ]);
+      await database.executeFiles(testDataDir, [ "contracts-teardown.sql", "products-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql" ]);
       await sapWireMockTestClient.empty();
       push.clearOutbox();
     });
