@@ -459,15 +459,15 @@ export default new class TaskQueue {
       sapContracts.forEach((sapContract) => {
         const sapContractLines = sapContract.BlanketAgreements_ItemsLines;
         sapContractLines.forEach(sapContractLine => {
-          const { AgreementNo, StartDate } = sapContract;
+          const { DocNum, StartDate } = sapContract;
           const { ItemGroup, CumulativeQuantity } = sapContractLine;
 
-          if (!AgreementNo || !StartDate || !ItemGroup) {
+          if (!DocNum || !StartDate || !ItemGroup) {
             return;
           }
 
           const year = moment(StartDate).format("YYYY");
-          const sapId = `${year}-${AgreementNo}-${ItemGroup}`;
+          const sapId = `${year}-${DocNum}-${ItemGroup}`;
 
           if (CumulativeQuantity && CumulativeQuantity > 0) {
             sapDeliveredQuantities[sapId] = sapDeliveredQuantities[sapId] ?

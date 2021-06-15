@@ -1,5 +1,5 @@
 import moment = require("moment");
-import { createStackedReject } from "../../utils";
+import { createStackedReject, logReject } from "../../utils";
 import { config } from "../../config";
 import models, { DeliveryModel, DeliveryPlaceModel, ProductModel } from "../../models";
 import { DeliveryLoan } from "../../rest/model/deliveryLoan";
@@ -7,6 +7,7 @@ import SapServiceFactory from "../service-layer-client";
 import { BinActionTypeEnum, SapDocObjectCodeEnum, SapStockTransferLine } from "../service-layer-client/types";
 import _ = require("lodash");
 import mailer from "../../mailer";
+import { getLogger } from "log4js";
 
 /**
  * Class for SAP deliveries service implementation
@@ -14,7 +15,7 @@ import mailer from "../../mailer";
 export default class SapDeliveriesServiceImpl {
 
   /**
-   * Create delivery purchase receipt to SAP
+   * Create purchase delivery note to SAP
    *
    * @param delivery delivery model
    * @param product product model
@@ -25,14 +26,14 @@ export default class SapDeliveriesServiceImpl {
    * @param itemGroupCategory item group category
    * @returns promise of successful creation
    */
-  static createDeliveryPurchaseReceiptToSap = async (
+  static createPurchaseDeliveryNoteToSap = async (
     delivery: DeliveryModel,
     product: ProductModel,
     deliveryPlace: DeliveryPlaceModel,
     unitPriceWithBonus: number,
     deliveryContactSapId: string,
     sapSalesPersonCode: string,
-    itemGroupCategory: string
+    itemGroupCategory: "FRESH" | "FROZEN"
   ): Promise<void> => {
     const deliveryComments = await SapDeliveriesServiceImpl.getNotesString(delivery.id);
 
@@ -53,36 +54,32 @@ export default class SapDeliveriesServiceImpl {
         }]
       });
     } catch (error) {
-      if (itemGroupCategory === "FRESH") {
-        const foundConfig = config();
+      const emailAddresses = SapDeliveriesServiceImpl.getErrorEmailAddresses(itemGroupCategory);
 
-        if (
-          foundConfig.contacts &&
-          foundConfig.contacts.notifications &&
-          foundConfig.contacts.notifications.errors &&
-          foundConfig.contacts.notifications.errors.fresh
-        ) {
-          const description: string[] = [];
-          description.push(`
-            Toimituksen tiedot:\n\n
-            Päiväys: ${moment(delivery.time).format("DD.MM.YYYY [klo] HH.mm")}\n
-            Viljelijän SAP-tunnus: ${deliveryContactSapId}\n
-            Toimitetun marjan SAP-tunnus: ${product.sapItemCode}\n
-            Toimitettu määrä: ${delivery.amount}\n
-            Yksikköhinta: ${unitPriceWithBonus}\n
-            Kommentti: ${deliveryComments || ""}
-          `);
+      if (emailAddresses) {
+        const description: string[] = [];
 
-          SapDeliveriesServiceImpl.sendErrorMails(
-            foundConfig.contacts.notifications.errors.fresh,
-            "Appi-toimituksen vienti SAP:iin epäonnistui",
-            description,
-            error instanceof Error ? error.stack || error.message : error.toString()
-          );
-        }
+        description.push(`
+          Toimituksen tiedot:\n\n
+          Päiväys: ${moment(delivery.time).format("DD.MM.YYYY [klo] HH.mm")}\n
+          Viljelijän SAP-tunnus: ${deliveryContactSapId}\n
+          Toimitetun marjan SAP-tunnus: ${product.sapItemCode}\n
+          Toimitettu määrä: ${delivery.amount}\n
+          Yksikköhinta: ${unitPriceWithBonus}\n
+          Kommentti: ${deliveryComments || ""}
+        `);
+
+        SapDeliveriesServiceImpl.sendErrorMails(
+          emailAddresses,
+          "Appi-toimituksen vienti SAP:iin epäonnistui",
+          description,
+          error instanceof Error ? error.stack || error.message : error.toString()
+        );
+      } else {
+        logReject("No error email sent from failed delivery purchase because email addresses are not configured", getLogger());
       }
 
-      return Promise.reject(createStackedReject("Failed to create delivery purchase receipt to SAP", error));
+      return Promise.reject(createStackedReject("Failed to create purchase delivery note to SAP", error));
     }
   }
 
@@ -236,5 +233,38 @@ export default class SapDeliveriesServiceImpl {
     for (const recipient of recipients) {
       mailer.send(config().mail.sender, recipient, subject, contentParts.join("\n\n"));
     }
+  }
+
+  /**
+   * Returns email addresses for error messages
+   *
+   * @param itemGroupCategory item group category
+   * @returns list of email addresses or undefined if addresses are not found from configuration
+   */
+  static getErrorEmailAddresses = (itemGroupCategory: "FRESH" | "FROZEN"): string[] | undefined => {
+    const { contacts } = config();
+    if (!contacts) {
+      return;
+    }
+
+    const { notifications } = contacts;
+    if (!notifications) {
+      return;
+    }
+
+    const { errors } = notifications;
+    if (!errors) {
+      return;
+    }
+
+    if (itemGroupCategory === "FRESH" && errors.fresh && errors.fresh.length) {
+      return errors.fresh;
+    }
+
+    if (itemGroupCategory === "FROZEN" && errors.frozen && errors.frozen.length) {
+      return errors.frozen;
+    }
+
+    return;
   }
 }

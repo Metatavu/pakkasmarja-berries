@@ -20,13 +20,14 @@ export default class SapSapStockTransfersService extends AbstractService {
       const config = await this.getConfig();
       const session = await this.createSession();
       const baseUrl = `${config.apiUrl}/StockTransfers`;
-      const requestBody = JSON.stringify(stockTransfer);
+      const content = JSON.stringify(stockTransfer);
       const options: RequestInit = {
         method: "POST",
         headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`
+          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
+          "Content-Length": content.length.toString()
         },
-        body: requestBody
+        body: content
       }
 
       const response = await this.asyncFetch(baseUrl, options) as SapStockTransfer;

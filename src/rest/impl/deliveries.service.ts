@@ -144,7 +144,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
 
       try {
-        await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
+        await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
+          databaseDelivery,
+          product,
+          databaseDeliveryPlace,
+          unitPriceWithBonus,
+          deliveryContactSapId,
+          sapSalesPersonCode,
+          itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
+        );
 
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {
@@ -481,7 +489,15 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
       databaseDelivery = await models.findDeliveryById(deliveryId);
       try {
-        await SapDeliveriesServiceImpl.createDeliveryPurchaseReceiptToSap(databaseDelivery, product, databaseDeliveryPlace, unitPriceWithBonus, deliveryContactSapId, sapSalesPersonCode, itemGroup.category);
+        await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
+          databaseDelivery,
+          product,
+          databaseDeliveryPlace,
+          unitPriceWithBonus,
+          deliveryContactSapId,
+          sapSalesPersonCode,
+          itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
+        );
 
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {

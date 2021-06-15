@@ -3,6 +3,7 @@
  */
 export interface SapConfig {
   apiUrl: string;
+  host: string;
   companyDb: string;
   username: string;
   password: string;
