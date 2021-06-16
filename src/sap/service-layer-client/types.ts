@@ -204,6 +204,15 @@ export interface SapPurchaseDeliveryNoteLine {
   UnitPrice: number | null;
   WarehouseCode: string | null;
   U_PFZ_REF: string | null;
+  BatchNumbers: BatchNumber[];
+}
+
+/**
+ * Interface describing batch number
+ */
+export interface BatchNumber {
+  BatchNumber: string;
+  Quantity: number;
 }
 
 /**

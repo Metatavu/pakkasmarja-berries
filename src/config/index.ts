@@ -260,6 +260,7 @@ export interface SAP {
   "item-group-prerequisites": SAPItemGroupPrerequisites;
   "item-group-minimum-profit-estimation": SAPItemGroupMinimumProfitEstimation;
   "xml-fileupload-path": string;
+  "batchProducts": string[];
   "loanProductIds": SAPLoanProducts;
 }
 

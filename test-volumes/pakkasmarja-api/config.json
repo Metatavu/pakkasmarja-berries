@@ -7,7 +7,7 @@
   },
   "mqtt": {
     "host": "broker.mqttdashboard.com",
-    "path": "/mqtt", 
+    "path": "/mqtt",
     "port": 8000,
     "secure": false,
     "topicPrefix": "pm/",
@@ -74,8 +74,8 @@
   "rest": {
     "clients": {
       "fakeuser": {
-        "secret": "fakesecret" 
-      } 
+        "secret": "fakesecret"
+      }
     }
   },
   "wkhtmltopdf": {
@@ -101,7 +101,8 @@
     "item-group-minimum-profit-estimation": {
       "234": 500
     },
-    "xml-fileupload-path": "/tmp/sapxml"
+    "xml-fileupload-path": "/tmp/sapxml",
+    "batchProducts": []
   },
   "sapServiceLayer": {
     "apiUrl": "http://sap-api-wiremock:8080/b1s/v1",

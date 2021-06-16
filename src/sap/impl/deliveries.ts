@@ -4,7 +4,7 @@ import { config } from "../../config";
 import models, { DeliveryModel, DeliveryPlaceModel, ProductModel } from "../../models";
 import { DeliveryLoan } from "../../rest/model/deliveryLoan";
 import SapServiceFactory from "../service-layer-client";
-import { BinActionTypeEnum, SapDocObjectCodeEnum, SapStockTransferLine } from "../service-layer-client/types";
+import { BatchNumber, BinActionTypeEnum, SapDocObjectCodeEnum, SapStockTransferLine } from "../service-layer-client/types";
 import _ = require("lodash");
 import mailer from "../../mailer";
 import { getLogger } from "log4js";
@@ -36,6 +36,19 @@ export default class SapDeliveriesServiceImpl {
     itemGroupCategory: "FRESH" | "FROZEN"
   ): Promise<void> => {
     const deliveryComments = await SapDeliveriesServiceImpl.getNotesString(delivery.id);
+    const batchProducts = config().sap.batchProducts;
+
+    if (!batchProducts) {
+      logReject("Batch products list not found from configuration", getLogger());
+    }
+
+    const batchNumbers: BatchNumber[] = [];
+    if ((batchProducts || []).some(batchProduct => batchProduct === product.sapItemCode)) {
+      batchNumbers.push({
+        BatchNumber: `${moment(delivery.time).format("YYYYMMDD")}_${deliveryContactSapId}`,
+        Quantity: delivery.amount
+      });
+    }
 
     try {
       const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
@@ -50,7 +63,8 @@ export default class SapDeliveriesServiceImpl {
           Quantity: delivery.amount,
           UnitPrice: unitPriceWithBonus,
           WarehouseCode: deliveryPlace.sapId == "01" && itemGroupCategory == "FRESH" ? "02" : deliveryPlace.sapId,
-          U_PFZ_REF: SapDeliveriesServiceImpl.compressUUID(delivery.id!)
+          U_PFZ_REF: SapDeliveriesServiceImpl.compressUUID(delivery.id!),
+          BatchNumbers: batchNumbers
         }]
       });
     } catch (error) {
