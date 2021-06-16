@@ -1,4 +1,4 @@
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import { Delivery, DeliveryNote } from "../rest/model/models";
@@ -15,7 +15,7 @@ const deliveriesDataUpdate = require(`${testDataDir}/deliveries-update.json`);
 
 /**
  * Creates delivery
- * 
+ *
  * @param token token
  * @returns promise for delivery
  */
@@ -35,7 +35,7 @@ const createDelivery = (token: string, deliveryModel?: Delivery): Promise<Delive
 
 /**
  * Creates delivery note
- * 
+ *
  * @param token token
  * @returns promise for delivery
  */
@@ -55,7 +55,7 @@ const createDeliveryNote = (token: string, id: string, deliveryNoteModel?: Deliv
 
 /**
  * Updates delivery note
- * 
+ *
  * @param token token
  * @param deliveryId deliveryId
  * @param noteId noteId
@@ -77,7 +77,7 @@ const updateDeliveryNote = (token: string, deliveryId: string, noteId: string, d
 
 /**
  * Lists delivery notes
- * 
+ *
  * @param token token
  * @param deliveryId deliveryId
  * @returns promise for list of deliveries
@@ -95,7 +95,7 @@ const listDeliveryNotes = (token: string, deliveryId: string): Promise<DeliveryN
 
 /**
  * Updates delivery
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for delivery
@@ -129,7 +129,7 @@ const updateDeliveryRejected = (token: string, id: string): Promise<Delivery> =>
 
 /**
  * Finds delivery
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for delivery
@@ -147,7 +147,7 @@ const findDelivery = (token: string, id: string): Promise<Delivery> => {
 
 /**
  * Build query
- * 
+ *
  * @param obj object of params
  */
 const buildURLQuery = (obj: any) => {
@@ -158,7 +158,7 @@ const buildURLQuery = (obj: any) => {
 
 /**
  * Lists deliveries
- * 
+ *
  * @param token token
  * @returns promise for list of deliveries
  */
