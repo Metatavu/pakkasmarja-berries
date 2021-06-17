@@ -6,6 +6,9 @@ import ApplicationRoles from "../rest/application-roles";
 import TestConfig from "./test-config";
 import sapWireMockTestClient from "./wiremock-test-client";
 
+/**
+ * Interface describing delivery loan request
+ */
 interface DeliveryLoanRequest {
   contactId: string;
   comment: string;
@@ -49,4 +52,3 @@ test("Create delivery loan", async (t) => {
     await auth.removeUser1Roles([ ApplicationRoles.UPDATE_OTHER_DELIVERIES ]);
   }
 });
-
