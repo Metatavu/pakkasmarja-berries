@@ -102,6 +102,10 @@
     "item-group-minimum-profit-estimation": {
       "234": 500
     },
+    "loanProductIds": {
+      "GRAY_BOX": "302601",
+      "RED_BOX": "302602"
+    },
     "xml-fileupload-path": "/tmp/sapxml",
     "batchProducts": []
   },

@@ -1,9 +1,9 @@
 import DeliveryLoansService from "../api/deliveryLoans.service";
 import { DeliveryLoan } from "../model/deliveryLoan";
 import { Request, Response } from "express";
-import SapDeliveriesServiceImpl from "src/sap/impl/deliveries";
-import userManagement, { UserProperty } from "src/user-management";
-import { createStackedReject, logReject } from "src/utils";
+import SapDeliveriesServiceImpl from "../../sap/impl/deliveries";
+import userManagement, { UserProperty } from "../../user-management";
+import { createStackedReject, logReject } from "../../utils";
 import { getLogger } from "log4js";
 import ApplicationRoles from "../application-roles";
 
@@ -21,7 +21,22 @@ import ApplicationRoles from "../application-roles";
     const comment: string = req.body.comment;
     const loans: DeliveryLoan[] = req.body.loans;
 
-    try {    
+    try {
+      const userId = this.getLoggedUserId(req);
+      if (!userId) {
+        return this.sendBadRequest(res, "No userId found from request");
+      }
+
+      const user = await userManagement.findUser(userId);
+      if (!user) {
+        return this.sendBadRequest(res, `User with ID ${userId} not found`);
+      }
+
+      const salesPersonCode = userManagement.getSingleAttribute(user, UserProperty.SAP_SALES_PERSON_CODE);
+      if (!salesPersonCode) {
+        return this.sendBadRequest(res, `SAP sales person code not found from user ${user.username || user.email}`);
+      }
+
       if (!contactid) {
         return this.sendBadRequest(res, "Contact ID not found from request body");
       }
@@ -32,7 +47,7 @@ import ApplicationRoles from "../application-roles";
         return this.sendBadRequest(res, `Contact not found with contact ID ${contactid}`);
       }
 
-      const contactSapId = await userManagement.getSingleAttribute(contact, UserProperty.SAP_ID);
+      const contactSapId = userManagement.getSingleAttribute(contact, UserProperty.SAP_ID);
 
       if (!contactSapId) {
         return this.sendBadRequest(res, `Sap ID not found from user ${contact.username || contact.email}`);
@@ -59,7 +74,7 @@ import ApplicationRoles from "../application-roles";
         new Date(),
         [ comment ],
         contactSapId,
-        "0",
+        salesPersonCode,
         loans
       );
       
