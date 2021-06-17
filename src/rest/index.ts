@@ -8,6 +8,7 @@ import ContactsServiceImpl from './impl/contacts.service';
 import ContractsServiceImpl from './impl/contracts.service';
 import DataSheetsServiceImpl from './impl/dataSheets.service';
 import DeliveriesServiceImpl from './impl/deliveries.service';
+import DeliveryLoansServiceImpl from './impl/deliveryLoans.service';
 import DeliveryPlacesServiceImpl from './impl/deliveryPlaces.service';
 import DeliveryQualitiesServiceImpl from './impl/deliveryQualities.service';
 import ItemGroupsServiceImpl from './impl/itemGroups.service';
@@ -48,6 +49,8 @@ export default class Api {
       new DataSheetsServiceImpl(app, keycloak);
     
       new DeliveriesServiceImpl(app, keycloak);
+    
+      new DeliveryLoansServiceImpl(app, keycloak);
     
       new DeliveryPlacesServiceImpl(app, keycloak);
     

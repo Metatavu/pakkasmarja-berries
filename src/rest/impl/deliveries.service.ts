@@ -156,7 +156,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {
-          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, loans);
+          const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
+          await SapDeliveriesServiceImpl.createStockTransferToSap(
+            new Date(databaseDelivery.time),
+            deliveryNotes.map(note => note.text || ""),
+            deliveryContactSapId, 
+            sapSalesPersonCode, 
+            loans
+          );
         }
       } catch (e) {
         logReject(e, getLogger());
@@ -501,7 +508,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {
-          await SapDeliveriesServiceImpl.createStockTransferToSap(databaseDelivery, deliveryContactSapId, sapSalesPersonCode, loans);
+          const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
+          await SapDeliveriesServiceImpl.createStockTransferToSap(
+            new Date(databaseDelivery.time),
+            deliveryNotes.map(note => note.text || ""),
+            deliveryContactSapId, 
+            sapSalesPersonCode, 
+            loans
+          );
         }
       } catch (e) {
         logReject(e, getLogger());
