@@ -42,13 +42,11 @@ import ApplicationRoles from "../application-roles";
       }
 
       const contact = await userManagement.findUser(contactid);
-
       if (!contact) {
         return this.sendBadRequest(res, `Contact not found with contact ID ${contactid}`);
       }
 
       const contactSapId = userManagement.getSingleAttribute(contact, UserProperty.SAP_ID);
-
       if (!contactSapId) {
         return this.sendBadRequest(res, `Sap ID not found from user ${contact.username || contact.email}`);
       }
