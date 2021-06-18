@@ -4,11 +4,13 @@ import * as uuid from "uuid4";
 import { config } from "../config";
 
 export default new class Mailer {
- 
+
   private mailgun: Mailgun.Mailgun | null;
-  
+
   constructor () {
-    this.mailgun = !this.inTestMode() ? Mailgun({apiKey: config().mail.api_key, domain: config().mail.domain}) : null;
+    this.mailgun = !this.inTestMode() ?
+      Mailgun({apiKey: config().mail.api_key, domain: config().mail.domain}) :
+      null;
   }
 
   /**
@@ -17,14 +19,14 @@ export default new class Mailer {
   inTestMode() {
     return config().mode === "TEST" || !config().mail.api_key || !config().mail.domain;
   }
-  
+
   /**
    * Send an email message
-   * 
-   * @param String sender email address
-   * @param String to recipient
-   * @param String subject email subject
-   * @param String contents email contects as plain text 
+   *
+   * @param sender sender email address
+   * @param to recipient address
+   * @param subject email subject
+   * @param contents email contents as plain text
    */
   send(sender: string, to: string, subject: string, contents: string, attachments?: Buffer) {
     const options = {
@@ -38,17 +40,13 @@ export default new class Mailer {
     if (!this.inTestMode() && this.mailgun) {
       return this.mailgun.messages().send(options);
     } else {
-      const mockFolder = config().mail.mockFolder;
-      const outbox = `${mockFolder}/outbox`;
-      
-      return new Promise((resolve, reject) => {
-        fs.writeFile(`${outbox}/${uuid()}`, JSON.stringify(options), { mode: 0o777 }, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
+      return new Promise<void>((resolve, reject) => {
+        fs.writeFile(
+          `${config().mail.mockFolder}/outbox/${uuid()}`,
+          JSON.stringify(options),
+          { mode: 0o777 },
+          err => err ? reject(err) : resolve()
+        );
       });
     }
   }
