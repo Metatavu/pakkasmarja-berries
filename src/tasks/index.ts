@@ -1,7 +1,7 @@
 import * as _ from "lodash";
 import { getLogger, Logger } from "log4js";
 import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
-import * as Queue from "better-queue"; 
+import * as Queue from "better-queue";
 import * as SQLStore from "better-queue-sql";
 import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
@@ -37,7 +37,7 @@ export default new class TaskQueue {
 
   /**
    * Constructor
-   * 
+   *
    * @param {Object} logger logger
    * @param {Object} models database models
    * @param {Object} signature signature functionalities
@@ -68,7 +68,7 @@ export default new class TaskQueue {
 
   /**
    * Creates new task queue
-   * 
+   *
    * @param {String} name name
    * @param {Function} fn fn
    */
@@ -112,20 +112,20 @@ export default new class TaskQueue {
 
   /**
    * Adds task to contractDocumentStatusQueue
-   * 
+   *
    * @param {int} contractDocumentId id
    */
   enqueueContractDocumentStatusTask(contractDocumentId: number) {
     this.contractDocumentStatusQueue.push({id: contractDocumentId, contractDocumentId: contractDocumentId});
   }
-  
+
   /**
    * Adds task to contractDocumentStatusBatchQueue
    */
   enqueueContractDocumentStatusBatchQueue() {
     this.contractDocumentStatusBatchQueue.push({id: 1});
   }
-  
+
   /**
    * Adds task to sapContractDeliveredQuantityUpdateQueue
    */
@@ -135,8 +135,8 @@ export default new class TaskQueue {
 
   /**
    * Enqueues SAP contact update task
-   * 
-   * @param {Object} businessPartner SAP business partner object 
+   *
+   * @param {Object} businessPartner SAP business partner object
    */
   async enqueueSapContactUpdate(operationReportId: number, businessPartner: SapBusinessPartner) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
@@ -150,8 +150,8 @@ export default new class TaskQueue {
 
   /**
    * Enqueues SAP item group update task
-   * 
-   * @param {Object} itemGroup SAP item group object 
+   *
+   * @param {Object} itemGroup SAP item group object
    */
   async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SapItemGroup) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
@@ -165,9 +165,9 @@ export default new class TaskQueue {
 
   /**
    * Enqueues SAP delivery place update task
-   * 
+   *
    * @param operationReportId operation report ID
-   * @param {Object} deliveryPlace SAP delivery place object 
+   * @param {Object} deliveryPlace SAP delivery place object
    */
   async enqueueSapDeliveryPlaceUpdate(operationReportId: number, deliveryPlace: SapDeliveryPlace) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
@@ -181,7 +181,7 @@ export default new class TaskQueue {
 
   /**
    * Enqueues SAP contract update task
-   * 
+   *
    * @param {String} operationReportId operationReportId
    * @param {Object} contract SAP contract object
    * @param {Object} contractLine SAP contract line object
@@ -198,7 +198,7 @@ export default new class TaskQueue {
 
   /**
    * Enqueues update current year approved contracts to SAP task
-   * 
+   *
    * @param operationReportId operation report ID
    * @param contract contract model object
    */
@@ -213,7 +213,7 @@ export default new class TaskQueue {
 
   /**
    * Adds task to sapContractSapIdSync queue
-   * 
+   *
    * @param {int} contractDocumentId id
    * @param {int} contractId id
    */
@@ -242,10 +242,10 @@ export default new class TaskQueue {
       this.enqueueContractDocumentStatusBatchQueue();
     }
   }
-  
+
   /**
    * Task to check contract document signature status from visma sign
-   * 
+   *
    * @param {object} data data given to task
    * @param {function} callback callbackcheckContractDocumentSignatureStatus function
    */
@@ -275,9 +275,9 @@ export default new class TaskQueue {
 
   /**
    * Executes a SAP contact update task
-   * 
+   *
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   async sapContactUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
@@ -305,7 +305,7 @@ export default new class TaskQueue {
 
       if (!email) {
         this.logger.error(`Could not synchronize user with SAP id ${sapId} because email is null`);
-        
+
         callback({
           message: `Could not synchronize user with SAP id ${sapId} because email is null`,
           operationReportItemId: data.operationReportItemId
@@ -313,7 +313,7 @@ export default new class TaskQueue {
 
         return;
       }
-      
+
       let user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapId);
       if (!user) {
         user = await userManagement.findUserByEmail(email);
@@ -361,9 +361,9 @@ export default new class TaskQueue {
 
   /**
    * Resolves and updates SAP Contract's sapId
-   * 
+   *
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   async sapContractSapIdSyncTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     const failTask = (reason: string) => {
@@ -393,7 +393,7 @@ export default new class TaskQueue {
       if (!itemGroupSapId) {
         throw new Error(`Item group SAP ID could not be resolved`);
       }
-      
+
       const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
       if (!userSapId) {
         throw new Error(`User SAP ID could not be resolved`);
@@ -445,9 +445,9 @@ export default new class TaskQueue {
 
   /**
    * Executes a SAP contact update task
-   * 
+   *
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   async sapContractDeliveredQuantityUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
@@ -469,14 +469,14 @@ export default new class TaskQueue {
           const year = moment(StartDate).format("YYYY");
           const sapId = `${year}-${DocNum}-${ItemGroup}`;
 
-          if (CumulativeQuantity && CumulativeQuantity > 0) {
+          if (CumulativeQuantity !== undefined) {
             sapDeliveredQuantities[sapId] = sapDeliveredQuantities[sapId] ?
               sapDeliveredQuantities[sapId] + CumulativeQuantity :
               CumulativeQuantity;
           }
         });
       });
-      
+
       const contracts: ContractModel[] = await models.listContractsByStatusAndSapIdNotNull("APPROVED");
       const totalCount = contracts.length;
       let syncCount = 0;
@@ -522,7 +522,7 @@ export default new class TaskQueue {
 
   /**
    * Translates vat liable value from SAP into format used by application
-   * 
+   *
    * @param {SapVatLiableEnum | null} sapVatLiable vat liable from SAP
    * @requires {String} vat liable in application format
    */
@@ -542,9 +542,9 @@ export default new class TaskQueue {
 
   /**
    * Executes a SAP delivery place update task
-   * 
+   *
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   private async sapDeliveryPlaceUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
@@ -572,7 +572,7 @@ export default new class TaskQueue {
       const deliveryPlace = await models.findDeliveryPlaceBySapId(sapId);
       if (deliveryPlace) {
         models.updateDeliveryPlace(deliveryPlace.id, name);
-        
+
         callback(null, {
           message: `Updated delivery place from SAP ${name} / ${sapId}`,
           operationReportItemId: data.operationReportItemId
@@ -597,9 +597,9 @@ export default new class TaskQueue {
 
   /**
    * Executes a SAP item group update task
-   * 
+   *
    * @param {Object} data task data
-   * @param {Function} callback task callback 
+   * @param {Function} callback task callback
    */
   private async sapItemGroupUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
@@ -628,7 +628,7 @@ export default new class TaskQueue {
       const prerequisiteContractItemGroupId = await this.resolveSapPrerequisiteContractItemGroupId(sapId);
       if (prerequisiteContractItemGroupId === false) {
         await this.enqueueSapItemGroupUpdate(data.operationReportItemId, data.itemGroup);
-        
+
         callback(null, {
           message: "Required prerequisite contract item group was not found, retrying",
           operationReportItemId: data.operationReportItemId
@@ -661,7 +661,7 @@ export default new class TaskQueue {
 
   /**
    * Executes a SAP contract update task
-   * 
+   *
    * @param {Object} data task data
    * @param {Function} callback task callback
    */
@@ -675,7 +675,7 @@ export default new class TaskQueue {
       const sapUserId = sapContract.BPCode;
       const year = moment(sapContract.StartDate ? sapContract.StartDate : undefined).year();
       const sapId = `${year}-${sapContract.DocNum}-${sapItemGroupId}`;
-      
+
       const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId || "");
       if (!deliveryPlace) {
         callback({
@@ -692,7 +692,7 @@ export default new class TaskQueue {
           message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`,
           operationReportItemId: data.operationReportItemId
         });
-        
+
         return;
       }
 
@@ -702,7 +702,7 @@ export default new class TaskQueue {
           message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,
           operationReportItemId: data.operationReportItemId
         });
-        
+
         return;
       }
 
@@ -712,7 +712,7 @@ export default new class TaskQueue {
           message: `Failed to synchronize SAP contract ${sapId} because planned quantity of item group ${sapItemGroupId} was not found from SAP contract`,
           operationReportItemId: data.operationReportItemId
         });
-        
+
         return;
       }
 
@@ -735,7 +735,7 @@ export default new class TaskQueue {
 
       const contract = await models.findContractBySapId(sapId);
       if (!contract) {
-        await models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity, 
+        await models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity,
           startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
 
         callback(null, {
@@ -746,16 +746,16 @@ export default new class TaskQueue {
         if (contract.proposedQuantity !== null) {
           proposedQuantity = contract.proposedQuantity;
         }
-        
+
         deliveryPlaceComment = contract.deliveryPlaceComment;
         quantityComment = contract.quantityComment;
         rejectComment = contract.rejectComment;
         areaDetails = contract.areaDetails;
         deliverAll = contract.deliverAll;
         remarks = contract.remarks;
-  
+
         await models.updateContract(
-          contract.id, 
+          contract.id,
           year,
           deliveryPlaceId,
           contract.proposedDeliveryPlaceId,
@@ -777,7 +777,7 @@ export default new class TaskQueue {
           quantityComment,
           rejectComment
         );
-      
+
         callback(null, {
           message: `Updated contract details from SAP ${sapId}`,
           operationReportItemId: data.operationReportItemId
@@ -886,7 +886,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves item group category for given SAP id
-   * 
+   *
    * @param {String} sapId sapId
    */
   private resolveSapItemGroupCategory(sapId: string) {
@@ -906,7 +906,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves item group minimum profit estimation for given SAP id
-   * 
+   *
    * @param {String} sapId sapId
    */
   private resolveSapMinimumProfitEstimation(sapId: string) {
@@ -916,7 +916,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves status for given SAP contract
-   * 
+   *
    * @param contract SAP contract
    * @returns status as string
    */
@@ -930,7 +930,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves contract quantity from given SAP contract and SAP contract line
-   * 
+   *
    * @param sapContract SAP contract object
    * @param sapContractLine SAP contract line object
    */
@@ -951,7 +951,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves prerequisite contract item group id for given SAP id or null if not specified
-   * 
+   *
    * @param {String} sapId sapId
    * @return {String} prerequisite contract item group id for given SAP id
    */
@@ -979,7 +979,7 @@ export default new class TaskQueue {
 
   /**
    * Task engine task for caching user permissions
-   * 
+   *
    * @param data data
    * @param callback callback
    */
@@ -1030,7 +1030,7 @@ export default new class TaskQueue {
 
   /**
    * Caches users chat group permissions
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    */
@@ -1039,7 +1039,7 @@ export default new class TaskQueue {
       if (!user.id) {
         return false;
       }
-  
+
       const permittedScopes = await this.getChatGroupPermissionScopes(chatGroup, user);
       const permissionName = chatGroupPermissionController.getChatGroupResourceName(chatGroup);
       let hadAnyPermission = false;
@@ -1050,7 +1050,7 @@ export default new class TaskQueue {
           permission = true;
           hadAnyPermission = true;
         }
-  
+
         await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
       }
       return hadAnyPermission;
@@ -1062,7 +1062,7 @@ export default new class TaskQueue {
 
   /**
    * Caches users chat thread permissions
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    */
@@ -1071,17 +1071,17 @@ export default new class TaskQueue {
       if (!user.id) {
         return;
       }
-  
+
       const permittedScopes = await this.getChatThreadPermissionScopes(chatThread, user);
       const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
-  
+
       for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
         let scope = CHAT_GROUP_SCOPES[i];
         let permission = false;
         if (permittedScopes.indexOf(scope) > -1) {
           permission = true;
         }
-  
+
         await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
       }
     } catch (error) {
@@ -1095,10 +1095,10 @@ export default new class TaskQueue {
   private enqueueQuestionGroupUsersThreadsTask() {
     this.questionGroupThreadsQueue.push({id: 1});
   }
-  
+
   /**
    * Task engine task for checking question group user threads
-   * 
+   *
    * @param data data
    * @param callback callback
    */
@@ -1133,13 +1133,13 @@ export default new class TaskQueue {
 
   /**
    * Ensures that user has proper thread in given question chat group
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    */
   private checkUserQuestionGroupThread = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
     const expectedAccess = await this.hasChatGroupTraversePermission(chatGroup, user);
-    
+
     if (!expectedAccess) {
       this.removeUserQuestionGroupThreadAccess(chatGroup, user);
     } else {
@@ -1148,8 +1148,8 @@ export default new class TaskQueue {
   }
 
   /**
-   * Ensures that given user has does not have access to a thread in given question group 
-   * 
+   * Ensures that given user has does not have access to a thread in given question group
+   *
    * @param chatGroup group
    * @param user user
    */
@@ -1163,13 +1163,13 @@ export default new class TaskQueue {
       await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
 
       const messageCount = await models.countMessagesByThread(chatThread.id);
-      if (messageCount == 0) {        
+      if (messageCount == 0) {
         const accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
         if (accessPermission && accessPermission.id) {
           this.logger.info(`Delete access permission from empty chat thread ${chatThread.id}`);
           await userManagement.deletePermission(accessPermission.id);
         }
-        
+
         this.logger.info(`Deleting empty question chat thread ${chatThread.id} from user ${user.id}`);
         await models.deleteThread(chatThread.id);
       } else {
@@ -1179,13 +1179,13 @@ export default new class TaskQueue {
   }
 
   /**
-   * Ensures that given user has access to a thread in given question group 
-   * 
+   * Ensures that given user has access to a thread in given question group
+   *
    * @param chatGroup group
    * @param user user
    */
   private addUserQuestionGroupThreadAccess = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
-    let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);    
+    let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
     const title = userManagement.getUserDisplayName(user) || "";
 
     if (!chatThread) {
@@ -1194,7 +1194,7 @@ export default new class TaskQueue {
     } else {
       await models.updateThreadTitle(chatThread.id, title);
     }
-    
+
     let resource = await chatThreadPermissionController.findChatThreadResource(chatThread);
     if (!resource) {
       this.logger.info(`Creating new resource for chat thread ${chatThread.id}`);
@@ -1216,7 +1216,7 @@ export default new class TaskQueue {
 
   /**
    * Returns whether user has traverse permission for given user group
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    * @returns whether user has traverse permission for given user group
@@ -1237,7 +1237,7 @@ export default new class TaskQueue {
 
   /**
    * Gets list of allowed scopes for groups resource
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    * @returns list of allowed scopes for user
@@ -1256,7 +1256,7 @@ export default new class TaskQueue {
 
   /**
    * Gets list of allowed scopes for threads resource
-   * 
+   *
    * @param chatThread chat thread
    * @param user user
    * @returns list of allowed scopes for user
@@ -1267,7 +1267,7 @@ export default new class TaskQueue {
 
   /**
    * Removes all unreads from an user to a chat group
-   * 
+   *
    * @param chatGroup chat group
    * @param user user
    */
@@ -1277,7 +1277,7 @@ export default new class TaskQueue {
 
   /**
    * Resolves display name for given SAP id
-   * 
+   *
    * @param {String} sapId sapId
    * @return {String} display name or null if not found
    */

@@ -243,7 +243,12 @@ export default class SapDeliveriesServiceImpl {
     }
 
     for (const recipient of recipients) {
-      mailer.send(config().mail.sender, recipient, subject, contentParts.join("\n\n"));
+      mailer.send(
+        `${config().mail.sender}@${config().mail.domain}`,
+        recipient,
+        subject,
+        contentParts.join("\n\n")
+      );
     }
   }
 
