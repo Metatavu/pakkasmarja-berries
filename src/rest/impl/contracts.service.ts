@@ -1015,7 +1015,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
     const appUrl = `${req.protocol}://${req.get("host")}`;
     const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}&redirectUrl=${redirectUrl}`;
-    const fulfillResult = await signature.fullfillInvitation(invitation.uuid, returnUrl, ssn, authService);
+    const fulfillResult = await signature.fulfillInvitation(invitation.uuid, returnUrl, ssn, authService);
 
     const result: ContractDocumentSignRequest = {redirectUrl: fulfillResult.location };
     
