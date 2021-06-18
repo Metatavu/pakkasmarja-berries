@@ -3,6 +3,9 @@ import * as Mailgun from "mailgun-js";
 import * as uuid from "uuid4";
 import { config } from "../config";
 
+/**
+ * Class for sending emails trough Mailgun
+ */
 export default new class Mailer {
 
   private mailgun: Mailgun.Mailgun | null;
