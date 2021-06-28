@@ -82,13 +82,6 @@
     "command": "wkhtmltopdf"
   },
   "sap": {
-    "import-files": [{
-      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-Active.xml",
-      "status": "APPROVED"
-    }, {
-      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-History.xml",
-      "status": "TERMINATED"
-    }],
     "item-group-categories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]

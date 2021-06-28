@@ -206,14 +206,6 @@ export interface SAPServiceLayer {
 }
 
 /**
- * General configuration for Keycloak
- */
-export interface SAPImportFile {
-  file: string;
-  status: string;
-}
-
-/**
  * Categorization for SAP item groups
  */
 export interface SAPItemGroupCategories {
@@ -254,7 +246,6 @@ export interface SAPLoanProducts {
  * SAP settings
  */
 export interface SAP {
-  "import-files": SAPImportFile[];
   "item-group-categories": SAPItemGroupCategories;
   "item-group-display-names": SAPItemGroupDisplayNames;
   "item-group-prerequisites": SAPItemGroupPrerequisites;
