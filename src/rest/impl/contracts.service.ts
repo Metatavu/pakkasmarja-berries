@@ -911,6 +911,30 @@ export default class ContractsServiceImpl extends ContractsService {
         break;
     }
   }
+
+  /**
+   * @inheritdoc
+   */
+   async listContractQuantities(req: Request, res: Response) {
+    if (!this.hasRealmRole(req, ApplicationRoles.VIEW_CONTRACT_QUANTITIES)) {
+      this.sendForbidden(res, "You have no permission to view contracts quantities");
+      return;
+    }
+
+    const itemGroupExternalId = req.query.itemGroupId;
+    const contactExternalId = req.query.contactId;
+    const year = new Date().getFullYear();
+    const status = "APPROVED";
+
+    const databaseContracts: ContractModel[] = []; // TODO: 
+
+    res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
+      return {
+        contractQuantity: databaseContract.contractQuantity,
+        deliveredQuantity: databaseContract.deliveredQuantity
+      };
+    })));
+  }
   
   /**
    * @inheritdoc
