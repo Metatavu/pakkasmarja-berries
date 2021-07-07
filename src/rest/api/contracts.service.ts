@@ -26,6 +26,7 @@ export default abstract class ContractsService extends AbstractService {
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}/documents/${encodeURIComponent(String(type))}')}`, [ keycloak.protect() ], this.catchAsync(this.getContractDocument.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates')}`, [ keycloak.protect() ], this.catchAsync(this.listContractDocumentTemplates.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/prices')}`, [ keycloak.protect() ], this.catchAsync(this.listContractPrices.bind(this)));
+    app.get(`/rest/v1${this.toPath('/contractQuantities')}`, [ keycloak.protect() ], this.catchAsync(this.listContractQuantities.bind(this)));
     app.get(`/rest/v1${this.toPath('/contracts')}`, [ keycloak.protect() ], this.catchAsync(this.listContracts.bind(this)));
     app.put(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(id))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContract.bind(this)));
     app.put(`/rest/v1${this.toPath('/contracts/${encodeURIComponent(String(contractId))}/documentTemplates/${encodeURIComponent(String(contractDocumentTemplateId))}')}`, [ keycloak.protect() ], this.catchAsync(this.updateContractDocumentTemplate.bind(this)));
@@ -126,6 +127,16 @@ export default abstract class ContractsService extends AbstractService {
     * - (query) number maxResults - Max results. Defaults to 5
   */
   public abstract listContractPrices(req: Request, res: Response): Promise<void>;
+
+
+  /**
+   * Lists contracts quantities
+   * @summary Lists contracts quantities
+   * Accepted parameters:
+    * - (query) string itemGroupId - Filters results by item group id.
+    * - (query) string contactId - Filters results by contact id.
+  */
+  public abstract listContractQuantities(req: Request, res: Response): Promise<void>;
 
 
   /**
