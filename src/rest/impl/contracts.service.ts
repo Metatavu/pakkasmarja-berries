@@ -937,7 +937,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
+    const databaseItemGrouplId = await models.findItemGroupByExternalId(itemGroupExternalId);
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
     const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status);
 
