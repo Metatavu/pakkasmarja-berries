@@ -974,7 +974,7 @@ test("Test view contract quantities", async (t) => {
     });
 });
 
-test("Test view contract quantities all contracts - forbidden", async (t) => {
+test("Test view contract quantities - forbidden", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
   return request(TestConfig.HOST)
