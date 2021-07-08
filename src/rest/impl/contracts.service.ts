@@ -915,7 +915,7 @@ export default class ContractsServiceImpl extends ContractsService {
   /**
    * @inheritdoc
    */
-   async listContractQuantities(req: Request, res: Response) {
+  async listContractQuantities(req: Request, res: Response) {
     if (!this.hasRealmRole(req, ApplicationRoles.VIEW_CONTRACT_QUANTITIES)) {
       this.sendForbidden(res, "You have no permission to view contracts quantities");
       return;
@@ -923,10 +923,29 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const itemGroupExternalId = req.query.itemGroupId;
     const contactExternalId = req.query.contactId;
-    const year = new Date().getFullYear();
     const status = "APPROVED";
+    var year;
+    const mode = config().mode;
 
-    const databaseContracts: ContractModel[] = []; // TODO: 
+    if (!itemGroupExternalId) {
+      this.sendBadRequest(res, "Request with no itemgroup ID")
+      return;
+    }
+
+    if (!contactExternalId) {
+      this.sendBadRequest(res, "Request with no contact ID")
+      return;
+    }
+
+    if (mode === "TEST") {
+      year = 2017
+    } else {
+      year = new Date().getFullYear();
+    }
+
+    const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
+    const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
+    const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status,);
 
     res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
       return {
