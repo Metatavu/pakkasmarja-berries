@@ -911,6 +911,49 @@ export default class ContractsServiceImpl extends ContractsService {
         break;
     }
   }
+
+  /**
+   * @inheritdoc
+   */
+  async listContractQuantities(req: Request, res: Response) {
+    if (!this.hasRealmRole(req, ApplicationRoles.VIEW_CONTRACT_QUANTITIES)) {
+      this.sendForbidden(res, "You have no permission to view contracts quantities");
+      return;
+    }
+
+    const itemGroupExternalId = req.query.itemGroupId;
+    const contactExternalId = req.query.contactId;
+    const status = "APPROVED";
+    const mode = config().mode;
+    const year = mode === "TEST" ? 2017 : new Date().getFullYear();
+
+    if (!itemGroupExternalId) {
+      this.sendBadRequest(res, "Request with no itemgroup ID");
+      return;
+    }
+
+    if (!contactExternalId) {
+      this.sendBadRequest(res, "Request with no contact ID");
+      return;
+    }
+
+    const databaseItemGrouplId = await models.findItemGroupByExternalId(itemGroupExternalId);
+    const itemGroupId = databaseItemGrouplId.id;
+
+    if (!itemGroupId) {
+      this.sendBadRequest(res, "Request with invalid itemgroup ID");
+      return;
+    }
+
+    const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status);
+
+    res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
+      return {
+        contractQuantity: databaseContract.contractQuantity,
+        deliveredQuantity: databaseContract.deliveredQuantity
+      };
+    })));
+  }
   
   /**
    * @inheritdoc
