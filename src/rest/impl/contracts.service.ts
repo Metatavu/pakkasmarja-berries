@@ -924,7 +924,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const itemGroupExternalId = req.query.itemGroupId;
     const contactExternalId = req.query.contactId;
     const status = "APPROVED";
-    var year;
+    const year = mode === "TEST" ? 2017 : new Date().getFullYear();
     const mode = config().mode;
 
     if (!itemGroupExternalId) {
