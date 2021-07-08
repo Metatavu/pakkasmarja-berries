@@ -48,10 +48,5 @@
     "areaDetails": [],
     "deliverAll": false,
     "proposedDeliverAll": false
-  },
-
-  "contactId": {
-    "contractQuantity": 50000,
-    "deliveredQuantity": 0
   }
 }

@@ -924,21 +924,27 @@ export default class ContractsServiceImpl extends ContractsService {
     const itemGroupExternalId = req.query.itemGroupId;
     const contactExternalId = req.query.contactId;
     const status = "APPROVED";
-    const year = mode === "TEST" ? 2017 : new Date().getFullYear();
     const mode = config().mode;
+    const year = mode === "TEST" ? 2017 : new Date().getFullYear();
 
     if (!itemGroupExternalId) {
-      this.sendBadRequest(res, "Request with no itemgroup ID")
+      this.sendBadRequest(res, "Request with no itemgroup ID");
       return;
     }
 
     if (!contactExternalId) {
-      this.sendBadRequest(res, "Request with no contact ID")
+      this.sendBadRequest(res, "Request with no contact ID");
       return;
     }
 
     const databaseItemGrouplId = await models.findItemGroupByExternalId(itemGroupExternalId);
-    const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
+    const itemGroupId = databaseItemGrouplId.id;
+
+    if (!itemGroupId) {
+      this.sendBadRequest(res, "Request with invalid itemgroup ID");
+      return;
+    }
+
     const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status);
 
     res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {

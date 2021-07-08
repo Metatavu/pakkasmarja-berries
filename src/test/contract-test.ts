@@ -961,6 +961,8 @@ test("Test list contracts - itemGroupId", async (t) => {
 test("Test view contract quantities", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
 
+  const contract = contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"];
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contractQuantities?contactId=6f1cd486-107e-404c-a73f-50cc1fdabdd6&itemGroupId=89723408-0f51-11e8-baa0-dfe7c7eae257")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.VIEW_CONTRACT_QUANTITIES])}`)
@@ -969,7 +971,10 @@ test("Test view contract quantities", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.VIEW_CONTRACT_QUANTITIES]);
       t.equal(response.body.length, 1);
-      t.deepEqual(response.body[0], contractDatas["contactId"]);
+      t.equal(response.body[0],[{ 
+        contractQuantity: contract.contractQuantity,
+        deliveredQuantity: contract.deliveredQuantity
+      }]);
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
