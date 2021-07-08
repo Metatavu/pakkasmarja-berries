@@ -939,7 +939,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
-    const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status,);
+    const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status);
 
     res.status(200).send(await Promise.all(databaseContracts.map((databaseContract) => {
       return {
