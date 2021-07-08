@@ -937,12 +937,6 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    if (mode === "TEST") {
-      year = 2017
-    } else {
-      year = new Date().getFullYear();
-    }
-
     const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
     const databaseContracts = await models.listContracts(contactExternalId, null, itemGroupId, year, status,);
