@@ -21,7 +21,7 @@ export default abstract class DeliveryLoansService extends AbstractService {
    * Creates delivery loan
    * @summary Create delivery loan
    * Accepted parameters:
-    * - (body) Body1 body - Payload
+    * - (body) DeliveryLoan body - Payload
   */
   public abstract createDeliveryLoan(req: Request, res: Response): Promise<void>;
 

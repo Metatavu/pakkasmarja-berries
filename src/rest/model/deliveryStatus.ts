@@ -11,7 +11,7 @@
  */
 
 
-export type DeliveryStatus = 'PROPOSAL' | 'PLANNED' | 'DELIVERY' | 'DONE' | 'REJECTED' | 'NOT_ACCEPTED';
+export type DeliveryStatus = 'PROPOSAL' | 'PLANNED' | 'DELIVERY' | 'DONE' | 'REJECTED' | 'NOT_ACCEPTED' | 'DELIVERYLOAN';
 
 export const DeliveryStatus = {
     PROPOSAL: 'PROPOSAL' as DeliveryStatus,
@@ -19,5 +19,6 @@ export const DeliveryStatus = {
     DELIVERY: 'DELIVERY' as DeliveryStatus,
     DONE: 'DONE' as DeliveryStatus,
     REJECTED: 'REJECTED' as DeliveryStatus,
-    NOTACCEPTED: 'NOT_ACCEPTED' as DeliveryStatus
+    NOTACCEPTED: 'NOT_ACCEPTED' as DeliveryStatus,
+    DELIVERYLOAN: 'DELIVERYLOAN' as DeliveryStatus
 };

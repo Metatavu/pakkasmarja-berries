@@ -63,9 +63,6 @@ import ApplicationRoles from "../application-roles";
         if (!item || loaned === undefined || returned === undefined) {
           return this.sendBadRequest(res, "Invalid delivery loan found from request body");
         }
-        if (loaned < 1 && returned < 1) {
-          return this.sendBadRequest(res, "Delivery loan with no transfers found from request body");
-        }  
       }
 
       await SapDeliveriesServiceImpl.createStockTransferToSap(
