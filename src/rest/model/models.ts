@@ -3,6 +3,7 @@ export * from './areaDetail';
 export * from './badRequest';
 export * from './basicContact';
 export * from './body';
+export * from './body1';
 export * from './chatGroup';
 export * from './chatGroupGroupPermission';
 export * from './chatGroupPermissionScope';
