@@ -82,13 +82,6 @@
     "command": "wkhtmltopdf"
   },
   "sap": {
-    "import-files": [{
-      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-Active.xml",
-      "status": "APPROVED"
-    }, {
-      "file": "/usr/src/pakkasmarja/sap-files/SAP-Export-History.xml",
-      "status": "TERMINATED"
-    }],
     "item-group-categories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
@@ -102,6 +95,10 @@
       "234": 500
     },
     "xml-fileupload-path": "/tmp/sapxml",
+    "loanProductIds": {
+      "GRAY_BOX": "302601",
+      "RED_BOX": "302602"
+    },
     "batchProducts": []
   },
   "sapServiceLayer": {

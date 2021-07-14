@@ -8333,7 +8333,14 @@
       "clientRole" : false,
       "containerId" : "pm",
       "attributes" : { }
-    }, {
+    },  {
+      "id" : "311f92bf-d1ea-4642-92bf-4f3e1913cb32",
+      "name" : "view-contract-quantities",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "pm",
+      "attributes" : { }
+    },  {
       "id" : "aac81c2e-4ae9-11e9-8646-d663bd873d93",
       "name" : "create-products",
       "composite" : false,

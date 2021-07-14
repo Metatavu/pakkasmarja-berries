@@ -248,4 +248,11 @@ export default class ApplicationRoles {
     return "administrate-opening-hours";
   }
 
+  /**
+   * Role that allows users to view contract quantities
+   */
+  static get VIEW_CONTRACT_QUANTITIES() {
+    return "view-contract-quantities";
+  }
+
 }

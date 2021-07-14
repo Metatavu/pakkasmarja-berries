@@ -957,3 +957,88 @@ test("Test list contracts - itemGroupId", async (t) => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
+
+test("Test view contract quantities", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+  const contract = contractDatas["1d45568e-0fba-11e8-9ac4-a700da67a976"];
+
+  return request(TestConfig.HOST)
+    .get("/rest/v1/contractQuantities?contactId=6f1cd486-107e-404c-a73f-50cc1fdabdd6&itemGroupId=89723408-0f51-11e8-baa0-dfe7c7eae257")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.VIEW_CONTRACT_QUANTITIES])}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then(async response => {
+      await auth.removeUser1Roles([ApplicationRoles.VIEW_CONTRACT_QUANTITIES]);
+      t.equal(response.body.length, 1);
+      t.equal(response.body[0], [{ 
+        contractQuantity: contract.contractQuantity,
+        deliveredQuantity: contract.deliveredQuantity
+      }]);
+      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    });
+});
+
+test("Test view contract quantities - forbidden", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+  return request(TestConfig.HOST)
+  .get("/rest/v1/contractQuantities?contactId=6f1cd486-107e-404c-a73f-50cc1fdabdd6&itemGroupId=89723408-0f51-11e8-baa0-dfe7c7eae257")
+  .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
+  .set("Accept", "application/json")
+  .then(async response => {
+    await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    t.deepEqual(response.body, {
+      "code": 403,
+      "message": "You have no permission to view contracts quantities" 
+    });
+  });
+});
+
+test("Test view contract quantities - invalid token", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+  return request(TestConfig.HOST)
+    .get("/rest/v1/contractQuantities?contactId=6f1cd486-107e-404c-a73f-50cc1fdabdd6&itemGroupId=89723408-0f51-11e8-baa0-dfe7c7eae257")
+    .set("Authorization", "Bearer FAKE")
+    .set("Accept", "application/json")
+    .expect(403)
+    .then(async response => {
+      await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+    });
+});
+
+test("Test view contract quantities - without contactId", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+  return request(TestConfig.HOST)
+    .get("/rest/v1/contractQuantities?itemGroupId=89723408-0f51-11e8-baa0-dfe7c7eae257")
+    .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.VIEW_CONTRACT_QUANTITIES])}`)
+    .set("Accept", "application/json")
+    .expect(400)
+    .then(async response => {
+      await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      t.deepEqual(response.body, {
+        "code": 400,
+        "message": "Request with no contact ID" 
+      });
+    });
+});
+
+test("Test view contract quantities - without itemgroup", async (t) => {
+  await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
+
+  return request(TestConfig.HOST)
+  .get("/rest/v1/contractQuantities?contactId=6f1cd486-107e-404c-a73f-50cc1fdabdd6")
+  .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.VIEW_CONTRACT_QUANTITIES])}`)
+  .set("Accept", "application/json")
+    .expect(400)
+    .then(async response => {
+      await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
+      t.deepEqual(response.body, {
+        "code": 400,
+        "message": "Request with no itemgroup ID" 
+      });
+    });
+});
+

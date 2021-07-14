@@ -83,13 +83,6 @@
     "command": "wkhtmltopdf"
   },
   "sap": {
-    "import-files": [{
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-Active.xml",
-      "status": "APPROVED"
-    }, {
-      "file": "/home/travis/build/Metatavu/pakkasmarja-berries/src/test/data/SAP-Export-History.xml",
-      "status": "TERMINATED"
-    }],
     "item-group-categories": {
       "FROZEN": ["123", "456"],
       "FRESH": ["234"]
@@ -101,6 +94,10 @@
     },
     "item-group-minimum-profit-estimation": {
       "234": 500
+    },
+    "loanProductIds": {
+      "GRAY_BOX": "302601",
+      "RED_BOX": "302602"
     },
     "xml-fileupload-path": "/tmp/sapxml",
     "batchProducts": []

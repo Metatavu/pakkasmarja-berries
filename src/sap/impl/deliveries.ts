@@ -35,7 +35,6 @@ export default class SapDeliveriesServiceImpl {
     sapSalesPersonCode: string,
     itemGroupCategory: "FRESH" | "FROZEN"
   ): Promise<void> => {
-    const deliveryComments = await SapDeliveriesServiceImpl.getNotesString(delivery.id);
     const batchProducts = config().sap.batchProducts;
 
     if (!batchProducts) {
@@ -49,6 +48,9 @@ export default class SapDeliveriesServiceImpl {
         Quantity: delivery.amount
       });
     }
+
+    const deliveryNotes = await models.listDeliveryNotes(delivery.id);
+    const deliveryComments = await SapDeliveriesServiceImpl.getNotesString(deliveryNotes.map(note => note.text || ""));
 
     try {
       const sapPurchaseDeliveryNotesService = SapServiceFactory.getPurchaseDeliveryNotesService();
@@ -107,7 +109,8 @@ export default class SapDeliveriesServiceImpl {
    * @return promise of successful creation
    */
   static createStockTransferToSap = async (
-    delivery: DeliveryModel,
+    docDate: Date,
+    comments: string[],
     deliveryContactSapId: string,
     sapSalesPersonCode: string,
     loans: DeliveryLoan[]
@@ -176,9 +179,9 @@ export default class SapDeliveriesServiceImpl {
 
       const sapStockTransfersService = SapServiceFactory.getStockTransfersService();
       await sapStockTransfersService.createStockTransfer({
-        DocDate: moment(delivery.time).format("YYYY-MM-DD"),
+        DocDate: moment(docDate).format("YYYY-MM-DD"),
         CardCode: deliveryContactSapId,
-        Comments: await SapDeliveriesServiceImpl.getNotesString(delivery.id),
+        Comments: await SapDeliveriesServiceImpl.getNotesString(comments),
         SalesPersonCode: parseInt(sapSalesPersonCode, 10),
         FromWarehouse: loanWarehouseCode,
         ToWarehouse: loanWarehouseCode,
@@ -202,18 +205,13 @@ export default class SapDeliveriesServiceImpl {
   /**
    * Get notes as string
    * 
-   * @param deliveryId delivery ID
+   * @param comments list of comments
    * @return constructed notes string
    */
-  static getNotesString = async (deliveryId: string | null) => {
-    if (!deliveryId) {
-      return "";
-    }
-
-    const deliveryNotes = await models.listDeliveryNotes(deliveryId);
-    const constructedNote = deliveryNotes.reduce((previous, { text }) => {
-      if (text) {
-        return previous ? `${previous} ; ${text}` : text;
+  static getNotesString = async (comments: string[]) => {
+    const constructedNote = comments.reduce((previous, comment) => {
+      if (comment) {
+        return previous ? `${previous} ; ${comment}` : comment;
       } else {
         return previous;
       }
@@ -245,7 +243,12 @@ export default class SapDeliveriesServiceImpl {
     }
 
     for (const recipient of recipients) {
-      mailer.send(config().mail.sender, recipient, subject, contentParts.join("\n\n"));
+      mailer.send(
+        `${config().mail.sender}@${config().mail.domain}`,
+        recipient,
+        subject,
+        contentParts.join("\n\n")
+      );
     }
   }
 

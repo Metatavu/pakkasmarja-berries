@@ -2,7 +2,7 @@ import * as VismaSignClient from "visma-sign-client";
 import * as moment from "moment";
 import { config, VismaSign } from "../config";
 
-const InvitationFullfillment = VismaSignClient.InvitationFullfillment; 
+const InvitationFulfillment = VismaSignClient.InvitationFulfillment;
 const vismaSignConfig: VismaSign | null = config()["visma-sign"] || null;
 
 if (vismaSignConfig) {
@@ -18,7 +18,7 @@ export default new class Signature {
   private filesApi: any;
   private invitationsApi: any;
   private authenticationsApi: any;
-  
+
   /**
    * Constructor
    */
@@ -31,12 +31,12 @@ export default new class Signature {
 
   /**
    * Request signature for pdf file
-   * 
+   *
    * @param {String} documentId document id
    * @param {String} filename file name
    * @param {Buffer} pdfFile Buffer that contains pdf file data
    * @returns {Promise} Return promise that resolves into invitation
-   */        
+   */
   async requestSignature(documentId: string, filename: string, pdfFile: Buffer) {
     await this.addFile(documentId, pdfFile, filename);
     return await this.createInvitation(documentId);
@@ -44,7 +44,7 @@ export default new class Signature {
 
   /**
    * Creates document thru Visma Sign API
-   * 
+   *
    * @param {String} name name
    * @returns {Promise} Promise that resolves to the created document
    */
@@ -58,7 +58,7 @@ export default new class Signature {
         code: vismaSignConfig.affiliateCode
       }];
     }
-    
+
     const document = VismaSignClient.Document.constructFromObject({
       document: documentData
     });
@@ -71,7 +71,7 @@ export default new class Signature {
 
   /**
    * Cancel document thru Visma Sign API
-   * 
+   *
    * @param {String} documentId id of the document which file is to be cancel
    * @returns {Promise} Promise for cancel response
    */
@@ -81,17 +81,17 @@ export default new class Signature {
 
   /**
    * Delete document thru Visma Sign API
-   * 
+   *
    * @param {String} documentId id of the document which file is to be deleted
    * @returns {Promise} Promise for cancel response
    */
   deleteDocument(documentId: string) {
     return this.documentsApi.deleteDocument(documentId);
   }
-  
+
   /**
    * Adds file to the document
-   * 
+   *
    * @param {String} documentId id of the document which file is to be added
    * @param {Buffer} data file data
    * @param {String} filename filename, optional
@@ -102,53 +102,51 @@ export default new class Signature {
     if (filename) {
       options.filename = filename;
     }
-    
+
     return this.filesApi.addDocumentFile(data, documentId, options);
   }
-  
+
   /**
    * Creates invitation for document
-   * 
+   *
    * @param {String} documentId id of document
    * @returns {Promise} Promise that resolves into redirect url
    */
   createInvitation(documentId: string) {
-    return this.invitationsApi.createDocumentInvitation([{}], documentId).then((data: any[]) => {
-      return data[0];
-    });
+    return this.invitationsApi.createDocumentInvitation([{}], documentId).then((data: any[]) => data[0]);
   }
 
   /**
    * Fulfills an invitation
-   * 
-   * @param {String} invitationId invitation id 
+   *
+   * @param {String} invitationId invitation id
    * @param {String} returnUrl redirect url
    * @param {String} identifier ssn of person signing
    * @param {String} authService auth service id
    */
-  fullfillInvitation(invitationId: string, returnUrl: string, identifier: string, authService: string) {
-    const body = InvitationFullfillment.constructFromObject({
+  fulfillInvitation(invitationId: string, returnUrl: string, identifier: string, authService: string) {
+    const body = InvitationFulfillment.constructFromObject({
       "returnUrl": returnUrl,
       "identifier": identifier,
       "authService": authService
     });
 
-    return this.invitationsApi.fullfillInvitation(body, invitationId);
+    return this.invitationsApi.fulfillInvitation(body, invitationId);
   }
 
   /**
    * Returns document file for a document id
-   * 
+   *
    * @param {String} documentId document id
-   * @returns {Blob} file as a blob 
+   * @returns {Blob} file as a blob
    */
   getDocumentFile(documentId: string) {
     return this.filesApi.getDocumentFile(documentId, 0);
   }
-  
+
   /**
    * Gets document status
-   * 
+   *
    * @param {String} documentId
    * @returns {Promise} for document status
    */
@@ -162,5 +160,5 @@ export default new class Signature {
   getAuthenticationMethods() {
     return this.authenticationsApi.getAuthenticationMethods();
   }
-  
+
 }

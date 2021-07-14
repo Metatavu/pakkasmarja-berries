@@ -1,0 +1,9 @@
+{
+  "contactId": "677e99fd-b854-479f-afa6-74f295052770",
+  "comment": "Test comment",
+  "loans": [{
+    "item": "GRAY_BOX",
+    "loaned": 1000,
+    "returned": 1000
+  }]
+}
