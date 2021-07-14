@@ -305,6 +305,7 @@ export interface DeliveryModel {
   qualityId: string | null;
   deliveryPlaceId: number;
   warehouseCode: string | null;
+  inSap: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -720,7 +721,8 @@ export class Models {
       unitPriceWithBonus: { type: Sequelize.DOUBLE, allowNull: true },
       qualityId: { type: Sequelize.UUID, allowNull: true },
       deliveryPlaceId: { type: Sequelize.BIGINT, allowNull: false, references: { model: "DeliveryPlaces", key: "id" } },
-      warehouseCode: { type: Sequelize.STRING(191), allowNull: true }
+      warehouseCode: { type: Sequelize.STRING(191), allowNull: true },
+      inSap: { type: Sequelize.BOOLEAN, allowNull: false }
     });
 
     this.DeliveryNote = this.defineModel("DeliveryNote", {
@@ -3258,7 +3260,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string): PromiseLike<DeliveryModel> {
+  public createDelivery(id: string, productId: string, userId: string, time: Date, status: string, amount: number, price: string | null, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: string, inSap: boolean): PromiseLike<DeliveryModel> {
     return this.Delivery.create({
       id: id,
       productId: productId,
@@ -3271,6 +3273,7 @@ export class Models {
       unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId,
+      inSap: inSap
     } as any);
   }
 
@@ -3288,7 +3291,7 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @return promise on created delivery
    */
-  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number): PromiseLike<[number, any]> {
+  public updateDelivery(id: string, productId: string, userId: string, time: Date, status: DeliveryStatus, amount: number, unitPrice: number | null, unitPriceWithBonus: number | null, qualityId: string | null, deliveryPlaceId: number, inSap: boolean): PromiseLike<[number, any]> {
     return this.Delivery.update({
       productId: productId,
       userId: userId,
@@ -3299,6 +3302,7 @@ export class Models {
       unitPriceWithBonus: unitPriceWithBonus,
       qualityId: qualityId,
       deliveryPlaceId: deliveryPlaceId,
+      inSap: inSap
     }, {
       where: {
         id: id

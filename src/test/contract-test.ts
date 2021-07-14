@@ -971,7 +971,7 @@ test("Test view contract quantities", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.VIEW_CONTRACT_QUANTITIES]);
       t.equal(response.body.length, 1);
-      t.equal(response.body[0], [{ 
+      t.equal(response.body, [{ 
         contractQuantity: contract.contractQuantity,
         deliveredQuantity: contract.deliveredQuantity
       }]);
