@@ -141,7 +141,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
 
-      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, false);
 
       try {
         await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
@@ -153,7 +153,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           sapSalesPersonCode,
           itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
         );
-
+        
+        if (databaseDelivery.id) {
+          await models.updateDelivery(databaseDelivery.id, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
+        }
+        
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {
           const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
@@ -170,7 +174,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
-      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id);
+      const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id, false);
       res.status(200).send(await this.translateDatabaseDelivery(result));
     }
   }
@@ -493,35 +497,38 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;  
       }
 
-      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id);
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, delivery.inSap);
       databaseDelivery = await models.findDeliveryById(deliveryId);
       try {
-        await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
-          databaseDelivery,
-          product,
-          databaseDeliveryPlace,
-          unitPriceWithBonus,
-          deliveryContactSapId,
-          sapSalesPersonCode,
-          itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
-        );
-
-        const loans: DeliveryLoan[] = req.body.loans;
-        if (!!loans && Array.isArray(loans) && loans.length) {
-          const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
-          await SapDeliveriesServiceImpl.createStockTransferToSap(
-            new Date(databaseDelivery.time),
-            deliveryNotes.map(note => note.text || ""),
-            deliveryContactSapId, 
-            sapSalesPersonCode, 
-            loans
+        if (!databaseDelivery.inSap) {
+          await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
+            databaseDelivery,
+            product,
+            databaseDeliveryPlace,
+            unitPriceWithBonus,
+            deliveryContactSapId,
+            sapSalesPersonCode,
+            itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
           );
+
+          await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
+          const loans: DeliveryLoan[] = req.body.loans;
+          if (!!loans && Array.isArray(loans) && loans.length) {
+            const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
+            await SapDeliveriesServiceImpl.createStockTransferToSap(
+              new Date(databaseDelivery.time),
+              deliveryNotes.map(note => note.text || ""),
+              deliveryContactSapId, 
+              sapSalesPersonCode, 
+              loans
+            );
+          }
         }
       } catch (e) {
         logReject(e, getLogger());
       }
     } else {
-      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id);
+      await models.updateDelivery(deliveryId, productId, userId, time, status, amount, null, null, qualityId, databaseDeliveryPlace.id, delivery.inSap);
       databaseDelivery = await models.findDeliveryById(deliveryId);
 
       if (databaseDelivery.status === "REJECTED" || databaseDelivery.status === "NOT_ACCEPTED") {
