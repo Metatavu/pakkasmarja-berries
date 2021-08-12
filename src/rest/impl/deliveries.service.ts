@@ -22,7 +22,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -83,7 +83,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     if (status === "DONE" && !deliveryQuality) {
       this.sendBadRequest(res, "Missing qualityId");
-      return;  
+      return;
     }
 
     if (status === "DONE" && deliveryQuality) {
@@ -92,7 +92,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
-      
+
       const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
         this.sendInternalServerError(res, "Failed to resolve product price");
@@ -153,19 +153,19 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           sapSalesPersonCode,
           itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
         );
-        
+
         if (databaseDelivery.id) {
           await models.updateDelivery(databaseDelivery.id, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
         }
-        
+
         const loans: DeliveryLoan[] = req.body.loans;
         if (!!loans && Array.isArray(loans) && loans.length) {
           const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
           await SapDeliveriesServiceImpl.createStockTransferToSap(
             new Date(databaseDelivery.time),
             deliveryNotes.map(note => note.text || ""),
-            deliveryContactSapId, 
-            sapSalesPersonCode, 
+            deliveryContactSapId,
+            sapSalesPersonCode,
             loans
           );
         }
@@ -259,7 +259,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     await models.deleteDeliveryNoteById(deliveryNoteId);
     res.status(204).send();
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -436,9 +436,21 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
+    if (!this.hasRealmRole(req, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES)) {
+      if (delivery.status === "DONE" || delivery.status === "NOT_ACCEPTED") {
+        this.sendForbidden(res, "You are not allowed to change already done or not accepted delivery");
+        return;
+      }
+
+      if (status === "DONE") {
+        this.sendForbidden(res, "You are not allowed to change delivery status to done");
+        return;
+      }
+    }
+
     if (status === "DONE" && !deliveryQuality) {
       this.sendBadRequest(res, "Missing qualityId");
-      return;  
+      return;
     }
 
     let databaseDelivery = null;
@@ -448,7 +460,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
-      
+
       const productPrice = await this.getProductPriceAtTime(product.id, time);
       if (!productPrice) {
         this.sendInternalServerError(res, "Failed to resolve product price");
@@ -489,12 +501,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;  
+        return;
       }
 
       if (!sapSalesPersonCode) {
         this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
-        return;  
+        return;
       }
 
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, delivery.inSap);
@@ -518,8 +530,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
             await SapDeliveriesServiceImpl.createStockTransferToSap(
               new Date(databaseDelivery.time),
               deliveryNotes.map(note => note.text || ""),
-              deliveryContactSapId, 
-              sapSalesPersonCode, 
+              deliveryContactSapId,
+              sapSalesPersonCode,
               loans
             );
           }
@@ -555,7 +567,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         const deliveryNotes = await models.listDeliveryNotes(delivery.id);
         const latestDeliveryNote = deliveryNotes.length > 0 ? deliveryNotes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0] : undefined;
         const imageAttachment = latestDeliveryNote && latestDeliveryNote.image ? Buffer.from(latestDeliveryNote.image, "base64") : undefined;
-        
+
         const additionalRejectionInfo = latestDeliveryNote ? `Lisätietoja hylkäyksestä: ${latestDeliveryNote.text}` : "";
 
         const deliveryInfoToRecipient: string[] = [
@@ -655,8 +667,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Translates database delivery into REST entity
-   * 
-   * @param delivery delivery 
+   *
+   * @param delivery delivery
    */
   private async translateDatabaseDelivery(delivery: DeliveryModel) {
     const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
@@ -680,7 +692,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Returns current price for a product
-   * 
+   *
    * @param productId product id
    * @return product price or null if not found
    */
@@ -695,7 +707,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Returns current price for a product
-   * 
+   *
    * @param productId product id
    * @return product price or null if not found
    */
@@ -710,8 +722,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
   /**
    * Translates database delivery note into REST entity
-   * 
-   * @param deliveryNote deliveryNote 
+   *
+   * @param deliveryNote deliveryNote
    */
   private async translateDatabaseDeliveryNote(deliveryNote: DeliveryNoteModel) {
     const result: DeliveryNote = {
