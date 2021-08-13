@@ -547,6 +547,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
         const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
+        const loggedUserId = this.getLoggedUserId(req);
+        const loggedUser = await userManagement.findUser(loggedUserId);
+
+        if (!loggedUser) {
+          this.sendInternalServerError(res, "Failed to get logged in user");
+          return;
+        }
+
         if (!deliveryContact) {
           this.sendInternalServerError(res, "Failed to deliveryContact");
           return;
@@ -560,6 +568,8 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         const itemGroup = await models.findItemGroupById(product.itemGroupId);
         const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
+
+        const loggedUserInfo = `${loggedUser.firstName || ""} ${loggedUser.lastName || ""} (${loggedUser.email})`;
 
         const sender = `${config().mail.sender}@${config().mail.domain}`;
         const contactConfig = config().contacts;
@@ -606,7 +616,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         /**Email data for recipient */
         const subjectToRecipient = `Ilmoitus toimituksen hylkäyksestä lähetetty`;
-        const contentsToRecipient = `Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToRecipient.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const contentsToRecipient = `Käyttäjä ${loggedUserInfo} on hylännyt toimituksen. Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToRecipient.join("\n")}\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         if (
           contactConfig &&
