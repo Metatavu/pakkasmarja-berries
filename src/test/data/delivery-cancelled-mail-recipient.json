@@ -2,5 +2,5 @@
   "from": "noreply@example.com",
   "to": "pakaste@example.com",
   "subject": "Ilmoitus toimituksen hylkäyksestä lähetetty",
-  "text": "Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä.\n\nToimituksen tiedot:\n\nToimittaja: Test 1 User 1\nTuote: Product 1\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 21.03.2020 klo 09.37\nLuomispäivä: 21.03.2020 klo 09.37\nPäivitetty: 21.03.2020 klo 09.37\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
+  "text": "Käyttäjä Test 1 User 1 (test1@testrealm1.com) on hylännyt toimituksen. Ilmoitus lähetetty toimittajalle toimituksen hylkäyksestä.\n\nToimituksen tiedot:\n\nToimittaja: Test 1 User 1\nTuote: Product 1\nMäärä: 120\nToimituspaikka: Test Place 1\nAjankohta: 21.03.2020 klo 09.37\nLuomispäivä: 21.03.2020 klo 09.37\nPäivitetty: 21.03.2020 klo 09.37\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------"
 }
