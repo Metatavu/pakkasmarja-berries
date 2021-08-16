@@ -174,8 +174,8 @@ const listDeliveries = (token: string, params: any): Promise<Delivery[]> => {
 }
 
 test("Create delivery", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDelivery = await createDelivery(token);
@@ -188,16 +188,16 @@ test("Create delivery", async (t) => {
     t.equal(createdDelivery.productId, deliveriesData[0].productId);
     t.equal(createdDelivery.time, deliveriesData[0].time);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("Update delivery", async (t) => {
   await sapWireMockTestClient.empty();
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES ]);
 
   try {
     const createdDelivery = await createDelivery(token);
@@ -213,10 +213,10 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.time, deliveriesData[1].time)
   } finally {
     await sapWireMockTestClient.empty();
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES ]);
 });
 
 test("Update delivery if user rejected already confirmed delivery", async t => {
@@ -225,7 +225,7 @@ test("Update delivery if user rejected already confirmed delivery", async t => {
   const contactUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
 
   await database.executeFiles(testDataDir, ["delivery-update-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDelivery = await createDelivery(token);
@@ -242,12 +242,12 @@ test("Update delivery if user rejected already confirmed delivery", async t => {
     await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("Find delivery", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDelivery = await createDelivery(token);
@@ -261,15 +261,15 @@ test("Find delivery", async (t) => {
     t.equal(foundDelivery.productId, deliveriesData[0].productId)
     t.equal(foundDelivery.time, deliveriesData[0].time)
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("Delete delivery", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDelivery = await createDelivery(token);
@@ -286,15 +286,15 @@ test("Delete delivery", async (t) => {
       .expect(404)
       .then((response) => {});
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("List deliveries", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const params = {
@@ -316,15 +316,15 @@ test("List deliveries", async (t) => {
     deliveries = await listDeliveries(token, params);
     t.equal(deliveries.length, 3);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("List deliveries - Forbidden", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     request(TestConfig.HOST)
@@ -333,15 +333,15 @@ test("List deliveries - Forbidden", async (t) => {
       .set("Accept", "application/json")
       .expect(403);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("List deliveries with itemGroupCategory", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     await createDelivery(token, deliveriesData[0]);
@@ -364,16 +364,16 @@ test("List deliveries with itemGroupCategory", async (t) => {
     deliveries = await listDeliveries(token, params);
     t.equal(deliveries.length, 2);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 
 test("Create delivery notes", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-notes-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
@@ -381,15 +381,15 @@ test("Create delivery notes", async (t) => {
     t.notEqual(createdDeliveryNote.id, null);
     t.equal(createdDeliveryNote.text, deliveryNotesData[0].text)
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-notes-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("Update delivery notes", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-notes-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
@@ -398,15 +398,15 @@ test("Update delivery notes", async (t) => {
     t.notEqual(updatedDeliveryNote.id, null);
     t.equal(updatedDeliveryNote.text, deliveryNotesData[1].text)
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-notes-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("List delivery notes", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-notes-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
@@ -416,15 +416,15 @@ test("List delivery notes", async (t) => {
     const notes = await listDeliveryNotes(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
     t.equal(notes.length, 3);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-notes-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
 
 test("Delete delivery note", async (t) => {
-  await database.executeFiles(testDataDir, ["delivery-notes-setup.sql"]);
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await database.executeFiles(testDataDir, [ "delivery-notes-setup.sql" ]);
+  const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDeliveryNote = await createDeliveryNote(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
@@ -444,8 +444,8 @@ test("Delete delivery note", async (t) => {
     const notes = await listDeliveryNotes(token, "bad02318-1a44-11e8-87a4-c7808d590a08");
     t.equal(notes.length, 0);
   } finally {
-    await database.executeFiles(testDataDir, ["delivery-notes-teardown.sql"]);
+    await database.executeFiles(testDataDir, [ "delivery-notes-teardown.sql" ]);
   }
 
-  await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
+  await auth.removeUser1Roles([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 });
