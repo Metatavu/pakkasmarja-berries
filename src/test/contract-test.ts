@@ -1,4 +1,4 @@
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import * as moment from "moment";
 import * as cheerio from "cheerio";
@@ -62,7 +62,7 @@ test("Test contract sign - missing prerequisite", async (t) => {
       await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       t.deepEqual(response.body, {
         "code": 400,
-        "message": "Missing prerequisite contracts" 
+        "message": "Missing prerequisite contracts"
       });
     });
 });
@@ -155,7 +155,7 @@ test("Test creating contracts", async (t) => {
       await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT]);
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       t.deepEqual(push.getOutbox(), contractCreatePushNotifications);
-      
+
       Object.keys(contractDataCreate).forEach((expectKey) => {
         const expectValue = contractDataCreate[expectKey];
         const actualValue = response.body[expectKey];
@@ -340,7 +340,7 @@ test("Test listing contracts - invalid token", async () => {
 
 test("Test finding contracts", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -354,7 +354,7 @@ test("Test finding contracts", async (t) => {
 
 test("Test finding contracts - without token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Accept", "application/json")
@@ -366,7 +366,7 @@ test("Test finding contracts - without token", async () => {
 
 test("Test finding contracts - invalid token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Authorization", "Bearer FAKE")
@@ -379,7 +379,7 @@ test("Test finding contracts - invalid token", async () => {
 
 test("Test finding contract - not found", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
@@ -393,7 +393,7 @@ test("Test finding contract - not found", async () => {
 
 test("Test finding contract - malformed id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
@@ -433,7 +433,7 @@ test("Test contract pdf", async (t) => {
 
 test("Test contract pdf - item group", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=PDF")
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -450,7 +450,7 @@ test("Test contract pdf - item group", async (t) => {
 
 test("Test contract pdf - without token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
     .set("Accept", "application/json")
@@ -462,7 +462,7 @@ test("Test contract pdf - without token", async () => {
 
 test("Test contract pdf - invalid token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
     .set("Authorization", "Bearer FAKE")
@@ -475,7 +475,7 @@ test("Test contract pdf - invalid token", async () => {
 
 test("Test contract html", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -484,7 +484,7 @@ test("Test contract html", async (t) => {
     .then(async response => {
       await database.executeFiles(testDataDir, ["item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       const $ = cheerio.load(response.text);
-      
+
       t.equal("Example berry purchase contract", $("h1").text(), "Contains header");
       t.ok($("p").text().indexOf("Example Co. (company in future)") > -1, "Contains replaced company name");
       t.ok($("td").text().indexOf("Group") > -1, "Contains replaced price");
@@ -501,7 +501,7 @@ test("Test contract html", async (t) => {
 
 test("Test contract pdf - item group", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/3950f496-0fba-11e8-9611-0b2da5ab56ce/documents/group?format=HTML")
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -516,7 +516,7 @@ test("Test contract pdf - item group", async (t) => {
 
 test("Test contract pdf - without token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
     .set("Accept", "text/html")
@@ -528,7 +528,7 @@ test("Test contract pdf - without token", async () => {
 
 test("Test contract pdf - invalid token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=HTML")
     .set("Authorization", "Bearer FAKE")
@@ -540,13 +540,13 @@ test("Test contract pdf - invalid token", async () => {
 });
 
 test("Test sync contracts", async (t) => {
-  const adminAccessToken = await auth.getAdminToken();  
-  
+  const adminAccessToken = await auth.getAdminToken();
+
   await operations.createOperationAndWait(adminAccessToken, "SAP_CONTACT_SYNC");
   await operations.createOperationAndWait(adminAccessToken, "SAP_DELIVERY_PLACE_SYNC");
   await operations.createOperationAndWait(adminAccessToken, "SAP_ITEM_GROUP_SYNC");
   await operations.createOperationAndWait(adminAccessToken, "SAP_CONTRACT_SYNC");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts?listAll=true&maxResults=10")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
@@ -556,7 +556,7 @@ test("Test sync contracts", async (t) => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
       await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"]);
-      
+
       const actualContracts = response.body;
       actualContracts.sort((c1: any, c2: any) => {
         if (c1.year === c2.year) {
@@ -579,7 +579,7 @@ test("Test sync contracts", async (t) => {
 test("Test contract xlsx", async (t) => {
   await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -596,7 +596,7 @@ test("Test contract xlsx", async (t) => {
 
 test("Test contract xlsx - invalid format", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -609,7 +609,7 @@ test("Test contract xlsx - invalid format", async () => {
 
 test("Test contract xlsx - without token", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Accept", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -637,7 +637,7 @@ test("Test updating contracts", async (t) => {
 
 test("Test find contract document template", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -652,7 +652,7 @@ test("Test find contract document template", async (t) => {
 
 test("Test find contract document template - incorrect contract", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/89723408-0f51-11e8-baa0-dfe7c7eae257/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -666,7 +666,7 @@ test("Test find contract document template - incorrect contract", async () => {
 
 test("Test find contract document template - invalid contract", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/invalid/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -680,7 +680,7 @@ test("Test find contract document template - invalid contract", async () => {
 
 test("Test find contract document template - incorrect id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -694,7 +694,7 @@ test("Test find contract document template - incorrect id", async () => {
 
 test("Test find contract document template - invalid id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -708,7 +708,7 @@ test("Test find contract document template - invalid id", async () => {
 
 test("Test list contract document templates", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -724,7 +724,7 @@ test("Test list contract document templates", async (t) => {
 
 test("Test list contract document templates - by type", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=master")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -740,7 +740,7 @@ test("Test list contract document templates - by type", async (t) => {
 
 test("Test list contract document templates - by type - not found", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates?type=notfound")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -755,7 +755,7 @@ test("Test list contract document templates - by type - not found", async (t) =>
 
 test("Test update contract document template", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .put("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.UPDATE_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -771,7 +771,7 @@ test("Test update contract document template", async (t) => {
 
 test("Test create contract document template", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .post("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documentTemplates")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.CREATE_CONTRACT_DOCUMENT_TEMPLATES])}`)
@@ -781,7 +781,7 @@ test("Test create contract document template", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.CREATE_CONTRACT_DOCUMENT_TEMPLATES]);
       await database.executeFiles(testDataDir, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-      
+
       const expected = contractDocumentTemplateCreateData;
       Object.keys(expected).forEach((expectKey) => {
         const expectValue = expected[expectKey];
@@ -793,7 +793,7 @@ test("Test create contract document template", async (t) => {
 
 test("Test listing item group prices", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -809,7 +809,7 @@ test("Test listing item group prices", async (t) => {
 
 test("Test listing item group prices - sort year desc", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=DESC")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -825,7 +825,7 @@ test("Test listing item group prices - sort year desc", async (t) => {
 
 test("Test listing item group prices - sort year asc", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -841,7 +841,7 @@ test("Test listing item group prices - sort year asc", async (t) => {
 
 test("Test listing item group prices - limit", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&maxResults=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -856,7 +856,7 @@ test("Test listing item group prices - limit", async (t) => {
 
 test("Test listing item group prices - offset", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices?sortBy=YEAR&sortDir=ASC&firstResult=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -871,7 +871,7 @@ test("Test listing item group prices - offset", async (t) => {
 
 test("Test listing item group prices - incorrect item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/12345678-0fba-11e8-9ac4-a700da67a976/prices")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -884,7 +884,7 @@ test("Test listing item group prices - incorrect item group", async () => {
 
 test("Test listing item group prices - invalid item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql", "contracts-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/invalid/prices")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -971,7 +971,7 @@ test("Test view contract quantities", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.VIEW_CONTRACT_QUANTITIES]);
       t.equal(response.body.length, 1);
-      t.deepEqual(response.body, [{ 
+      t.deepEqual(response.body, [{
         contractQuantity: contract.contractQuantity,
         deliveredQuantity: contract.deliveredQuantity
       }]);
@@ -990,7 +990,7 @@ test("Test view contract quantities - forbidden", async (t) => {
     await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     t.deepEqual(response.body, {
       "code": 403,
-      "message": "You have no permission to view contracts quantities" 
+      "message": "You have no permission to view contracts quantities"
     });
   });
 });
@@ -1020,7 +1020,7 @@ test("Test view contract quantities - without contactId", async (t) => {
       await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       t.deepEqual(response.body, {
         "code": 400,
-        "message": "Request with no contact ID" 
+        "message": "Request with no contact ID"
       });
     });
 });
@@ -1037,8 +1037,7 @@ test("Test view contract quantities - without itemgroup", async (t) => {
       await database.executeFiles(testDataDir, ["item-groups-prerequisite-teardown.sql", "item-groups-prices-teardown.sql", "contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       t.deepEqual(response.body, {
         "code": 400,
-        "message": "Request with no itemgroup ID" 
+        "message": "Request with no itemgroup ID"
       });
     });
 });
-
