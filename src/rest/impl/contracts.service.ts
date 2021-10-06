@@ -28,18 +28,18 @@ import SapContractsServiceImpl from "../../sap/impl/contracts";
 /**
  * Implementation for Contracts REST service
  */
-interface HtmlContractDocumentData { 
-  documentName: string, 
+interface HtmlContractDocumentData {
+  documentName: string,
   documentSlug?: string,
   filename: string,
   content: string,
-  header: string | null, 
+  header: string | null,
   footer: string | null
 }
 
 interface PdfContractDocument {
-  documentName: string, 
-  filename: string, 
+  documentName: string,
+  filename: string,
   data?: File,
   dataStream?: Stream
 }
@@ -47,10 +47,10 @@ interface PdfContractDocument {
 export default class ContractsServiceImpl extends ContractsService {
 
   private logger: Logger;
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -388,7 +388,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseContract = await models.findContractByExternalId(contractId);
     if (!databaseContract) {
       this.sendNotFound(res);
@@ -410,7 +410,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     res.setHeader("Content-type", accept);
     let xlsxData = null;
-        
+
     switch (accept) {
       case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
         xlsxData = await this.getContractsAsXLSX([databaseContract]);
@@ -470,7 +470,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendBadRequest(res, "Invalid itemGroupId");
       return;
     }
-    
+
     // May not be edited by users without UPDATE_OTHER_CONTRACTS -permission
     let year = updateContract.year;
     let deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
@@ -489,7 +489,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
     const proposedQuantity = updateContract.proposedQuantity;
     const areaDetails = updateContract.areaDetails;
-    const proposedDeliverAll = updateContract.proposedDeliverAll; 
+    const proposedDeliverAll = updateContract.proposedDeliverAll;
     const deliveryPlaceComment = updateContract.deliveryPlaceComment;
     const quantityComment = updateContract.quantityComment;
     const rejectComment = updateContract.rejectComment;
@@ -580,7 +580,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -588,17 +588,17 @@ export default class ContractsServiceImpl extends ContractsService {
     const contractId = req.params.id;
     const type = req.params.type;
     const format = req.query.format;
-    
+
     if (!contractId || !type) {
       this.sendNotFound(res);
       return;
     }
-    
+
     if (!format) {
       this.sendBadRequest(res, "Missing request parameter format");
       return;
     }
-    
+
     const contract: ContractModel = await models.findContractByExternalId(contractId);
     if (!contract) {
       this.sendNotFound(res);
@@ -612,7 +612,7 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     const baseUrl = `${req.protocol}://${req.get("host")}`;
-    
+
     switch (format) {
       case "HTML":
         this.getContractDocumentHtml(baseUrl, contract, type)
@@ -651,9 +651,9 @@ export default class ContractsServiceImpl extends ContractsService {
           });
       break;
     }
-    
+
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -662,13 +662,13 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You have no permission to create contract document templates");
       return;
     }
-    
+
     const contractId = req.params.contractId;
     if (!contractId) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseContract = await models.findContractByExternalId(contractId);
     if (!databaseContract) {
       this.sendNotFound(res);
@@ -695,14 +695,14 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You have no permission to list contract document templates");
       return;
     }
-    
+
     const contractId = req.params.contractId;
     const contractDocumentTemplateId = req.params.contractDocumentTemplateId;
     if (!contractId || !contractDocumentTemplateId) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseContractDocumentTemplate = await models.findContractDocumentTemplateByExternalId(contractDocumentTemplateId);
     if (!databaseContractDocumentTemplate) {
       this.sendNotFound(res);
@@ -737,7 +737,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You have no permission to list contract document templates");
       return;
     }
-    
+
     const contractId = req.params.contractId;
     const type = req.query.type;
     if (!contractId) {
@@ -761,7 +761,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     res.status(200).send(contractDocumentTemplates);
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -777,7 +777,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseContractDocumentTemplate = await models.findContractDocumentTemplateByExternalId(contractDocumentTemplateId);
     if (!databaseContractDocumentTemplate) {
       this.sendNotFound(res);
@@ -814,10 +814,10 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendInternalServerError(res, "Failed to update document template");
       return;
     }
-    
+
     res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, updatedDocumentTemplate));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -858,7 +858,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return this.translateItemGroupPrice(price, databaseItemGroup);
     }));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -875,12 +875,12 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You have no permission to list this contracts prices");
       return;
     }
-    
+
     const databaseItemGrouplId = itemGroupExternalId ? (await models.findItemGroupByExternalId(itemGroupExternalId)) : null;
     const itemGroupId = databaseItemGrouplId ? databaseItemGrouplId.id : null;
     const userId = listAll ? null : this.getLoggedUserId(req);
     const databaseContracts = await models.listContracts(userId, itemGroupCategory, itemGroupId, year, status, firstResult, maxResults);
-    
+
     if (!userId && !listAll) {
       this.sendInternalServerError(res, "listAll not set but userId resolved to null");
       return;
@@ -895,7 +895,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     res.setHeader("Content-type", accept);
     let xlsxData = null;
-        
+
     switch (accept) {
       case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
         xlsxData = await this.getContractsAsXLSX(databaseContracts);
@@ -954,7 +954,7 @@ export default class ContractsServiceImpl extends ContractsService {
       };
     })));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -963,12 +963,12 @@ export default class ContractsServiceImpl extends ContractsService {
     const type = req.params.type;
     const ssn = req.query.ssn;
     const authService = req.query.authService;
-    
+
     if (!contractId || !type) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const contract = await models.findContractByExternalId(contractId);
     if (!contract) {
       this.sendNotFound(res);
@@ -982,12 +982,12 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendForbidden(res, "You cannot sign this contract");
       return;
     }
-    
+
     if (!contract.deliveryPlaceId || contract.deliveryPlaceId !== contract.proposedDeliveryPlaceId) {
       this.sendBadRequest(res, "This contract is not ready for signing");
       return;
     }
-    
+
     if (!contract.contractQuantity || contract.contractQuantity !== contract.proposedQuantity) {
       this.sendBadRequest(res, "This contract is not ready for signing");
       return;
@@ -1017,7 +1017,7 @@ export default class ContractsServiceImpl extends ContractsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const parts = await toArray(document.dataStream);
     const buffers = parts.map((part: any) => Buffer.isBuffer(part) ? part : Buffer.from(part));
     const fileBuffer = Buffer.concat(buffers);
@@ -1061,13 +1061,13 @@ export default class ContractsServiceImpl extends ContractsService {
     const fulfillResult = await signature.fulfillInvitation(invitation.uuid, returnUrl, ssn, authService);
 
     const result: ContractDocumentSignRequest = {redirectUrl: fulfillResult.location };
-    
+
     res.send(result);
   }
-  
+
   /**
    * Translates Database contract into REST entity
-   * 
+   *
    * @param {Object} contract Sequelize contract model
    * @return {Contract} REST entity
    */
@@ -1078,7 +1078,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const areaDetails = contract.areaDetails ? JSON.parse(contract.areaDetails).map((areaDetail: any) => {
       const result: AreaDetail = areaDetail;
       return result;
-    }) : [];  
+    }) : [];
 
     let status: ContractStatus | null = null;
     switch (contract.status) {
@@ -1102,7 +1102,7 @@ export default class ContractsServiceImpl extends ContractsService {
     if (!status) {
       return null;
     }
-    
+
     const result: Contract = {
       "id": contract.externalId,
       "sapId": contract.sapId || null,
@@ -1133,7 +1133,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Translates Database ContractDocumentTemplate into REST entity
-   * 
+   *
    * @param databaseContractDocumentTemplate Sequelize contract document template
    * @param databaseContract Sequelize contract model
    * @param databaseDocumentTemplate Sequelize document template
@@ -1147,13 +1147,13 @@ export default class ContractsServiceImpl extends ContractsService {
       "header": databaseDocumentTemplate.header || null,
       "footer": databaseDocumentTemplate.footer || null
     };
-    
+
     return result;
   }
 
   /**
    * Translates Database ItemGroupPrice into REST entity
-   * 
+   *
    * @param {ItemGroupPrice} databasePrice Sequelize item group price
    * @param {ItemGroup} itemGroup Sequelize item group
    */
@@ -1170,8 +1170,8 @@ export default class ContractsServiceImpl extends ContractsService {
   }
 
   /**
-   * Exports array contracts as XLSX 
-   * 
+   * Exports array contracts as XLSX
+   *
    * @param {Contract[]} contracts array of contracts
    * @returns {Object} object containing exported data buffer, filename and sheet name
    */
@@ -1183,6 +1183,7 @@ export default class ContractsServiceImpl extends ContractsService {
       i18n.__("contracts.exports.supplierId"),
       i18n.__("contracts.exports.companyName"),
       i18n.__("contracts.exports.itemGroupName"),
+      i18n.__("contracts.exports.proposedQuantity"),
       i18n.__("contracts.exports.contractQuantity"),
       i18n.__("contracts.exports.placeName"),
       i18n.__("contracts.exports.remarks"),
@@ -1196,13 +1197,13 @@ export default class ContractsServiceImpl extends ContractsService {
       name: name,
       filename: filename,
       contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      buffer: excel.buildXLSX(name, columnHeaders, rows) 
+      buffer: excel.buildXLSX(name, columnHeaders, rows)
     };
   }
 
   /**
-   * Returns contract datas as Excel rows 
-   * 
+   * Returns contract datas as Excel rows
+   *
    * @param {Contract[]} contracts array of contract objects
    * @returns {Promise} promise for XLSX rows
    */
@@ -1213,9 +1214,9 @@ export default class ContractsServiceImpl extends ContractsService {
   }
 
   /**
-   * Returns contract data as Excel row 
-   * 
-   * @param {Contract} contract contract object 
+   * Returns contract data as Excel row
+   *
+   * @param {Contract} contract contract object
    * @returns {Promise} promise for XLSX row
    */
   async getContractXLSXRow(contract: ContractModel) {
@@ -1226,6 +1227,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const supplierId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
     const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
     const itemGroupName = itemGroup ? itemGroup.name : null;
+    const proposedQuantity = contract.proposedQuantity;
     const contractQuantity = contract.contractQuantity;
     const placeName = deliveryPlace ? deliveryPlace.name : null;
     const remarks = contract.remarks;
@@ -1236,6 +1238,7 @@ export default class ContractsServiceImpl extends ContractsService {
       supplierId,
       companyName,
       itemGroupName,
+      proposedQuantity,
       contractQuantity,
       placeName,
       remarks,
@@ -1246,10 +1249,10 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Renders contract document as HTML
-   * 
+   *
    * @param {String} baseUrl baseUrl
    * @param {Contract} contract contract
-   * @param {String} type document type 
+   * @param {String} type document type
    */
   async getContractDocumentHtml(baseUrl: string, contract: ContractModel, type: string): Promise<HtmlContractDocumentData|null> {
     try {
@@ -1284,7 +1287,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
       const templateData = {
         companyName: companyName,
-        userFirstName: user.firstName, 
+        userFirstName: user.firstName,
         userLastName: user.lastName,
         contract: contract,
         itemGroup: itemGroup,
@@ -1305,19 +1308,19 @@ export default class ContractsServiceImpl extends ContractsService {
       if (!content) {
         return null;
       }
-      
+
       const header: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
       const footer: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
       const documentName: string = this.getDocumentName(itemGroup, companyName);
       const documentSlug: string = this.getDocumentSlug(documentName);
 
-      return { 
-        documentName: documentName, 
-        filename: `${documentSlug}.html`, 
-        content: content, 
+      return {
+        documentName: documentName,
+        filename: `${documentSlug}.html`,
+        content: content,
         header: header,
         footer: footer
-      };    
+      };
     } catch (e) {
       this.logger.error("Failed to generate contract document html", e);
       return null;
@@ -1326,10 +1329,10 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Renders contract document as HTML
-   * 
+   *
    * @param {String} baseUrl baseUrl
    * @param {Contract} contract contract
-   * @param {String} type document type 
+   * @param {String} type document type
    */
   async getContractDocumentPdf(baseUrl: string, contract: ContractModel, type: string): Promise<PdfContractDocument | null> {
     const contractDocument = await models.findContractDocumentByContractAndType(contract.id, type);
@@ -1341,11 +1344,11 @@ export default class ContractsServiceImpl extends ContractsService {
         const documentName = this.getDocumentName(itemGroup, companyName);
         const documentSlug = this.getDocumentSlug(documentName);
 
-        return { 
-          documentName: documentName, 
-          filename: `${documentSlug}.pdf`, 
+        return {
+          documentName: documentName,
+          filename: `${documentSlug}.pdf`,
           data: documentFile
-        };  
+        };
       }
     }
 
@@ -1355,17 +1358,17 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     const dataStream = await pdf.renderPdf(contractDocumentHtml.content, contractDocumentHtml.header, contractDocumentHtml.footer, baseUrl);
-    
+
     return {
-      documentName: contractDocumentHtml.documentName, 
-      filename: `${contractDocumentHtml.documentSlug}.pdf`, 
-      dataStream: dataStream 
+      documentName: contractDocumentHtml.documentName,
+      filename: `${contractDocumentHtml.documentSlug}.pdf`,
+      dataStream: dataStream
     };
   }
 
   /**
    * Lists contract document templates.
-   * 
+   *
    * @param {int} contractId contract id
    * @param {String} type template type. Optional, ignored if null
    * @returns {Object[]} array of Sequelize contract document templates
@@ -1379,7 +1382,7 @@ export default class ContractsServiceImpl extends ContractsService {
           } else {
             return [];
           }
-        }); 
+        });
     } else {
       return models.listContractDocumentTemplateByContractId(contractId);
     }
@@ -1401,7 +1404,7 @@ export default class ContractsServiceImpl extends ContractsService {
   }
 
   /**
-   * Returns whether deliverAll is allowed for given item group 
+   * Returns whether deliverAll is allowed for given item group
    *
    * @param itemGroupId item group ID
    */
@@ -1448,8 +1451,8 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Returns company name for a contract
-   * 
-   * @param {Contract} contract contract 
+   *
+   * @param {Contract} contract contract
    */
   private async getContractCompanyName(contract: ContractModel) {
     const user = await userManagement.findUser(contract.userId);
@@ -1462,23 +1465,23 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Returns contract document's name for a item group and company
-   * 
-   * @param {ItemGroup} itemGroup item group 
-   * @param {String} companyName company name 
+   *
+   * @param {ItemGroup} itemGroup item group
+   * @param {String} companyName company name
    */
   private getDocumentName(itemGroup: ItemGroupModel, companyName: string | null): string {
     const result = `${moment().format("YYYY")} - ${itemGroup.name}`;
     if (companyName) {
-      return `${result}, ${companyName}`;      
+      return `${result}, ${companyName}`;
     }
 
     return result;
   }
 
   /**
-   * Slugifys document name 
-   * 
-   * @param {*} documentName 
+   * Slugifys document name
+   *
+   * @param {*} documentName
    */
   private getDocumentSlug(documentName: string): string {
     return slugify(documentName);
@@ -1486,8 +1489,8 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Formats given date as finnish format
-   * 
-   * @param {Date} date 
+   *
+   * @param {Date} date
    * @returns {String} given date as finnish format
    */
   private formatDate(date: Date) {
@@ -1500,7 +1503,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Formats federal tax id as business code
-   * 
+   *
    * @param {String} federalTaxId tax id
    * @returns {String} business code
    */
@@ -1517,7 +1520,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Renders a document template component into HTML text
-   * 
+   *
    * @param {String} baseurl base url
    * @param {String} mustacheTemplate mustache template
    * @param {String} pugTemplateName pug template name
@@ -1532,7 +1535,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const mustachePartials = await this.loadMustachePartials();
     const preprosessedMustacheTemplate = await this.preprosessMustacheTemplate(mustacheTemplate);
 
-    const bodyContent = Mustache.render(preprosessedMustacheTemplate, 
+    const bodyContent = Mustache.render(preprosessedMustacheTemplate,
       mustacheData,
       mustachePartials
     );
@@ -1566,8 +1569,8 @@ export default class ContractsServiceImpl extends ContractsService {
         } else {
           resolve(data.toString());
         }
-      });  
-    });  
+      });
+    });
   }
 
   private getMustachePartialFiles(): Promise<string[]> {
@@ -1588,8 +1591,8 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Preprosesses mustache template.
-   * 
-   * @param {String} template mustache template 
+   *
+   * @param {String} template mustache template
    */
   private async preprosessMustacheTemplate(template: string) {
     const partials = (await this.getMustachePartialFiles()).map((partialFile: string) => {
@@ -1602,10 +1605,10 @@ export default class ContractsServiceImpl extends ContractsService {
 
     return template;
   }
-  
+
   /**
    * Renders a pug template
-   * 
+   *
    * @param {String} template template name
    * @param {Object} model model
    * @return {String} rendered HTML
@@ -1617,7 +1620,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
   /**
    * Gets display name for contract status
-   * 
+   *
    * @param {String} status contract status saved in database
    * @returns {String} display name for each contract status
    */
@@ -1637,10 +1640,10 @@ export default class ContractsServiceImpl extends ContractsService {
         return "muu";
     }
   }
-  
+
   /**
    * Sends push notification to user about contract status change
-   * 
+   *
    * @param {String} userId userId
    * @param {String} title push notification title
    * @param {String} content push notification content

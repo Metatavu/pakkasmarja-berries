@@ -11,7 +11,7 @@ export default class SapPurchaseDeliveryNotesService extends AbstractService {
 
   /**
    * Creates new purchase delivery note to SAP Service Layer
-   * 
+   *
    * @returns Promise of created purchase delivery note
    */
   public async createPurchaseDeliveryNote(purchaseDeliveryNote: SapPurchaseDeliveryNote): Promise<SapPurchaseDeliveryNote> {
