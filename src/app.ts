@@ -90,7 +90,10 @@ process.on("unhandledRejection", (error) => {
   }));
 
   app.use((req, res, next) => {
-    logger.info(`${req.method} request into ${req.path}`);
+    if (!req.path.startsWith("/system")) {
+      logger.info(`${req.method} request into ${req.path}`);
+    }
+
     next();
   });
 
