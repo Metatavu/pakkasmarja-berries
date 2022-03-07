@@ -15,6 +15,6 @@ coverage
 dist
 pakkasmarja_realm.json
 pakkasmarja_database.sql
-.env
+.env*
 config-dev.json
 sap-api-wiremock/
