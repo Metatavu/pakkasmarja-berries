@@ -44,6 +44,7 @@ services:
     volumes:
       - ../prod-data/prod-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
       - ../prod-data/prod-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json
+      - ../prod-data/uploads:/opt/pakkasmarja-server-uploads
     ports:
       - 3000:3000
 volumes:
