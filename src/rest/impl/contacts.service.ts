@@ -72,7 +72,8 @@ export default class ContactsServiceImpl extends ContactsService {
 
       const search = req.query.search;
       const users = await userManagement.listUsers({
-        search: search
+        search: search,
+        max: 9999
       });
 
       const contacts = users.map((user: any) => {
