@@ -6,6 +6,7 @@ import { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
 import { CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, ApplicationScope, CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 import { ChatGroupModel } from "../models";
 import AbstractPermissionController from "./abstract-permission-controller";
+import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 
 export const CHAT_GROUP_SCOPES: ApplicationScope[] = ["chat-group:manage", "chat-group:access", "chat-group:traverse"];
 
@@ -83,6 +84,28 @@ export default new class ChatGroupPermissionController extends AbstractPermissio
 
     return scopes;
   }
+
+  /**
+   * Resolves scopes for given role policy list in given chat group 
+   * 
+   * @param chatGroup chat group
+   * @param allRolePolicies all role policies which permissions should be checked
+   * @returns list of scopes for given role policy list 
+   */
+    public async getUserRoleChatGroupScopes(chatGroup: ChatGroupModel, allRolePolicies: RolePolicyRepresentation[]): Promise<string[]> {
+      const scopes: string[] = [];
+  
+      for (let k = 0; k< allRolePolicies.length; k++) {
+        let rolePolicy = allRolePolicies[k]
+        for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) { 
+          if (await this.hasChatGroupPermissionPolicy(chatGroup, CHAT_GROUP_SCOPES[i], rolePolicy)) {
+            scopes.push(CHAT_GROUP_SCOPES[i]);
+          }
+        }
+      }
+      
+      return scopes;
+    }
 
   /**
    * Creates resource for a group resource

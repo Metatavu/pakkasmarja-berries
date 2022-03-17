@@ -344,6 +344,21 @@ export default new class UserManagement {
   }
 
   /**
+   * Lists all role policies for the realm
+   * 
+   * @returns list of role policies
+   */
+  public async listRolePolicies(): Promise<RolePolicyRepresentation[]> {
+    const client = await this.getClient();
+    const results = await client.clients.listAuthzRolePolicies({
+      id: await this.getRestClientInternalId(),
+      realm: config().keycloak.admin.realm
+    });
+
+    return results.length ? results : [];
+  }
+
+  /**
    * Finds authz group policy by name
    * 
    * @param name name
