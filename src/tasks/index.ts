@@ -16,6 +16,8 @@ import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
 import { ContractStatus } from "../rest/model/contractStatus";
 import SapContractsServiceImpl from "../sap/impl/contracts";
+import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
+import { ChatGroupType } from '../rest/model/chatGroupType';
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -998,7 +1000,7 @@ export default new class TaskQueue {
     this.logger.info("Updating users chat permissions");
 
     const users = await userManagement.listAllUsers();
-    const chatGroups = await models.listChatGroups(null);
+    const chatGroups = await models.listChatGroups(ChatGroupType.CHAT);
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
@@ -1012,7 +1014,6 @@ export default new class TaskQueue {
             permittedGroupIds.push(chatGroups[j].id);
           }
         }
-
         const chatThreads = await models.listThreads(permittedGroupIds);
         for (let n = 0; n < chatThreads.length; n++) {
           await this.cacheUserChatThreadPermissions(chatThreads[n], user);
@@ -1250,6 +1251,21 @@ export default new class TaskQueue {
       let groupScopes = await chatGroupPermissionController.getUserGroupChatGroupScopes(chatGroup, userGroup);
       allScopes = allScopes.concat(groupScopes);
     }
+
+    const allRolePolicies = await userManagement.listRolePolicies()
+    const userRolePolicies: RolePolicyRepresentation[] = []
+    const userRoleIds = (await userManagement.listUserRoles(user)).map((role) => role.id)
+
+    allRolePolicies.forEach((rolePolicy) => {
+      (rolePolicy.roles || []).forEach((policyRole) => {
+        if (userRoleIds.includes(policyRole.id)) {
+          userRolePolicies.push(rolePolicy)
+        }
+      });
+    });
+
+    const roleScopes = await chatGroupPermissionController.getUserRoleChatGroupScopes(chatGroup, userRolePolicies);
+    allScopes = allScopes.concat(roleScopes);
 
     return allScopes;
   }

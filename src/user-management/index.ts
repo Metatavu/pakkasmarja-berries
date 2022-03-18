@@ -802,6 +802,26 @@ export default new class UserManagement {
     });
   }
 
+
+  /**
+   * Lists users user roles
+   * 
+   * @param user user
+   * @return user roles
+   */
+  public async listUserRoles(user: UserRepresentation): Promise<RoleRepresentation[]> {
+    if (!user.id) {
+      return [];
+    }
+    
+    const client = await this.getClient();
+    const userRoleRepresentations = await client.users.listRoleMappings({
+      id: user.id,
+      realm: config().keycloak.admin.realm
+    });  
+    return userRoleRepresentations.realmMappings ? userRoleRepresentations.realmMappings : []
+  }  
+
   /**
    * List's users user groups
    * 
