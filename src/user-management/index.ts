@@ -819,7 +819,7 @@ export default new class UserManagement {
       id: user.id,
       realm: config().keycloak.admin.realm
     });  
-    return userRoleRepresentations.realmMappings ? userRoleRepresentations.realmMappings : []
+    return userRoleRepresentations.realmMappings || []
   }  
 
   /**
