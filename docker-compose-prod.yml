@@ -1,0 +1,51 @@
+version: "3"
+services:
+  mqtt:
+    image: eclipse-mosquitto:1.6.2
+    ports:
+    - "1883:1883"
+    - "9001:9001"
+    volumes:
+      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+  mysql:
+    image: mysql:5.7
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pm
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+  keycloak:
+    image: metatavu/keycloak:5.0.0
+    environment:
+      DB_VENDOR: mysql
+      DB_DATABASE: keycloak
+      DB_ADDR: mysql
+      DB_USER: root
+      DB_PASSWORD: root
+      KEYCLOAK_USER: metatavu
+      KEYCLOAK_PASSWORD: metatavu
+    ports:
+      - 8080:8080
+  pakkasmarja:
+    env_file:
+      - .env.prod
+    build: .
+    environment: 
+      STARTUP_DELAY: 35
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_IAM_REGION: ${AWS_IAM_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      - ../prod-data/prod-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
+      - ../prod-data/prod-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json
+      - ../prod-data/uploads:/opt/pakkasmarja-server-uploads
+    ports:
+      - 3000:3000
+volumes:
+  db_data: {}
