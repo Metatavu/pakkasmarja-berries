@@ -355,7 +355,7 @@ export default new class UserManagement {
       realm: config().keycloak.admin.realm
     });
 
-    return results.length ? results : [];
+    return results || [];
   }
 
   /**
