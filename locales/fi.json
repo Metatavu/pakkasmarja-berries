@@ -4,6 +4,7 @@
   "contracts.exports.itemGroupName": "Marjalaji",
   "contracts.exports.proposedQuantity": "Viljelijän ehdottama määrä",
   "contracts.exports.contractQuantity": "Sopimusmäärä",
+  "contracts.exports.deliveredQuantity": "Toimitettu määrä",
   "contracts.exports.placeName": "Toimituspaikka",
   "contracts.exports.remarks": "Huomautuskenttä",
   "contracts.exports.signDate": "Viljelijän allekirjoituspäivä",

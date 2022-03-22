@@ -1185,13 +1185,14 @@ export default class ContractsServiceImpl extends ContractsService {
       i18n.__("contracts.exports.itemGroupName"),
       i18n.__("contracts.exports.proposedQuantity"),
       i18n.__("contracts.exports.contractQuantity"),
+      i18n.__("contracts.exports.deliveredQuantity"),
       i18n.__("contracts.exports.placeName"),
       i18n.__("contracts.exports.remarks"),
       i18n.__("contracts.exports.signDate"),
       i18n.__("contracts.exports.approvalDate")
     ];
 
-    const rows = await this.getContractXLSXRows(contracts);
+    const rows = (await this.getContractXLSXRows(contracts)).filter((row) => row !== null && row !== undefined)
 
     return {
       name: name,
@@ -1221,6 +1222,11 @@ export default class ContractsServiceImpl extends ContractsService {
    */
   async getContractXLSXRow(contract: ContractModel) {
     const user = await userManagement.findUser(contract.userId);
+
+    if (!user) {
+      return null;
+    }
+
     const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
     const itemGroup = await models.findItemGroupById(contract.itemGroupId);
 
@@ -1229,6 +1235,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const itemGroupName = itemGroup ? itemGroup.name : null;
     const proposedQuantity = contract.proposedQuantity;
     const contractQuantity = contract.contractQuantity;
+    const deliveredQuantity = contract.deliveredQuantity;
     const placeName = deliveryPlace ? deliveryPlace.name : null;
     const remarks = contract.remarks;
     const signDate = contract.signDate;
@@ -1240,6 +1247,7 @@ export default class ContractsServiceImpl extends ContractsService {
       itemGroupName,
       proposedQuantity,
       contractQuantity,
+      deliveredQuantity,
       placeName,
       remarks,
       signDate,
