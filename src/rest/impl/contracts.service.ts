@@ -1222,6 +1222,7 @@ export default class ContractsServiceImpl extends ContractsService {
    */
   async getContractXLSXRow(contract: ContractModel) {
     const user = await userManagement.findUser(contract.userId);
+
     if (!user) {
       return null;
     }
