@@ -1192,7 +1192,7 @@ export default class ContractsServiceImpl extends ContractsService {
       i18n.__("contracts.exports.approvalDate")
     ];
 
-    const rows = (await this.getContractXLSXRows(contracts)).filter((v) => v != null && v != undefined)
+    const rows = (await this.getContractXLSXRows(contracts)).filter((row) => row !== null && row !== undefined)
 
     return {
       name: name,
