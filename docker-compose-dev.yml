@@ -27,7 +27,7 @@ services:
     build: .
     env_file:
       - .env
-    environment: 
+    environment:
       STARTUP_DELAY: 35
     ports:
       - 3002:3000
