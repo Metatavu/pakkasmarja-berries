@@ -1,9 +1,13 @@
 FROM node:dubnium
+
+# Copy package.json and run npm scripts
 WORKDIR /usr/src/pakkasmarja
 ADD . .
 COPY package*.json ./
 RUN npm install
 RUN npm run build
+
+# Run tests
 ADD ./docker/run-tests.sh /opt/docker/run-tests.sh
 RUN chmod a+x /opt/docker/run-tests.sh
 CMD "/opt/docker/run-tests.sh"

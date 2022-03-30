@@ -1,0 +1,17 @@
+.gitignore
+api.ts
+api/apis.ts
+api/businessPartnersApi.ts
+api/contractsApi.ts
+api/itemsApi.ts
+api/systemApi.ts
+git_push.sh
+model/modelError.ts
+model/models.ts
+model/sapAddress.ts
+model/sapAddressType.ts
+model/sapBankAccount.ts
+model/sapBusinessPartner.ts
+model/sapContract.ts
+model/sapContractStatus.ts
+model/sapItem.ts

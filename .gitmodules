@@ -1,0 +1,3 @@
+[submodule "pakkasmarja-erp-services-spec"]
+	path = pakkasmarja-erp-services-spec
+	url = git@github.com:Metatavu/pakkasmarja-erp-services-spec.git
