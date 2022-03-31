@@ -18,10 +18,6 @@ export default new class SapMock {
     try {
       const data = JSON.stringify(businessPartners[id]);
 
-      console.log({
-        data: data
-      });
-
       return await this.getEntriesApi().createEntry({
         data: data,
         name: "BusinessPartner"

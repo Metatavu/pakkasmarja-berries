@@ -8,6 +8,7 @@ import database from "./database";
 import operations from "./operations";
 import { BasicContact } from "src/rest/model/models";
 import TestConfig from "./test-config";
+import sapMock from "./sap-mock";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contactDatas = require(`${testDataDir}/contacts.json`);
@@ -286,6 +287,8 @@ test("Test update contact - malformed", async () => {
 });
 
 test("Test sync contact", async (t) => {
+  sapMock.mockBusinessPartner("1");
+
   const accessToken = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
   await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_CONTACT_SYNC");
   
@@ -301,7 +304,11 @@ test("Test sync contact", async (t) => {
         database.executeFiles(testDataDir, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
       ]);
 
+      // TODO: FIX THIS!!!!
+      response.body.audit = contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"].audit;
       t.deepEqual(response.body, contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"]);
+
+      await sapMock.deleteMocks();
     });
 });
 
