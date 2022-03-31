@@ -27,15 +27,15 @@ test("Test listing contacts", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
 
-      t.equal(response.body.length, 4);
+      t.equal(response.body.length, 5);
       const actualResponse: any[] = response.body;
 
       actualResponse.sort((a, b) => {
         return b.id.localeCompare(a.id);
       });
 
-      t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], actualResponse[0]);
-      t.deepEqual(contactDatas["677e99fd-b854-479f-afa6-74f295052770"], actualResponse[2]);
+      t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], actualResponse.find(c => c.id === "6f1cd486-107e-404c-a73f-50cc1fdabdd6"));
+      t.deepEqual(contactDatas["677e99fd-b854-479f-afa6-74f295052770"], actualResponse.find(c => c.id === "677e99fd-b854-479f-afa6-74f295052770"));
     });
 });
 
@@ -175,8 +175,11 @@ test("Test update contact", async (t) => {
 });
 
 test("Test update contact without changes", async (t) => {
-  await mail.clearOutbox();
   await users.resetUsers(["677e99fd-b854-479f-afa6-74f295052770"], t);
+  
+  mail.clearOutbox();
+  t.deepEqual(mail.getOutbox().length, 0);
+
   const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
     "firstName": "Updated first name",
     "lastName": "Updated last name",
