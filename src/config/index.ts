@@ -331,6 +331,15 @@ export interface ClientConfig {
 }
 
 /**
+ * ERP configuration
+ */
+export interface ErpConfig {
+  url: string;
+  username: string;
+  password: string;
+}
+
+/**
  * Server configuration
  */
 export interface Config {
@@ -354,6 +363,7 @@ export interface Config {
   mqtt: Mqtt;
   uploadDirectory: string;
   client: ClientConfig;
+  erp: ErpConfig;
 }
 
 /**

@@ -13,20 +13,20 @@
 import { RequestFile } from './models';
 
 export class SapBankAccount {
-    'bIC'?: string;
-    'iBAN'?: string;
+    'bic'?: string;
+    'iban'?: string;
 
     static discriminator: string | undefined = undefined;
 
     static attributeTypeMap: Array<{name: string, baseName: string, type: string}> = [
         {
-            "name": "bIC",
-            "baseName": "BIC",
+            "name": "bic",
+            "baseName": "bic",
             "type": "string"
         },
         {
-            "name": "iBAN",
-            "baseName": "IBAN",
+            "name": "iban",
+            "baseName": "iban",
             "type": "string"
         }    ];
 

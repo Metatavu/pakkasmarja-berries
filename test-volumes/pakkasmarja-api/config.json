@@ -5,6 +5,11 @@
     "enabled": true,
     "expire-time": 60000
   },
+  "erp": {
+    "url": "http://erp-service:8080",
+    "username": "erp",
+    "password": "erp"
+  },
   "mqtt": {
     "host": "broker.mqttdashboard.com",
     "path": "/mqtt",

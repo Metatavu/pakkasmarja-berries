@@ -9,6 +9,7 @@ import OperationsService from "../api/operations.service";
 import tasks from "../../tasks";
 import { config } from "../../config";
 import SapServiceFactory from "../../sap/service-layer-client";
+import ErpClient from "../../erp/client";
 
 const OPERATION_SAP_CONTACT_SYNC = "SAP_CONTACT_SYNC";
 const OPERATION_SAP_DELIVERY_PLACE_SYNC = "SAP_DELIVERY_PLACE_SYNC";
@@ -104,8 +105,9 @@ export default class OperationsServiceImpl extends OperationsService {
    */
   private async readSapImportBusinessPartners() {
     try {
-      const sapBusinessPartnersService = SapServiceFactory.getBusinessPartnersService();
-      const businessPartners = await sapBusinessPartnersService.listBusinessPartners();
+      const businessPartnersApi = await ErpClient.getBusinessPartnersApi();
+      const businessPartnersResult = await businessPartnersApi.listBusinessPartners();
+      const businessPartners = businessPartnersResult.body;
       const operationReport = await models.createOperationReport("SAP_CONTACT_SYNC");
 
       businessPartners.forEach(businessPartner =>

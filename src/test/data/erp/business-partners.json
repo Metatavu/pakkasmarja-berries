@@ -16,7 +16,7 @@
     ],
     "CardName": "Test Corp 2.",
     "FederalTaxID": "DM22233344",
-    "VatLiable": "vLiable",
+    "VatLiable": "vEC",
     "UpdateDate": "2022-02-18",
     "UpdateTime": "08:00:12",
     "BPBankAccounts": [

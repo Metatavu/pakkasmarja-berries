@@ -19,7 +19,7 @@ export default class ContactsServiceImpl extends ContactsService {
   /**
    * @inheritdoc
    */
-  async findContact(req: Request, res: Response): Promise<void> {
+  async findContact(req: Request, res: Response): Promise<void> {
     const userId = req.params.id;
     if (!userId) {
       this.sendNotFound(res);
@@ -44,7 +44,7 @@ export default class ContactsServiceImpl extends ContactsService {
   /**
    * @inheritdoc
    */
-  async findBasicContact(req: Request, res: Response): Promise<void> {
+  async findBasicContact(req: Request, res: Response): Promise<void> {
     const userId = req.params.id;
     if (!userId) {
       this.sendNotFound(res);
@@ -230,8 +230,8 @@ export default class ContactsServiceImpl extends ContactsService {
    * @param {Object} user Keycloak user
    * @return {BasicContact} basic contact 
    */
-  private translateBasicContact(user: UserRepresentation | null): BasicContact | null {
-    if (!user || !user.id) {
+  private translateBasicContact(user: UserRepresentation | null): BasicContact | null {
+    if (!user || !user.id) {
       return null;
     }
 
@@ -255,14 +255,14 @@ export default class ContactsServiceImpl extends ContactsService {
    * @param {Object} user Keycloak user
    * @return {Contact} contact 
    */
-  private translateContact(user: UserRepresentation | null): Contact | null {
-    if (!user || !user.id) {
+  private translateContact(user: UserRepresentation | null): Contact | null {
+    if (!user || !user.id) {
       return null;
     }
 
     try {
-      const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
-      let vatLiable: Contact.VatLiableEnum | null = null;
+      const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
+      let vatLiable: Contact.VatLiableEnum | null = null;
 
       if ("true" == userVatLiable) {
         vatLiable = userVatLiable;
@@ -275,11 +275,11 @@ export default class ContactsServiceImpl extends ContactsService {
       const result: Contact = {
         'id': user.id,
         "sapId": userManagement.getSingleAttribute(user, UserProperty.SAP_ID) ||null,
-        'firstName': user.firstName || null,
-        'lastName': user.lastName || null,
+        'firstName': user.firstName || null,
+        'lastName': user.lastName || null,
         'companyName': userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
         'phoneNumbers': this.resolveKeycloakUserPhones(user),
-        'email': user.email || null,
+        'email': user.email || null,
         'addresses': this.resolveKeycloakUserAddresses(user),
         'BIC': userManagement.getSingleAttribute(user, UserProperty.BIC) || null,
         'IBAN': userManagement.getSingleAttribute(user, UserProperty.IBAN) || null,
@@ -311,8 +311,8 @@ export default class ContactsServiceImpl extends ContactsService {
       'email': contact.email
     });
 
-    const phoneNumbers: string[] = contact.phoneNumbers || [];
-    const addresses: Address[] = contact.addresses || [];
+    const phoneNumbers: string[] = contact.phoneNumbers || [];
+    const addresses: Address[] = contact.addresses || [];
     
     userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, contact.companyName);
     userManagement.setSingleAttribute(user, UserProperty.BIC, contact.BIC);
@@ -377,7 +377,7 @@ export default class ContactsServiceImpl extends ContactsService {
         const address: Address = {
           "streetAddress": streetAddress1,
           "postalCode": postalCode1,
-          "city": city1 || null
+          "city": city1 || null
         };
 
         result.push(address);  
@@ -387,7 +387,7 @@ export default class ContactsServiceImpl extends ContactsService {
         const address: Address = {
           "streetAddress": streetAddress1,
           "postalCode": postalCode1,
-          "city": city2 || null
+          "city": city2 || null
         };
 
         result.push(address);  
