@@ -1,0 +1,29 @@
+{
+  "1": {
+    "CardCode": "1",
+    "CardType": "cSupplier",
+    "EmailAddress": "test1@testrealm1.com",
+    "Phone1": "+358 22 222 2222",
+    "Phone2": "+358 33 333 3333",
+    "BPAddresses": [
+      {
+        "AddressType": "bo_BillTo",
+        "AddressName": "MetaLab",
+        "Street": "Test Street 222",
+        "City": "Demo",
+        "ZipCode": "22222"
+      }
+    ],
+    "CardName": "Test Corp 2.",
+    "FederalTaxID": "DM22233344",
+    "VatLiable": "vLiable",
+    "UpdateDate": "2022-02-18",
+    "UpdateTime": "08:00:12",
+    "BPBankAccounts": [
+      {
+        "BICSwiftCode": "DEMO1234",
+        "IBAN": "FI2222222222222222"
+      }
+    ]
+  }
+}
