@@ -10,7 +10,7 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup, SapVatLiableEnum } from "../sap/service-layer-client/types";
+import { SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup } from "../sap/service-layer-client/types";
 import * as moment from "moment";
 import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
@@ -18,6 +18,7 @@ import { ContractStatus } from "../rest/model/contractStatus";
 import SapContractsServiceImpl from "../sap/impl/contracts";
 import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 import { ChatGroupType } from '../rest/model/chatGroupType';
+import { SapAddressType, SapBusinessPartner } from "../generated/erp-services-client/api";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -144,7 +145,7 @@ export default new class TaskQueue {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapContactUpdateQueue.push({
-      id: businessPartner.CardCode,
+      id: businessPartner.code,
       businessPartner: businessPartner,
       operationReportItemId: operationReportItem.id
     });
@@ -284,25 +285,25 @@ export default new class TaskQueue {
   async sapContactUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
       const businessPartner: SapBusinessPartner = data.businessPartner;
-      const sapId = businessPartner.CardCode;
-      const email = businessPartner.EmailAddress;
-      const companyName = businessPartner.CardName;
-      const phone1 = businessPartner.Phone1;
-      const phone2 = businessPartner.Phone2;
-      const billingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.BILLING);
-      const billStreet = billingInfo ? billingInfo.Street : null;
-      const billZip = billingInfo ? billingInfo.ZipCode : null;
-      const billCity = billingInfo ? billingInfo.City : null;
-      const shippingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.SHIPPING);
-      const shipStreet = shippingInfo ? shippingInfo.Street : null;
-      const shipZip = shippingInfo ? shippingInfo.ZipCode : null;
-      const shipCity = shippingInfo ? shippingInfo.City : null;
-      const bankAccountInfo = businessPartner.BPBankAccounts.length > 0 ? businessPartner.BPBankAccounts[0] : undefined;
-      const iban = bankAccountInfo ? bankAccountInfo.IBAN : null;
-      const bic = bankAccountInfo ? bankAccountInfo.BICSwiftCode : null;
-      const taxCode = businessPartner.FederalTaxID;
-      const sapVatLiable = businessPartner.VatLiable;
-      const audit = businessPartner.U_audit;
+      const sapId = String(businessPartner.code);
+      const email = businessPartner.email;
+      const companyName = businessPartner.companyName;
+      const phoneNumbers = businessPartner.phoneNumbers;
+      const addresses = businessPartner.addresses || [];
+      const billingInfo = addresses.find(address => address.type === SapAddressType.Billing);
+      const billStreet = billingInfo ? billingInfo.streetAddress : null;
+      const billZip = billingInfo ? billingInfo.postalCode : null;
+      const billCity = billingInfo ? billingInfo.city : null;
+      const shippingInfo = addresses.find(address => address.type === SapAddressType.Delivery);
+      const shipStreet = shippingInfo ? shippingInfo.streetAddress : null;
+      const shipZip = shippingInfo ? shippingInfo.postalCode : null;
+      const shipCity = shippingInfo ? shippingInfo.city : null;
+      const bankAccountInfo = businessPartner.bankAccounts ? businessPartner.bankAccounts[0] : undefined;
+      const iban = bankAccountInfo ? bankAccountInfo.iban : null;
+      const bic = bankAccountInfo ? bankAccountInfo.bic : null;
+      const taxCode = businessPartner.federalTaxId;
+      const sapVatLiable = businessPartner.vatLiable;
+      const audit = null; // TODO: audit
       const vatLiable = this.translateSapVatLiable(sapVatLiable);
 
       if (!email) {
@@ -331,8 +332,8 @@ export default new class TaskQueue {
       }
 
       userManagement.setSingleAttribute(user, UserProperty.SAP_ID, sapId);
-      userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phone1);
-      userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phone2);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phoneNumbers && phoneNumbers.length > 0 ? phoneNumbers[0] : null);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phoneNumbers && phoneNumbers.length > 1 ? phoneNumbers[1] : null);
       userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, companyName);
       userManagement.setSingleAttribute(user, UserProperty.BIC, bic);
       userManagement.setSingleAttribute(user, UserProperty.IBAN, iban);
@@ -528,15 +529,18 @@ export default new class TaskQueue {
    * @param {SapVatLiableEnum | null} sapVatLiable vat liable from SAP
    * @requires {String} vat liable in application format
    */
-  private translateSapVatLiable(sapVatLiable: SapVatLiableEnum | null) {
+  private translateSapVatLiable(sapVatLiable?: SapBusinessPartner.VatLiableEnum) {
+    if (!sapVatLiable) {
+      return null;
+    }
+
     switch (sapVatLiable) {
-      case SapVatLiableEnum.Y:
-        return "YES";
-      case SapVatLiableEnum.N:
-        return "NO";
-      case SapVatLiableEnum.EU:
+      case SapBusinessPartner.VatLiableEnum.Fi:
+        return "true";
+      case SapBusinessPartner.VatLiableEnum.NotLiable:
+        return "false";
+      case SapBusinessPartner.VatLiableEnum.Eu:
         return "EU";
-      case null:
       default:
         return null;
     }
