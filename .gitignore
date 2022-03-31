@@ -19,3 +19,4 @@ pakkasmarja_database.sql
 config-dev.json
 sap-api-wiremock/
 .history/
+test-volumes/odata-mock

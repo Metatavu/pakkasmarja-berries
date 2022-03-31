@@ -21,7 +21,7 @@
     "taxCode": "DM22233344",
     "vatLiable": "EU",
     "audit": "2030",
-    "sapId": "tusap1",
+    "sapId": "1",
     "avatarUrl": "https://www.gravatar.com/avatar/56fffc9d7fa23ac7f7999c93fb0dfff1da066b93?d=identicon", 
     "displayName": "Test 1 User 1 Test Corp 2."
   },
@@ -47,7 +47,7 @@
     "taxCode": "FI12345678",
     "vatLiable": "YES",
     "audit": "2020",
-    "sapId": "tusap2",
+    "sapId": "2",
     "avatarUrl": "https://www.gravatar.com/avatar/4228ee7ede5cec470df3daad8ce0ac98ce4f33fd?d=identicon", 
     "displayName": "Test 2 User 2 Test Corp."
   }
