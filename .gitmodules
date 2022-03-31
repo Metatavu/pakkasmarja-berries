@@ -1,3 +1,6 @@
 [submodule "pakkasmarja-erp-services-spec"]
 	path = pakkasmarja-erp-services-spec
 	url = git@github.com:Metatavu/pakkasmarja-erp-services-spec.git
+[submodule "odata-mock-spec"]
+	path = odata-mock-spec
+	url = https://github.com/Metatavu/odata-mock-spec.git
