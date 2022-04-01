@@ -1,4 +1,4 @@
-import { BusinessPartnersApi } from "../generated/erp-services-client/api";
+import { BusinessPartnersApi, ContractsApi } from "../generated/erp-services-client/api";
 import { config } from "../config";
 import * as request from "request";
 
@@ -19,13 +19,21 @@ interface AccessToken {
 export default class ErpClient {
 
   /**
-   * Gets initialized BusinessPartners API
+   * Gets initialized business partners API
    *
-   * @param auth authentication
-   * @returns initialized funds API
+   * @returns initialized business partners API
    */
   public static getBusinessPartnersApi = async (): Promise<BusinessPartnersApi> => (
     await ErpClient.applyAuthentication(new BusinessPartnersApi(ErpClient.getBasePath()))
+  );
+
+  /**
+   * Gets initialized contracts API
+   *
+   * @returns initialized contracts API
+   */
+  public static getContractsApi = async (): Promise<ContractsApi> => (
+    await ErpClient.applyAuthentication(new ContractsApi(ErpClient.getBasePath()))
   );
 
   /**

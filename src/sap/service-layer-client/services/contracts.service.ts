@@ -11,42 +11,6 @@ import { createStackedReject } from "../../../utils";
 export default class SapContractsService extends AbstractService {
 
   /**
-   * Lists contracts from SAP Service Layer
-   * 
-   * @returns Promise of list of SAP contracts
-   */
-  public async listContracts(): Promise<SapContract[]> {
-    try {
-      const config = await this.getConfig();
-      const session = await this.createSession();
-      const baseUrl = `${config.apiUrl}/BlanketAgreements`;
-      const startOfLastYear = moment().subtract(1, "year").startOf("year").format("YYYY-MM-DD");
-      const filter = this.escapeSapQuery(`$filter=StartDate ge '${startOfLastYear}' and (Status eq 'asApproved' or Status eq 'asTerminated')`);
-      const countUrl = `${baseUrl}/$count?${filter}`;
-      const options: RequestInit = {
-        method: "GET",
-        headers: {
-          "Cookie": `B1SESSION=${session.sessionId}; ROUTEID=${session.routeId}`,
-          "Prefer": "odata.maxpagesize=100"
-        }
-      }
-
-      const countResponse = await fetch(countUrl, options);
-      const count = await this.parseCountFromResponse(countResponse);
-      const baseItemUrl = `${baseUrl}?${filter}`;
-      const itemUrls = this.getItemUrls(baseItemUrl, count);
-      const responses: ListContractsResponse[] = await Promise.all(
-        itemUrls.map(url => this.asyncFetch(url, options))
-      );
-
-      await this.endSession(session);
-      return this.translateListItemsResponses(responses);
-    } catch (e) {
-      return Promise.reject(createStackedReject("Failed to list SAP contracts", e));
-    }
-  }
-
-  /**
    * Lists active contracts from SAP Service Layer by business partner
    * 
    * @param BPCode business partner code

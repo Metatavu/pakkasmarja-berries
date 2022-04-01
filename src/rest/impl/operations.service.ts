@@ -166,15 +166,12 @@ export default class OperationsServiceImpl extends OperationsService {
    */
   private async readSapImportContracts() {
     try {
-      const sapContractsService = SapServiceFactory.getContractsService();
-      const contracts = await sapContractsService.listContracts();
+      const contractsApi = await ErpClient.getContractsApi();
+      const contractsResponse = await contractsApi.listContracts();
+      const contracts = contractsResponse.body;
       const operationReport = await models.createOperationReport("SAP_CONTRACT_SYNC");
   
-      contracts.forEach(contract =>
-        contract.BlanketAgreements_ItemsLines.forEach(contractLine =>
-          tasks.enqueueSapContractUpdate(operationReport.id, contract, contractLine)
-        )
-      );
+      contracts.forEach(contract => tasks.enqueueSapContractUpdate(operationReport.id, contract));
   
       return operationReport;
     } catch (e) {

@@ -10,7 +10,7 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import { SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup } from "../sap/service-layer-client/types";
+import { SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup } from "../sap/service-layer-client/types";
 import * as moment from "moment";
 import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
@@ -18,7 +18,8 @@ import { ContractStatus } from "../rest/model/contractStatus";
 import SapContractsServiceImpl from "../sap/impl/contracts";
 import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 import { ChatGroupType } from '../rest/model/chatGroupType';
-import { SapAddressType, SapBusinessPartner } from "../generated/erp-services-client/api";
+import { SapAddressType, SapBusinessPartner, SapContract, SapContractStatus } from "../generated/erp-services-client/api";
+import ErpClient from "src/erp/client";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -187,14 +188,12 @@ export default new class TaskQueue {
    *
    * @param {String} operationReportId operationReportId
    * @param {Object} contract SAP contract object
-   * @param {Object} contractLine SAP contract line object
    */
-  async enqueueSapContractUpdate(operationReportId: number, contract: SapContract, contractLine: SapContractLine) {
+  async enqueueSapContractUpdate(operationReportId: number, contract: SapContract) {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapContractUpdateQueue.push({
       contract: contract,
-      contractLine: contractLine,
       operationReportItemId: operationReportItem.id
     });
   }
@@ -454,30 +453,17 @@ export default new class TaskQueue {
    */
   async sapContractDeliveredQuantityUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
-      const sapContractsService = SapServiceFactory.getContractsService();
-      const sapContracts = await sapContractsService.listContracts();
+      const contractsApi = await ErpClient.getContractsApi();
+      const contractsResponse = await contractsApi.listContracts();
+      const sapContracts = contractsResponse.body;
 
       const sapDeliveredQuantities = {};
 
       sapContracts.forEach((sapContract) => {
-        const sapContractLines = sapContract.BlanketAgreements_ItemsLines;
-        sapContractLines.forEach(sapContractLine => {
-          const { DocNum, StartDate } = sapContract;
-          const { ItemGroup, CumulativeQuantity } = sapContractLine;
-
-          if (!DocNum || !StartDate || !ItemGroup) {
-            return;
-          }
-
-          const year = moment(StartDate).format("YYYY");
-          const sapId = `${year}-${DocNum}-${ItemGroup}`;
-
-          if (CumulativeQuantity !== undefined) {
-            sapDeliveredQuantities[sapId] = sapDeliveredQuantities[sapId] ?
-              sapDeliveredQuantities[sapId] + CumulativeQuantity :
-              CumulativeQuantity;
-          }
-        });
+        const sapStartDate = sapContract.startDate;
+        const year = moment(sapStartDate ? sapStartDate : undefined).year();
+        const sapId = sapContract.id;
+        sapDeliveredQuantities[sapId] = sapContract.deliveredQuantity;
       });
 
       const contracts: ContractModel[] = await models.listContractsByStatusAndSapIdNotNull("APPROVED");
@@ -674,64 +660,59 @@ export default new class TaskQueue {
   private async sapContractUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
     try {
       const sapContract: SapContract = data.contract;
-      const sapContractLine: SapContractLine = data.contractLine;
       const status = this.resolveSapContractStatus(sapContract);
-      const sapItemGroupId = `${sapContractLine.ItemGroup}`;
-      const sapDeliveryPlaceId = sapContractLine.U_PFZ_ToiP;
-      const sapUserId = sapContract.BPCode;
-      const year = moment(sapContract.StartDate ? sapContract.StartDate : undefined).year();
-      const sapId = `${year}-${sapContract.DocNum}-${sapItemGroupId}`;
+      const sapItemGroupCode = String(sapContract.itemGroupCode);
+      const sapBusinessPartnerCode = String(sapContract.businessPartnerCode);
+      const sapStartDate = sapContract.startDate;
+      const sapEndDate = sapContract.endDate;
+      const sapSigningDate = sapContract.signingDate;
+      const sapTerminateDate = sapContract.terminateDate;
 
-      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId || "");
+      const sapId = sapContract.id;
+      const sapDeliveryPlaceCode = ""; // TODO: resolve delivery place from SAP
+      const sapContractQuantity = 0; // TODO: resolve contract quantity from SAP
+      const sapDeliveredQuantity = sapContract.deliveredQuantity || 0;
+      const year = moment(sapStartDate ? sapStartDate : undefined).year();
+
+      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceCode);
       if (!deliveryPlace) {
         callback({
-          message: `Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`,
+          message: `Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceCode} was not found from the system`,
           operationReportItemId: data.operationReportItemId
         });
 
         return;
       }
 
-      const itemGroup = await models.findItemGroupBySapId(`${sapItemGroupId}`);
+      const itemGroup = await models.findItemGroupBySapId(sapItemGroupCode);
       if (!itemGroup) {
         callback({
-          message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`,
+          message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupCode} was not found from the system`,
           operationReportItemId: data.operationReportItemId
         });
 
         return;
       }
 
-      const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapUserId);
+      const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapBusinessPartnerCode);
       if (!user || !user.id) {
         callback({
-          message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,
+          message: `Failed to synchronize SAP contract ${sapId} because user ${sapBusinessPartnerCode} was not found from the system`,
           operationReportItemId: data.operationReportItemId
         });
 
         return;
       }
 
-      const contractQuantity = this.resolveSapContractQuantity(sapContract, sapContractLine);
-      if (!contractQuantity) {
-        callback({
-          message: `Failed to synchronize SAP contract ${sapId} because planned quantity of item group ${sapItemGroupId} was not found from SAP contract`,
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const deliveredQuantity = sapContractLine.CumulativeQuantity || 0;
       const userId = user.id;
       const itemGroupId = itemGroup.id;
       const deliveryPlaceId = deliveryPlace.id;
-      const startDate = sapContract.StartDate ? moment(sapContract.StartDate).toDate() : null;
-      const endDate = sapContract.EndDate ? moment(sapContract.EndDate).toDate() : null;
-      const signDate = sapContract.SigningDate ? moment(sapContract.SigningDate).toDate() : null;
-      const termDate = sapContract.TerminateDate ? moment(sapContract.TerminateDate).toDate() : null;
+      const startDate = sapStartDate ? moment(sapStartDate).toDate() : null;
+      const endDate = sapEndDate ? moment(sapEndDate).toDate() : null;
+      const signDate = sapSigningDate ? moment(sapSigningDate).toDate() : null;
+      const termDate = sapTerminateDate ? moment(sapTerminateDate).toDate() : null;
       let remarks = null;
-      let proposedQuantity = contractQuantity;
+      let proposedQuantity = sapContractQuantity;
       let deliveryPlaceComment = null;
       let quantityComment = null;
       let rejectComment = null;
@@ -741,8 +722,28 @@ export default new class TaskQueue {
 
       const contract = await models.findContractBySapId(sapId);
       if (!contract) {
-        await models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity,
-          startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
+        await models.createContract(userId, 
+          year, 
+          deliveryPlaceId, 
+          deliveryPlaceId, 
+          itemGroupId, 
+          sapId, 
+          sapContractQuantity, 
+          sapDeliveredQuantity, 
+          proposedQuantity,
+          startDate, 
+          endDate, 
+          signDate, 
+          termDate, 
+          status, 
+          areaDetails, 
+          deliverAll, 
+          proposedDeliverAll, 
+          remarks, 
+          deliveryPlaceComment, 
+          quantityComment, 
+          rejectComment
+        );
 
         callback(null, {
           message: `Created new contract from SAP ${sapId}`,
@@ -767,8 +768,8 @@ export default new class TaskQueue {
           contract.proposedDeliveryPlaceId,
           itemGroupId,
           sapId,
-          contractQuantity,
-          deliveredQuantity,
+          sapContractQuantity,
+          sapDeliveredQuantity,
           proposedQuantity,
           startDate,
           endDate,
@@ -927,7 +928,7 @@ export default new class TaskQueue {
    * @returns status as string
    */
   private resolveSapContractStatus(contract: SapContract) {
-    if (contract.Status === SapContractStatusEnum.TERMINATED) {
+    if (contract.status === SapContractStatus.Terminated) {
       return "TERMINATED";
     } else {
       return "APPROVED";
