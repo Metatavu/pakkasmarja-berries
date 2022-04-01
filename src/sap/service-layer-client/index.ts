@@ -1,4 +1,3 @@
-import SapBusinessPartnersService from "./services/businessPartners.service";
 import SapContractsService from "./services/contracts.service";
 import SapDeliveryPlacesService from "./services/deliveryPlaces.service";
 import SapItemGroupsService from "./services/itemGroups.service";
@@ -12,9 +11,6 @@ export default class SapServiceFactory {
 
   /** Returns new instance of SAP item groups service */
   public static getItemGroupsService = () => new SapItemGroupsService();
-
-  /** Returns new instance of SAP business partners service */
-  public static getBusinessPartnersService = () => new SapBusinessPartnersService();
 
   /** Returns new instance of SAP delivery places service */
   public static getDeliveryPlacesService = () => new SapDeliveryPlacesService();

@@ -27,35 +27,6 @@ export interface SapLoginRequestBody {
 }
 
 /**
- * Interface describing response of ListBusinessPartners request
- */
-export interface ListBusinessPartnersResponse {
-  "odata.metadata"?: string;
-  value: SapBusinessPartner[];
-  "odata.nextLink"?: string;
-}
-
-/**
- * Interface describing SAP business partner
- */
-export interface SapBusinessPartner {
-  CardCode: string | null;
-  CardType: string | null;
-  CardName: string | null;
-  CardForeignName: string | null;
-  Phone1: string | null;
-  Phone2: string | null;
-  EmailAddress: string | null;
-  BPAddresses: SapBPAddress[];
-  BPBankAccounts: SapBPBankAccount[];
-  FederalTaxID: string | null;
-  VatLiable: SapVatLiableEnum | null;
-  U_audit: string | null;
-  U_muu: string | null;
-  [key: string]: any;
-}
-
-/**
  * Interface describing SAP business partner address
  */
 export interface SapBPAddress {
