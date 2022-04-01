@@ -33,8 +33,8 @@ interface HtmlContractDocumentData {
   documentSlug?: string,
   filename: string,
   content: string,
-  header: string | null,
-  footer: string | null
+  header: string | null,
+  footer: string | null
 }
 
 interface PdfContractDocument {
@@ -501,7 +501,7 @@ export default class ContractsServiceImpl extends ContractsService {
       year = databaseContract.year;
       deliveryPlaceId = databaseContract.deliveryPlaceId;
       itemGroupId = databaseContract.itemGroupId;
-      sapId = databaseContract.sapId || null;
+      sapId = databaseContract.sapId || null;
       contractQuantity = databaseContract.contractQuantity;
       deliveredQuantity = databaseContract.deliveredQuantity;
       startDate = databaseContract.startDate;
@@ -531,22 +531,22 @@ export default class ContractsServiceImpl extends ContractsService {
       deliveryPlaceId,
       proposedDeliveryPlaceId,
       itemGroupId,
-      sapId || null,
-      contractQuantity || null,
-      deliveredQuantity || null,
-      proposedQuantity || null,
-      startDate || null,
-      endDate || null,
-      signDate || null,
-      termDate || null,
+      sapId || null,
+      contractQuantity || null,
+      deliveredQuantity || null,
+      proposedQuantity || null,
+      startDate || null,
+      endDate || null,
+      signDate || null,
+      termDate || null,
       status,
       areaDetails ? JSON.stringify(areaDetails) : "",
       deliverAll,
       proposedDeliverAll,
-      remarks || null,
-      deliveryPlaceComment || null,
-      quantityComment || null,
-      rejectComment || null
+      remarks || null,
+      deliveryPlaceComment || null,
+      quantityComment || null,
+      rejectComment || null
     );
 
     const updatedDatabaseContract = await models.findContractById(databaseContract.id);
@@ -681,7 +681,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const databaseDocumentTemplate = await models.createDocumentTemplate(payload.contents, payload.header || null, payload.footer || null);
+    const databaseDocumentTemplate = await models.createDocumentTemplate(payload.contents, payload.header || null, payload.footer || null);
     const databaseContractDocumentTemplate = await models.createContractDocumentTemplate(payload.type, databaseContract.id, databaseDocumentTemplate.id);
 
     res.status(200).send(this.translateContractDocumentTemplate(databaseContractDocumentTemplate, databaseContract, databaseDocumentTemplate));
@@ -807,7 +807,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    await models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header || null, payload.footer || null);
+    await models.updateDocumentTemplate(databaseDocumentTemplate.id, payload.contents, payload.header || null, payload.footer || null);
 
     const updatedDocumentTemplate = await models.findDocumentTemplateById(databaseContractDocumentTemplate.documentTemplateId);
     if (!updatedDocumentTemplate) {
@@ -1080,7 +1080,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return result;
     }) : [];
 
-    let status: ContractStatus | null = null;
+    let status: ContractStatus | null = null;
     switch (contract.status) {
       case 'APPROVED':
         status = 'APPROVED';
@@ -1105,7 +1105,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const result: Contract = {
       "id": contract.externalId,
-      "sapId": contract.sapId || null,
+      "sapId": contract.sapId || null,
       "contactId": contract.userId,
       "itemGroupId": itemGroup.externalId,
       "deliveryPlaceId": deliveryPlace.externalId,
@@ -1144,8 +1144,8 @@ export default class ContractsServiceImpl extends ContractsService {
       "contractId": databaseContract.externalId,
       "type": databaseContractDocumentTemplate.type,
       "contents": databaseDocumentTemplate.contents,
-      "header": databaseDocumentTemplate.header || null,
-      "footer": databaseDocumentTemplate.footer || null
+      "header": databaseDocumentTemplate.header || null,
+      "footer": databaseDocumentTemplate.footer || null
     };
 
     return result;
@@ -1312,13 +1312,13 @@ export default class ContractsServiceImpl extends ContractsService {
         taxCode: taxCode
       };
 
-      const content: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
+      const content: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.contents, "contract-document.pug", templateData);
       if (!content) {
         return null;
       }
 
-      const header: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
-      const footer: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
+      const header: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.header, "contract-header.pug", templateData);
+      const footer: string | null = await this.renderDocumentTemplateComponent(baseUrl, documentTemplate.footer, "contract-footer.pug", templateData);
       const documentName: string = this.getDocumentName(itemGroup, companyName);
       const documentSlug: string = this.getDocumentSlug(documentName);
 
@@ -1342,7 +1342,7 @@ export default class ContractsServiceImpl extends ContractsService {
    * @param {Contract} contract contract
    * @param {String} type document type
    */
-  async getContractDocumentPdf(baseUrl: string, contract: ContractModel, type: string): Promise<PdfContractDocument | null> {
+  async getContractDocumentPdf(baseUrl: string, contract: ContractModel, type: string): Promise<PdfContractDocument | null> {
     const contractDocument = await models.findContractDocumentByContractAndType(contract.id, type);
     if (contractDocument && contractDocument.vismaSignDocumentId && contractDocument.signed) {
       const documentFile = await signature.getDocumentFile(contractDocument.vismaSignDocumentId);
@@ -1477,7 +1477,7 @@ export default class ContractsServiceImpl extends ContractsService {
    * @param {ItemGroup} itemGroup item group
    * @param {String} companyName company name
    */
-  private getDocumentName(itemGroup: ItemGroupModel, companyName: string | null): string {
+  private getDocumentName(itemGroup: ItemGroupModel, companyName: string | null): string {
     const result = `${moment().format("YYYY")} - ${itemGroup.name}`;
     if (companyName) {
       return `${result}, ${companyName}`;
@@ -1621,7 +1621,7 @@ export default class ContractsServiceImpl extends ContractsService {
    * @param {Object} model model
    * @return {String} rendered HTML
    */
-  private renderPugTemplate(template: string, model: { bodyContent: string, baseUrl: string } ) {
+  private renderPugTemplate(template: string, model: { bodyContent: string, baseUrl: string } ) {
     const compiledPug = pug.compileFile(`${__dirname}/../../../templates/${template}`);
     return compiledPug(model);
   }
