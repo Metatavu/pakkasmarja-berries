@@ -10,12 +10,9 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import { SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup } from "../sap/service-layer-client/types";
+import { SapDeliveryPlace, SapItemGroup } from "../sap/service-layer-client/types";
 import * as moment from "moment";
-import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
-import { ContractStatus } from "../rest/model/contractStatus";
-import SapContractsServiceImpl from "../sap/impl/contracts";
 import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 import { ChatGroupType } from '../rest/model/chatGroupType';
 import { SapAddressType, SapBusinessPartner, SapContract, SapContractStatus } from "../generated/erp-services-client/api";
@@ -33,7 +30,6 @@ export default new class TaskQueue {
   private sapDeliveryPlaceUpdateQueue: Queue;
   private sapItemGroupUpdateQueue: Queue;
   private sapContractUpdateQueue: Queue;
-  private updateCurrentYearApprovedContractsToSapQueue: Queue;
   private sapContractSapIdSyncQueue: Queue;
   private sapContractDeliveredQuantityUpdateQueue: Queue;
   private questionGroupThreadsQueue: Queue;
@@ -57,7 +53,6 @@ export default new class TaskQueue {
     this.sapDeliveryPlaceUpdateQueue = this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
     this.sapItemGroupUpdateQueue = this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
     this.sapContractUpdateQueue = this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
-    this.updateCurrentYearApprovedContractsToSapQueue = this.createQueue("updateCurrentYearApprovedContractsToSap", this.updateCurrentYearApprovedContractsToSapTask.bind(this));
     this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
     this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
     this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
@@ -193,21 +188,6 @@ export default new class TaskQueue {
     const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
 
     this.sapContractUpdateQueue.push({
-      contract: contract,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Enqueues update current year approved contracts to SAP task
-   *
-   * @param operationReportId operation report ID
-   * @param contract contract model object
-   */
-  async enqueueUpdateCurrentYearApprovedContractsToSap(operationReportId: number, contract: ContractModel) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
-    this.updateCurrentYearApprovedContractsToSapQueue.push({
       contract: contract,
       operationReportItemId: operationReportItem.id
     });
@@ -379,8 +359,7 @@ export default new class TaskQueue {
     try {
       const contract = await models.findContractById(data.id);
       const userId = contract.userId;
-      const year = contract.year;
-
+      
       const itemGroup = await models.findItemGroupById(contract.itemGroupId);
       if (!itemGroup) {
         throw new Error(`Item group with ID ${contract.itemGroupId} could not be found`);
@@ -453,7 +432,7 @@ export default new class TaskQueue {
       sapContracts.forEach((sapContract) => {
         const sapStartDate = sapContract.startDate;
         const year = moment(sapStartDate ? sapStartDate : undefined).year();
-        const sapId = sapContract.id;
+        const sapId = sapContract.id!!;
         sapDeliveredQuantities[sapId] = sapContract.deliveredQuantity;
       });
 
@@ -659,7 +638,7 @@ export default new class TaskQueue {
       const sapSigningDate = sapContract.signingDate;
       const sapTerminateDate = sapContract.terminateDate;
 
-      const sapId = sapContract.id;
+      const sapId = sapContract.id!!;
       const sapDeliveryPlaceCode = ""; // TODO: resolve delivery place from SAP
       const sapContractQuantity = 0; // TODO: resolve contract quantity from SAP
       const sapDeliveredQuantity = sapContract.deliveredQuantity || 0;
@@ -791,98 +770,6 @@ export default new class TaskQueue {
   }
 
   /**
-   * Updates current year approved contracts to SAP
-   *
-   * @param data task data
-   * @param callback task callback
-   */
-  private updateCurrentYearApprovedContractsToSapTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
-    const contract: ContractModel | undefined = data.contract;
-    if (!contract) {
-      const reason = "no contract found from task data";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    const user = await userManagement.findUser(contract.userId);
-    if (!user) {
-      const reason = "Contract user not found";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    const userName = user.firstName && user.lastName ?
-      `${user.firstName} ${user.lastName}` :
-      user.username || user.email;
-
-    const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-    if (!itemGroup) {
-      const reason = "Item group not found";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract for user ${userName} because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    try {
-      if (contract.status !== ContractStatus.APPROVED) {
-        throw new Error("contract status was not APPROVED");
-      }
-
-      if (contract.year !== new Date().getFullYear()) {
-        throw new Error("contract year was not current year");
-      }
-
-      const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
-      if (!deliveryPlace) {
-        throw new Error("contract delivery place was not found");
-      }
-
-      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-      if (!itemGroup) {
-        throw new Error("contract item group was not found");
-      }
-
-      const itemGroupSapId = itemGroup.sapId;
-      if (!itemGroupSapId) {
-        throw new Error(`Item group SAP ID could not be resolved`);
-      }
-
-      const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
-      await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
-
-      callback(null, {
-        message: `Successfully updated contract for user ${userName} with item group ${itemGroup.name} to SAP`,
-        operationReportItemId: data.operationReportItemId
-      });
-    } catch (error) {
-      logReject(createStackedReject(
-        `updateCurrentYearApprovedContractsToSapTask failed for contract ${contract.externalId}`, error),
-        this.logger
-      );
-
-      const errorMessage = error instanceof Error ? error.message : error;
-      callback({
-        message: `Failed to update contract for user ${userName} with item group ${itemGroup.name} because ${errorMessage}`,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
    * Resolves item group category for given SAP id
    *
    * @param {String} sapId sapId
@@ -924,27 +811,6 @@ export default new class TaskQueue {
     } else {
       return "APPROVED";
     }
-  }
-
-  /**
-   * Resolves contract quantity from given SAP contract and SAP contract line
-   *
-   * @param sapContract SAP contract object
-   * @param sapContractLine SAP contract line object
-   */
-  private resolveSapContractQuantity(sapContract: SapContract, sapContractLine: SapContractLine) {
-    const itemGroup = sapContractLine.ItemGroup;
-    if (!itemGroup) {
-      return undefined;
-    }
-
-    const quantityPropertyKey = `U_TR_${itemGroup}`;
-    const quantity: number | undefined = sapContract[quantityPropertyKey];
-    if (!quantity || typeof quantity !== "number") {
-      return undefined;
-    }
-
-    return quantity;
   }
 
   /**

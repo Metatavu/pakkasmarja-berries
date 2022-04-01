@@ -23,7 +23,9 @@ import pdf from "../../pdf";
 import { config } from "../../config";
 import xlsx from "node-xlsx";
 import { createStackedReject, logReject } from "../../utils";
-import SapContractsServiceImpl from "../../sap/impl/contracts";
+import ErpClient from "src/erp/client";
+import { SapContract } from "src/generated/erp-services-client/model/sapContract";
+import { SapContractStatus } from "src/generated/erp-services-client/api";
 
 /**
  * Implementation for Contracts REST service
@@ -156,14 +158,31 @@ export default class ContractsServiceImpl extends ContractsService {
 
     if (contract.status === "APPROVED") {
       try {
-        const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(databaseContract, deliveryPlace, itemGroup);
+        const user = await userManagement.findUser(userId);
+        const businessPartnerCode = user ? userManagement.getSingleAttribute(user, UserProperty.SAP_ID) : null;
+        if (!businessPartnerCode) {
+          this.sendInternalServerError(res, `Could not resolve SAP business partner code for user ${userId}`);
+          return;
+        }
+
+        
+        const sapContract = await this.createSapContract(
+          businessPartnerCode,
+          itemGroup.sapId,
+          contract.deliveredQuantity,
+          startDate,
+          endDate, 
+          signDate, 
+          termDate, 
+          remarks
+        );
 
         await models.updateContract(databaseContract.id,
           year,
           deliveryPlaceId,
           proposedDeliveryPlaceId,
           itemGroupId,
-          `${year}-${sapContract.DocNum}-${itemGroup.sapId}`,
+          sapContract.id!!,
           contractQuantity,
           deliveredQuantity,
           proposedQuantity,
@@ -194,6 +213,37 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     res.status(200).send(await this.translateDatabaseContract(databaseContract));
+  }
+
+  private createSapContract = async (
+    businessPartnerCode: string, 
+    itemGroupCode: string, 
+    deliveredQuantity: number | null, 
+    startDate: Date | null, 
+    endDate: Date | null, 
+    signDate: Date | null, 
+    termDate: Date | null, 
+    remarks: string | null
+  ) => {
+    const contractsApi = await ErpClient.getContractsApi();
+    const response = await contractsApi.createContract({
+      businessPartnerCode: parseInt(businessPartnerCode),
+      contactPersonCode: 0,
+      itemGroupCode: parseInt(itemGroupCode),
+      deliveredQuantity: deliveredQuantity || 0,
+      startDate: startDate ? startDate.toISOString() : undefined,
+      endDate: endDate ? endDate.toISOString() : undefined,
+      signingDate: signDate ? signDate.toISOString() : undefined,
+      terminateDate: termDate ? termDate.toISOString() : undefined,
+      remarks: remarks || "",
+      status: SapContractStatus.Approved
+    });
+
+    if (response.response.statusCode !== 200) {
+      throw new Error(`Could not create SAP contract: ${response.response.statusMessage}`);
+    }
+
+    return response.body;
   }
 
   /**
@@ -561,9 +611,21 @@ export default class ContractsServiceImpl extends ContractsService {
       `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
     );
 
+    // TODO: check if previous status was not approved
     if (updatedDatabaseContract.status === "APPROVED") {
-      try {
-        const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup);
+      try {      
+        const sapContract = await this.createSapContract(
+          businessPartnerCode,
+          itemGroup.sapId,
+          contract.deliveredQuantity,
+          startDate,
+          endDate, 
+          signDate, 
+          termDate, 
+          remarks
+        );
+        
+        SapContractsServiceImpl.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup);
         await models.updateContractSapId(updatedDatabaseContract.id, `${year}-${sapContract.DocNum}-${itemGroup.sapId}`);
 
         res.status(200).send(

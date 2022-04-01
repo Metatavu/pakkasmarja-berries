@@ -15,7 +15,7 @@ export default class SapContractsService extends AbstractService {
    * 
    * @param BPCode business partner code
    * @returns Promise of list of active SAP contracts of business partner
-   */
+   *//**
   public async listActiveContractsByBusinessPartner(BPCode: string): Promise<SapContract[]> {
     try {
       const config = await this.getConfig();
@@ -37,7 +37,7 @@ export default class SapContractsService extends AbstractService {
     } catch (e) {
       return Promise.reject(createStackedReject("Failed to list active SAP contracts by business partner", e));
     }
-  }
+  } */
 
   /**
    * Finds contract from SAP Service Layer
