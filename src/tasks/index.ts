@@ -401,32 +401,23 @@ export default new class TaskQueue {
         throw new Error(`User SAP ID could not be resolved`);
       }
 
-      const sapContractsService = SapServiceFactory.getContractsService();
-      const userActiveSapContracts = await sapContractsService.listActiveContractsByBusinessPartner(userSapId);
-      if (!userActiveSapContracts) {
-        throw new Error(`Failed to list SAP contracts for user with SAP ID "${userSapId}"`);
-      }
+      const startOfYear = moment().startOf("year").format("YYYY-MM-DD");
+      const contractsApi = await ErpClient.getContractsApi();
+      
+      const sapContractResponses = await Promise.all([
+        contractsApi.listContracts(startOfYear, userSapId, SapContractStatus.Approved),
+        contractsApi.listContracts(startOfYear, userSapId, SapContractStatus.OnHold),
+        contractsApi.listContracts(startOfYear, userSapId, SapContractStatus.Draft)
+      ]);
 
-      const sapContract = (
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.APPROVED) ||
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.ON_HOLD) ||
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.DRAFT)
-      );
+      const [ approvedContracts, onHoldContracts, draftContracts ] = sapContractResponses.map(response => response.body);
+      const sapContract = approvedContracts[0] || onHoldContracts[0] || draftContracts[0];
 
       if (!sapContract) {
         throw new Error(`Active SAP contract could not be found`);
       }
 
-      const contractLines = sapContract.BlanketAgreements_ItemsLines;
-      if (contractLines.every(line => line.ItemGroup !== Number(itemGroupSapId))) {
-        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not contain lines for item group in App contract`);
-      }
-
-      if (!sapContract.DocNum) {
-        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not have document number`);
-      }
-
-      const contractSapId = `${year}-${sapContract.DocNum}-${itemGroupSapId}`;
+      const contractSapId = sapContract.id;
       if (!contractSapId) {
         throw new Error(`Contract SAP ID could not be resolved`);
       }
