@@ -22,6 +22,10 @@ export class SapBusinessPartner {
     * SAP business partner code.
     */
     'code': number;
+    /**
+    * Legacy SAP business partner code.
+    */
+    'legacyCode'?: number;
     'email': string;
     'phoneNumbers'?: Array<string>;
     'addresses'?: Array<SapAddress>;
@@ -37,6 +41,11 @@ export class SapBusinessPartner {
         {
             "name": "code",
             "baseName": "code",
+            "type": "number"
+        },
+        {
+            "name": "legacyCode",
+            "baseName": "legacyCode",
             "type": "number"
         },
         {

@@ -1,5 +1,5 @@
 {
-  "itemGroupId": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
+  "itemGroupId": "6a67344b-57e2-4ec1-ba63-aa0432c6b827",
   "deliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
   "proposedDeliveryPlaceId": "c17711ea-1a44-11e8-a7e4-5f91469b1a79",
   "contactId": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
@@ -13,12 +13,14 @@
   "status": "APPROVED",
   "remarks": "Created for testing",
   "year": 2021,
-  "sapId": null,
   "deliveryPlaceComment": "Delivery comment test",
   "quantityComment": "Quantity comment test",
   "rejectComment": "Reject comment test",
   "areaDetails": [{
-    "name": "Create Test", "size": 2, "species": "something created", "profitEstimation": 5
+    "name": "Create Test",
+    "size": 2,
+    "species": "something created",
+    "profitEstimation": 5
   }],
   "deliverAll": false,
   "proposedDeliverAll": false

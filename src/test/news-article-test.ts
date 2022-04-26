@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import ApplicationRoles from "../rest/application-roles";
@@ -9,7 +8,7 @@ import TestConfig from "./test-config";
 
 /**
  * Creates news article
- * 
+ *
  * @param token token
  * @param title title
  * @param contents contents
@@ -38,10 +37,10 @@ const createNewsArticle = (token: string, title: string, contents: string): Prom
 
 /**
  * Finds news article
- * 
+ *
  * @param token token
  * @param id news article id
- * @param expectStatus 
+ * @param expectStatus
  * @returns promise for news article
  */
 const findNewsArticle = (token: string, id: number, expectStatus?: number): Promise<NewsArticle> => {
@@ -52,12 +51,12 @@ const findNewsArticle = (token: string, id: number, expectStatus?: number): Prom
     .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Lists news articles
- * 
+ *
  * @param token token
  * @returns promise for news articles
  */
@@ -69,12 +68,12 @@ const listNewsArticles = (token: string): Promise<NewsArticle[]> => {
     .expect(200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Deletes news article
- * 
+ *
  * @param token token
  * @param id news article id
  * @returns promise for delete
@@ -89,7 +88,7 @@ const deleteNewsArticle = async (token: string, id: number) => {
 
 test("Create news article", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.MANAGE_NEWS_ARTICLES]);
-  
+
   await mqtt.subscribe("newsarticles");
   try {
     const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
@@ -118,7 +117,7 @@ test("Finds news article", async (t) => {
   const createdNewsArticle = await createNewsArticle(token, "Article title", "Article content");
   const foundNewsArticle = await findNewsArticle(token, createdNewsArticle.id!);
   await findNewsArticle(token, 1234, 404);
-  
+
   t.deepEqual(foundNewsArticle, createdNewsArticle);
   await deleteNewsArticle(token, createdNewsArticle.id!);
 });
@@ -164,7 +163,7 @@ test("Deletes news article", async (t) => {
       "operation": "DELETED",
       "id": createdNewsArticle.id
     });
-    
+
   } finally {
     await mqtt.unsubscribe("newsarticles");
   }

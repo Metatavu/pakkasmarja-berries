@@ -5,10 +5,30 @@
     "enabled": true,
     "expire-time": 60000
   },
-  "erp": {
-    "url": "http://erp-service:8080",
-    "username": "erp",
-    "password": "erp"
+  "tasks": {
+    "tableName": "tasks",
+    "queues": {
+      "questionGroupThreadsQueue": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      },
+      "chatPermissionsCacheQueue": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      },
+      "sapContactUpdate": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      },
+      "sapContractDeliveredQuantityUpdate": {
+        "concurrent": 1,
+        "afterProcessDelay": 1000,
+        "maxTimeout": 20000
+      }
+    }
   },
   "mqtt": {
     "host": "broker.mqttdashboard.com",
@@ -39,6 +59,13 @@
       },
       "confidential-port": 0,
       "policy-enforcer": {}
+    },
+    "erp": {
+      "url": "http://erp-service:8080",
+      "clientId": "erp",
+      "username": "erp",
+      "password": "erp",
+      "clientSecret": "a71f10c3-428b-4723-9cdb-4c7eab9d8a2f"
     },
     "app": {
       "realm": "pm",
@@ -106,20 +133,17 @@
     },
     "batchProducts": []
   },
-  "sapServiceLayer": {
-    "apiUrl": "http://sap-api-wiremock:8080/b1s/v1",
-    "host": "sap-api-wiremock:8080",
-    "companyDb": "pm",
-    "username": "pm",
-    "password": "random"
-  },
   "uploadDirectory": "/tmp/",
   "contacts": {
     "notifications": {
-      "email": "to@example.org",
-      "fresh": "tuore@example.com",
-      "frozen": "pakaste@example.com",
-      "deliveries": "tilaukset@example.com"
+      "contactUpdates": [ "contact.updates@example.org" ],
+      "fresh": "rejecteddelivery.fresh@example.com",
+      "frozen": "rejecteddelivery.frozen@example.com",
+      "deliveries": "rejecteddelivery.deliveries@example.com",
+      "errors": {
+        "fresh": [ "errors.fresh@example.org" ],
+        "frozen": [ "errors.frozen@example.org" ]
+      }
     }
   }
 }

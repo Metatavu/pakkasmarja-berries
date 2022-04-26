@@ -37,8 +37,8 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     const chatGroup = await models.createChatGroup(type, payload.title, payload.imageUrl);
     const resource = await chatGroupPermissionController.createChatGroupResource(chatGroup);
     const chatAdminPolicy = await userManagement.findRolePolicyByName("chat-admin");
-    
-    if (!chatAdminPolicy || !chatAdminPolicy.id) {
+
+    if (!chatAdminPolicy || !chatAdminPolicy.id) {
       this.sendInternalServerError(res, "Failed to lookup chat admin policy");
       return;
     }
@@ -100,7 +100,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       this.sendForbidden(res);
       return;
     }
-    
+
     res.status(200).send(this.translateChatGroup(chatGroup));
   }
 
@@ -129,7 +129,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       this.sendBadRequest(res, `Invalid type ${payload.type}`);
       return;
     }
-        
+
     const chatGroupId = parseInt(req.params.chatGroupId);
     const chatGroup = await models.findChatGroup(chatGroupId);
     if (!chatGroup) {
@@ -180,7 +180,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       this.sendInternalServerError(res, "Could not find user group");
       return;
     }
-    
+
     const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
@@ -217,7 +217,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
     const userGroups = await userManagement.listGroups(0, 999);
 
-    const result = (await Promise.all(userGroups.map(async (userGroup) => {      
+    const result = (await Promise.all(userGroups.map(async (userGroup) => {
       const scope = this.translateApplicationScope(await chatGroupPermissionController.getUserGroupChatGroupScope(chatGroup, userGroup));
       if (!scope) {
         return null;
@@ -229,13 +229,13 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
         id: chatGroupPermissionController.getChatGroupGroupPermissionId(chatGroupId, userGroup.id!),
         scope: scope
       };
-  
+
       return result;
     })))
     .filter((permission) => {
       return permission;
     });
-    
+
     res.status(200).send(result);
   }
 
@@ -271,9 +271,9 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
     const scope = this.translateApplicationScope(await chatGroupPermissionController.getUserGroupChatGroupScope(chatGroup, userGroup));
     if (!scope) {
       this.sendNotFound(res);
-      return;      
+      return;
     }
-    
+
     const result: ChatGroupGroupPermission = {
       chatGroupId: chatGroup.id,
       userGroupId: userGroup.id,
@@ -313,7 +313,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
       this.sendInternalServerError(res, "Could not find user group");
       return;
     }
-    
+
     const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
@@ -377,7 +377,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
   /**
    * Translates REST chat group type into Database type
-   * 
+   *
    * @param type type
    * @returns database type
    */
@@ -393,7 +393,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
   /**
    * Translates application scope into REST scope
-   * 
+   *
    * @param scope scope to be translated
    * @returns translated scope
    */
@@ -416,7 +416,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
   /**
    * Translates application scope into REST scope
-   * 
+   *
    * @param scope scope to be translated
    * @returns translated scope
    */
@@ -439,7 +439,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
 
   /**
    * Translates database entity into REST entity
-   * 
+   *
    * @param chatGroup database entity
    * @returns REST entity
    */

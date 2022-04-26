@@ -1,13 +1,20 @@
 import * as localVarRequest from 'request';
 
+export * from './binActionType';
 export * from './modelError';
 export * from './sapAddress';
 export * from './sapAddressType';
 export * from './sapBankAccount';
+export * from './sapBatchNumber';
 export * from './sapBusinessPartner';
 export * from './sapContract';
 export * from './sapContractStatus';
 export * from './sapItem';
+export * from './sapPurchaseDeliveryNote';
+export * from './sapPurchaseDeliveryNoteLine';
+export * from './sapStockTransfer';
+export * from './sapStockTransferLine';
+export * from './sapStockTransferLineBinAllocation';
 
 import * as fs from 'fs';
 
@@ -22,14 +29,21 @@ export interface RequestDetailedFile {
 export type RequestFile = string | Buffer | fs.ReadStream | RequestDetailedFile;
 
 
+import { BinActionType } from './binActionType';
 import { ModelError } from './modelError';
 import { SapAddress } from './sapAddress';
 import { SapAddressType } from './sapAddressType';
 import { SapBankAccount } from './sapBankAccount';
+import { SapBatchNumber } from './sapBatchNumber';
 import { SapBusinessPartner } from './sapBusinessPartner';
 import { SapContract } from './sapContract';
 import { SapContractStatus } from './sapContractStatus';
 import { SapItem } from './sapItem';
+import { SapPurchaseDeliveryNote } from './sapPurchaseDeliveryNote';
+import { SapPurchaseDeliveryNoteLine } from './sapPurchaseDeliveryNoteLine';
+import { SapStockTransfer } from './sapStockTransfer';
+import { SapStockTransferLine } from './sapStockTransferLine';
+import { SapStockTransferLineBinAllocation } from './sapStockTransferLineBinAllocation';
 
 /* tslint:disable:no-unused-variable */
 let primitives = [
@@ -44,6 +58,7 @@ let primitives = [
                  ];
 
 let enumsMap: {[index: string]: any} = {
+        "BinActionType": BinActionType,
         "SapAddressType": SapAddressType,
         "SapBusinessPartner.VatLiableEnum": SapBusinessPartner.VatLiableEnum,
         "SapContractStatus": SapContractStatus,
@@ -53,9 +68,15 @@ let typeMap: {[index: string]: any} = {
     "ModelError": ModelError,
     "SapAddress": SapAddress,
     "SapBankAccount": SapBankAccount,
+    "SapBatchNumber": SapBatchNumber,
     "SapBusinessPartner": SapBusinessPartner,
     "SapContract": SapContract,
     "SapItem": SapItem,
+    "SapPurchaseDeliveryNote": SapPurchaseDeliveryNote,
+    "SapPurchaseDeliveryNoteLine": SapPurchaseDeliveryNoteLine,
+    "SapStockTransfer": SapStockTransfer,
+    "SapStockTransferLine": SapStockTransferLine,
+    "SapStockTransferLineBinAllocation": SapStockTransferLineBinAllocation,
 }
 
 export class ObjectSerializer {

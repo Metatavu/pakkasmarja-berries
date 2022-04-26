@@ -19,10 +19,10 @@ import chatThreadPermissionController from "../user-management/chat-thread-permi
 export default class AbstractService {
 
   private baseLogger: Logger = getLogger();
-  
+
   /**
    * Returns whether logged user has manage permission to given thread
-   * 
+   *
    * @param req request
    * @param thread thread
    * @param chatGroup chat group
@@ -37,7 +37,7 @@ export default class AbstractService {
 
   /**
    * Returns whether logged user has access permission to given thread
-   * 
+   *
    * @param req request
    * @param thread thread
    * @param chatGroup chat group
@@ -56,11 +56,11 @@ export default class AbstractService {
 
   /**
    * Checks whether given access token has required scopes
-   * 
+   *
    * @param req request
-   * @param resourceName resource name 
+   * @param resourceName resource name
    * @param scopes required scopes
-   * @return Promise for whether user has permission to resource or not 
+   * @return Promise for whether user has permission to resource or not
    */
   public async hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]): Promise<boolean> {
     const accessToken = (req as any).kauth.grant.access_token;
@@ -76,7 +76,7 @@ export default class AbstractService {
 
   /**
    * Gets accesstoken from request
-   * 
+   *
    * @param {object} req express request
    * @returns access token
    */
@@ -85,13 +85,13 @@ export default class AbstractService {
     if (kauth && kauth.grant && kauth.grant.access_token) {
       return kauth.grant.access_token;
     }
-    
-    return null;   
+
+    return null;
   }
 
   /**
    * Gets user id from request
-   * 
+   *
    * @param {object} req express request
    * @returns user id
    */
@@ -101,10 +101,10 @@ export default class AbstractService {
   }
 
   /**
-   * Returns whether user has specified realm role or not 
-   * 
+   * Returns whether user has specified realm role or not
+   *
    * @param {object} req express request
-   * @param {String} role realm role 
+   * @param {String} role realm role
    */
   protected hasRealmRole(req: Request, role: string) {
     const accessToken = this.getAccessToken(req);
@@ -113,7 +113,7 @@ export default class AbstractService {
 
   /**
    * Catch unhandled promise errors
-   * 
+   *
    * @param {function} handler handler function
    * @return {Function} decorated handler function
    */
@@ -121,11 +121,11 @@ export default class AbstractService {
     return (req: Request, res: Response) => {
       try {
         return Promise.resolve(handler(req, res)).catch((err) => {
-          this.baseLogger.error(`${req.method} request into ${req.path} failed in error`, err);
+          this.baseLogger.error(`${req.method} request into ${req.path} failed in error`, err);
           res.status(500).send(err);
         });
       } catch (e) {
-        this.baseLogger.error(`${req.method} request into ${req.path} failed with exception`, e);
+        this.baseLogger.error(`${req.method} request into ${req.path} failed with exception`, e);
         return null;
       }
     };
@@ -133,19 +133,19 @@ export default class AbstractService {
 
   /**
    * Converts swagger path into a route path
-   * 
+   *
    * @param {String} path swagger path
    * @return {String} route path
    */
   protected toPath(path: string) {
-    return path.replace(/\$\{encodeURIComponent\(String\((.*?)\)\)\}/g, (match, param) => { 
+    return path.replace(/\$\{encodeURIComponent\(String\((.*?)\)\)\}/g, (match, param) => {
       return `:${param}`;
     });
   }
 
   /**
    * Responds with 404 - not found
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    */
   protected sendNotFound(res: Response, message?: string) {
@@ -159,7 +159,7 @@ export default class AbstractService {
 
   /**
    * Responds with 400 - bad request
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
@@ -176,7 +176,7 @@ export default class AbstractService {
 
   /**
    * Responds with 409 - conflict
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
@@ -193,7 +193,7 @@ export default class AbstractService {
 
   /**
    * Responds with 403 - forbidden
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
@@ -208,25 +208,28 @@ export default class AbstractService {
 
   /**
    * Responds with 500 - internal server error
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
-  protected sendInternalServerError(res: Response, error? : string|Error) {
-    const message = error instanceof Error ? (error as Error).message : error;
+  protected sendInternalServerError(res: Response, error?: string | Error) {
+    const message = error instanceof Error ? error.message : error;
+
     const response: InternalServerError = {
-      "code": 500,
-      "message": message || "Internal Server Error"
+      code: 500,
+      message: message || "Internal Server Error"
     };
 
-    this.baseLogger.warn(`Internal Server Error with message ${message || "Internal Server Error"}`);
+    const loggerMessage = error instanceof Error ? error.stack : error;
+
+    this.baseLogger.warn(`Internal Server Error with message ${loggerMessage || "Internal Server Error"}`);
 
     res.status(500).send(response);
   }
 
   /**
    * Responds with 501 - not implemented
-   * 
+   *
    * @param {http.ServerResponse} res server response object
    * @param {String} message (optional)
    */
@@ -252,7 +255,7 @@ export default class AbstractService {
 
   /**
    * Truncates time to seconds
-   * 
+   *
    * @param time time
    * @returns time truncated to seconds
    */

@@ -4,6 +4,10 @@ export * from './contractsApi';
 import { ContractsApi } from './contractsApi';
 export * from './itemsApi';
 import { ItemsApi } from './itemsApi';
+export * from './purchaseDeliveryNotesApi';
+import { PurchaseDeliveryNotesApi } from './purchaseDeliveryNotesApi';
+export * from './stockTransfersApi';
+import { StockTransfersApi } from './stockTransfersApi';
 export * from './systemApi';
 import { SystemApi } from './systemApi';
 import * as http from 'http';
@@ -17,4 +21,4 @@ export class HttpError extends Error {
 
 export { RequestFile } from '../model/models';
 
-export const APIS = [BusinessPartnersApi, ContractsApi, ItemsApi, SystemApi];
+export const APIS = [BusinessPartnersApi, ContractsApi, ItemsApi, PurchaseDeliveryNotesApi, StockTransfersApi, SystemApi];

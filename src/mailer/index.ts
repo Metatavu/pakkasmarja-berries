@@ -8,7 +8,7 @@ import { config } from "../config";
  */
 export default new class Mailer {
 
-  private mailgun: Mailgun.Mailgun | null;
+  private mailgun: Mailgun.Mailgun | null;
 
   constructor () {
     this.mailgun = !this.inTestMode() ?
@@ -30,14 +30,15 @@ export default new class Mailer {
    * @param to recipient address
    * @param subject email subject
    * @param contents email contents as plain text
+   * @param attachment email attachment as Buffer
    */
-  send(sender: string, to: string, subject: string, contents: string, attachments?: Buffer) {
-    const options = {
+  send(sender: string, to: string, subject: string, contents: string, attachment?: Buffer) {
+    const options: Mailgun.messages.SendData = {
       from: sender,
       to: to,
       subject: subject,
       text: contents,
-      attachments: attachments
+      attachment: attachment
     };
 
     if (!this.inTestMode() && this.mailgun) {

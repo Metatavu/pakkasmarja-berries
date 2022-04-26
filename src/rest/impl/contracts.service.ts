@@ -6,7 +6,7 @@ import * as i18n from "i18n";
 import { Response, Request, Application } from "express";
 import ContractsService from "../api/contracts.service";
 import ApplicationRoles from "../application-roles";
-import models, { ContractModel, ItemGroupModel, ContractDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel, DeliveryPlaceModel, ProductModel } from "../../models";
+import models, { ContractModel, ItemGroupModel, ContractDocumentTemplateModel, DocumentTemplateModel, ItemGroupPriceModel, DeliveryPlaceModel } from "../../models";
 import { getLogger, Logger } from "log4js";
 import { ContractDocumentTemplate, Contract, ContractDocumentSignRequest, AreaDetail, ItemGroupPrice, ContractStatus, ContractPreviewData, ImportedContractOpt, ContractOpt } from "../model/models";
 import * as toArray from "stream-to-array";
@@ -22,10 +22,9 @@ import excel from "../../excel";
 import pdf from "../../pdf";
 import { config } from "../../config";
 import xlsx from "node-xlsx";
-import { createStackedReject, logReject } from "../../utils";
-import ErpClient from "src/erp/client";
-import { SapContract } from "src/generated/erp-services-client/model/sapContract";
-import { SapContractStatus } from "src/generated/erp-services-client/api";
+import { createStackedReject } from "../../utils";
+import ErpClient from "../../erp/client";
+import { HttpError, SapContractStatus } from "../../generated/erp-services-client/api";
 
 /**
  * Implementation for Contracts REST service
@@ -106,7 +105,6 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlaceId = deliveryPlace.id;
     const proposedDeliveryPlaceId = proposedDeliveryPlace.id || deliveryPlace.id;
     const itemGroupId = itemGroup.id;
-    const sapId = contract.sapId || null;
     const contractQuantity = contract.contractQuantity;
     const deliveredQuantity = contract.deliveredQuantity;
     const proposedQuantity = contract.proposedQuantity;
@@ -124,7 +122,39 @@ export default class ContractsServiceImpl extends ContractsService {
     const rejectComment = contract.rejectComment;
     const proposedDeliverAll = contract.proposedDeliverAll;
 
-    const databaseContract = await models.createContract(
+    let sapId = contract.sapId || null;
+
+    if (contract.status === "APPROVED") {
+      try {
+        const user = await userManagement.findUser(userId);
+        const businessPartnerCode = user ?
+          userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) :
+          null;
+
+        if (!businessPartnerCode) {
+          this.sendInternalServerError(res, `Could not resolve SAP business partner code for user ${userId}`);
+          return;
+        }
+
+        const sapContract = await this.createSapContract(
+          businessPartnerCode,
+          itemGroup.sapId,
+          contract.deliveredQuantity,
+          startDate,
+          endDate,
+          signDate,
+          termDate,
+          remarks
+        );
+
+        sapId = sapContract.id!;
+      } catch (error) {
+        this.sendInternalServerError(res, createStackedReject("Could not create contract to SAP", error));
+        return;
+      }
+    }
+
+    const createdContract = await models.createContract(
       userId,
       year,
       deliveryPlaceId,
@@ -148,7 +178,7 @@ export default class ContractsServiceImpl extends ContractsService {
       rejectComment
     );
 
-    if (contract.status === "DRAFT") {
+    if (createdContract.status === "DRAFT") {
       this.sendContractChangePushNotification(
         userId,
         `Uusi sopimusluonnos ${itemGroup.displayName || itemGroup.name} / ${year}`,
@@ -156,94 +186,7 @@ export default class ContractsServiceImpl extends ContractsService {
       );
     }
 
-    if (contract.status === "APPROVED") {
-      try {
-        const user = await userManagement.findUser(userId);
-        const businessPartnerCode = user ? userManagement.getSingleAttribute(user, UserProperty.SAP_ID) : null;
-        if (!businessPartnerCode) {
-          this.sendInternalServerError(res, `Could not resolve SAP business partner code for user ${userId}`);
-          return;
-        }
-
-        
-        const sapContract = await this.createSapContract(
-          businessPartnerCode,
-          itemGroup.sapId,
-          contract.deliveredQuantity,
-          startDate,
-          endDate, 
-          signDate, 
-          termDate, 
-          remarks
-        );
-
-        await models.updateContract(databaseContract.id,
-          year,
-          deliveryPlaceId,
-          proposedDeliveryPlaceId,
-          itemGroupId,
-          sapContract.id!!,
-          contractQuantity,
-          deliveredQuantity,
-          proposedQuantity,
-          startDate,
-          endDate,
-          signDate,
-          termDate,
-          status,
-          areaDetails ? JSON.stringify(areaDetails) : null,
-          deliverAll,
-          proposedDeliverAll,
-          remarks,
-          deliveryPlaceComment,
-          quantityComment,
-          rejectComment
-        );
-
-        res.status(200).send(
-          await this.translateDatabaseContract(
-            await models.findContractById(databaseContract.id)
-          )
-        );
-
-        return;
-      } catch (e) {
-        logReject(createStackedReject("Could not add contract to SAP", e), this.logger);
-      }
-    }
-
-    res.status(200).send(await this.translateDatabaseContract(databaseContract));
-  }
-
-  private createSapContract = async (
-    businessPartnerCode: string, 
-    itemGroupCode: string, 
-    deliveredQuantity: number | null, 
-    startDate: Date | null, 
-    endDate: Date | null, 
-    signDate: Date | null, 
-    termDate: Date | null, 
-    remarks: string | null
-  ) => {
-    const contractsApi = await ErpClient.getContractsApi();
-    const response = await contractsApi.createContract({
-      businessPartnerCode: parseInt(businessPartnerCode),
-      contactPersonCode: 0,
-      itemGroupCode: parseInt(itemGroupCode),
-      deliveredQuantity: deliveredQuantity || 0,
-      startDate: startDate ? startDate.toISOString() : undefined,
-      endDate: endDate ? endDate.toISOString() : undefined,
-      signingDate: signDate ? signDate.toISOString() : undefined,
-      terminateDate: termDate ? termDate.toISOString() : undefined,
-      remarks: remarks || "",
-      status: SapContractStatus.Approved
-    });
-
-    if (response.response.statusCode !== 200) {
-      throw new Error(`Could not create SAP contract: ${response.response.statusMessage}`);
-    }
-
-    return response.body;
+    res.status(200).send(await this.translateDatabaseContract(createdContract));
   }
 
   /**
@@ -295,7 +238,7 @@ export default class ContractsServiceImpl extends ContractsService {
           });
         }
 
-        const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, `${contactSapId}`);
+        const user = await userManagement.findUserByProperty(UserProperty.SAP_BUSINESS_PARTNER_CODE, `${contactSapId}`);
         if (!user) {
           contractErrors.push({
             key: "contactId",
@@ -501,20 +444,28 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const updateContract: Contract = _.isObject(req.body) ? req.body : null;
-    if (!updateContract) {
+    const payload: Contract = _.isObject(req.body) ? req.body : null;
+    if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
     }
 
-    if (!updateContract.itemGroupId) {
+    if (!payload.itemGroupId) {
       this.sendBadRequest(res, "itemGroupId is required");
       return;
     }
 
-    const deliveryPlace = updateContract.deliveryPlaceId ? await models.findDeliveryPlaceByExternalId(updateContract.deliveryPlaceId) : null;
-    const proposedDeliveryPlace = updateContract.proposedDeliveryPlaceId ? await models.findDeliveryPlaceByExternalId(updateContract.proposedDeliveryPlaceId) : null;
-    const itemGroup = updateContract.itemGroupId ? await models.findItemGroupByExternalId(updateContract.itemGroupId) : null;
+    const deliveryPlace = payload.deliveryPlaceId ?
+      await models.findDeliveryPlaceByExternalId(payload.deliveryPlaceId) :
+      null;
+
+    const proposedDeliveryPlace = payload.proposedDeliveryPlaceId ?
+      await models.findDeliveryPlaceByExternalId(payload.proposedDeliveryPlaceId) :
+      null;
+
+    const itemGroup = payload.itemGroupId ?
+    await models.findItemGroupByExternalId(payload.itemGroupId) :
+    null;
 
     if (!itemGroup) {
       this.sendBadRequest(res, "Invalid itemGroupId");
@@ -522,30 +473,30 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     // May not be edited by users without UPDATE_OTHER_CONTRACTS -permission
-    let year = updateContract.year;
+    let year = payload.year;
     let deliveryPlaceId = deliveryPlace ? deliveryPlace.id : null;
     let itemGroupId = itemGroup.id;
-    let sapId = updateContract.sapId;
-    let contractQuantity = updateContract.contractQuantity;
-    let deliveredQuantity = updateContract.deliveredQuantity;
-    let startDate = updateContract.startDate;
-    let endDate = updateContract.endDate;
-    let signDate = updateContract.signDate;
-    let termDate = updateContract.termDate;
-    let remarks = updateContract.remarks;
-    let deliverAll = updateContract.deliverAll;
+    let sapId = payload.sapId;
+    let contractQuantity = payload.contractQuantity;
+    let deliveredQuantity = payload.deliveredQuantity;
+    let startDate = payload.startDate;
+    let endDate = payload.endDate;
+    let signDate = payload.signDate;
+    let termDate = payload.termDate;
+    let remarks = payload.remarks;
+    let deliverAll = payload.deliverAll;
 
     // May be edited by users that own the contract
     const proposedDeliveryPlaceId = proposedDeliveryPlace ? proposedDeliveryPlace.id : null;
-    const proposedQuantity = updateContract.proposedQuantity;
-    const areaDetails = updateContract.areaDetails;
-    const proposedDeliverAll = updateContract.proposedDeliverAll;
-    const deliveryPlaceComment = updateContract.deliveryPlaceComment;
-    const quantityComment = updateContract.quantityComment;
-    const rejectComment = updateContract.rejectComment;
+    const proposedQuantity = payload.proposedQuantity;
+    const areaDetails = payload.areaDetails;
+    const proposedDeliverAll = payload.proposedDeliverAll;
+    const deliveryPlaceComment = payload.deliveryPlaceComment;
+    const quantityComment = payload.quantityComment;
+    const rejectComment = payload.rejectComment;
 
     // Derived if the user does not have UPDATE_OTHER_CONTRACTS -permission
-    let status = updateContract.status;
+    let status = payload.status;
 
     if (!canUpdateOthers) {
       year = databaseContract.year;
@@ -561,10 +512,14 @@ export default class ContractsServiceImpl extends ContractsService {
       remarks = databaseContract.remarks;
       deliverAll = databaseContract.deliverAll;
 
-      if (updateContract.status === "REJECTED") {
+      if (payload.status === "REJECTED") {
         status = "REJECTED";
-      } else if (!updateContract.status || updateContract.status === "DRAFT" || updateContract.status === "ON_HOLD") {
-        if (contractQuantity === proposedQuantity && deliveryPlaceId === proposedDeliveryPlaceId && deliverAll === proposedDeliverAll) {
+      } else if (!payload.status || payload.status === "DRAFT" || payload.status === "ON_HOLD") {
+        if (
+          contractQuantity === proposedQuantity &&
+          deliveryPlaceId === proposedDeliveryPlaceId &&
+          deliverAll === proposedDeliverAll
+        ) {
           status = "DRAFT";
         } else {
           status = "ON_HOLD";
@@ -575,72 +530,74 @@ export default class ContractsServiceImpl extends ContractsService {
       }
     }
 
-    await models.updateContract(
-      databaseContract.id,
-      year,
-      deliveryPlaceId,
-      proposedDeliveryPlaceId,
-      itemGroupId,
-      sapId || null,
-      contractQuantity || null,
-      deliveredQuantity || null,
-      proposedQuantity || null,
-      startDate || null,
-      endDate || null,
-      signDate || null,
-      termDate || null,
-      status,
-      areaDetails ? JSON.stringify(areaDetails) : "",
-      deliverAll,
-      proposedDeliverAll,
-      remarks || null,
-      deliveryPlaceComment || null,
-      quantityComment || null,
-      rejectComment || null
-    );
+    if (status === "APPROVED" && databaseContract.status !== "APPROVED") {
+      try {
+        const user = await userManagement.findUser(databaseContract.userId);
+        const businessPartnerCode = user ?
+          userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) :
+          null;
 
-    const updatedDatabaseContract = await models.findContractById(databaseContract.id);
-    if (!updatedDatabaseContract) {
-      this.sendInternalServerError(res, "Failed to update contract");
-      return;
-    }
+        if (!businessPartnerCode) {
+          this.sendInternalServerError(res, `Could not resolve SAP business partner code for user ${databaseContract.userId}`);
+          return;
+        }
 
-    this.sendContractChangePushNotification(
-      updatedDatabaseContract.userId,
-      `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
-      `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
-    );
-
-    // TODO: check if previous status was not approved
-    if (updatedDatabaseContract.status === "APPROVED") {
-      try {      
         const sapContract = await this.createSapContract(
           businessPartnerCode,
           itemGroup.sapId,
-          contract.deliveredQuantity,
+          deliveredQuantity,
           startDate,
-          endDate, 
-          signDate, 
-          termDate, 
+          endDate,
+          signDate,
+          termDate,
           remarks
         );
-        
-        SapContractsServiceImpl.createOrUpdateSapContract(updatedDatabaseContract, deliveryPlace, itemGroup);
-        await models.updateContractSapId(updatedDatabaseContract.id, `${year}-${sapContract.DocNum}-${itemGroup.sapId}`);
 
-        res.status(200).send(
-          await this.translateDatabaseContract(
-            await models.findContractById(updatedDatabaseContract.id)
-          )
-        );
-
+        sapId = sapContract.id!;
+      } catch (error) {
+        this.sendInternalServerError(res, createStackedReject("Could not create contract to SAP", error));
         return;
-      } catch (e) {
-        logReject(createStackedReject("Could not update contract to SAP", e), this.logger);
       }
     }
 
-    res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
+    try {
+      await models.updateContract(
+        databaseContract.id,
+        year,
+        deliveryPlaceId,
+        proposedDeliveryPlaceId,
+        itemGroupId,
+        sapId || null,
+        contractQuantity || null,
+        deliveredQuantity || null,
+        proposedQuantity || null,
+        startDate || null,
+        endDate || null,
+        signDate || null,
+        termDate || null,
+        status,
+        areaDetails ? JSON.stringify(areaDetails) : "",
+        deliverAll,
+        proposedDeliverAll,
+        remarks || null,
+        deliveryPlaceComment || null,
+        quantityComment || null,
+        rejectComment || null
+      );
+
+      const updatedDatabaseContract = await models.findContractById(databaseContract.id);
+
+      this.sendContractChangePushNotification(
+        updatedDatabaseContract.userId,
+        `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
+        `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
+      );
+
+      res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
+    } catch (error) {
+      this.sendInternalServerError(res, createStackedReject("Could not update contract", error));
+      return;
+    }
   }
 
   /**
@@ -1128,69 +1085,101 @@ export default class ContractsServiceImpl extends ContractsService {
   }
 
   /**
+   * Creates SAP contract
+   *
+   * @param businessPartnerCode business partner code
+   * @param itemGroupCode item group code
+   * @param deliveredQuantity delivered quantity
+   * @param startDate start date
+   * @param endDate end date
+   * @param signDate sign date
+   * @param terminateDate terminate date
+   * @param remarks remarks
+   */
+  private createSapContract = async (
+    businessPartnerCode: string,
+    itemGroupCode: string,
+    deliveredQuantity: number | null,
+    startDate: Date | null,
+    endDate: Date | null,
+    signDate: Date | null,
+    terminateDate: Date | null,
+    remarks: string | null
+  ) => {
+    try {
+      const contractsApi = await ErpClient.getContractsApi();
+
+      const response = await contractsApi.createContract({
+        businessPartnerCode: parseInt(businessPartnerCode),
+        contactPersonCode: 0,
+        itemGroupCode: parseInt(itemGroupCode),
+        deliveredQuantity: deliveredQuantity || 0,
+        startDate: startDate ? new Date(startDate).toISOString() : undefined,
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+        signingDate: signDate ? new Date(signDate).toISOString() : undefined,
+        terminateDate: terminateDate ? new Date(terminateDate).toISOString() : undefined,
+        remarks: remarks || "",
+        status: SapContractStatus.Approved
+      });
+
+      if (response.response.statusCode !== 200) {
+        throw new Error(`Could not create SAP contract: ${response.response.statusMessage}`);
+      }
+
+      return response.body;
+    } catch (error) {
+      return Promise.reject(
+        createStackedReject(
+          "Create SAP contract request failed.",
+          error instanceof HttpError ?
+            new Error(`${error.message}: ${JSON.stringify(error.body) || ""}`) :
+            error
+        )
+      );
+    }
+  }
+
+  /**
    * Translates Database contract into REST entity
    *
    * @param {Object} contract Sequelize contract model
    * @return {Contract} REST entity
    */
-  async translateDatabaseContract(contract: ContractModel) {
-    const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-    const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
-    const proposedDeliveryPlace = await models.findDeliveryPlaceById(contract.proposedDeliveryPlaceId);
-    const areaDetails = contract.areaDetails ? JSON.parse(contract.areaDetails).map((areaDetail: any) => {
-      const result: AreaDetail = areaDetail;
-      return result;
-    }) : [];
+  async translateDatabaseContract(contract: ContractModel): Promise<Contract> {
+    const [ itemGroup, deliveryPlace, proposedDeliveryPlace ] = await Promise.all([
+      models.findItemGroupById(contract.itemGroupId),
+      models.findDeliveryPlaceById(contract.deliveryPlaceId),
+      models.findDeliveryPlaceById(contract.proposedDeliveryPlaceId)
+    ]);
 
-    let status: ContractStatus | null = null;
-    switch (contract.status) {
-      case 'APPROVED':
-        status = 'APPROVED';
-      break;
-      case 'ON_HOLD':
-        status = 'ON_HOLD';
-      break;
-      case 'DRAFT':
-        status = 'DRAFT';
-      break;
-      case 'TERMINATED':
-        status = 'TERMINATED';
-      break;
-      case 'REJECTED':
-        status = 'REJECTED';
-      break;
-    }
+    const areaDetails = contract.areaDetails ?
+      JSON.parse(contract.areaDetails) as AreaDetail[] :
+      [];
 
-    if (!status) {
-      return null;
-    }
-
-    const result: Contract = {
-      "id": contract.externalId,
-      "sapId": contract.sapId || null,
-      "contactId": contract.userId,
-      "itemGroupId": itemGroup.externalId,
-      "deliveryPlaceId": deliveryPlace.externalId,
-      "proposedDeliveryPlaceId": proposedDeliveryPlace.externalId,
-      "contractQuantity": contract.contractQuantity,
-      "deliveredQuantity": contract.deliveredQuantity,
-      "proposedQuantity": contract.proposedQuantity,
-      "startDate": contract.startDate,
-      "endDate": contract.endDate,
-      "signDate": contract.signDate,
-      "termDate": contract.termDate,
-      "status": status,
-      "areaDetails": areaDetails || [],
-      "deliverAll": contract.deliverAll,
-      "proposedDeliverAll": contract.proposedDeliverAll,
-      "remarks": contract.remarks,
-      "year": contract.year,
-      "deliveryPlaceComment": contract.deliveryPlaceComment,
-      "quantityComment": contract.quantityComment,
-      "rejectComment": contract.rejectComment
+    return {
+      id: contract.externalId,
+      sapId: contract.sapId || null,
+      contactId: contract.userId,
+      itemGroupId: itemGroup.externalId,
+      deliveryPlaceId: deliveryPlace.externalId,
+      proposedDeliveryPlaceId: proposedDeliveryPlace.externalId,
+      contractQuantity: contract.contractQuantity,
+      deliveredQuantity: contract.deliveredQuantity,
+      proposedQuantity: contract.proposedQuantity,
+      startDate: contract.startDate,
+      endDate: contract.endDate,
+      signDate: contract.signDate,
+      termDate: contract.termDate,
+      status: contract.status as ContractStatus,
+      areaDetails: areaDetails,
+      deliverAll: contract.deliverAll,
+      proposedDeliverAll: contract.proposedDeliverAll,
+      remarks: contract.remarks,
+      year: contract.year,
+      deliveryPlaceComment: contract.deliveryPlaceComment,
+      quantityComment: contract.quantityComment,
+      rejectComment: contract.rejectComment
     };
-
-    return result;
   }
 
   /**
@@ -1292,7 +1281,7 @@ export default class ContractsServiceImpl extends ContractsService {
     const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
     const itemGroup = await models.findItemGroupById(contract.itemGroupId);
 
-    const supplierId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
+    const supplierId = userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE);
     const companyName = userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME);
     const itemGroupName = itemGroup ? itemGroup.name : null;
     const proposedQuantity = contract.proposedQuantity;

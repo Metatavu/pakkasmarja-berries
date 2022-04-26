@@ -1,6 +1,6 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
-import models, { DeliveryModel, DeliveryNoteModel, ProductModel } from "../../models";
+import models, { DeliveryModel, DeliveryNoteModel, DeliveryPlaceModel, ProductModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
 import { Delivery, DeliveryLoan, DeliveryNote, ItemGroupCategory } from "../model/models";
 import ApplicationRoles from "../application-roles";
@@ -12,8 +12,9 @@ import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as _ from "lodash";
 import mailer from "../../mailer";
 import { getLogger } from "log4js";
-import { logReject } from "../../utils";
-import SapDeliveriesServiceImpl from "../../sap/impl/deliveries";
+import { createStackedReject, logReject } from "../../utils";
+import ErpClient from "../../erp/client";
+import { BinActionType, HttpError, SapBatchNumber, SapStockTransfer, SapStockTransferLine } from "../../generated/erp-services-client/api";
 
 /**
  * Implementation for Deliveries REST service
@@ -88,7 +89,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
     if (status === "DONE" && deliveryQuality) {
       const product: ProductModel = await models.findProductById(productId);
-      if (!product || !product.id) {
+      if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
@@ -99,12 +100,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
 
-      const itemGroup = await models.findItemGroupById(product.itemGroupId);
-
       const unitPrice = parseFloat(productPrice);
       let unitPriceWithBonus = 0;
 
-      if(amount > 0){
+      if (amount > 0) {
         const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
         const totalPrice = unitPrice * amount + bonusPrice;
         unitPriceWithBonus = totalPrice / amount;
@@ -116,19 +115,19 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const receivingUserId = this.getLoggedUserId(req);
-      const deliveryContact: UserRepresentation | null = await userManagement.findUser(req.body.userId);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(req.body.userId);
       if (!deliveryContact) {
         this.sendInternalServerError(res, "Failed to deliveryContact");
         return;
       }
 
-      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
       if (!receivingContact) {
         this.sendInternalServerError(res, "Failed to receivingContact");
         return;
       }
 
-      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
+      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_BUSINESS_PARTNER_CODE);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
 
       if (!deliveryContactSapId) {
@@ -141,37 +140,45 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
 
+      const itemGroup = await models.findItemGroupById(product.itemGroupId);
+
+      if (!itemGroup) {
+        this.sendNotFound(res, `Item group for product ${productId} not found`);
+      }
+
       const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, false);
 
       try {
-        await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
+        await this.createSapPurchaseDeliveryNote(
           databaseDelivery,
-          product,
           databaseDeliveryPlace,
+          product,
+          Number(deliveryContactSapId),
+          Number(sapSalesPersonCode),
           unitPriceWithBonus,
-          deliveryContactSapId,
-          sapSalesPersonCode,
-          itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
+          itemGroup.category as ItemGroupCategory
         );
 
         if (databaseDelivery.id) {
           await models.updateDelivery(databaseDelivery.id, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
         }
 
-        const loans: DeliveryLoan[] = req.body.loans;
-        if (!!loans && Array.isArray(loans) && loans.length) {
+        const loans: DeliveryLoan[] | undefined = req.body.loans;
+        if (!!loans && Array.isArray(loans) && !!loans.length) {
           const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
-          await SapDeliveriesServiceImpl.createStockTransferToSap(
+
+          await this.createSapStockTransfer(
+            loans,
+            Number(deliveryContactSapId),
+            Number(sapSalesPersonCode),
             new Date(databaseDelivery.time),
-            deliveryNotes.map(note => note.text || ""),
-            deliveryContactSapId,
-            sapSalesPersonCode,
-            loans
+            deliveryNotes.map(note => note.text || "")
           );
         }
-      } catch (e) {
-        logReject(e, getLogger());
+      } catch (error) {
+        logReject(error, getLogger());
       }
+
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
     } else {
       const result = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, null, null, qualityId, databaseDeliveryPlace.id, false);
@@ -456,7 +463,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     let databaseDelivery = null;
     if (status === "DONE" && deliveryQuality) {
       const product: ProductModel = await models.findProductById(productId);
-      if (!product || !product.id) {
+      if (!product || !product.id) {
         this.sendInternalServerError(res, "Failed to resolve product");
         return;
       }
@@ -466,8 +473,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         this.sendInternalServerError(res, "Failed to resolve product price");
         return;
       }
-
-      const itemGroup = await models.findItemGroupById(product.itemGroupId);
 
       const unitPrice = parseFloat(productPrice);
       let unitPriceWithBonus = 0;
@@ -484,19 +489,19 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const receivingUserId = this.getLoggedUserId(req);
-      const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
+      const deliveryContact: UserRepresentation | null = await userManagement.findUser(delivery.userId);
       if (!deliveryContact) {
         this.sendInternalServerError(res, "Failed to deliveryContact");
         return;
       }
 
-      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
+      const receivingContact: UserRepresentation | null = await userManagement.findUser(receivingUserId);
       if (!receivingContact) {
         this.sendInternalServerError(res, "Failed to receivingContact");
         return;
       }
 
-      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_ID);
+      const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_BUSINESS_PARTNER_CODE);
       const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
 
       if (!deliveryContactSapId) {
@@ -509,30 +514,37 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         return;
       }
 
+      const itemGroup = await models.findItemGroupById(product.itemGroupId);
+
       await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, delivery.inSap);
+
       databaseDelivery = await models.findDeliveryById(deliveryId);
+
       try {
         if (!databaseDelivery.inSap) {
-          await SapDeliveriesServiceImpl.createPurchaseDeliveryNoteToSap(
+          await this.createSapPurchaseDeliveryNote(
             databaseDelivery,
-            product,
             databaseDeliveryPlace,
+            product,
+            Number(deliveryContactSapId),
+            Number(sapSalesPersonCode),
             unitPriceWithBonus,
-            deliveryContactSapId,
-            sapSalesPersonCode,
-            itemGroup.category === "FRESH" ? "FRESH" : "FROZEN"
+            itemGroup.category as ItemGroupCategory
           );
 
           await models.updateDelivery(deliveryId, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
-          const loans: DeliveryLoan[] = req.body.loans;
+
+          const loans: DeliveryLoan[] | undefined = req.body.loans;
+
           if (!!loans && Array.isArray(loans) && loans.length) {
             const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
-            await SapDeliveriesServiceImpl.createStockTransferToSap(
+
+            await this.createSapStockTransfer(
+              loans,
+              Number(deliveryContactSapId),
+              Number(sapSalesPersonCode),
               new Date(databaseDelivery.time),
-              deliveryNotes.map(note => note.text || ""),
-              deliveryContactSapId,
-              sapSalesPersonCode,
-              loans
+              deliveryNotes.map(note => note.text || "")
             );
           }
         }
@@ -673,31 +685,238 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     res.status(200).send(await this.translateDatabaseDeliveryNote(databaseDeliveryNote));
   }
 
+  /**
+   * Creates SAP purchase delivery note
+   *
+   * @param delivery delivery
+   * @param deliveryPlace delivery place
+   * @param product product
+   * @param businessPartnerCode business partner code
+   * @param sapSalesPersonCode SAP sales person code
+   * @param price price
+   * @param itemGroupCategory item group category
+   */
+  private createSapPurchaseDeliveryNote = async (
+    delivery: DeliveryModel,
+    deliveryPlace: DeliveryPlaceModel,
+    product: ProductModel,
+    businessPartnerCode: number,
+    sapSalesPersonCode: number,
+    price: number,
+    itemGroupCategory: ItemGroupCategory
+  ) => {
+    const deliveryNotes = await models.listDeliveryNotes(delivery.id);
+    const deliveryComments = this.joinComments(deliveryNotes.map(note => note.text || ""));
+    const batchNumbers = this.getSapPurchaseDeliveryNoteBatchNumbers(product, delivery, businessPartnerCode);
 
+    try {
+      const purchaseDeliveryNotesApi = await ErpClient.getPurchaseDeliveryNotesApi();
+      const response = await purchaseDeliveryNotesApi.createPurchaseDeliveryNote({
+        businessPartnerCode: businessPartnerCode,
+        docDate: moment(delivery.time).format("YYYY-MM-DD"),
+        salesPersonCode: sapSalesPersonCode,
+        comments: deliveryComments,
+        lines: [{
+          itemCode: Number(product.sapItemCode),
+          quantity: delivery.amount,
+          unitPrice: price,
+          warehouseCode: deliveryPlace.sapId,
+          batchNumbers: batchNumbers
+        }]
+      });
+
+      return response.body;
+    } catch (error) {
+      const emailAddresses = this.getErrorEmailAddresses(itemGroupCategory);
+
+      if (emailAddresses) {
+        const description: string[] = [];
+
+        description.push(`
+          Toimituksen tiedot:\n\n
+          Päiväys: ${moment(delivery.time).format("DD.MM.YYYY [klo] HH.mm")}\n
+          Viljelijän SAP-tunnus: ${businessPartnerCode}\n
+          Toimitetun marjan SAP-tunnus: ${product.sapItemCode}\n
+          Toimitettu määrä: ${delivery.amount}\n
+          Yksikköhinta: ${price}\n
+          Kommentti: ${deliveryComments || ""}
+        `);
+
+        this.sendErrorMails(
+          emailAddresses,
+          "Appi-toimituksen vienti SAP:iin epäonnistui",
+          description,
+          error instanceof Error ? error.stack || error.message : error.toString()
+        );
+      } else {
+        logReject(
+          "No error email sent from failed delivery purchase note creation because email addresses are not configured",
+          getLogger()
+        );
+      }
+
+      return Promise.reject(
+        createStackedReject(
+          "Create SAP delivery purchase note request failed.",
+          error instanceof HttpError ?
+            new Error(`${error.message}: ${JSON.stringify(error.body) || ""}`) :
+            error
+        )
+      );
+    }
+  }
+
+  /**
+   * Create SAP stock transfer
+   *
+   * @param loans loans
+   * @param businessPartnerCode business partner code
+   * @param salesPersonCode sales person code
+   * @param docDate doc date
+   * @param comments comments
+   * @return promise of successful creation
+   */
+  private createSapStockTransfer = async (
+    loans: DeliveryLoan[],
+    businessPartnerCode: number,
+    salesPersonCode: number,
+    docDate: Date,
+    comments: string[]
+  ): Promise<SapStockTransfer | undefined> => {
+    try {
+      if (!loans.length) return;
+
+      const stockTransferLines = this.translateLoans(loans);
+
+      if (stockTransferLines.length < 1) {
+        throw new Error(`Stock transfer lines could not be constructed from following loans: ${JSON.stringify(loans, null, 2)}`);
+      }
+
+      const stockTransfersApi = await ErpClient.getStockTransfersApi();
+      const result = await stockTransfersApi.createStockTransfer({
+        businessPartnerCode: businessPartnerCode,
+        docDate: moment(docDate).format("YYYY-MM-DD"),
+        fromWarehouse: "100",
+        toWarehouse: "100",
+        salesPersonCode: salesPersonCode,
+        lines: stockTransferLines,
+        comments: this.joinComments(comments)
+      });
+
+      return result.body;
+    } catch (error) {
+      return Promise.reject(
+        createStackedReject(
+          "Create SAP stock transfer request failed.",
+          error instanceof HttpError ?
+            new Error(`${error.message}: ${JSON.stringify(error.body) || ""}`) :
+            error
+        )
+      );
+    }
+  }
+
+  /**
+   * Returns SAP purchase delivery note batch numbers from given product
+   *
+   * @param product product
+   * @param delivery delivery
+   * @param businessPartnerCode business partner code
+   */
+  private getSapPurchaseDeliveryNoteBatchNumbers = (
+    product: ProductModel,
+    delivery: DeliveryModel,
+    businessPartnerCode: number
+  ): SapBatchNumber[] => {
+    const batchProductCodes = config().sap.batchProducts;
+
+    if (!batchProductCodes) {
+      logReject("Batch product codes list not found from configuration", getLogger());
+    }
+
+    if ((batchProductCodes || []).every(batchProductCode => batchProductCode !== product.sapItemCode)) {
+      return [];
+    }
+
+    return [{
+      batchNumber: `${moment(delivery.time).format("YYYYMMDD")}_${businessPartnerCode}`,
+      quantity: delivery.amount
+    }];
+  }
+
+  /**
+   * Translates delivery loans to SAP stock transfer lines
+   *
+   * @param loans loans
+   */
+  private translateLoans = (loans: DeliveryLoan[]): SapStockTransferLine[] => {
+    return loans.reduce<SapStockTransferLine[]>((lines, loan) => {
+      const { item, loaned, returned } = loan;
+      const itemCode = config().sap.loanProductIds[item];
+
+      if (returned > 0) {
+        lines.push({
+          itemCode: Number(itemCode),
+          quantity: returned,
+          binAllocations: [
+            { absEntry: 2, actionType: BinActionType.ToWarehouse },
+            { absEntry: 3, actionType: BinActionType.FromWarehouse },
+          ]
+        });
+      }
+
+      if (loaned > 0) {
+        lines.push({
+          itemCode: Number(itemCode),
+          quantity: loaned,
+          binAllocations: [
+            { absEntry: 3, actionType: BinActionType.ToWarehouse },
+            { absEntry: 2, actionType: BinActionType.FromWarehouse },
+          ]
+        });
+      }
+
+      return lines;
+    }, []);
+  };
+
+  /**
+   * Joins list of comments to single comment string
+   *
+   * @param comments list of comments
+   */
+  private joinComments = (comments: string[]) => {
+    let joinedComment = "";
+
+    comments.forEach(note => {
+      if (!note) return;
+      joinedComment += !!joinedComment ? ` ; ${note}` : note;
+    });
+
+    return _.truncate(joinedComment, { "length": 253 });
+  }
 
   /**
    * Translates database delivery into REST entity
    *
    * @param delivery delivery
    */
-  private async translateDatabaseDelivery(delivery: DeliveryModel) {
+  private async translateDatabaseDelivery(delivery: DeliveryModel): Promise<Delivery> {
     const deliveryPlace = await models.findDeliveryPlaceById(delivery.deliveryPlaceId);
 
-    const result: Delivery = {
-      "id": delivery.id,
-      "productId": delivery.productId,
-      "userId": delivery.userId,
-      "time": delivery.time,
-      "status": delivery.status,
-      "amount": delivery.amount,
-      "price": delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
-      "qualityId": delivery.qualityId,
-      "deliveryPlaceId": deliveryPlace.externalId,
-      "warehouseCode": delivery.warehouseCode,
-      "loans": []
+    return {
+      id: delivery.id,
+      productId: delivery.productId,
+      userId: delivery.userId,
+      time: delivery.time,
+      status: delivery.status,
+      amount: delivery.amount,
+      price: delivery.unitPriceWithBonus ? delivery.unitPriceWithBonus.toFixed(2) : null,
+      qualityId: delivery.qualityId,
+      deliveryPlaceId: deliveryPlace.externalId,
+      warehouseCode: delivery.warehouseCode,
+      loans: []
     };
-
-    return result;
   }
 
   /**
@@ -706,28 +925,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param productId product id
    * @return product price or null if not found
    */
-  private async getCurrentProductPrice(productId: string): Promise<string | null> {
-    const price = await models.findLatestProductPrice(productId);
-    if (!price) {
-      return null;
-    }
-
-    return price.price;
-  }
-
-  /**
-   * Returns current price for a product
-   *
-   * @param productId product id
-   * @return product price or null if not found
-   */
-  private async getProductPriceAtTime(productId: string, date: Date): Promise<string | null> {
+  private async getProductPriceAtTime(productId: string, date: Date): Promise<string | null> {
     const price = await models.findProductPriceAtTime(productId, date);
-    if (!price) {
-      return null;
-    }
-
-    return price.price;
+    return price ? price.price : null;
   }
 
   /**
@@ -735,14 +935,62 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    *
    * @param deliveryNote deliveryNote
    */
-  private async translateDatabaseDeliveryNote(deliveryNote: DeliveryNoteModel) {
-    const result: DeliveryNote = {
-      "id": deliveryNote.id,
-      "text": deliveryNote.text,
-      "image": deliveryNote.image
-    };
+  private translateDatabaseDeliveryNote = (deliveryNote: DeliveryNoteModel): DeliveryNote => ({
+    id: deliveryNote.id,
+    text: deliveryNote.text,
+    image: deliveryNote.image
+  });
 
-    return result;
+  /**
+   * Send email messages about logged error
+   *
+   * @param recipients message recipients
+   * @param subject message subject
+   * @param description message description as list of paragraphs
+   * @param errorStack possible error stack
+   */
+  private sendErrorMails = (
+    recipients: string[],
+    subject: string,
+    description: string[],
+    errorStack?: string
+  ) => {
+    const contentParts: string[] = Array.from(description);
+
+    if (errorStack) {
+      contentParts.push("===============================================");
+      contentParts.push("Tekninen virhekooste:");
+      contentParts.push(errorStack);
+    }
+
+    for (const recipient of recipients) {
+      mailer.send(
+        `${config().mail.sender}@${config().mail.domain}`,
+        recipient,
+        subject,
+        contentParts.join("\n\n")
+      );
+    }
+  }
+
+  /**
+   * Returns email addresses for error messages
+   *
+   * @param itemGroupCategory item group category
+   * @returns list of email addresses or undefined if addresses are not found from configuration
+   */
+  private getErrorEmailAddresses = (itemGroupCategory: "FRESH" | "FROZEN"): string[] | undefined => {
+    const { contacts } = config();
+    const { notifications } = contacts || {};
+    const { errors } = notifications || {};
+
+    if (!errors) return undefined;
+
+    if (itemGroupCategory === "FRESH") {
+      return errors.fresh && errors.fresh.length ? errors.fresh : undefined;
+    } else {
+      return errors.frozen && errors.frozen.length ? errors.frozen : undefined;
+    }
   }
 
 }

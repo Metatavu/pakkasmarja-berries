@@ -1,55 +1,60 @@
 {
-  "6f1cd486-107e-404c-a73f-50cc1fdabdd6": {
-    "id": "6f1cd486-107e-404c-a73f-50cc1fdabdd6",
-    "firstName": "Test 1",
-    "lastName": "User 1",
-    "companyName": "Test Corp 2.",
+  "d9d324ca-de2f-4756-86f0-17179aed8969": {
+    "id": "d9d324ca-de2f-4756-86f0-17179aed8969",
+    "firstName" : "New",
+    "lastName" : "SAP ID",
+    "companyName": "New SAP.",
+    "phoneNumbers": [
+      "+358 11 111 1111"
+    ],
+    "email" : "new-sap-id@testrealm1.com",
+    "addresses": [
+      {
+        "streetAddress": "New SAP Street 111",
+        "postalCode": "11111",
+        "city": "New SAP City"
+      }
+    ],
+    "BIC": "NSAP1111",
+    "IBAN": "FI1111111111111111",
+    "taxCode": "FI11111111",
+    "vatLiable": "EU",
+    "sapBusinessPartnerCode": "654321",
+    "sapId": null,
+    "audit": null,
+    "avatarUrl": "https://www.gravatar.com/avatar/25b74dba63b569e00bbe8d2b928e76aed841a566?d=identicon",
+    "displayName": "New SAP ID New SAP."
+  },
+  "040cbeaa-b330-4094-9b7a-c04dea9e2891": {
+    "id": "040cbeaa-b330-4094-9b7a-c04dea9e2891",
+    "firstName": "Legacy",
+    "lastName": "SAP ID",
+    "companyName": "Legacy SAP.",
     "phoneNumbers": [
       "+358 22 222 2222",
       "+358 33 333 3333"
     ],
-    "email": "test1@testrealm1.com",
+    "email" : "legacy-sap-id@testrealm1.com",
     "addresses": [
       {
-        "streetAddress": "Test Street 222",
+        "streetAddress": "Legacy SAP Street 222",
         "postalCode": "22222",
-        "city": "Demo"
-      }
-    ],
-    "BIC": "DEMO1234",
-    "IBAN": "FI2222222222222222",
-    "taxCode": "DM22233344",
-    "vatLiable": "EU",
-    "audit": "2030",
-    "sapId": "1",
-    "avatarUrl": "https://www.gravatar.com/avatar/56fffc9d7fa23ac7f7999c93fb0dfff1da066b93?d=identicon", 
-    "displayName": "Test 1 User 1 Test Corp 2."
-  },
-  "677e99fd-b854-479f-afa6-74f295052770": {
-    "id": "677e99fd-b854-479f-afa6-74f295052770",
-    "firstName": "Test 2",
-    "lastName": "User 2",
-    "companyName": "Test Corp.",
-    "phoneNumbers": [
-      "+358 12 345 6789",
-      "+358 23 456 7890"
-    ],
-    "email": "test2@testrealm1.com",
-    "addresses": [
+        "city": "Legacy SAP City"
+      },
       {
-        "streetAddress": "Test Street 123",
-        "postalCode": "10100",
-        "city": "Test"
+        "streetAddress": "Legacy SAP Street 333",
+        "postalCode": "33333",
+        "city": "Legacy SAP City"
       }
     ],
-    "BIC": "DABAIE2D",
-    "IBAN": "FI2112345600000786",
-    "taxCode": "FI12345678",
-    "vatLiable": "YES",
-    "audit": "2020",
-    "sapId": "2",
-    "avatarUrl": "https://www.gravatar.com/avatar/4228ee7ede5cec470df3daad8ce0ac98ce4f33fd?d=identicon", 
-    "displayName": "Test 2 User 2 Test Corp."
+    "BIC": "LSAP2222",
+    "IBAN": "FI2222222222222222",
+    "taxCode": "FI22222222",
+    "vatLiable": "true",
+    "sapBusinessPartnerCode": "987654",
+    "sapId": null,
+    "audit": null,
+    "avatarUrl": "https://www.gravatar.com/avatar/710a24cc7dddc65fbea586542152b74ca43e7128?d=identicon",
+    "displayName": "Legacy SAP ID Legacy SAP."
   }
 }
-
