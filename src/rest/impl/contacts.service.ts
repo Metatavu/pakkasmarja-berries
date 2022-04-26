@@ -348,7 +348,7 @@ export default class ContactsServiceImpl extends ContactsService {
   }
 
   /**
-   * Resolves Keycloak user"s phone numbers
+   * Resolves Keycloak user's phone numbers
    *
    * @param {Object} user
    * @return {String[]} array of phone numbers
