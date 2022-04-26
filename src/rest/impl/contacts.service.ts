@@ -270,18 +270,17 @@ export default class ContactsServiceImpl extends ContactsService {
       const userVatLiable: string | null = userManagement.getSingleAttribute(user, UserProperty.VAT_LIABLE);
       let vatLiable: Contact.VatLiableEnum | null = null;
 
-      if ("true" == userVatLiable) {
-        vatLiable = userVatLiable;
-      } else if ("false" == userVatLiable) {
-        vatLiable = userVatLiable;
-      } else if ("EU" == userVatLiable) {
-        vatLiable = userVatLiable;
+      if (userVatLiable === "YES") {
+        vatLiable = "true";
+      } else if (userVatLiable === "NO") {
+        vatLiable = "false";
+      } else if (userVatLiable === "EU") {
+        vatLiable = "EU";
       }
 
       const result: Contact = {
         id: user.id,
-        sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_ID) || null,
-        sapBusinessPartnerCode: userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) || null,
+        sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) || null,
         firstName: user.firstName || null,
         lastName: user.lastName || null,
         companyName: userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
@@ -337,11 +336,7 @@ export default class ContactsServiceImpl extends ContactsService {
     userManagement.setSingleAttribute(user, UserProperty.CITY_2, addresses.length > 1 ? addresses[1].city : null);
 
     if (contact.sapId !== undefined) {
-      userManagement.setSingleAttribute(user, UserProperty.SAP_ID, contact.sapId);
-    }
-
-    if (contact.sapBusinessPartnerCode !== undefined) {
-      userManagement.setSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE, contact.sapBusinessPartnerCode);
+      userManagement.setSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE, contact.sapId);
     }
 
     return user;

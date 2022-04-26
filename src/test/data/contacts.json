@@ -12,8 +12,7 @@
     "taxCode": "FI11223344",
     "vatLiable": null,
     "audit": null,
-    "sapBusinessPartnerCode": "111111",
-    "sapId": null,
+    "sapId": "111111",
     "avatarUrl": "https://www.gravatar.com/avatar/56fffc9d7fa23ac7f7999c93fb0dfff1da066b93?d=identicon",
     "displayName": "Test 1 User 1"
   },
@@ -39,8 +38,7 @@
     "taxCode": "FI12345678",
     "vatLiable": null,
     "audit": "YES",
-    "sapBusinessPartnerCode": "222222",
-    "sapId": null,
+    "sapId": "222222",
     "avatarUrl": "https://www.gravatar.com/avatar/4228ee7ede5cec470df3daad8ce0ac98ce4f33fd?d=identicon",
     "displayName": "Test 2 User 2 Test Corp."
   },
@@ -57,8 +55,7 @@
     "taxCode": null,
     "vatLiable": null,
     "audit": null,
-    "sapBusinessPartnerCode": "654321",
-    "sapId": null,
+    "sapId": "654321",
     "avatarUrl": "https://www.gravatar.com/avatar/25b74dba63b569e00bbe8d2b928e76aed841a566?d=identicon",
     "displayName": "New SAP ID"
   },
@@ -75,7 +72,6 @@
     "taxCode": null,
     "vatLiable": null,
     "audit": null,
-    "sapBusinessPartnerCode": null,
     "sapId": "456789",
     "avatarUrl": "https://www.gravatar.com/avatar/710a24cc7dddc65fbea586542152b74ca43e7128?d=identicon",
     "displayName": "Legacy SAP ID"

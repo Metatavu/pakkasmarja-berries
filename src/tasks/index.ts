@@ -326,9 +326,9 @@ export default new class TaskQueue {
 
     switch (sapVatLiable) {
       case SapBusinessPartner.VatLiableEnum.Fi:
-        return "true";
+        return "YES";
       case SapBusinessPartner.VatLiableEnum.NotLiable:
-        return "false";
+        return "NO";
       case SapBusinessPartner.VatLiableEnum.Eu:
         return "EU";
       default:

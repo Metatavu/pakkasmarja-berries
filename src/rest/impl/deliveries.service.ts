@@ -852,7 +852,11 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   private translateLoans = (loans: DeliveryLoan[]): SapStockTransferLine[] => {
     return loans.reduce<SapStockTransferLine[]>((lines, loan) => {
       const { item, loaned, returned } = loan;
-      const itemCode = config().sap.loanProductIds[item];
+      const itemCode: string = _.get(config(), [ "sap", "loanProductIds", item ]);
+
+      if (!itemCode) {
+        throw new Error(`SAP item code not found for loan item ${item}`);
+      }
 
       if (returned > 0) {
         lines.push({
@@ -886,14 +890,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param comments list of comments
    */
   private joinComments = (comments: string[]) => {
-    let joinedComment = "";
-
-    comments.forEach(note => {
-      if (!note) return;
-      joinedComment += !!joinedComment ? ` ; ${note}` : note;
-    });
-
-    return _.truncate(joinedComment, { "length": 253 });
+    return _.truncate(comments.join(" ; "), { "length": 253 });
   }
 
   /**
