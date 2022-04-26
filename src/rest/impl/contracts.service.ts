@@ -464,8 +464,8 @@ export default class ContractsServiceImpl extends ContractsService {
       null;
 
     const itemGroup = payload.itemGroupId ?
-    await models.findItemGroupByExternalId(payload.itemGroupId) :
-    null;
+      await models.findItemGroupByExternalId(payload.itemGroupId) :
+      null;
 
     if (!itemGroup) {
       this.sendBadRequest(res, "Invalid itemGroupId");
