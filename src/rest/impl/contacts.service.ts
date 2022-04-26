@@ -372,7 +372,7 @@ export default class ContactsServiceImpl extends ContactsService {
   }
 
   /**
-   * Resolves Keycloak user"s addresses
+   * Resolves Keycloak user's addresses
    *
    * @param {Object} user
    * @return {Address[]} array of addresses
