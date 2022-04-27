@@ -70,7 +70,7 @@ steps:
       sh scripts/decrypt.sh
     fi
 
-- name: gcr.io/cloud-builders/gradle
+- name: openjdk:11-jdk
   id: gradle-build-erp-services
   entrypoint: bash
   args:
