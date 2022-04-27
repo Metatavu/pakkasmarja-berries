@@ -1,17 +1,20 @@
 options:
   machineType: N1_HIGHCPU_32
+timeout: 900s
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'docker-build'
-  entrypoint: 'bash'
+- name: gcr.io/cloud-builders/docker
+  id: docker-build
+  entrypoint: bash
   args:
   - '-c'
   - |
     if [ -n "${_DEPLOYMENT}" ]; then
       docker build -t ${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8) .
     fi
-- name: 'gcr.io/cloud-builders/docker'
-  entrypoint: 'bash'
+
+- name: gcr.io/cloud-builders/docker
+  id: docker-push
+  entrypoint: bash
   env:
     - "DEBIAN_FRONTEND=noninteractive"
     - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
@@ -25,8 +28,10 @@ steps:
       aws ecr get-login-password | docker login --username AWS --password-stdin ${_DOCKER_REPO_URL}
       docker push ${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8)
     fi
-- name: 'gcr.io/cloud-builders/kubectl'
-  entrypoint: 'bash'
+
+- name: gcr.io/cloud-builders/kubectl
+  id: kubernetes-deploy
+  entrypoint: bash
   env:
     - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
     - "AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}"
@@ -39,17 +44,53 @@ steps:
       aws eks update-kubeconfig --name ${_CLUSTER} --region=${_AWS_DEFAULT_REGION} &&
       kubectl -n ${_NAMESPACE} set image deployment/${_DEPLOYMENT} ${_DEPLOYMENT}=${_DOCKER_REPO_URL}:$(echo ${BUILD_ID} | cut -b 1-8)
     fi
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'docker-up'
-  entrypoint: 'bash'
+
+- name: gcr.io/cloud-builders/git
+  id: git-clone-erp-services
+  entrypoint: bash
+  args:
+    - '-c'
+    - |
+      if [ -n "${_TEST}" ]; then
+        git clone https://github.com/Metatavu/pakkasmarja-erp-services.git
+      fi
+
+- name: gcr.io/cloud-builders/gradle
+  id: gradle-build-erp-services
+  entrypoint: bash
+  env:
+    - 'ENC_PASS=${_ENC_PASS}'
+    - 'ENC_ITER=${_ENC_ITER}'
+  args:
+    - '-c'
+    - |
+      if [ -n "${_TEST}" ]; then
+        cd ./pakkasmarja-erp-services &&
+        ./scripts/decrypt.sh &&
+        ./gradlew clean build -PtargetEnvironment=local
+      fi
+
+- name: gcr.io/cloud-builders/docker
+  id: docker-build-erp-services
+  entrypoint: bash
+  args:
+    - '-c'
+    - |
+      if [ -n "${_TEST}" ]; then
+        cd ./pakkasmarja-erp-services &&
+        docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest . &&
+        cd .. &&
+        rm -fR pakkasmarja-erp-services
+      fi
+
+- name: gcr.io/cloud-builders/docker
+  id: docker-test
+  entrypoint: bash
   args:
   - '-c'
   - |
     if [ -n "${_TEST}" ]; then
-      set -e
       curl -L "https://github.com/docker/compose/releases/download/1.28.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose &&
-      git clone https://github.com/Metatavu/pakkasmarja-erp-services.git && cd pakkasmarja-erp-services && ./gradlew clean build -PtargetEnvironment=local && docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest . && cd .. && rm -fR pakkasmarja-erp-services &&
       docker-compose -f ./docker-compose-tests.yml build &&
       docker-compose -f ./docker-compose-tests.yml up --exit-code-from pakkasmarja-tests
     fi
-timeout: 900s
