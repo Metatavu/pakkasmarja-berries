@@ -71,7 +71,7 @@ steps:
       apt update && apt install -y openssl
       cd pakkasmarja-erp-services
       sh scripts/decrypt.sh
-      ls -lha ../
+      mkdir -p ../test-volumes/odata-mock
       cp src/test/resources/edm.xml ../test-volumes/odata-mock/edm.xml
     fi
 
