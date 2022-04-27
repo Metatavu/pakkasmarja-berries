@@ -69,10 +69,9 @@ steps:
   - |
     if [ -n "${_TEST}" ]; then
       apt update && apt install -y openssl
-      cd pakkasmarja-erp-services/scripts
-      sh decrypt.sh
-      cd ..
-      cp ./src/test/resources/edm.xml ../test-volumes/odata-mock/edm.xml
+      cd pakkasmarja-erp-services
+      sh scripts/decrypt.sh
+      cp src/test/resources/edm.xml ../test-volumes/odata-mock/edm.xml
     fi
 
 - name: openjdk:11-jdk
