@@ -16,10 +16,10 @@ steps:
   id: docker-push
   entrypoint: bash
   env:
-    - "DEBIAN_FRONTEND=noninteractive"
-    - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
-    - "AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}"
-    - "AWS_DEFAULT_REGION=${_AWS_DEFAULT_REGION}"
+  - "DEBIAN_FRONTEND=noninteractive"
+  - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
+  - "AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}"
+  - "AWS_DEFAULT_REGION=${_AWS_DEFAULT_REGION}"
   args:
   - '-c'
   - |
@@ -33,9 +33,9 @@ steps:
   id: kubernetes-deploy
   entrypoint: bash
   env:
-    - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
-    - "AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}"
-    - "AWS_DEFAULT_REGION=${_AWS_DEFAULT_REGION}"
+  - "AWS_ACCESS_KEY_ID=${_AWS_ACCESS_KEY_ID}"
+  - "AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}"
+  - "AWS_DEFAULT_REGION=${_AWS_DEFAULT_REGION}"
   args:
   - '-c'
   - |
@@ -49,39 +49,50 @@ steps:
   id: git-clone-erp-services
   entrypoint: bash
   args:
-    - '-c'
-    - |
-      if [ -n "${_TEST}" ]; then
-        git clone https://github.com/Metatavu/pakkasmarja-erp-services.git
-      fi
+  - '-c'
+  - |
+    if [ -n "${_TEST}" ]; then
+      git clone https://github.com/Metatavu/pakkasmarja-erp-services.git
+    fi
+
+- name: ubuntu
+  id: decrypt-erp-services
+  entrypoint: bash
+  env:
+  - "ENC_ITER=${_ENC_ITER}"
+  - "ENC_PASS=${_ENC_PASS}"
+  args:
+  - '-c'
+  - |
+    if [ -n "${_TEST}" ]; then
+      cd ./pakkasmarja-erp-services
+      apt update && apt install -y openssl
+      sh scripts/decrypt.sh
+    fi
 
 - name: gcr.io/cloud-builders/gradle
   id: gradle-build-erp-services
   entrypoint: bash
-  env:
-    - 'ENC_PASS=${_ENC_PASS}'
-    - 'ENC_ITER=${_ENC_ITER}'
   args:
-    - '-c'
-    - |
-      if [ -n "${_TEST}" ]; then
-        cd ./pakkasmarja-erp-services &&
-        ./scripts/decrypt.sh &&
-        ./gradlew clean build -PtargetEnvironment=local
-      fi
+  - '-c'
+  - |
+    if [ -n "${_TEST}" ]; then
+      cd ./pakkasmarja-erp-services
+      ./gradlew clean build -PtargetEnvironment=local
+    fi
 
 - name: gcr.io/cloud-builders/docker
   id: docker-build-erp-services
   entrypoint: bash
   args:
-    - '-c'
-    - |
-      if [ -n "${_TEST}" ]; then
-        cd ./pakkasmarja-erp-services &&
-        docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest . &&
-        cd .. &&
-        rm -fR pakkasmarja-erp-services
-      fi
+  - '-c'
+  - |
+    if [ -n "${_TEST}" ]; then
+      cd ./pakkasmarja-erp-services
+      docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest .
+      cd ..
+      rm -fR pakkasmarja-erp-services
+    fi
 
 - name: gcr.io/cloud-builders/docker
   id: docker-test
