@@ -53,6 +53,9 @@ steps:
   - |
     if [ -n "${_TEST}" ]; then
       git clone https://github.com/Metatavu/pakkasmarja-erp-services.git
+      cd ./pakkasmarja-erp-services
+      git submodule init
+      git submodule update
     fi
 
 - name: ubuntu
