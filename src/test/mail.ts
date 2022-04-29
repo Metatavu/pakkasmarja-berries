@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as config from "nconf";
 
 config.file({file: `${__dirname}/../../test/config.json`}).defaults(require(`${__dirname}/../../default-config.json`));
-  
+
 /**
  * Mail utility class for tests
  */
@@ -17,7 +17,7 @@ export default new class Mail {
 
   /**
    * Returns sent mails as JSON objects
-   * 
+   *
    * @return Array sent mails as JSON objects
    */
   public getOutbox() {
@@ -64,5 +64,5 @@ export default new class Mail {
       parents.push(folder);
     }
   }
-  
+
 }

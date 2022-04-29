@@ -12,8 +12,8 @@
     "taxCode": "FI11223344",
     "vatLiable": null,
     "audit": null,
-    "sapId": "tusap1",
-    "avatarUrl": "https://www.gravatar.com/avatar/56fffc9d7fa23ac7f7999c93fb0dfff1da066b93?d=identicon", 
+    "sapId": "111111",
+    "avatarUrl": "https://www.gravatar.com/avatar/56fffc9d7fa23ac7f7999c93fb0dfff1da066b93?d=identicon",
     "displayName": "Test 1 User 1"
   },
   "677e99fd-b854-479f-afa6-74f295052770": {
@@ -38,8 +38,42 @@
     "taxCode": "FI12345678",
     "vatLiable": null,
     "audit": "YES",
-    "sapId": "tusap2",
-    "avatarUrl": "https://www.gravatar.com/avatar/4228ee7ede5cec470df3daad8ce0ac98ce4f33fd?d=identicon", 
+    "sapId": "222222",
+    "avatarUrl": "https://www.gravatar.com/avatar/4228ee7ede5cec470df3daad8ce0ac98ce4f33fd?d=identicon",
     "displayName": "Test 2 User 2 Test Corp."
+  },
+  "d9d324ca-de2f-4756-86f0-17179aed8969": {
+    "id": "d9d324ca-de2f-4756-86f0-17179aed8969",
+    "firstName" : "New",
+    "lastName" : "SAP ID",
+    "companyName": null,
+    "phoneNumbers": [],
+    "email" : "new-sap-id@testrealm1.com",
+    "addresses": [],
+    "BIC": null,
+    "IBAN": null,
+    "taxCode": null,
+    "vatLiable": null,
+    "audit": null,
+    "sapId": "654321",
+    "avatarUrl": "https://www.gravatar.com/avatar/25b74dba63b569e00bbe8d2b928e76aed841a566?d=identicon",
+    "displayName": "New SAP ID"
+  },
+  "040cbeaa-b330-4094-9b7a-c04dea9e2891": {
+    "id": "040cbeaa-b330-4094-9b7a-c04dea9e2891",
+    "firstName": "Legacy",
+    "lastName": "SAP ID",
+    "companyName": null,
+    "phoneNumbers": [],
+    "email" : "legacy-sap-id@testrealm1.com",
+    "addresses": [],
+    "BIC": null,
+    "IBAN": null,
+    "taxCode": null,
+    "vatLiable": null,
+    "audit": null,
+    "sapId": "456789",
+    "avatarUrl": "https://www.gravatar.com/avatar/710a24cc7dddc65fbea586542152b74ca43e7128?d=identicon",
+    "displayName": "Legacy SAP ID"
   }
 }

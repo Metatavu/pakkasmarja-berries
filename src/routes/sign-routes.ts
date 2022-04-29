@@ -1,9 +1,11 @@
 import { Response, Request, Application } from "express";
 import Signature from "../signature";
 import models from "../models";
-import SapContractsServiceImpl from "../sap/impl/contracts";
 import { createStackedReject, logReject } from "../utils";
 import { getLogger } from "log4js";
+import ErpClient from "../erp/client";
+import userManagement, { UserProperty } from "../user-management";
+import { SapContractStatus } from "../generated/erp-services-client/api";
 
 /**
  * Sign routes
@@ -41,6 +43,7 @@ export default class SignRoutes {
             const { id, contractId } = contractDocument;
             models.updateContractDocumentSigned(id, true);
             models.updateContractStatus(contractId, "APPROVED");
+
             try {
               const contract = await models.findContractById(contractId);
               if (!contract) {
@@ -57,18 +60,48 @@ export default class SignRoutes {
                 throw Error("Could not find contract item group from database");
               }
 
-              await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
+              const user = await userManagement.findUser(contract.userId);
+              const businessPartnerCode = user ?
+                userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) :
+                null;
+
+              if (!businessPartnerCode) {
+                throw Error(`Could not resolve SAP business partner code for user ${contract.userId}`);
+              }
+
+              const contractsApi = await ErpClient.getContractsApi();
+              const response = await contractsApi.createContract({
+                businessPartnerCode: parseInt(businessPartnerCode),
+                contactPersonCode: 0,
+                itemGroupCode: parseInt(itemGroup.sapId),
+                deliveredQuantity: contract.deliveredQuantity || 0,
+                startDate: contract.startDate ? contract.startDate.toISOString() : undefined,
+                endDate: contract.endDate ? contract.endDate.toISOString() : undefined,
+                signingDate: contract.signDate ? contract.signDate.toISOString() : undefined,
+                terminateDate: undefined,
+                remarks: contract.remarks || "",
+                status: SapContractStatus.Approved
+              });
+
+              if (response.response.statusCode !== 200) {
+                throw new Error(`Could not create SAP contract: ${response.response.statusMessage}`);
+              }
+
+              await models.updateContractSapId(contractId, response.body.id!);
             } catch (error) {
-              logReject(createStackedReject(`Could not update contract of signed contract document ${id} to SAP`, error), getLogger());
+              logReject(
+                createStackedReject(`Could not update contract of signed contract document ${id} to SAP`, error),
+                getLogger()
+              );
             }
           } else {
             console.error(`Could not find contract document for vismasignId ${vismaSignDocumentId}`);
           }
         }
 
-      } catch (e) {
+      } catch (error) {
         success = false;
-        console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, e);
+        console.error(`Error verifying document status with vismasignId ${vismaSignDocumentId}`, error);
       }
     }
 

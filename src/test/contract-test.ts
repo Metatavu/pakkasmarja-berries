@@ -4,7 +4,6 @@ import * as moment from "moment";
 import * as cheerio from "cheerio";
 import auth from "./auth";
 import database from "./database";
-import operations from "./operations";
 import ApplicationRoles from "../rest/application-roles";
 import push from "./push";
 import pdf from "./pdf";
@@ -12,7 +11,7 @@ import xlsx from "./xlsx";
 import users from "./users";
 import requestUtils from "./request-utils";
 import TestConfig from "./test-config";
-import sapWireMockTestClient from "./wiremock-test-client";
+import sapMock from "./sap-mock";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contractDatas = require(`${testDataDir}/contracts.json`);
@@ -74,7 +73,7 @@ test("Test importing contracts", async (t) => {
     .set("Content-Type", "application/x-www-form-urlencoded")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ ApplicationRoles.CREATE_CONTRACT ])}`)
     .set("Accept", "application/json")
-    .attach('file', `${testDataDir}contracts-import.xlsx`)
+    .attach("file", `${testDataDir}contracts-import.xlsx`)
     .expect(200)
     .then(async response => {
       await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT ]);
@@ -156,6 +155,8 @@ test("Test creating contracts", async (t) => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
       t.deepEqual(push.getOutbox(), contractCreatePushNotifications);
 
+      push.clearOutbox();
+
       Object.keys(contractDataCreate).forEach((expectKey) => {
         const expectValue = contractDataCreate[expectKey];
         const actualValue = response.body[expectKey];
@@ -166,8 +167,8 @@ test("Test creating contracts", async (t) => {
 
 test("Test creating contract to SAP", async (t) => {
   await database.executeFiles(testDataDir, [ "delivery-places-setup.sql", "item-groups-setup.sql", "products-setup.sql", "contracts-setup.sql" ]);
-  push.clearOutbox();
-  await sapWireMockTestClient.empty();
+  await sapMock.deleteMocks();
+  await sapMock.mockItem("1");
 
   await request(TestConfig.HOST)
     .post("/rest/v1/contracts")
@@ -175,12 +176,14 @@ test("Test creating contract to SAP", async (t) => {
     .set("Accept", "application/json")
     .send(contractSapCreate)
     .expect(200)
-    .then(async () => {
-      t.equal(await sapWireMockTestClient.verify("POST", "/BlanketAgreements"), 1, "Create SAP contract request found");
+    .then(async ({ body }) => {
+      const { id, sapId, ...actualCreatedContract } = body;
+      t.equal(sapId, "2021-0-100", "Created contract SAP ID is correct");
+      t.deepEqual(actualCreatedContract, contractSapCreate, "created contract is equal to expected one");
     }).finally(async () => {
       await auth.removeUser1Roles([ ApplicationRoles.CREATE_CONTRACT, ApplicationRoles.UPDATE_OTHER_CONTRACTS ]);
       await database.executeFiles(testDataDir, [ "contracts-teardown.sql", "products-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql" ]);
-      await sapWireMockTestClient.empty();
+      await sapMock.deleteMocks();
       push.clearOutbox();
     });
 });
@@ -320,7 +323,7 @@ test("Test listing contracts - without token", async () => {
     .get("/rest/v1/contracts")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -333,7 +336,7 @@ test("Test listing contracts - invalid token", async () => {
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -359,7 +362,7 @@ test("Test finding contracts - without token", async () => {
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -372,7 +375,7 @@ test("Test finding contracts - invalid token", async () => {
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -385,7 +388,7 @@ test("Test finding contract - not found", async () => {
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
     .set("Accept", "application/json")
     .expect(404)
-    .then(async response => {
+    .then(async () => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
@@ -399,7 +402,7 @@ test("Test finding contract - malformed id", async () => {
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
     .set("Accept", "application/json")
     .expect(404)
-    .then(async response => {
+    .then(async () => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
@@ -455,7 +458,7 @@ test("Test contract pdf - without token", async () => {
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/documents/master?format=PDF")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -468,7 +471,7 @@ test("Test contract pdf - invalid token", async () => {
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
     .expect(403)
-    .then(async response => {
+    .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
@@ -536,43 +539,6 @@ test("Test contract pdf - invalid token", async () => {
     .expect(403)
     .then(async () => {
       await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
-    });
-});
-
-test("Test sync contracts", async (t) => {
-  const adminAccessToken = await auth.getAdminToken();
-
-  await operations.createOperationAndWait(adminAccessToken, "SAP_CONTACT_SYNC");
-  await operations.createOperationAndWait(adminAccessToken, "SAP_DELIVERY_PLACE_SYNC");
-  await operations.createOperationAndWait(adminAccessToken, "SAP_ITEM_GROUP_SYNC");
-  await operations.createOperationAndWait(adminAccessToken, "SAP_CONTRACT_SYNC");
-
-  return request(TestConfig.HOST)
-    .get("/rest/v1/contracts?listAll=true&maxResults=10")
-    .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTRACTS])}`)
-    .set("Accept", "application/json")
-    .expect(200)
-    .then(async response => {
-      await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTRACTS]);
-      await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
-      await database.executeFiles(testDataDir, ["contracts-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"]);
-
-      const actualContracts = response.body;
-      actualContracts.sort((c1: any, c2: any) => {
-        if (c1.year === c2.year) {
-          return c1.contractQuantity - c2.contractQuantity;
-        } else {
-          return c2.year - c1.year;
-        }
-      });
-
-      contractDatasSync.forEach((expectedContract: any, contractIndex: number) => {
-        Object.keys(expectedContract).forEach((expectKey) => {
-          const expectValue = expectedContract[expectKey];
-          const actualValue = actualContracts[contractIndex][expectKey];
-          t.deepEqual(actualValue, expectValue, `[${contractIndex}][${expectKey}] is ${actualValue}`);
-        });
-      });
     });
 });
 

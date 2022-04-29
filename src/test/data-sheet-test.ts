@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import ApplicationRoles from "../rest/application-roles";
@@ -8,7 +7,7 @@ import TestConfig from "./test-config";
 
 /**
  * Creates data sheet
- * 
+ *
  * @param token token
  * @param name name
  * @param data data
@@ -34,7 +33,7 @@ const createDataSheet = (token: string, name: string, data: string[][]): Promise
 
 /**
  * Creates data sheet
- * 
+ *
  * @param token token
  * @param id id
  * @param name name
@@ -61,10 +60,10 @@ const updateDataSheet = (token: string, id: string, name: string, data: string[]
 
 /**
  * Finds data sheet
- * 
+ *
  * @param token token
  * @param id data sheet id
- * @param expectStatus 
+ * @param expectStatus
  * @returns promise for data sheet
  */
 const findDataSheet = (token: string, id: string, expectStatus?: number): Promise<DataSheet> => {
@@ -75,12 +74,12 @@ const findDataSheet = (token: string, id: string, expectStatus?: number): Promis
     .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Lists data sheets
- * 
+ *
  * @param token token
  * @returns promise for data sheets
  */
@@ -92,12 +91,12 @@ const listDataSheets = (token: string, name: string): Promise<DataSheet[]> => {
     .expect(200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Deletes data sheet
- * 
+ *
  * @param token token
  * @param id data sheet id
  * @returns promise for delete
@@ -118,14 +117,14 @@ test("Create data sheet", async (t) => {
     ["1", "2"],
     ["2", "4"]
   ];
-  
+
   const createdDataSheet = await createDataSheet(token, name, data);
   t.notEqual(createdDataSheet, null);
   t.notEqual(createdDataSheet.id, null);
   t.equal(createdDataSheet.name, "sheet-name");
   t.deepEquals(createdDataSheet.data,  data);
   await deleteDataSheet(token, createdDataSheet.id!);
-  
+
   await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
@@ -137,7 +136,7 @@ test("Update data sheet", async (t) => {
     ["1", "2"],
     ["2", "4"]
   ];
-  
+
   const createdDataSheet = await createDataSheet(token, name, data);
   t.notEqual(createdDataSheet, null);
   t.notEqual(createdDataSheet.id, null);
@@ -158,11 +157,11 @@ test("Update data sheet", async (t) => {
   t.deepEquals(updatedDataSheet.data, updateData);
 
   const foundDataSheet = await findDataSheet(token, createdDataSheet.id!);
-  
+
   t.deepEqual(foundDataSheet, updatedDataSheet);
 
   await deleteDataSheet(token, createdDataSheet.id!);
-  
+
   await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });
 
@@ -178,7 +177,7 @@ test("Finds data sheet", async (t) => {
   const createdDataSheet = await createDataSheet(token, name, data);
   const foundDataSheet = await findDataSheet(token, createdDataSheet.id!);
   await findDataSheet(token, "1234", 404);
-  
+
   t.deepEqual(foundDataSheet, createdDataSheet);
   await deleteDataSheet(token, createdDataSheet.id!);
 
@@ -212,7 +211,7 @@ test("Lists data sheet", async (t) => {
 
 test("Deletes data sheet", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.MANAGE_DATA_SHEETS]);
-  
+
   const name = "sheet-name";
   const data: string[][] = [
     ["1", "2"],
@@ -224,6 +223,6 @@ test("Deletes data sheet", async (t) => {
   await findDataSheet(token, createdDataSheet.id!, 200);
   await deleteDataSheet(token, createdDataSheet.id!);
   await findDataSheet(token, createdDataSheet.id!, 404);
-  
+
   await auth.removeUser1Roles([ApplicationRoles.MANAGE_DATA_SHEETS]);
 });

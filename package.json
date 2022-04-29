@@ -10,7 +10,8 @@
     "test": "node_modules/.bin/istanbul cover --report none --dir coverage/unit node_modules/.bin/tape -- dist/test/*-test.js|node_modules/.bin/tap-spec",
     "coverage": "node_modules/.bin/istanbul report",
     "build": "tsc",
-    "build-erp-services-client": "openapi-generator-cli generate -i pakkasmarja-erp-services-spec/swagger.yaml -o src/generated/erp-services-client -c generator-config.json -g typescript-node"
+    "build-erp-services-client": "openapi-generator-cli generate -i pakkasmarja-erp-services-spec/swagger.yaml -o src/generated/erp-services-client -c generator-config.json -g typescript-node",
+    "build-odata-client": "openapi-generator-cli generate -i odata-mock-spec/swagger.yaml -o src/generated/odata-client -c generator-config.json -g typescript-node"
   },
   "author": {
     "name": "Metatavu",

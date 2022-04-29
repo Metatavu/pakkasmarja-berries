@@ -13,7 +13,7 @@ export type OnMessageCallback = (message: any) => void;
  * Class that handles MQTT connection
  */
 export default new class Mqtt {
-  
+
   private logger: Logger = getLogger();
   private client: mqtt.MqttClient;
   private subscribers: Map<String, Array<OnMessageCallback>>;
@@ -29,12 +29,12 @@ export default new class Mqtt {
 
   /**
    * Publishes a message
-   * 
+   *
    * @param subtopic subtopic
    * @param message message
    * @returns promise for sent package
    */
-  public publish(subtopic: string, message: any): Promise<mqtt.Packet> {
+  public publish(subtopic: string, message: any): Promise<mqtt.Packet | undefined> {
     return new Promise((resolve, reject) => {
       const topic = `${config().mqtt.topicPrefix}${config().mqtt.topic}/${subtopic}/`;
       this.client.publish(topic, JSON.stringify(message), (error?: Error, packet?: mqtt.Packet) => {
@@ -46,27 +46,27 @@ export default new class Mqtt {
       });
     });
   }
-  
+
   /**
    * Subscribes to given subtopic
-   * 
+   *
    * @param subtopic subtopic
    * @param onMessage message handler
    */
   public subscribe(subtopic: string, onMessage: OnMessageCallback) {
-    const topicSubscribers = this.subscribers.get(subtopic) || [];
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
     topicSubscribers.push(onMessage);
     this.subscribers.set(subtopic, topicSubscribers);
   }
-  
+
   /**
    * Unsubscribes from given subtopic
-   * 
+   *
    * @param subtopic subtopic
    * @param onMessage message handler
    */
   public unsubscribe(subtopic: string, onMessage: OnMessageCallback) {
-    const topicSubscribers = this.subscribers.get(subtopic) || [];
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
     this.subscribers.set(subtopic, topicSubscribers.filter((topicSubscriber) => {
       return topicSubscriber !== onMessage;
     }));
@@ -76,7 +76,7 @@ export default new class Mqtt {
    * Reconnects to MQTT server
    */
   public async reconnect() {
-    if (this.client && this.client.connected) {
+    if (this.client && this.client.connected) {
       await this.disconnect();
     }
 
@@ -109,7 +109,7 @@ export default new class Mqtt {
    * Disconnects from the server
    */
   public async disconnect() {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       if (this.client && this.client.connected) {
         this.client.end(false, resolve);
       } else {
@@ -120,7 +120,7 @@ export default new class Mqtt {
 
   /**
    * Waits for connection connecting
-   * 
+   *
    * @returns promise for connection not connecting
    */
   private waitConnectingDelayed(): Promise<boolean> {
@@ -133,17 +133,17 @@ export default new class Mqtt {
 
   /**
    * Connects the MQTT client
-   * 
+   *
    * @returns promise for connection
    */
-  private doConnect() {
-    return new Promise((resolve) => {
-      if (this.client && this.client.connected) {
+  private doConnect() {
+    return new Promise<void>((resolve) => {
+      if (this.client && this.client.connected) {
         return resolve();
       }
 
-      const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port + (config().mqtt.path || ""); 
-      const options: IClientOptions = { 
+      const url = (config().mqtt.secure ? "wss://" : "ws://") + config().mqtt.host + ":" + config().mqtt.port + (config().mqtt.path || "");
+      const options: IClientOptions = {
         host: config().mqtt.host,
         port: config().mqtt.port,
         keepalive: 30,
@@ -202,7 +202,7 @@ export default new class Mqtt {
     const subtopicIndex = topicStripped.lastIndexOf("/") + 1;
     const subtopic = topicStripped.substr(subtopicIndex);
     const message = JSON.parse(payload.toString());
-    const topicSubscribers = this.subscribers.get(subtopic) || [];
+    const topicSubscribers = this.subscribers.get(subtopic) || [];
     topicSubscribers.forEach((topicSubscriber: OnMessageCallback) => {
       topicSubscriber(message);
     });

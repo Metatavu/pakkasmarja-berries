@@ -6,7 +6,9 @@ import ApplicationRoles from "../rest/application-roles";
 import database from "./database";
 import mail from "./mail";
 import TestConfig from "./test-config";
-import sapWireMockTestClient from "./wiremock-test-client";
+import sapMock from "./sap-mock";
+import _ = require("lodash");
+import Mailgun = require("mailgun-js");
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const deliveriesData = require(`${testDataDir}/deliveries.json`);
@@ -195,14 +197,13 @@ test("Create delivery", async (t) => {
 });
 
 test("Update delivery", async (t) => {
-  await sapWireMockTestClient.empty();
+  await sapMock.deleteMocks();
   await database.executeFiles(testDataDir, [ "delivery-setup.sql" ]);
   const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS, ApplicationRoles.LIST_AND_FIND_OTHER_DELIVERIES ]);
 
   try {
     const createdDelivery = await createDelivery(token);
     const updatedDelivery = await updateDelivery(token, createdDelivery.id || "");
-    t.true(await sapWireMockTestClient.verify("POST", "/PurchaseDeliveryNotes"), "Purchase delivery note request found");
     t.notEqual(updatedDelivery, null);
     t.notEqual(updatedDelivery.id, null);
     t.equal(updatedDelivery.status, deliveriesData[1].status)
@@ -212,7 +213,7 @@ test("Update delivery", async (t) => {
     t.equal(updatedDelivery.productId, deliveriesData[1].productId)
     t.equal(updatedDelivery.time, deliveriesData[1].time)
   } finally {
-    await sapWireMockTestClient.empty();
+    await sapMock.deleteMocks();
     await database.executeFiles(testDataDir, [ "delivery-teardown.sql" ]);
   }
 
@@ -221,23 +222,40 @@ test("Update delivery", async (t) => {
 
 test("Update delivery if user rejected already confirmed delivery", async t => {
   mail.clearOutbox();
-  const contactUpdateMail = require(`${testDataDir}/delivery-cancelled-mail-recipient.json`);
-  const contactUpdateMailToShipper = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
+  const deliveryCancelledMailRecipient: Mailgun.messages.SendData = require(`${testDataDir}/delivery-cancelled-mail-recipient.json`);
+  const deliveryCancelledMailShipper: Mailgun.messages.SendData = require(`${testDataDir}/delivery-cancelled-mail-shipper.json`);
 
-  await database.executeFiles(testDataDir, ["delivery-update-setup.sql"]);
+  await database.executeFiles(testDataDir, [ "delivery-update-setup.sql" ]);
   const token = await auth.getTokenUser1([ ApplicationRoles.CREATE_CHAT_GROUPS ]);
 
   try {
     const createdDelivery = await createDelivery(token);
     const updatedDeliveryRejected = await updateDeliveryRejected(token, createdDelivery.id || "");
 
-    t.notEqual(updatedDeliveryRejected, null);
-    t.equal(updatedDeliveryRejected.status, deliveriesDataUpdate[0].status);
-    t.equal(mail.getOutbox().length, 3);
-    t.equal(mail.getOutbox().filter(mail => mail["to"] === "pakaste@example.com" || mail["to"] === "tilaukset@example.com").length, 2);
-    t.equal(mail.getOutbox().filter(mail => mail["to"] === "test1@testrealm1.com").length, 1);
-    t.equal(mail.getOutbox().find(mail => mail["to"] === "pakaste@example.com")["text"].length, contactUpdateMail["text"].length);
-    t.equal(mail.getOutbox().find(mail => mail["to"] === "test1@testrealm1.com")["text"].length, contactUpdateMailToShipper["text"].length);
+    t.notEqual(updatedDeliveryRejected, null, "Delivery is not null");
+    t.equal(updatedDeliveryRejected.status, deliveriesDataUpdate[0].status, "Delivery status is correct");
+    t.equal(mail.getOutbox().length, 3, "3 mails are sent");
+
+    const allMails = _.groupBy<Mailgun.messages.SendData>(mail.getOutbox(), value => value.to);
+
+    const frozenEmails = allMails["rejecteddelivery.frozen@example.com"];
+    const deliveryEmails = allMails["rejecteddelivery.deliveries@example.com"];
+    const shipperEmails = allMails["test1@testrealm1.com"];
+
+    t.equal(frozenEmails.length, 1, "Exactly one frozen email exists");
+    t.equal(deliveryEmails.length, 1, "Exactly one delivery email exists");
+    t.equal(shipperEmails.length, 1, "Exactly one shipper email exists");
+
+    t.equal(
+      (frozenEmails[0].text || "").length,
+      (deliveryCancelledMailRecipient.text || "").length,
+      "Frozen email has the same length as the template"
+    );
+    t.equal(
+      (shipperEmails[0].text || "").length,
+      (deliveryCancelledMailShipper.text || "").length,
+      "Supplier email has the same length as the template"
+    );
   } finally {
     await database.executeFiles(testDataDir, ["delivery-update-teardown.sql"]);
   }

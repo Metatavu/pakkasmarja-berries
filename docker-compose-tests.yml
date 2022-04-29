@@ -1,5 +1,24 @@
 version: "3"
 services:
+  sap-mock:
+    image: metatavu/odata-mock:latest
+    environment:
+      ODATA_MOCK_EDM_FILE: /opt/odata/edm.xml
+      ODATA_MOCK_SESSION_COOKIE_NAME: B1SESSION
+      ODATA_MOCK_SESSION_COMPANYDB: companydb
+      ODATA_MOCK_SESSION_USERNAME: sapuser
+      ODATA_MOCK_SESSION_PASSWORD: sappass
+    volumes:
+      - ./test-volumes/odata-mock:/opt/odata
+  erp-service:
+    image: metatavu/erp-service:latest
+    environment:
+      FI_METATAVU_PAKKASMARJA_SAP_API_URL: http://sap-mock:8080/odata
+      FI_METATAVU_PAKKASMARJA_SAP_COMPANY_DB: companydb
+      FI_METATAVU_PAKKASMARJA_SAP_USER_NAME: sapuser
+      FI_METATAVU_PAKKASMARJA_SAP_USER_PASSWORD: sappass
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://test-keycloak:8080/auth/realms/pm
+      QUARKUS_OIDC_CLIENT_ID: erp
   pm-mysql:
     image: mysql:5.7
     command: --lower_case_table_names=1
@@ -21,12 +40,6 @@ services:
       - 8080:8080
     volumes:
       - ./test-volumes/keycloak:/opt/docker
-  sap-api-wiremock:
-    image: rodolpheche/wiremock
-    ports:
-      - 1234:8080
-    volumes:
-      - ./test/sap-api-wiremock:/home/wiremock
   pakkasmarja-api:
     build: .
     environment:
@@ -44,7 +57,6 @@ services:
     volumes:
       - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
       - ./test-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json
-      - ./test-volumes/pakkasmarja-api/sap-files:/usr/src/pakkasmarja/sap-files
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml
@@ -54,15 +66,15 @@ services:
       dockerfile: Dockerfile.tests
     environment:
       TEST_HOST: http://pakkasmarja-api:3000
-      SAP_TEST_CLIENT_HOST: http://sap-api-wiremock:8080
     depends_on:
       - pakkasmarja-api
       - pm-mysql
       - test-keycloak
+      - sap-mock
+      - erp-service
     volumes:
       - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
       - ./test-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json
-      - ./test-volumes/pakkasmarja-api/sap-files:/usr/src/pakkasmarja/sap-files
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml

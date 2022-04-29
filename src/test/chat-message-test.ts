@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
 import auth from "./auth";
@@ -11,7 +10,7 @@ import TestConfig from "./test-config";
 
 /**
  * Sorts list by id
- * 
+ *
  * @param list list
  * @return sorted list
  */
@@ -19,13 +18,13 @@ const sorted = (list: any[]) => {
   list.sort((a, b) => {
     return a.id! - b.id!;
   });
-  
+
   return list;
 }
 
 /**
  * Lists chat groups
- * 
+ *
  * @param token token
  * @returns promise for chat groups
  */
@@ -37,12 +36,12 @@ const listUserGroups = (token: string): Promise<UserGroup[]> => {
     .expect(200)
     .then((response) => {
       return sorted(response.body);
-    });  
+    });
 }
 
 /**
  * Lists unreads
- * 
+ *
  * @param token token
  * @returns promise for unreads
  */
@@ -54,12 +53,12 @@ const listUnreads = (token: string, pathPrefix: string): Promise<Unread[]> => {
     .expect(200)
     .then((response) => {
       return sorted(response.body);
-    });  
+    });
 }
 
 /**
  * Creates chat group
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -86,7 +85,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
 
 /**
  * Creates chat thread
- *  
+ *
  * @param token token
  * @param groupId group id
  * @param title thread title
@@ -122,7 +121,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
 
 /**
  * Creates chat group
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -152,7 +151,7 @@ const createChatMessage = (token: string, threadId: number, contents: string): P
 
 /**
  * Finds chat message
- * 
+ *
  * @param token token
  * @param threadId chat thread id
  * @param messageId chat message id
@@ -167,12 +166,12 @@ const findChatMessage = (token: string, threadId: number, messageId: number, exp
     .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Lists chat messages
- * 
+ *
  * @param token token
  * @param threadId thread id
  * @returns promise for chat groups
@@ -187,7 +186,7 @@ const listChatMessages = (token: string, threadId: number, createdBefore?: Date,
   if (createdAfter) {
     query.push(`createdAfter=${createdAfter.toISOString()}`);
   }
-  
+
   return request(TestConfig.HOST)
     .get(`/rest/v1/chatThreads/${threadId}/messages?${query.join("&")}`)
     .set("Authorization", `Bearer ${token}`)
@@ -198,14 +197,14 @@ const listChatMessages = (token: string, threadId: number, createdBefore?: Date,
       result.sort((a, b) => {
         return a.id! - b.id!;
       });
-      
+
       return result;
-    });  
+    });
 }
 
 /**
  * Updates chat message
- * 
+ *
  * @param token token
  * @param id id
  * @param threadId thread id
@@ -236,7 +235,7 @@ const updateChatMessage = (token: string, id: number, threadId: number, contents
 
 /**
  * Deletes chat group
- * 
+ *
  * @param token token
  * @param id chat group id
  * @returns promise for delete
@@ -251,7 +250,7 @@ const deleteChatGroup = async (token: string, id: number) => {
 
 /**
  * Deletes chat thread
- * 
+ *
  * @param token token
  * @param threadId chat thread id
  * @returns promise for delete
@@ -266,7 +265,7 @@ const deleteChatThread = async (token: string, threadId: number) => {
 
 /**
  * Deletes chat message
- * 
+ *
  * @param token token
  * @param threadId chat thread id
  * @param messageId chat message id
@@ -281,8 +280,8 @@ const deleteChatMessage = async (token: string, threadId: number, messageId: num
 }
 
 /**
- * Updates message createdAt value 
- * 
+ * Updates message createdAt value
+ *
  * @param token token
  * @param message message
  * @param createdAt createdAt
@@ -295,7 +294,7 @@ const updateMessageCreated = async (token: string, message: ChatMessage, created
 
 /**
  * Returns Date object
- * 
+ *
  * @param year year
  * @param month month
  * @param date date
@@ -319,7 +318,7 @@ const waitAsync = (timeout: number): Promise<void> => {
 
 test("Create chat message", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  
+
   await mqtt.subscribe("chatmessages");
   try {
     const createdChatGroup = await createChatGroup(token, "Group title (Create chat message)", "CHAT");
@@ -331,8 +330,8 @@ test("Create chat message", async (t) => {
       "messageId": createdChatMessage.id,
       "threadId": createdChatThread.id,
       "groupId": createdChatGroup.id
-    });    
-    
+    });
+
     await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
     await deleteChatThread(token, createdChatThread.id!);
     await deleteChatGroup(token, createdChatGroup.id!);
@@ -358,7 +357,7 @@ test("Finds chat message", async (t) => {
   t.deepEqual(foundChatMessage, createdChatMessage);
 
   await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
@@ -374,10 +373,10 @@ test("Updates chat message", async (t) => {
   const updatedMessage = await updateChatMessage(token, createdChatMessage.id!, createdChatThread.id!, "Updated");
 
   t.equal(updatedMessage.contents, "Updated");
-  
+
 
   await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   await auth.removeUser1Roles([ApplicationRoles.CREATE_CHAT_GROUPS]);
@@ -394,13 +393,13 @@ test("Lists chat messages", async (t) => {
   const createdChatThreads = await Promise.all([
     await createChatThread(token, createdGroups[0].id!, "Thread 1.1"),
     await createChatThread(token, createdGroups[1].id!, "Thread 1.2")
-  ]); 
+  ]);
 
   const createdMessages1 = await Promise.all([
     await createChatMessage(token, createdChatThreads[0].id!, "Message 1.1"),
     await createChatMessage(token, createdChatThreads[0].id!, "Message 1.2"),
     await createChatMessage(token, createdChatThreads[0].id!, "Message 1.3")
-  ]); 
+  ]);
 
   createdMessages1.sort((a, b) => {
     return a.id! - b.id!;
@@ -409,26 +408,43 @@ test("Lists chat messages", async (t) => {
   const createdMessages2 = await Promise.all([
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.1"),
     await createChatMessage(token, createdChatThreads[1].id!, "Message 2.2")
-  ]); 
+  ]);
 
   createdMessages2.sort((a, b) => {
     return a.id! - b.id!;
   });
 
-  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!), createdMessages1);
-  t.deepEqual(await listChatMessages(token, createdChatThreads[1].id!), createdMessages2);
+  const [ foundMessages1, foundMessages2 ] = await Promise.all([
+    listChatMessages(token, createdChatThreads[0].id!),
+    listChatMessages(token, createdChatThreads[1].id!)
+  ]);
+
+  t.deepEqual(foundMessages1, createdMessages1);
+  t.deepEqual(foundMessages2, createdMessages2);
 
   const messageCreated1 = getDate(2017, 3, 2);
   const messageCreated2 = getDate(2017, 3, 4);
   const messageCreated3 = getDate(2017, 3, 6);
 
-  createdMessages1[0] = await updateMessageCreated(token, createdMessages1[0], messageCreated1);
-  createdMessages1[1] = await updateMessageCreated(token, createdMessages1[1], messageCreated2);
-  createdMessages1[2] = await updateMessageCreated(token, createdMessages1[2], messageCreated3);
+  const updatedMessages = await Promise.all([
+    updateMessageCreated(token, createdMessages1[0], messageCreated1),
+    updateMessageCreated(token, createdMessages1[1], messageCreated2),
+    updateMessageCreated(token, createdMessages1[2], messageCreated3)
+  ]);
 
-  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 3), undefined), [ createdMessages1[0] ]);
-  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, undefined, getDate(2017, 3, 5)), [ createdMessages1[2] ]);
-  t.deepEqual(await listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 5), getDate(2017, 3, 3)), [ createdMessages1[1] ]);
+  createdMessages1[0] = updatedMessages[0];
+  createdMessages1[1] = updatedMessages[1];
+  createdMessages1[2] = updatedMessages[2];
+
+  const afterUpdateMessageLists = await Promise.all([
+    listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 3), undefined),
+    listChatMessages(token, createdChatThreads[0].id!, getDate(2017, 3, 5), getDate(2017, 3, 3)),
+    listChatMessages(token, createdChatThreads[0].id!, undefined, getDate(2017, 3, 5))
+  ]);
+
+  t.deepEqual(afterUpdateMessageLists[0], [ createdMessages1[0] ]);
+  t.deepEqual(afterUpdateMessageLists[1], [ createdMessages1[1] ]);
+  t.deepEqual(afterUpdateMessageLists[2], [ createdMessages1[2] ]);
 
   await Promise.all(createdMessages1.map((message) => {
     return deleteChatMessage(token, message.threadId, message.id!);
@@ -463,13 +479,13 @@ test("Deletes chat message", async (t) => {
     await deleteChatMessage(token, createdChatThread.id!, createdChatMessage.id!);
     await findChatMessage(token, createdChatThread.id!, createdChatMessage.id!, 404);
 
-    await deleteChatThread(token, createdChatThread.id!);    
+    await deleteChatThread(token, createdChatThread.id!);
     await deleteChatGroup(token, createdChatGroup.id!);
 
     await mqtt.expectMessage({
       "operation": "DELETED",
       "id": createdChatMessage.id
-    });    
+    });
 
   } finally {
     await mqtt.unsubscribe("chatmessages");
@@ -506,14 +522,14 @@ test("Create chat message unreads", async (t) => {
   await chatPermissions.createChatThreadGroupPermission(token, chatThread1.id!, userGroup1!.id!, "ACCESS");
   await chatPermissions.createChatGroupGroupPermission(token, chatGroup1.id!, userGroup2!.id!, "MANAGE");
   await chatPermissions.createChatGroupGroupPermission(token, chatGroup2.id!, userGroup1!.id!, "ACCESS");
-  
+
   const chatMessage1 = await createChatMessage(token, chatThread1.id!, "Message!");
   const chatMessage2 = await createChatMessage(token1, chatThread2.id!, "Message!");
 
   await waitAsync(2000);
 
-  const adminGroupd1Unreads = await listUnreads(token, `chat-${chatGroup1.id}`); 
-  const adminGroupd2Unreads = await listUnreads(token, `chat-${chatGroup2.id}`); 
+  const adminGroupd1Unreads = await listUnreads(token, `chat-${chatGroup1.id}`);
+  const adminGroupd2Unreads = await listUnreads(token, `chat-${chatGroup2.id}`);
   const user1Group1Unreads = await listUnreads(token1, `chat-${chatGroup1.id}`);
   const user2Group1Unreads = await listUnreads(token2, `chat-${chatGroup1.id}`);
   const user1Group2Unreads = await listUnreads(token1, `chat-${chatGroup2.id}`);
@@ -531,7 +547,7 @@ test("Create chat message unreads", async (t) => {
   t.equals(user2Group1Unreads.length, 1);
   t.equals(user1Group1Unreads[0].path, `chat-${chatGroup1.id}-${chatThread1.id}-${chatMessage1.id}`);
   t.equals(user2Group1Unreads[0].path, `chat-${chatGroup1.id}-${chatThread1.id}-${chatMessage1.id}`);
-  
+
   // No unreads for user 1 or user 2 in group 2
   t.equals(user1Group2Unreads.length, 0);
   t.equals(user2Group2Unreads.length, 0);
@@ -573,7 +589,7 @@ test("Chat message unreads permission change", async (t) => {
   await waitAsync(2000);
 
   t.equals((await listUnreads(token1, `chat-${chatGroup1.id}`)).length, 0);
-  
+
   await deleteChatMessage(token, chatThread1.id!, chatMessage1.id!);
   await deleteChatThread(token, chatThread1.id!);
   await deleteChatGroup(token, chatGroup1.id!);

@@ -1,0 +1,65 @@
+{
+  "1": {
+    "CardCode": "654321",
+    "U_PFZ_LegCardCode": "123456",
+    "CardType": "cSupplier",
+    "EmailAddress": "new-sap-id@testrealm1.com",
+    "Phone1": "+358 11 111 1111",
+    "Phone2": null,
+    "BPAddresses": [
+      {
+        "AddressType": "bo_BillTo",
+        "AddressName": "New SAP Billing",
+        "Street": "New SAP Street 111",
+        "City": "New SAP City",
+        "ZipCode": "11111"
+      }
+    ],
+    "CardName": "New SAP.",
+    "FederalTaxID": "FI11111111",
+    "VatLiable": "vEC",
+    "UpdateDate": "2022-02-18",
+    "UpdateTime": "08:00:12",
+    "BPBankAccounts": [
+      {
+        "BICSwiftCode": "NSAP1111",
+        "IBAN": "FI1111111111111111"
+      }
+    ]
+  },
+  "2": {
+    "CardCode": "987654",
+    "U_PFZ_LegCardCode": "456789",
+    "CardType": "cSupplier",
+    "EmailAddress": "legacy-sap-id@testrealm1.com",
+    "Phone1": "+358 22 222 2222",
+    "Phone2": "+358 33 333 3333",
+    "BPAddresses": [
+      {
+        "AddressType": "bo_BillTo",
+        "AddressName": "Legacy SAP Billing",
+        "Street": "Legacy SAP Street 222",
+        "City": "Legacy SAP City",
+        "ZipCode": "22222"
+      },
+      {
+        "AddressType": "bo_ShipTo",
+        "AddressName": "Legacy SAP Street Shipping",
+        "Street": "Legacy SAP Street 333",
+        "City": "Legacy SAP City",
+        "ZipCode": "33333"
+      }
+    ],
+    "CardName": "Legacy SAP.",
+    "FederalTaxID": "FI22222222",
+    "VatLiable": "vLiable",
+    "UpdateDate": "2022-02-18",
+    "UpdateTime": "08:00:12",
+    "BPBankAccounts": [
+      {
+        "BICSwiftCode": "LSAP2222",
+        "IBAN": "FI2222222222222222"
+      }
+    ]
+  }
+}

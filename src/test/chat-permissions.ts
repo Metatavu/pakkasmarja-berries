@@ -1,4 +1,3 @@
-import config from "./config";
 import * as request from "supertest";
 import { ChatGroupGroupPermission } from "../rest/model/chatGroupGroupPermission";
 import { ChatThreadPermissionScope, ChatGroupPermissionScope, ChatThreadGroupPermission, ChatThreadUserPermission } from "../rest/model/models";
@@ -8,7 +7,7 @@ export default new class ChatPermissions {
 
   /**
    * Creates chat group group permission
-   * 
+   *
    * @param token token
    * @param title title
    * @param type type
@@ -35,7 +34,7 @@ export default new class ChatPermissions {
 
   /**
    * Update chat group group permission
-   * 
+   *
    * @param token token
    * @param chatGroupId chatGroupId
    * @param payload payload
@@ -55,7 +54,7 @@ export default new class ChatPermissions {
 
   /**
    * Finds chat group group permission
-   * 
+   *
    * @param token token
    * @param chatGroupId chatGroupId
    * @param payload payload
@@ -74,10 +73,10 @@ export default new class ChatPermissions {
 
   /**
    * List chat group group permissions
-   * 
+   *
    * @param token token
    * @param id chat group id
-   * @param expectStatus 
+   * @param expectStatus
    * @returns promise for chat group group permissions
    */
   public listChatGroupGroupPermissions = (token: string, id: number, expectStatus?: number): Promise<ChatGroupGroupPermission[]> => {
@@ -88,12 +87,12 @@ export default new class ChatPermissions {
       .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
-      });  
+      });
   }
 
   /**
    * Delete chat group group permission
-   * 
+   *
    * @param token token
    * @param chatThreadId chatThreadId
    * @returns promise for delete permission
@@ -111,7 +110,7 @@ export default new class ChatPermissions {
 
   /**
    * Creates chat group group permission
-   * 
+   *
    * @param token token
    * @param title title
    * @param type type
@@ -138,7 +137,7 @@ export default new class ChatPermissions {
 
   /**
    * Update chat group group permission
-   * 
+   *
    * @param token token
    * @param chatGroupId chatGroupId
    * @param payload payload
@@ -158,7 +157,7 @@ export default new class ChatPermissions {
 
   /**
    * Finds chat group group permission
-   * 
+   *
    * @param token token
    * @param chatGroupId chatGroupId
    * @param payload payload
@@ -177,10 +176,10 @@ export default new class ChatPermissions {
 
   /**
    * List chat group group permissions
-   * 
+   *
    * @param token token
    * @param id chat group id
-   * @param expectStatus 
+   * @param expectStatus
    * @returns promise for chat group group permissions
    */
   public listChatThreadGroupPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadGroupPermission[]> => {
@@ -191,12 +190,12 @@ export default new class ChatPermissions {
       .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
-      });  
+      });
   }
 
   /**
    * Creates chat user user permission
-   * 
+   *
    * @param token token
    * @param title title
    * @param type type
@@ -223,7 +222,7 @@ export default new class ChatPermissions {
 
   /**
    * Update chat user user permission
-   * 
+   *
    * @param token token
    * @param chatUserId chatUserId
    * @param payload payload
@@ -243,7 +242,7 @@ export default new class ChatPermissions {
 
   /**
    * Finds chat user user permission
-   * 
+   *
    * @param token token
    * @param chatUserId chatUserId
    * @param payload payload
@@ -262,10 +261,10 @@ export default new class ChatPermissions {
 
   /**
    * List chat user user permissions
-   * 
+   *
    * @param token token
    * @param id chat user id
-   * @param expectStatus 
+   * @param expectStatus
    * @returns promise for chat user user permissions
    */
   public listChatThreadUserPermissions = (token: string, chatThreadId: number, expectStatus?: number): Promise<ChatThreadUserPermission[]> => {
@@ -276,6 +275,6 @@ export default new class ChatPermissions {
       .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
-      });   
+      });
     }
 }

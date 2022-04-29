@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import userManagement from ".";
-import { ApplicationScope, CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_THREAD_ACCESS } from "../rest/application-scopes";
+import { ApplicationScope } from "../rest/application-scopes";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
 import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
 import { ChatGroupModel, ThreadModel } from "../models";
@@ -14,7 +14,7 @@ export default class AbstractPermissionController {
 
   /**
    * Returns resource name for a group
-   * 
+   *
    * @param chatGroup chat group
    * @return resource name for a group
    */
@@ -24,7 +24,7 @@ export default class AbstractPermissionController {
 
   /**
    * Deletes a permission
-   * 
+   *
    * @param name permission name
    * @return promise for deletion
    */
@@ -37,7 +37,7 @@ export default class AbstractPermissionController {
 
   /**
    * Returns resource name for a thread
-   * 
+   *
    * @param chatThread chat thread
    * @return resource name for a thread
    */
@@ -47,7 +47,7 @@ export default class AbstractPermissionController {
 
   /**
    * Grants user an owner permission to given resource
-   * 
+   *
    * @param userId user id
    * @param resourceType resource type
    * @param resourceName resource name
@@ -61,13 +61,13 @@ export default class AbstractPermissionController {
     if (permission) {
       await userManagement.deletePermission(permission.id!);
     }
-    
+
     return await this.createScopePermission(permissionName, resource, scopes, policy);
   }
 
   /**
    * Finds or creates group policies for given group id
-   * 
+   *
    * @param userGroupId user group id
    * @returns promise for group policy
    */
@@ -83,7 +83,7 @@ export default class AbstractPermissionController {
 
   /**
    * Finds or creates user policies for given user id
-   * 
+   *
    * @param user user id
    * @returns promise for user policy
    */
@@ -99,7 +99,7 @@ export default class AbstractPermissionController {
 
   /**
    * Deletes a permission
-   * 
+   *
    * @param permissionId permission id
    * @return promise for deletion
    */
@@ -109,7 +109,7 @@ export default class AbstractPermissionController {
 
   /**
    * Creates scope permission
-   * 
+   *
    * @param name name
    * @param resource resource
    * @param scopes scopes
@@ -122,13 +122,13 @@ export default class AbstractPermissionController {
 
   /**
    * Finds or creates an user policy
-   * 
+   *
    * @param userId user id
    * @returns promise for user policy
    */
   protected async createUserPolicy(userId: string) {
     const name = `user-${userId}`;
-    
+
     let result = await userManagement.findUserPolicyByName(name);
     if (!result) {
       result = await userManagement.createUserPolicy(name, [ userId ]);
@@ -139,22 +139,22 @@ export default class AbstractPermissionController {
 
   /**
    * Finds or creates new group resource into the Keycloak
-   * 
-   * @param id group id 
+   *
+   * @param id group id
    * @returns promise for group resource
    */
   protected async createGroupResource (name: string, uri: string, type: string, scopes: ApplicationScope[]): Promise<ResourceRepresentation> {
-    let resource = await userManagement.findResourceByUri(uri);        
+    let resource = await userManagement.findResourceByUri(uri);
     if (!resource) {
       resource = await userManagement.createResource(name, name, uri, type, scopes);
-    } 
+    }
 
     return resource!;
   }
 
   /**
-   * Returns associated permission policy ids for given permission 
-   * 
+   * Returns associated permission policy ids for given permission
+   *
    * @param permissionName name of permission
    * @return associated permission policy ids
    */
@@ -164,7 +164,7 @@ export default class AbstractPermissionController {
 
   /**
    * Returns whether group policy is associated with given permission
-   * 
+   *
    * @param permission permission
    * @param groupPolicy group policy
    * @return whether group policy is associated with given permission
@@ -175,8 +175,8 @@ export default class AbstractPermissionController {
   }
 
   /**
-   * Returns associated permission policy ids for given permission 
-   * 
+   * Returns associated permission policy ids for given permission
+   *
    * @param permissionName name of permission
    * @return associated permission policy ids
    */
@@ -186,7 +186,7 @@ export default class AbstractPermissionController {
     }
 
     const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
-    
+
     return policies.map((policy) => {
       return policy.id!;
     });
@@ -194,7 +194,7 @@ export default class AbstractPermissionController {
 
   /**
    * Adds a policy to scope permission
-   * 
+   *
    * @param permissionName name of permission
    * @param groupPolicy policy
    */
@@ -206,13 +206,13 @@ export default class AbstractPermissionController {
 
     const policyIds = await this.getPermissionPolicyIds(permission);
     permission.policies = policyIds.concat([groupPolicy.id!]);
-    
+
     return await userManagement.updateScopePermission(permission.id, permission);
   }
 
   /**
    * Removes a policy from chat group scope permission
-   * 
+   *
    * @param permissionName name of permission
    * @param groupPolicy policy
    */

@@ -22,12 +22,13 @@ import PermissionCache from "./permission-cache";
 
 export enum UserProperty {
   SAP_ID = "sapId",
+  SAP_BUSINESS_PARTNER_CODE = "sapBusinessPartnerCode",
   SAP_SALES_PERSON_CODE = "sapSalesPersonCode",
   COMPANY_NAME = "yritys",
   BIC = "BIC",
   IBAN = "IBAN",
   TAX_CODE = "verotunniste",
-  VAT_LIABLE = "arvonlisäverovelvollisuus", 
+  VAT_LIABLE = "arvonlisäverovelvollisuus",
   AUDIT = "auditointi",
   PHONE_1 = "Puhelin 1",
   PHONE_2 = "Puhelin 2",
@@ -48,11 +49,11 @@ interface PolicyResolveResult {
 export default new class UserManagement {
 
   private client: any;
-  private permissionCache: PermissionCache | null;
+  private permissionCache: PermissionCache | null;
   private userCache: UserCache | null;
   private requireFreshClient: boolean;
   private restClientInternalId: string;
-  
+
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
     this.permissionCache = config().cache.enabled ? new PermissionCache(6 * 1000 * 60 * 60) : null;
@@ -68,11 +69,11 @@ export default new class UserManagement {
 
   /**
    * Finds single user from Keycloak.
-   * 
+   *
    * @param {String} id user id
    * @return {Promise} promise for a user or null if not found
    */
-  public async findUser(id: string): Promise<UserRepresentation | null> {
+  public async findUser(id: string): Promise<UserRepresentation | null> {
     if (!id) {
       return null;
     }
@@ -92,9 +93,9 @@ export default new class UserManagement {
 
   /**
    * Finds user by attribute
-   * 
-   * @param {String} name attribute name 
-   * @param {String} value attribute value 
+   *
+   * @param {String} name attribute name
+   * @param {String} value attribute value
    */
   public async findUserByProperty(name: UserProperty, value: string | null): Promise<UserRepresentation | null> {
     if (value === null) {
@@ -125,7 +126,7 @@ export default new class UserManagement {
 
   /**
    * Lists all users from Keycloak
-   * 
+   *
    * @return users
    */
   public async listAllUsers(): Promise<UserRepresentation[]> {
@@ -133,7 +134,7 @@ export default new class UserManagement {
     const max = 50;
     let result: UserRepresentation[] = [];
     let paged: UserRepresentation[] = [];
-    
+
     do {
       paged = await this.listUsers({
         first: first,
@@ -150,8 +151,8 @@ export default new class UserManagement {
 
   /**
    * Finds user by email
-   * 
-   * @param {String} email email address 
+   *
+   * @param {String} email email address
    */
   findUserByEmail(email: string) {
     return this.listUsers({ email: email })
@@ -167,8 +168,8 @@ export default new class UserManagement {
   }
 
   /**
-   * Lists users in specified page by property  
-   * 
+   * Lists users in specified page by property
+   *
    * @param {String} name property name
    * @param {String} value  property value
    * @param {Integer} first first result
@@ -192,7 +193,7 @@ export default new class UserManagement {
 
   /**
    * Updates user into Keycloak
-   * 
+   *
    * @param {UserRepresentation} user user object
    * @return {Promise} promise that resolves on success and rejects on failure
    */
@@ -206,13 +207,13 @@ export default new class UserManagement {
     if (this.userCache) {
       await this.userCache.unset(user.id!);
     }
-    
+
     return user;
   }
-  
+
   /**
    * Updates user password into Keycloak
-   * 
+   *
    * @param {string} userId User id of keycloak user
    * @param {string} password New password for the user
    * @param {boolean} temporary if password is temporary or not
@@ -232,10 +233,10 @@ export default new class UserManagement {
       realm: config().keycloak.admin.realm
     });
   }
-  
+
   /**
-   * Lists users from Keycloak. 
-   * 
+   * Lists users from Keycloak.
+   *
    * @param {Object} options options (optional)
    * @return {Promise} promise for users
    */
@@ -245,10 +246,10 @@ export default new class UserManagement {
       realm: config().keycloak.admin.realm
     }));
   }
-  
+
   /**
    * Find group from the Keycloak
-   * 
+   *
    * @param userGroupId user group id
    */
   public async findGroup(userGroupId: string): Promise<GroupRepresentation> {
@@ -261,7 +262,7 @@ export default new class UserManagement {
 
   /**
    * Lists Groups from the Keycloak
-   * 
+   *
    * @param first first result index
    * @param max max results
    * @param search search string
@@ -278,7 +279,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz resource by URI
-   * 
+   *
    * @param uri URI
    * @return Promise for found resource or null if not found
    */
@@ -296,7 +297,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz resource
-   * 
+   *
    * @param name name
    * @param displayName display name
    * @param uri URI
@@ -327,7 +328,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz group policy by name
-   * 
+   *
    * @param name name
    * @return Promise for found policy or null if not found
    */
@@ -345,7 +346,7 @@ export default new class UserManagement {
 
   /**
    * Lists all role policies for the realm
-   * 
+   *
    * @returns list of role policies
    */
   public async listRolePolicies(): Promise<RolePolicyRepresentation[]> {
@@ -360,7 +361,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz group policy by name
-   * 
+   *
    * @param name name
    * @return Promise for found policy or null if not found
    */
@@ -378,7 +379,7 @@ export default new class UserManagement {
 
   /**
    * Finds role by name
-   * 
+   *
    * @param name name
    * @return Promise for found role or null if not found
    */
@@ -388,7 +389,7 @@ export default new class UserManagement {
     const roles = await client.roles.find({
       realm: config().keycloak.admin.realm
     } as any);
-    
+
     return roles.find((role) => {
       return role.name == name;
     });
@@ -396,13 +397,13 @@ export default new class UserManagement {
 
   /**
    * Creates new realm role
-   * 
+   *
    * @param name name
    * @return Promise for created role
    */
   public async createRealmRole(name: string): Promise<RoleRepresentation | undefined> {
     const client = await this.getClient();
-    
+
     await client.roles.create({
       name: name,
       realm: config().keycloak.admin.realm
@@ -413,7 +414,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz group policy by name
-   * 
+   *
    * @param name name
    * @return Promise for found policy or null if not found
    */
@@ -431,7 +432,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz group policy
-   * 
+   *
    * @param name name
    * @param groupIds group ids
    * @return Promise created policy
@@ -459,7 +460,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz role policy
-   * 
+   *
    * @param name name
    * @param roleIds role ids
    * @return Promise created policy
@@ -488,7 +489,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz group policy
-   * 
+   *
    * @param name name
    * @param userIds user ids
    * @return Promise created policy
@@ -512,7 +513,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz permissions by names
-   * 
+   *
    * @param names names
    * @return Promise for found permissions
    */
@@ -526,7 +527,7 @@ export default new class UserManagement {
 
   /**
    * Finds authz permission by name
-   * 
+   *
    * @param name name
    * @return Promise for found permission or null if not found
    */
@@ -544,7 +545,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz scope permission
-   * 
+   *
    * @param name name
    * @param resourceIds resource ids
    * @param scopes scopes
@@ -572,7 +573,7 @@ export default new class UserManagement {
 
   /**
    * Creates authz scope permission
-   * 
+   *
    * @param permissionId permission id
    * @param permission new permission
    * @return Promise updated permission
@@ -596,13 +597,13 @@ export default new class UserManagement {
 
   /**
    * Lists users for given permission
-   * 
+   *
    * @param permissions permissions
    * @returns users for given permission
    */
   public async listPermissionsUsers(permissions: PolicyRepresentation[]) {
     const client = await this.getClient();
-    
+
     const policyResolve: PolicyResolveResult = {
       groupPolicyNames: [],
       rolePolicyNames: [],
@@ -611,10 +612,10 @@ export default new class UserManagement {
 
     for (let i = 0; i < permissions.length; i++) {
       const permission = permissions[i];
-      const policies = await this.listAuthzPermissionAssociatedPolicies(permission.id!);  
+      const policies = await this.listAuthzPermissionAssociatedPolicies(permission.id!);
       await this.resolvePolicyTypes(policies, policyResolve);
     }
-    
+
     const roleIds: string[] = _.uniq(_.flatMap(await Promise.all(policyResolve.rolePolicyNames
       .map((name) => {
         return this.findRolePolicyByName(name);
@@ -683,8 +684,8 @@ export default new class UserManagement {
         result.push(user);
       }
     }
-    
-    return result; 
+
+    return result;
   }
 
   public async listAuthzPermissionAssociatedPolicies(permissionId: string): Promise<PolicyRepresentation[]> {
@@ -695,10 +696,10 @@ export default new class UserManagement {
       permissionId: permissionId
     });
   }
-  
+
   /**
    * Checks whether given access token has required scopes
-   * 
+   *
    * @param resourceName resource name
    * @param scopes scopes
    * @param accessToken access token
@@ -719,8 +720,8 @@ export default new class UserManagement {
     };
 
     const clientId = config().keycloak.rest.resource;
-    
-    const body: URLSearchParams = new URLSearchParams(); 
+
+    const body: URLSearchParams = new URLSearchParams();
     body.append("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket");
     body.append("client_id", clientId);
     body.append("audience", clientId);
@@ -730,13 +731,13 @@ export default new class UserManagement {
     });
 
     const response = await fetch(url, {
-      method: "POST", 
+      method: "POST",
       headers: headers,
       body: body
     });
 
     const result = response.status === 200;
-    
+
     if (userId) {
       await this.updateCachedPermission(resourceName, scopes, userId, result);
     }
@@ -746,7 +747,7 @@ export default new class UserManagement {
 
   /**
    * Deletes an permission
-   * 
+   *
    * @param permissionId permission id
    * @return Promise for successful deletion
    */
@@ -761,7 +762,7 @@ export default new class UserManagement {
 
   /**
    * Lists user group users
-   * 
+   *
    * @param userGroupId user group id
    * @return user group users
    */
@@ -777,7 +778,7 @@ export default new class UserManagement {
 
   /**
    * Lists user group users
-   * 
+   *
    * @param userGroupId user group id
    * @return user group users
    */
@@ -789,7 +790,7 @@ export default new class UserManagement {
 
   /**
    * Lists users with specified role
-   * 
+   *
    * @param roleName role name
    * @return users with specified role
    */
@@ -805,7 +806,7 @@ export default new class UserManagement {
 
   /**
    * Lists users user roles
-   * 
+   *
    * @param user user
    * @return user roles
    */
@@ -813,18 +814,18 @@ export default new class UserManagement {
     if (!user.id) {
       return [];
     }
-    
+
     const client = await this.getClient();
     const userRoleRepresentations = await client.users.listRoleMappings({
       id: user.id,
       realm: config().keycloak.admin.realm
-    });  
+    });
     return userRoleRepresentations.realmMappings || []
-  }  
+  }
 
   /**
    * List's users user groups
-   * 
+   *
    * @param user user
    * @return user groups
    */
@@ -832,14 +833,14 @@ export default new class UserManagement {
     if (!user.id) {
       return [];
     }
-    
+
     const client = await this.getClient();
     return await client.users.listGroups({ id: user.id, realm: config().keycloak.admin.realm });
   }
 
   /**
    * Lists users with specified role
-   * 
+   *
    * @param roleName role name
    * @return users with specified role
    */
@@ -851,7 +852,7 @@ export default new class UserManagement {
 
   /**
    * Categorizes policy by types for given list of policies
-   * 
+   *
    * @param policies policies
    * @param result categorized policies
    */
@@ -884,7 +885,7 @@ export default new class UserManagement {
 
   /**
    * Returns display name for an user
-   * 
+   *
    * @param user user
    * @returns display name for an user
    */
@@ -899,29 +900,29 @@ export default new class UserManagement {
       const value = _.isArray(originalValue) ? originalValue.join("") : originalValue;
       attributes[String(key).toLowerCase()] = value;
     });
-    
+
     if (attributes["näyttönimi"]) {
       return attributes["näyttönimi"];
     }
-    
+
     const company = attributes.yritys;
-    const name = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName ;
-    
+    const name = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || user.lastName ;
+
     if (company && name) {
       return this.isCompanyNameEqualToName(name, company) ? name : `${name} ${company}`;
     }
-    
+
     if (company) {
       return company;
     }
-    
+
     if (name) {
       return name;
     }
-    
+
     return `<${user.email}>`;
   }
-  
+
   isCompanyNameEqualToName(name: string, company: string) {
     if (!(company && name)) {
       return false;
@@ -937,13 +938,13 @@ export default new class UserManagement {
         return false;
       }
     }
-    
+
     return true;
   }
-  
+
   /**
    * Returns image URL for an user
-   * 
+   *
    * @param user user
    * @return image URL for an user
    */
@@ -953,18 +954,18 @@ export default new class UserManagement {
     const hash = shasum.digest("hex");
     return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
   }
-  
+
   isValidUserId(userId: string) {
     if (typeof userId === "string") {
       return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
     }
-    
+
     return false;
   }
-  
+
   /**
    * Returns single user attribute
-   * 
+   *
    * @param {Object} user Keycloak user
    * @param {String[]} names attribute name or names
    * @return {String} attribute value or null if not found
@@ -980,20 +981,20 @@ export default new class UserManagement {
 
     const nameAttr = _.isArray(names) ? names : [ names ];
     for (let i = 0; i < nameAttr.length; i++) {
-      const name = nameAttr[i];        
+      const name = nameAttr[i];
       const values: string[] = _.isArray(attributes[name]) ? _.compact(attributes[name]) : [];
 
       if (values.length === 1) {
         return values[0];
       }
     }
-    
+
     return null;
   }
-  
+
   /**
    * Sets single user attribute
-   * 
+   *
    * @param {Object} user Keycloak user
    * @param {String} name name of the attribute
    * @param {String} value value
@@ -1002,8 +1003,8 @@ export default new class UserManagement {
     if (!user.attributes) {
       user.attributes = {};
     }
-    
-    if (value) {
+
+    if (value) {
       user.attributes[name] = value;
     } else {
       delete user.attributes[name];
@@ -1012,12 +1013,12 @@ export default new class UserManagement {
 
   /**
    * Find user from Keycloak
-   * 
+   *
    * @param id id
-   * @return promise for user or null if not found 
+   * @return promise for user or null if not found
    */
   private async findKeycloakUser(id: string): Promise<UserRepresentation> {
-    const client = await this.getClient(); 
+    const client = await this.getClient();
 
     return new Promise<any>((resolve, reject) => {
       client.users.findOne({
@@ -1032,14 +1033,14 @@ export default new class UserManagement {
           reject(err);
         } else {
           resolve(null);
-        } 
+        }
       });
     });
   }
-  
+
   /**
    * Returns Keycloak admin client
-   * 
+   *
    * @return Promise for keycloak admin client
    */
   private async getClient(): Promise<KcAdminClient> {
@@ -1054,14 +1055,14 @@ export default new class UserManagement {
 
       this.requireFreshClient = false;
     }
-    
+
     return this.client;
   }
 
   /**
    * Returns rest client's internal id
-   * 
-   * @returns promise for rest client's internal id 
+   *
+   * @returns promise for rest client's internal id
    */
   private async getRestClientInternalId(): Promise<string> {
     if (!this.restClientInternalId) {
@@ -1073,8 +1074,8 @@ export default new class UserManagement {
 
   /**
    * Resolves rest client's internal id
-   * 
-   * @returns promise for rest client's internal id 
+   *
+   * @returns promise for rest client's internal id
    */
   private async resolveAuthzClientId(): Promise<string> {
     const clients = await (await this.getClient()).clients.find({
@@ -1087,11 +1088,11 @@ export default new class UserManagement {
     }
 
     return clients[0].id!;
-  }    
-  
+  }
+
   /**
   * Returns an user id from an access token
-  * 
+  *
   * @param accessToken token
   */
   private getAccessTokenUserId(accessToken: string): string | null {
@@ -1101,7 +1102,7 @@ export default new class UserManagement {
 
   /**
    * Returns permission from cache
-   * 
+   *
    * @param resourceName resource name
    * @param scopes scopes
    * @param userId user id
@@ -1112,7 +1113,7 @@ export default new class UserManagement {
 
   /**
    * Updates permission into cache
-   * 
+   *
    * @param resourceName resource name
    * @param scopes scopes
    * @param userId user id

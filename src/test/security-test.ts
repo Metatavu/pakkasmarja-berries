@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";
@@ -28,7 +27,7 @@ restPaths.forEach((restPath: RestPath) => {
 
   testSettings.forEach((testSetting: any) => {
 
-    const path = "/rest/v1" + pathTemplate.replace(/\{(.*?)\}/g, (match, param) => { 
+    const path = "/rest/v1" + pathTemplate.replace(/\{(.*?)\}/g, (match, param) => {
       return testSetting.params[param];
     });
 
@@ -80,7 +79,7 @@ restPaths.forEach((restPath: RestPath) => {
           t.equals(response.statusCode, testSetting.expectStatus, testSetting.message);
         });
     });
-  
+
   });
 
 });

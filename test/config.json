@@ -97,17 +97,11 @@
     },
     "loanProductIds": {
       "GRAY_BOX": "302601",
-      "RED_BOX": "302602"
+      "RED_BOX": "302602",
+      "ORANGE_BOX": "302603"
     },
     "xml-fileupload-path": "/tmp/sapxml",
     "batchProducts": []
-  },
-  "sapServiceLayer": {
-    "apiUrl": "http://sap-api-wiremock:8080/b1s/v1",
-    "host": "sap-api-wiremock:8080",
-    "companyDb": "pm",
-    "username": "pm",
-    "password": "random"
   },
   "uploadDirectory": "/tmp/",
   "contacts": {

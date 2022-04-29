@@ -8921,7 +8921,7 @@
       "sapSalesPersonCode" : [ "234567" ],
       "verotunniste" : [ "DM22233344" ],
       "BIC" : [ "DEMO1234" ],
-      "sapId" : [ "tusap1" ]
+      "sapId" : [ "1" ]
     },
     "credentials" : [ {
       "type" : "password",
@@ -8969,7 +8969,7 @@
       "Tilan kaupunki" : [ "Demo" ],
       "verotunniste" : [ "FI12345678" ],
       "BIC" : [ "DABAIE2D" ],
-      "sapId" : [ "tusap2" ]
+      "sapId" : [ "2" ]
     },
     "credentials" : [ {
       "type" : "password",

@@ -4,7 +4,7 @@ import auth from "./auth";
 import { DeliveryLoan } from "../rest/model/models";
 import ApplicationRoles from "../rest/application-roles";
 import TestConfig from "./test-config";
-import sapWireMockTestClient from "./wiremock-test-client";
+import sapMock from "./sap-mock";
 
 /**
  * Interface describing delivery loan request
@@ -35,7 +35,7 @@ const createDeliveryLoan = (token: string): Promise<DeliveryLoan[]> => {
 }
 
 test("Create delivery loan", async (t) => {
-  await sapWireMockTestClient.empty();
+  await sapMock.deleteMocks();
   const token = await auth.getTokenUser1([ ApplicationRoles.UPDATE_OTHER_DELIVERIES ]);
 
   try {
@@ -46,9 +46,8 @@ test("Create delivery loan", async (t) => {
     t.equal(createdDeliveryLoans[0].item, sentDeliveryloan.item);
     t.equal(createdDeliveryLoans[0].loaned, sentDeliveryloan.loaned);
     t.equal(createdDeliveryLoans[0].returned, sentDeliveryloan.returned);
-    t.equal(await sapWireMockTestClient.verify("POST", "/StockTransfers"), 1);
   } finally {
-    await sapWireMockTestClient.empty();
+    await sapMock.deleteMocks();
     await auth.removeUser1Roles([ ApplicationRoles.UPDATE_OTHER_DELIVERIES ]);
   }
 });

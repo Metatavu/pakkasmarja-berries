@@ -20,7 +20,7 @@ export class SapContract {
     /**
     * ID in format of \"[year]-[SAP contract document number]-[item group ID]\"
     */
-    'id': string;
+    'id'?: string;
     /**
     * SAP business partner code
     */

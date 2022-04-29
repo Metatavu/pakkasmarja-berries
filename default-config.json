@@ -26,45 +26,15 @@
         "afterProcessDelay": 10800000,
         "maxTimeout": 20000
       },
-      "contractDocumentStatus": {
-        "concurrent": 1,
-        "afterProcessDelay": 5000,
-        "maxTimeout": 20000
-      },
-      "contractDocumentStatusBatch": {
-        "concurrent": 1,
-        "afterProcessDelay": 600000,
-        "maxTimeout": 20000
-      },
       "sapContactUpdate": {
         "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapDeliveryPlaceUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapItemGroupUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
-      },
-      "sapContractUpdate": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
+        "afterProcessDelay": 86400000,
+        "maxTimeout": 600000
       },
       "sapContractDeliveredQuantityUpdate": {
         "concurrent": 1,
         "afterProcessDelay": 14400000,
         "maxTimeout": 600000
-      },
-      "updateCurrentYearApprovedContractsToSapQueue": {
-        "concurrent": 1,
-        "afterProcessDelay": 1000,
-        "maxTimeout": 20000
       }
     }
   },

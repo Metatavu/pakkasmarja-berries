@@ -41,24 +41,6 @@ export interface Mqtt {
 }
 
 /**
- * Contract document status task settings
- */
-export interface ContractDocumentStatus {
-  afterProcessDelay: number;
-  concurrent: number;
-  maxTimeout: number;
-}
-
-/**
- * Contract document status batch task settings
- */
-export interface ContractDocumentStatusBatch {
-  afterProcessDelay: number;
-  concurrent: number;
-  maxTimeout: number;
-}
-
-/**
  * SAP contact update task settings
  */
 export interface SapContactUpdate {
@@ -77,43 +59,11 @@ export interface SapContractDeliveredQuantityUpdate {
 }
 
 /**
- * SAP contract update task settings
- */
-export interface SapContractUpdate {
-  afterProcessDelay: number;
-  concurrent: number;
-  maxTimeout: number;
-}
-
-/**
- * SAP delivery place update task settings
- */
-export interface SapDeliveryPlaceUpdate {
-  afterProcessDelay: number;
-  concurrent: number;
-  maxTimeout: number;
-}
-
-/**
- * SAP item group update task settings
- */
-export interface SapItemGroupUpdate {
-  afterProcessDelay: number;
-  concurrent: number;
-  maxTimeout: number;
-}
-
-/**
  * Task queues
  */
 export interface Queues {
-  contractDocumentStatus: ContractDocumentStatus;
-  contractDocumentStatusBatch: ContractDocumentStatusBatch;
   sapContactUpdate: SapContactUpdate;
   sapContractDeliveredQuantityUpdate: SapContractDeliveredQuantityUpdate;
-  sapContractUpdate: SapContractUpdate;
-  sapDeliveryPlaceUpdate: SapDeliveryPlaceUpdate;
-  sapItemGroupUpdate: SapItemGroupUpdate;
 }
 
 /**
@@ -151,11 +101,23 @@ export interface KeycloakConfig {
 }
 
 /**
+ * ERP configuration
+ */
+export interface ErpConfig {
+  url: string;
+  clientId: string;
+  clientSecret: string;
+  username: string;
+  password: string;
+}
+
+/**
  * Keycloak settings
  */
 export interface Keycloak {
   admin: KeycloakAdminConfig;
   rest: KeycloakConfig;
+  erp: ErpConfig;
   app: KeycloakConfig;
 }
 
@@ -195,17 +157,6 @@ export interface Wkhtmltopdf {
 }
 
 /**
- * SAP Service Layer configuration
- */
-export interface SAPServiceLayer {
-  apiUrl: string;
-  host: string;
-  companyDb: string;
-  username: string;
-  password: string;
-}
-
-/**
  * Categorization for SAP item groups
  */
 export interface SAPItemGroupCategories {
@@ -237,9 +188,10 @@ export interface SAPItemGroupMinimumProfitEstimation {
 /**
  * Loanable SAP products
  */
-export interface SAPLoanProducts {
+export interface SAPLoanProducts {
   GRAY_BOX: string;
   RED_BOX: string;
+  ORANGE_BOX: string;
 }
 
 /**
@@ -286,7 +238,7 @@ export interface ErrorNotifications {
  * General notification info
  */
 export interface Notifications {
-  email: string;
+  contactUpdates: string[];
   frozen: string;
   fresh: string;
   deliveries: string;
@@ -345,7 +297,6 @@ export interface Config {
   mysql: Mysql;
   wkhtmltopdf: Wkhtmltopdf;
   sap: SAP;
-  sapServiceLayer: SAPServiceLayer;
   "visma-sign"?: VismaSign;
   mail: Mail;
   contacts?: Contacts;
