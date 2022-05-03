@@ -5,6 +5,7 @@ module.exports = {
   up: async (query: QueryInterface) => {
     await query.addColumn("DeliveryPlaces", "deprecated", { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false });
     await query.sequelize.query("UPDATE DeliveryPlaces SET deprecated = false");
+    await query.sequelize.query("UPDATE DeliveryPlaces SET sapId = externalId");
 
     await query.sequelize.query("UPDATE DeliveryPlaces SET sapId = '03' WHERE name = 'Suonenjoki'");
     await query.sequelize.query("UPDATE DeliveryPlaces SET sapId = '21' WHERE name = 'Vesanto Toripiha'");
