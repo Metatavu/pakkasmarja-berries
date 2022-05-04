@@ -96,8 +96,10 @@ export class BusinessPartnersApi {
      * Lists businessPartners.
      * @summary List businessPartners.
      * @param updatedAfter Filter results by updated after given date time
+     * @param firstResult First result. Defaults to 0
+     * @param maxResults Max results. Defaults to 10
      */
-    public async listBusinessPartners (updatedAfter?: Date, options: {headers: {[name: string]: string}} = {headers: {}}) : Promise<{ response: http.IncomingMessage; body: Array<SapBusinessPartner>;  }> {
+    public async listBusinessPartners (updatedAfter?: Date, firstResult?: number, maxResults?: number, options: {headers: {[name: string]: string}} = {headers: {}}) : Promise<{ response: http.IncomingMessage; body: Array<SapBusinessPartner>;  }> {
         const localVarPath = this.basePath + '/v1/businessPartners';
         let localVarQueryParameters: any = {};
         let localVarHeaderParams: any = (<any>Object).assign({}, this._defaultHeaders);
@@ -112,6 +114,14 @@ export class BusinessPartnersApi {
 
         if (updatedAfter !== undefined) {
             localVarQueryParameters['updatedAfter'] = ObjectSerializer.serialize(updatedAfter, "Date");
+        }
+
+        if (firstResult !== undefined) {
+            localVarQueryParameters['firstResult'] = ObjectSerializer.serialize(firstResult, "number");
+        }
+
+        if (maxResults !== undefined) {
+            localVarQueryParameters['maxResults'] = ObjectSerializer.serialize(maxResults, "number");
         }
 
         (<any>Object).assign(localVarHeaderParams, options.headers);
