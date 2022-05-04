@@ -108,8 +108,8 @@ export default class ContractsServiceImpl extends ContractsService {
     const contractQuantity = contract.contractQuantity;
     const deliveredQuantity = contract.deliveredQuantity;
     const proposedQuantity = contract.proposedQuantity;
-    const startDate = contract.startDate;
-    const endDate = contract.endDate;
+    let startDate = contract.startDate;
+    let endDate = contract.endDate;
     const signDate = contract.signDate;
     const termDate = contract.termDate;
     const areaDetails = contract.areaDetails;
@@ -1109,13 +1109,20 @@ export default class ContractsServiceImpl extends ContractsService {
     try {
       const contractsApi = await ErpClient.getContractsApi();
 
+      const contractStartDate = startDate ?
+        new Date(startDate) :
+        new Date();
+      const contractEndDate = endDate ?
+        new Date(endDate) :
+        new Date(`${new Date().getFullYear() + 1}-01-31`);
+
       const response = await contractsApi.createContract({
         businessPartnerCode: parseInt(businessPartnerCode),
         contactPersonCode: 0,
         itemGroupCode: parseInt(itemGroupCode),
         deliveredQuantity: deliveredQuantity || 0,
-        startDate: startDate ? new Date(startDate).toISOString() : undefined,
-        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+        startDate: contractStartDate.toISOString(),
+        endDate: contractEndDate.toISOString(),
         signingDate: signDate ? new Date(signDate).toISOString() : undefined,
         terminateDate: terminateDate ? new Date(terminateDate).toISOString() : undefined,
         remarks: remarks || "",

@@ -69,15 +69,22 @@ export default class SignRoutes {
                 throw Error(`Could not resolve SAP business partner code for user ${contract.userId}`);
               }
 
+              const contractStartDate = contract.startDate ?
+                new Date(contract.startDate) :
+                new Date();
+              const contractEndDate = contract.endDate ?
+                new Date(contract.endDate) :
+                new Date(`${new Date().getFullYear() + 1}-01-31`);
+
               const contractsApi = await ErpClient.getContractsApi();
               const response = await contractsApi.createContract({
                 businessPartnerCode: parseInt(businessPartnerCode),
                 contactPersonCode: 0,
                 itemGroupCode: parseInt(itemGroup.sapId),
                 deliveredQuantity: contract.deliveredQuantity || 0,
-                startDate: contract.startDate ? contract.startDate.toISOString() : undefined,
-                endDate: contract.endDate ? contract.endDate.toISOString() : undefined,
-                signingDate: contract.signDate ? contract.signDate.toISOString() : undefined,
+                startDate: contractStartDate.toISOString(),
+                endDate: contractEndDate.toISOString(),
+                signingDate: new Date().toISOString(),
                 terminateDate: undefined,
                 remarks: contract.remarks || "",
                 status: SapContractStatus.Approved
