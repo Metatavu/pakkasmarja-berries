@@ -137,19 +137,23 @@ export default new class TaskQueue {
     try {
       const businessPartnersApi = await ErpClient.getBusinessPartnersApi();
       const updateStartTime = new Date();
-      const businessPartnersResult = await businessPartnersApi.listBusinessPartners(this.contactsLastUpdatedAt);
+      const businessPartnersResult = await businessPartnersApi.listBusinessPartners(
+        this.contactsLastUpdatedAt, // updatedAt
+        0, // firstResult
+        10000 // maxResults
+      );
       const businessPartners = businessPartnersResult.body;
 
-      const results: string[] = [];
-
-      for (const businessPartner of businessPartners) {
-        try {
-          const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
-          results.push(`  ${businessPartner.code}: Synced to user ${user.email || user.username}`);
-        } catch (error) {
-          results.push(`  ${businessPartner.code}: ${error}`);
-        }
-      }
+      const results: string[] = await Promise.all(
+        businessPartners.map(async businessPartner => {
+          try {
+            const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
+            return `  ${businessPartner.code}: Synced to user ${user.email || user.username}`;
+          } catch (error) {
+            return `  ${businessPartner.code}: ${error}`;
+          }
+        })
+      );
 
       this.contactsLastUpdatedAt = this.inTestMode() ? undefined : updateStartTime;
 
