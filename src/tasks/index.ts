@@ -147,14 +147,10 @@ export default new class TaskQueue {
       const updateResults: string[] = [];
 
       for (const businessPartner of businessPartners) {
-        this.logger.info(`updating business partner with code ${businessPartner.code}`);
-
         try {
           const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
-          this.logger.info(`Synced business partner with code ${businessPartner.code}`);
           updateResults.push(`  ${businessPartner.code}: Synced to user ${user.email || user.username}`);
         } catch (error) {
-          this.logger.warn(`Failed to sync business partner with code ${businessPartner.code}`);
           updateResults.push(`  ${businessPartner.code}: ${error}`);
         }
 
