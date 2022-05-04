@@ -144,20 +144,27 @@ export default new class TaskQueue {
       );
       const businessPartners = businessPartnersResult.body;
 
-      const results: string[] = await Promise.all(
-        businessPartners.map(async businessPartner => {
-          try {
-            const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
-            return `  ${businessPartner.code}: Synced to user ${user.email || user.username}`;
-          } catch (error) {
-            return `  ${businessPartner.code}: ${error}`;
-          }
-        })
-      );
+      const updateResults: string[] = [];
+
+      for (const businessPartner of businessPartners) {
+        this.logger.info(`updating business partner with code ${businessPartner.code}`);
+
+        try {
+          const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
+          this.logger.info(`Synced business partner with code ${businessPartner.code}`);
+          updateResults.push(`  ${businessPartner.code}: Synced to user ${user.email || user.username}`);
+        } catch (error) {
+          this.logger.warn(`Failed to sync business partner with code ${businessPartner.code}`);
+          updateResults.push(`  ${businessPartner.code}: ${error}`);
+        }
+
+        // Wait a bit between requests to ease Keycloak load
+        await new Promise<void>(resolve => setTimeout(resolve, 1000));
+      }
 
       this.contactsLastUpdatedAt = this.inTestMode() ? undefined : updateStartTime;
 
-      let resultMessage = `SAP contacts update finished. Results:\n${results.join("\n")}`;
+      let resultMessage = `SAP contacts update finished. Results:\n${updateResults.join("\n")}`;
 
       this.logger.info(resultMessage);
 
