@@ -143,7 +143,6 @@ export default class ContractsServiceImpl extends ContractsService {
           startDate,
           endDate,
           signDate,
-          termDate,
           remarks
         );
 
@@ -549,7 +548,6 @@ export default class ContractsServiceImpl extends ContractsService {
           startDate,
           endDate,
           signDate,
-          termDate,
           remarks
         );
 
@@ -1103,7 +1101,6 @@ export default class ContractsServiceImpl extends ContractsService {
     startDate: Date | null,
     endDate: Date | null,
     signDate: Date | null,
-    terminateDate: Date | null,
     remarks: string | null
   ) => {
     try {
@@ -1127,7 +1124,7 @@ export default class ContractsServiceImpl extends ContractsService {
         startDate: contractStartDate.toISOString(),
         endDate: contractEndDate.toISOString(),
         signingDate: contractSigningDate.toISOString(),
-        terminateDate: terminateDate ? new Date(terminateDate).toISOString() : undefined,
+        terminateDate: undefined,
         remarks: remarks || "",
         status: SapContractStatus.Approved
       });
