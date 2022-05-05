@@ -1115,6 +1115,9 @@ export default class ContractsServiceImpl extends ContractsService {
       const contractEndDate = endDate ?
         new Date(endDate) :
         new Date(`${new Date().getFullYear() + 1}-01-31`);
+      const contractSigningDate = signDate ?
+        new Date(signDate) :
+        new Date();
 
       const response = await contractsApi.createContract({
         businessPartnerCode: parseInt(businessPartnerCode),
@@ -1123,7 +1126,7 @@ export default class ContractsServiceImpl extends ContractsService {
         deliveredQuantity: deliveredQuantity || 0,
         startDate: contractStartDate.toISOString(),
         endDate: contractEndDate.toISOString(),
-        signingDate: signDate ? new Date(signDate).toISOString() : undefined,
+        signingDate: contractSigningDate.toISOString(),
         terminateDate: terminateDate ? new Date(terminateDate).toISOString() : undefined,
         remarks: remarks || "",
         status: SapContractStatus.Approved
