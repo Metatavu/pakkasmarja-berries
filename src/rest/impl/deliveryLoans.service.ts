@@ -40,11 +40,6 @@ export default class DeliveryLoansServiceImpl extends DeliveryLoansService {
         return this.sendBadRequest(res, `User with ID ${userId} not found`);
       }
 
-      const salesPersonCode = userManagement.getSingleAttribute(user, UserProperty.SAP_SALES_PERSON_CODE);
-      if (!salesPersonCode) {
-        return this.sendBadRequest(res, `SAP sales person code not found from user ${user.username || user.email}`);
-      }
-
       if (!contactId) {
         return this.sendBadRequest(res, "Contact ID not found from request body");
       }
@@ -76,7 +71,6 @@ export default class DeliveryLoansServiceImpl extends DeliveryLoansService {
       const stockTransfer = await this.createSapStockTransfer(
         loans,
         Number(businessPartnerCode),
-        Number(salesPersonCode),
         new Date(),
         [ comment ]
       );
@@ -93,7 +87,6 @@ export default class DeliveryLoansServiceImpl extends DeliveryLoansService {
    *
    * @param loans loans
    * @param businessPartnerCode business partner code
-   * @param salesPersonCode sales person code
    * @param docDate doc date
    * @param comments comments
    * @return promise of successful creation
@@ -101,7 +94,6 @@ export default class DeliveryLoansServiceImpl extends DeliveryLoansService {
   private createSapStockTransfer = async (
     loans: DeliveryLoan[],
     businessPartnerCode: number,
-    salesPersonCode: number,
     docDate: Date,
     comments: string[]
   ): Promise<SapStockTransfer> => {
@@ -122,7 +114,7 @@ export default class DeliveryLoansServiceImpl extends DeliveryLoansService {
         docDate: moment(docDate).format("YYYY-MM-DD"),
         fromWarehouse: "100",
         toWarehouse: "100",
-        salesPersonCode: salesPersonCode,
+        salesPersonCode: -1,
         lines: stockTransferLines,
         comments: this.joinComments(comments)
       });

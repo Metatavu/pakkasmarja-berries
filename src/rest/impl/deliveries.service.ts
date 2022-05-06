@@ -128,15 +128,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_BUSINESS_PARTNER_CODE);
-      const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
 
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;
-      }
-
-      if (!sapSalesPersonCode) {
-        this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
         return;
       }
 
@@ -154,7 +148,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           databaseDeliveryPlace,
           product,
           Number(deliveryContactSapId),
-          Number(sapSalesPersonCode),
           unitPriceWithBonus,
           itemGroup.category as ItemGroupCategory
         );
@@ -170,7 +163,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           await this.createSapStockTransfer(
             loans,
             Number(deliveryContactSapId),
-            Number(sapSalesPersonCode),
             new Date(databaseDelivery.time),
             deliveryNotes.map(note => note.text || "")
           );
@@ -502,15 +494,9 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const deliveryContactSapId = userManagement.getSingleAttribute(deliveryContact, UserProperty.SAP_BUSINESS_PARTNER_CODE);
-      const sapSalesPersonCode = userManagement.getSingleAttribute(receivingContact, UserProperty.SAP_SALES_PERSON_CODE);
 
       if (!deliveryContactSapId) {
         this.sendBadRequest(res, `Missing sapId on delivering user ${deliveryContact.id}`);
-        return;
-      }
-
-      if (!sapSalesPersonCode) {
-        this.sendBadRequest(res, `Missing sapId on receiving user ${receivingContact.id}`);
         return;
       }
 
@@ -527,7 +513,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
             databaseDeliveryPlace,
             product,
             Number(deliveryContactSapId),
-            Number(sapSalesPersonCode),
             unitPriceWithBonus,
             itemGroup.category as ItemGroupCategory
           );
@@ -542,7 +527,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
             await this.createSapStockTransfer(
               loans,
               Number(deliveryContactSapId),
-              Number(sapSalesPersonCode),
               new Date(databaseDelivery.time),
               deliveryNotes.map(note => note.text || "")
             );
@@ -692,7 +676,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    * @param deliveryPlace delivery place
    * @param product product
    * @param businessPartnerCode business partner code
-   * @param sapSalesPersonCode SAP sales person code
    * @param price price
    * @param itemGroupCategory item group category
    */
@@ -701,7 +684,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     deliveryPlace: DeliveryPlaceModel,
     product: ProductModel,
     businessPartnerCode: number,
-    sapSalesPersonCode: number,
     price: number,
     itemGroupCategory: ItemGroupCategory
   ) => {
@@ -714,7 +696,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       const response = await purchaseDeliveryNotesApi.createPurchaseDeliveryNote({
         businessPartnerCode: businessPartnerCode,
         docDate: moment(delivery.time).format("YYYY-MM-DD"),
-        salesPersonCode: sapSalesPersonCode,
+        salesPersonCode: -1,
         comments: deliveryComments,
         lines: [{
           itemCode: Number(product.sapItemCode),
@@ -771,7 +753,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
    *
    * @param loans loans
    * @param businessPartnerCode business partner code
-   * @param salesPersonCode sales person code
    * @param docDate doc date
    * @param comments comments
    * @return promise of successful creation
@@ -779,7 +760,6 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
   private createSapStockTransfer = async (
     loans: DeliveryLoan[],
     businessPartnerCode: number,
-    salesPersonCode: number,
     docDate: Date,
     comments: string[]
   ): Promise<SapStockTransfer | undefined> => {
@@ -798,7 +778,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         docDate: moment(docDate).format("YYYY-MM-DD"),
         fromWarehouse: "100",
         toWarehouse: "100",
-        salesPersonCode: salesPersonCode,
+        salesPersonCode: -1,
         lines: stockTransferLines,
         comments: this.joinComments(comments)
       });
