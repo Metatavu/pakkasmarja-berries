@@ -659,7 +659,7 @@ export default new class TaskQueue {
    * @param user user
    */
   private removeUserChatGroupUnreads = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void> => {
-    await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}%`, user.id!);
+    await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}-%`, user.id!);
   }
 
   /**
