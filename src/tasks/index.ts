@@ -306,7 +306,7 @@ export default new class TaskQueue {
       });
     } catch (error) {
       const errorMessage = error instanceof HttpError ?
-        `${error.statusCode} - ${error.message}` :
+        `${error.statusCode} - ${error.message} with response body ${error.body}` :
         error.toString();
 
       const reason = `Error processing queue ${errorMessage}`;
