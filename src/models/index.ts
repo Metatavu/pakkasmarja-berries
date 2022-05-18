@@ -119,6 +119,7 @@ export interface DeliveryPlaceModel {
   sapId: string,
   externalId: string,
   name: string,
+  deprecated: boolean,
   createdAt: Date,
   updatedAt: Date
 }
@@ -529,7 +530,8 @@ export class Models {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       sapId: { type: Sequelize.STRING(191), allowNull: false },
       externalId: { type: Sequelize.UUID, allowNull: false, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
-      name: { type: Sequelize.STRING(191), allowNull: false }
+      name: { type: Sequelize.STRING(191), allowNull: false },
+      deprecated: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false },
     }, {
       indexes: [{
         name: "UN_DELIVERY_PLACE_SAP_ID",
@@ -1755,7 +1757,11 @@ export class Models {
    * @return {Promise} promise for delivery places
    */
   listDeliveryPlaces(firstResult?: number, maxResults?: number) {
-    return this.sequelize.models.DeliveryPlace.findAll({ where: { }, offset: firstResult, limit: maxResults });
+    return this.sequelize.models.DeliveryPlace.findAll({
+      where: { deprecated: false },
+      offset: firstResult,
+      limit: maxResults
+    });
   }
     
   /**

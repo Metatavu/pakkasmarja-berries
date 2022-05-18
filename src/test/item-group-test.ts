@@ -1,15 +1,12 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";
-import operations from "./operations";
 import ApplicationRoles from "../rest/application-roles";
 import TestConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const itemGroupDatas = require(`${testDataDir}/item-groups.json`);
-const itemGroupSyncDatas = require(`${testDataDir}/item-groups-sync.json`);
 const itemGroupDocumentTemplateDatas = require(`${testDataDir}/item-group-document-templates.json`);
 const itemGroupDocumentTemplateUpdateDatas = require(`${testDataDir}/item-group-document-templates-update.json`);
 const itemGroupPriceDatas = require(`${testDataDir}/item-group-prices.json`);
@@ -18,24 +15,25 @@ const itemGroupPricesUpdateData = require(`${testDataDir}/item-group-prices-upda
 
 test("Test listing item groups", async (t) => {
   await database.executeFiles(testDataDir, [ "item-groups-setup.sql", "item-groups-prerequisite-setup.sql" ]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .set("Accept", "application/json")
     .expect(200)
     .then(async response => {
-      t.equal(response.body.length, 2);
+      t.equal(response.body.length, 3);
       t.deepEqual(response.body[0], itemGroupDatas["89723408-0f51-11e8-baa0-dfe7c7eae257"]);
       t.deepEqual(response.body[1], itemGroupDatas["98be1d32-0f51-11e8-bb59-3b8b6bbe9a20"]);
-      
+      t.deepEqual(response.body[2], itemGroupDatas["6a67344b-57e2-4ec1-ba63-aa0432c6b827"])
+
       await database.executeFile(testDataDir, "item-groups-teardown.sql");
     });
 });
 
 test("Test listing item groups - without token", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups")
     .set("Accept", "application/json")
@@ -47,7 +45,7 @@ test("Test listing item groups - without token", async () => {
 
 test("Test listing item groups - invalid token", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups")
     .set("Authorization", "Bearer FAKE")
@@ -60,7 +58,7 @@ test("Test listing item groups - invalid token", async () => {
 
 test("Test finding item group", async (t) => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -74,7 +72,7 @@ test("Test finding item group", async (t) => {
 
 test("Test finding item group - without token", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257")
     .set("Accept", "application/json")
@@ -86,7 +84,7 @@ test("Test finding item group - without token", async () => {
 
 test("Test finding item group - invalid token", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257")
     .set("Authorization", "Bearer FAKE")
@@ -99,7 +97,7 @@ test("Test finding item group - invalid token", async () => {
 
 test("Test finding item group - not found", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/c74e5468-0fb1-11e8-a4e2-87868e24ee8b")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -112,7 +110,7 @@ test("Test finding item group - not found", async () => {
 
 test("Test finding item group - malformed id", async () => {
   await database.executeFile(testDataDir, "item-groups-setup.sql");
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -123,40 +121,9 @@ test("Test finding item group - malformed id", async () => {
     });
 });
 
-test("Test sync item groups", async (t) => {
-  const accessToken = await auth.getTokenUser1();
-  
-  await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_ITEM_GROUP_SYNC");
-  
-  return request(TestConfig.HOST)
-    .get("/rest/v1/itemGroups")
-    .set("Authorization", `Bearer ${accessToken}`)
-    .set("Accept", "application/json")
-    .expect(200)
-    .then(async response => {
-      const actualItemGroups = response.body;
-      
-      actualItemGroups.sort((a: any, b: any) => {
-        return a.name.localeCompare(b.name);
-      });
-
-      itemGroupSyncDatas.forEach((expected: any, index: number) => {
-        Object.keys(expected).forEach((expectKey) => {
-          const expectValue = expected[expectKey];
-          const actualValue = response.body[index][expectKey];
-          t.equal(actualValue, expectValue, `[${index}][${expectKey}] is ${actualValue}`);
-        });
-      });
-
-      await Promise.all([
-        database.executeFiles(testDataDir, ["item-groups-teardown.sql", "operation-reports-teardown.sql"])
-      ]);
-    });
-});
-
 test("Test find item group document template", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -171,7 +138,7 @@ test("Test find item group document template", async (t) => {
 
 test("Test find item group document template - incorrect item group", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -185,7 +152,7 @@ test("Test find item group document template - incorrect item group", async (t) 
 
 test("Test find item group document template - invalid item group", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/invalid/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -199,7 +166,7 @@ test("Test find item group document template - invalid item group", async (t) =>
 
 test("Test find item group document template - incorrect id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2ba4ace6-2227-11e8-8cd7-ef6b34e82618")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -213,7 +180,7 @@ test("Test find item group document template - incorrect id", async () => {
 
 test("Test find item group document template - invalid id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -227,7 +194,7 @@ test("Test find item group document template - invalid id", async () => {
 
 test("Test list item group document templates", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.LIST_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -243,7 +210,7 @@ test("Test list item group document templates", async (t) => {
 
 test("Test update item group document template", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "contracts-setup.sql", "contract-documents-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .put("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/documentTemplates/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.UPDATE_ITEM_GROUP_DOCUMENT_TEMPLATES)}`)
@@ -259,7 +226,7 @@ test("Test update item group document template", async (t) => {
 
 test("Test listing item group prices", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -275,7 +242,7 @@ test("Test listing item group prices", async (t) => {
 
 test("Test listing item group prices - sort year desc", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices?sortBy=YEAR&sortDir=DESC")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -291,7 +258,7 @@ test("Test listing item group prices - sort year desc", async (t) => {
 
 test("Test listing item group prices - sort year asc", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -307,7 +274,7 @@ test("Test listing item group prices - sort year asc", async (t) => {
 
 test("Test listing item group prices - limit", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC&maxResults=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -322,7 +289,7 @@ test("Test listing item group prices - limit", async (t) => {
 
 test("Test listing item group prices - offset", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices?sortBy=YEAR&sortDir=ASC&firstResult=1")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -337,7 +304,7 @@ test("Test listing item group prices - offset", async (t) => {
 
 test("Test listing item group prices - incorrect item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -350,7 +317,7 @@ test("Test listing item group prices - incorrect item group", async () => {
 
 test("Test listing item group prices - invalid item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/invalid/prices/2fe6ad72-2227-11e8-a5fd-efc457362c53")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -378,7 +345,7 @@ test("Test listing item group prices - invalid token", async () => {
 
 test("Test find item group price", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/79d937fc-3103-11e8-a1f7-5f974dead07c")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -392,7 +359,7 @@ test("Test find item group price", async (t) => {
 
 test("Test find item group price - incorrect id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -405,7 +372,7 @@ test("Test find item group price - incorrect id", async () => {
 
 test("Test find item group price - invalid id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -415,10 +382,10 @@ test("Test find item group price - invalid id", async () => {
       await database.executeFiles(testDataDir, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
-  
+
 test("Test finding item group price - incorrect item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -428,10 +395,10 @@ test("Test finding item group price - incorrect item group", async () => {
       await database.executeFiles(testDataDir, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
-  
+
 test("Test finding item group price - invalid item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
@@ -459,7 +426,7 @@ test("Test finding item group price - invalid token", async () => {
 
 test("Test create item group price", async (t) => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .post("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.CREATE_ITEM_GROUP_PRICES)}`)
@@ -521,7 +488,7 @@ test("Test delete item group price", async (t) => {
 
 test("Test delete item group price - incorrect id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-a1f7-5f974dead07c")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
@@ -535,7 +502,7 @@ test("Test delete item group price - incorrect id", async () => {
 
 test("Test delete item group price - invalid id", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/not-uuid")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
@@ -546,10 +513,10 @@ test("Test delete item group price - invalid id", async () => {
       await database.executeFiles(testDataDir, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
-  
+
 test("Test delete item group price - incorrect item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
@@ -560,10 +527,10 @@ test("Test delete item group price - incorrect item group", async () => {
       await database.executeFiles(testDataDir, ["item-groups-prices-teardown.sql", "item-groups-teardown.sql", "delivery-places-teardown.sql"]);
     });
 });
-  
+
 test("Test delete item group price - invalid item group", async () => {
   await database.executeFiles(testDataDir, ["delivery-places-setup.sql", "item-groups-setup.sql", "item-groups-prices-setup.sql"]);
-  
+
   return request(TestConfig.HOST)
     .delete("/rest/v1/itemGroups/invalid/prices/2cef70dc-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", `Bearer ${await auth.getTokenUser1(ApplicationRoles.DELETE_ITEM_GROUP_PRICES)}`)
@@ -588,4 +555,4 @@ test("Test delete item group price - invalid token", async () => {
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
     .expect(403);
-});  
+});

@@ -1,4 +1,4 @@
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import users from "./users";
@@ -6,16 +6,23 @@ import ApplicationRoles from "../rest/application-roles";
 import mail from "./mail";
 import database from "./database";
 import operations from "./operations";
-import { BasicContact } from "src/rest/model/models";
+import { BasicContact, Contact } from "src/rest/model/models";
 import TestConfig from "./test-config";
+import sapMock from "./sap-mock";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const contactDatas = require(`${testDataDir}/contacts.json`);
 const contactDataSync = require(`${testDataDir}/contacts-sync.json`);
 const contactUpdateMails = require(`${testDataDir}/contact-update-mails.json`);
 
+const testUser1 = "6f1cd486-107e-404c-a73f-50cc1fdabdd6";
+const testUser2 = "677e99fd-b854-479f-afa6-74f295052770";
+const userWithSapBusinessPartnerCode = "d9d324ca-de2f-4756-86f0-17179aed8969";
+const userWithLegacySapId = "040cbeaa-b330-4094-9b7a-c04dea9e2891";
+
 test("Test listing contacts", async (t) => {
-  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+
+  await users.resetUsers([ testUser1, testUser2 ], t);
   const token = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
 
   return request(TestConfig.HOST)
@@ -25,22 +32,27 @@ test("Test listing contacts", async (t) => {
     .expect(200)
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
+      await users.resetUsers([ testUser1, testUser2 ], t);
 
-      t.equal(response.body.length, 4);
-      const actualResponse: any[] = response.body;
+      const actualResponse: Contact[] = response.body;
+      t.equal(actualResponse.length, 7, "Should return 7 contacts");
 
-      actualResponse.sort((a, b) => {
-        return b.id.localeCompare(a.id);
-      });
-
-      t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], actualResponse[0]);
-      t.deepEqual(contactDatas["677e99fd-b854-479f-afa6-74f295052770"], actualResponse[2]);
+      t.deepEqual(
+        contactDatas[testUser1],
+        actualResponse.find(c => c.id === testUser1),
+        `Contact ${testUser1} should be the same in response as in test data`
+      );
+      t.deepEqual(
+        contactDatas[testUser2],
+        actualResponse.find(c => c.id === testUser2),
+        `Contact ${testUser2} should be the same in response as in test data`
+      );
     });
 });
 
 test("Test listing contacts - search", async (t) => {
-  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
-  
+  await users.resetUsers([ testUser1, testUser2 ], t);
+
   return request(TestConfig.HOST)
     .get("/rest/v1/contacts?search=test1@testrealm1.com")
     .set("Authorization", `Bearer ${await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS])}`)
@@ -49,7 +61,7 @@ test("Test listing contacts - search", async (t) => {
     .then(async response => {
       await auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]);
       t.equal(response.body.length, 1);
-      t.deepEqual(contactDatas["6f1cd486-107e-404c-a73f-50cc1fdabdd6"], response.body[0]);
+      t.deepEqual(contactDatas[testUser1], response.body[0]);
     });
 });
 
@@ -69,32 +81,31 @@ test("Test listing contacts - invalid token", async () => {
 });
 
 test("Test find contact", async (t) => {
-  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
+  await users.resetUsers([ testUser1, testUser2 ], t);
 
   return request(TestConfig.HOST)
-    .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
+    .get(`/rest/v1/contacts/${testUser2}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .set("Accept", "application/json")
     .expect(200)
     .then(response => {
-      t.deepEqual(response.body, contactDatas["677e99fd-b854-479f-afa6-74f295052770"]);
+      t.deepEqual(response.body, contactDatas[testUser2]);
     });
 });
 
 test("Test find basic contact", async (t) => {
-  await users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t);
-  const id = "677e99fd-b854-479f-afa6-74f295052770";
+  await users.resetUsers([ testUser1, testUser2 ], t);
 
   return request(TestConfig.HOST)
-    .get(`/rest/v1/contacts/${id}/basic`)
+    .get(`/rest/v1/contacts/${testUser2}/basic`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
     .set("Accept", "application/json")
     .expect(200)
     .then(response => {
       const expected: BasicContact = {
-        id: contactDatas[id].id,
-        displayName: contactDatas[id].displayName,
-        avatarUrl: contactDatas[id].avatarUrl
+        id: contactDatas[testUser2].id,
+        displayName: contactDatas[testUser2].displayName,
+        avatarUrl: contactDatas[testUser2].avatarUrl
       };
 
       t.deepEqual(response.body, expected);
@@ -103,14 +114,14 @@ test("Test find basic contact", async (t) => {
 
 test("Test find contact - without token", async () => {
   return request(TestConfig.HOST)
-    .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
+    .get(`/rest/v1/contacts/${testUser2}`)
     .set("Accept", "application/json")
     .expect(403);
 });
 
 test("Test find contact - invalid token", async () => {
   return request(TestConfig.HOST)
-    .get("/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770")
+    .get(`/rest/v1/contacts/${testUser2}`)
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
     .expect(403);
@@ -140,26 +151,26 @@ test("Test find contact - invalid id", async () => {
 
 test("Test update contact", async (t) => {
   mail.clearOutbox();
-  const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
-    "firstName": "Updated first name",
-    "lastName": "Updated last name",
-    "companyName": "Updated company name",
-    "phoneNumbers": ["+123 567 8901"],
-    "email": "updatedemail@testrealm1.com",
-    "addresses": [{
-      "streetAddress": "Updated street",
-      "postalCode": "98765",
-      "city": "Updated city"
+  const updateData = Object.assign({}, contactDatas[testUser2], {
+    firstName: "Updated first name",
+    lastName: "Updated last name",
+    companyName: "Updated company name",
+    phoneNumbers: ["+123 567 8901"],
+    email: "updatedemail@testrealm1.com",
+    addresses: [{
+      streetAddress: "Updated street",
+      postalCode: "98765",
+      city: "Updated city"
     }],
-    "BIC": "DABAIE3D",
-    "IBAN": "FI1112345600000786",
-    "taxCode": "FI23456789",
-    "vatLiable": "EU",
-    "audit": "No",
-    "avatarUrl": "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
-    "displayName": "Updated first name Updated last name Updated company name"
+    BIC: "DABAIE3D",
+    IBAN: "FI1112345600000786",
+    taxCode: "FI23456789",
+    vatLiable: "EU",
+    audit: "No",
+    avatarUrl: "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
+    displayName: "Updated first name Updated last name Updated company name"
   });
-  
+
   return request(TestConfig.HOST)
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -174,28 +185,31 @@ test("Test update contact", async (t) => {
 });
 
 test("Test update contact without changes", async (t) => {
-  await mail.clearOutbox();
-  await users.resetUsers(["677e99fd-b854-479f-afa6-74f295052770"], t);
-  const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
-    "firstName": "Updated first name",
-    "lastName": "Updated last name",
-    "companyName": "Updated company name",
-    "phoneNumbers": ["+123 567 8901"],
-    "email": "updatedemail@testrealm1.com",
-    "addresses": [{
-      "streetAddress": "Updated street",
-      "postalCode": "98765",
-      "city": "Updated city"
+  await users.resetUsers([ testUser2 ], t);
+
+  mail.clearOutbox();
+  t.deepEqual(mail.getOutbox().length, 0);
+
+  const updateData = Object.assign({}, contactDatas[testUser2], {
+    firstName: "Updated first name",
+    lastName: "Updated last name",
+    companyName: "Updated company name",
+    phoneNumbers: ["+123 567 8901"],
+    email: "updatedemail@testrealm1.com",
+    addresses: [{
+      streetAddress: "Updated street",
+      postalCode: "98765",
+      city: "Updated city"
     }],
-    "BIC": "DABAIE3D",
-    "IBAN": "FI1112345600000786",
-    "taxCode": "FI23456789",
-    "vatLiable": "EU",
-    "audit": "No",
-    "avatarUrl": "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
-    "displayName": "Updated first name Updated last name Updated company name"
+    BIC: "DABAIE3D",
+    IBAN: "FI1112345600000786",
+    taxCode: "FI23456789",
+    vatLiable: "EU",
+    audit: "No",
+    avatarUrl: "https://www.gravatar.com/avatar/0c8a21d448e8e36a88f2f3d63c6cecfdcc4c9981?d=identicon",
+    displayName: "Updated first name Updated last name Updated company name"
   });
-  
+
   return request(TestConfig.HOST)
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2()}`)
@@ -213,23 +227,23 @@ test("Test update contact without changes", async (t) => {
 });
 
 test("Test update contact - without token", async () => {
-  const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
-    "firstName": "Updated first name",
-    "lastName": "Updated last name",
-    "companyName": "Updated company name",
-    "phoneNumbers": ["+123 567 8901"],
-    "email": "updatedemail@testrealm1.com",
-    "addresses": [{
-      "streetAddress": "Updated street",
-      "postalCode": "98765"
+  const updateData = Object.assign({}, contactDatas[testUser2], {
+    firstName: "Updated first name",
+    lastName: "Updated last name",
+    companyName: "Updated company name",
+    phoneNumbers: ["+123 567 8901"],
+    email: "updatedemail@testrealm1.com",
+    addresses: [{
+      streetAddress: "Updated street",
+      postalCode: "98765"
     }],
-    "BIC": "DABAIE3D",
-    "IBAN": "FI1112345600000786",
-    "taxCode": "FI23456789",
-    "vatLiable": "EU",
-    "audit": "No"
+    BIC: "DABAIE3D",
+    IBAN: "FI1112345600000786",
+    taxCode: "FI23456789",
+    vatLiable: "EU",
+    audit: "No"
   });
-  
+
   return request(TestConfig.HOST)
     .put(`/rest/v1/contacts/${updateData.id}`)
     .send(updateData)
@@ -238,23 +252,23 @@ test("Test update contact - without token", async () => {
 });
 
 test("Test update contact - invalid token", async () => {
-  const updateData = Object.assign({}, contactDatas["677e99fd-b854-479f-afa6-74f295052770"], {
-    "firstName": "Updated first name",
-    "lastName": "Updated last name",
-    "companyName": "Updated company name",
-    "phoneNumbers": ["+123 567 8901"],
-    "email": "updatedemail@testrealm1.com",
-    "addresses": [{
-      "streetAddress": "Updated street",
-      "postalCode": "98765"
+  const updateData = Object.assign({}, contactDatas[testUser2], {
+    firstName: "Updated first name",
+    lastName: "Updated last name",
+    companyName: "Updated company name",
+    phoneNumbers: ["+123 567 8901"],
+    email: "updatedemail@testrealm1.com",
+    addresses: [{
+      streetAddress: "Updated street",
+      postalCode: "98765"
     }],
-    "BIC": "DABAIE3D",
-    "IBAN": "FI1112345600000786",
-    "taxCode": "FI23456789",
-    "vatLiable": "EU",
-    "audit": "No"
+    BIC: "DABAIE3D",
+    IBAN: "FI1112345600000786",
+    taxCode: "FI23456789",
+    vatLiable: "EU",
+    audit: "No"
   });
-  
+
   return request(TestConfig.HOST)
     .put(`/rest/v1/contacts/${updateData.id}`)
     .set("Authorization", "Bearer FAKE")
@@ -275,7 +289,7 @@ test("Test update contact - not found", async () => {
 
 test("Test update contact - malformed", async () => {
   return request(TestConfig.HOST)
-    .put(`/rest/v1/contacts/677e99fd-b854-479f-afa6-74f295052770`)
+    .put(`/rest/v1/contacts/${testUser2}`)
     .set("Authorization", `Bearer ${await auth.getTokenUser2([ApplicationRoles.LIST_ALL_CONTACTS])}`)
     .send("malformed data")
     .set("Accept", "application/json")
@@ -285,30 +299,56 @@ test("Test update contact - malformed", async () => {
     });
 });
 
-test("Test sync contact", async (t) => {
+test("Test sync contact with SAP business partner code", async (t) => {
+  await sapMock.mockBusinessPartner("1");
+
   const accessToken = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
   await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_CONTACT_SYNC");
-  
+
   return request(TestConfig.HOST)
-    .get("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6")
+    .get(`/rest/v1/contacts/${userWithSapBusinessPartnerCode}`)
     .set("Authorization", `Bearer ${accessToken}`)
     .set("Accept", "application/json")
     .expect(200)
     .then(async response => {
       await Promise.all([
         auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]),
-        users.resetUsers(["6f1cd486-107e-404c-a73f-50cc1fdabdd6", "677e99fd-b854-479f-afa6-74f295052770"], t),
-        database.executeFiles(testDataDir, ["contract-documents-teardown.sql", "contracts-teardown.sql", "item-groups-prices-teardown.sql", "item-groups-teardown.sql", "operation-reports-teardown.sql"])
+        users.resetUsers([ userWithSapBusinessPartnerCode ], t),
+        database.executeFiles(testDataDir, ["operation-reports-teardown.sql"]),
+        sapMock.deleteMocks()
       ]);
 
-      t.deepEqual(response.body, contactDataSync["6f1cd486-107e-404c-a73f-50cc1fdabdd6"]);
+      t.deepEqual(response.body, contactDataSync[userWithSapBusinessPartnerCode], "Contact data should be synced");
+    });
+});
+
+test("Test sync contact with legacy SAP ID", async (t) => {
+  await sapMock.mockBusinessPartner("2");
+
+  const accessToken = await auth.getTokenUser1([ApplicationRoles.LIST_ALL_CONTACTS]);
+  await operations.createOperationAndWait(await auth.getAdminToken(), "SAP_CONTACT_SYNC");
+
+  return request(TestConfig.HOST)
+    .get(`/rest/v1/contacts/${userWithLegacySapId}`)
+    .set("Authorization", `Bearer ${accessToken}`)
+    .set("Accept", "application/json")
+    .expect(200)
+    .then(async response => {
+      await Promise.all([
+        auth.removeUser1Roles([ApplicationRoles.LIST_ALL_CONTACTS]),
+        users.resetUsers([ userWithLegacySapId ], t),
+        database.executeFiles(testDataDir, ["operation-reports-teardown.sql"]),
+        sapMock.deleteMocks()
+      ]);
+
+      t.deepEqual(response.body, contactDataSync[userWithLegacySapId], "Contact data should be synced");
     });
 });
 
 test("Test update contact password change", async (t) => {
   t.notOk(await auth.getToken("test1-testrealm1", "fake-password"), "fake password should not return token");
   return request(TestConfig.HOST)
-    .put("/rest/v1/contacts/6f1cd486-107e-404c-a73f-50cc1fdabdd6/credentials")
+    .put(`/rest/v1/contacts/${testUser1}/credentials`)
     .set("Authorization", `Bearer ${await auth.getTokenUser1()}`)
     .send({ "password": "fake-password" })
     .set("Accept", "application/json")
@@ -316,6 +356,6 @@ test("Test update contact password change", async (t) => {
     .then(async() => {
       t.notOk(await auth.getToken("test1-testrealm1", "test"), "Initial password should not return token after reset");
       t.ok(await auth.getToken("test1-testrealm1", "fake-password"), "updated password should return token");
-      await users.resetUserPassword("6f1cd486-107e-404c-a73f-50cc1fdabdd6", "test1-testrealm1", "fake-password", "test");
+      await users.resetUserPassword(testUser1, "test1-testrealm1", "fake-password", "test");
     });
 });

@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
 import auth from "./auth";
@@ -11,7 +10,7 @@ import TestConfig from "./test-config";
 
 /**
  * Sorts list by id
- * 
+ *
  * @param list list
  * @return sorted list
  */
@@ -19,13 +18,13 @@ const sorted = (list: any[]) => {
   list.sort((a, b) => {
     return a.id! - b.id!;
   });
-  
+
   return list;
 }
 
 /**
  * Lists chat groups
- * 
+ *
  * @param token token
  * @returns promise for chat groups
  */
@@ -37,12 +36,12 @@ const listUserGroups = (token: string): Promise<UserGroup[]> => {
     .expect(200)
     .then((response) => {
       return sorted(response.body);
-    });  
+    });
 }
 
 /**
  * Creates chat group
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -69,10 +68,10 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
 
 /**
  * Finds chat group
- * 
+ *
  * @param token token
  * @param id chat group id
- * @param expectStatus 
+ * @param expectStatus
  * @returns promise for chat group
  */
 const findChatGroup = (token: string, id: number, expectStatus?: number): Promise<ChatGroup> => {
@@ -83,12 +82,12 @@ const findChatGroup = (token: string, id: number, expectStatus?: number): Promis
     .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Lists chat groups
- * 
+ *
  * @param token token
  * @returns promise for chat groups
  */
@@ -100,13 +99,13 @@ const listChatGroups = (token: string): Promise<ChatGroup[]> => {
     .expect(200)
     .then((response) => {
       return sorted(response.body);
-    });  
+    });
 }
 
 
 /**
  * Updates chat group
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -134,7 +133,7 @@ const updateChatGroup = (token: string, id: number, title: string, type: ChatGro
 
 /**
  * Deletes chat group
- * 
+ *
  * @param token token
  * @param id chat group id
  * @returns promise for delete
@@ -148,7 +147,7 @@ const deleteChatGroup = async (token: string, id: number) => {
 }
 
 test("Test group permission create", async (t) => {
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
   const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
   t.notEqual(createdChatGroup, null);
@@ -165,7 +164,7 @@ test("Test group permission create", async (t) => {
 });
 
 test("Test group permission list", async (t) => {
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
 
   const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
@@ -188,7 +187,7 @@ test("Test group permission list", async (t) => {
 });
 
 test("Test group permission update", async (t) => {
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
 
   const createdChatGroup = await createChatGroup(token, "Group title (Test group permission list)", "CHAT");
@@ -212,8 +211,8 @@ test("Test group permission update", async (t) => {
 });
 
 test("Create chat group", async (t) => {
-  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);  
-  
+  const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
+
   await mqtt.subscribe("chatgroups");
   try {
     const createdChatGroup = await createChatGroup(token, "Group title (Create chat group)", "CHAT");
@@ -243,7 +242,7 @@ test("Finds chat group", async (t) => {
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const foundChatGroup = await findChatGroup(token, createdChatGroup.id!);
   await findChatGroup(token, 1234, 404);
-  
+
   t.deepEqual(foundChatGroup, createdChatGroup);
   await deleteChatGroup(token, createdChatGroup.id!);
 

@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import chatPermissions from "./chat-permissions";
 import auth from "./auth";
@@ -10,7 +9,7 @@ import TestConfig from "./test-config";
 
 /**
  * Sorts list by id
- * 
+ *
  * @param list list
  * @return sorted list
  */
@@ -18,13 +17,13 @@ const sorted = (list: any[]) => {
   list.sort((a, b) => {
     return a.id! - b.id!;
   });
-  
+
   return list;
 }
 
 /**
  * Lists chat groups
- * 
+ *
  * @param token token
  * @returns promise for chat groups
  */
@@ -36,12 +35,12 @@ const listUserGroups = (token: string): Promise<UserGroup[]> => {
     .expect(200)
     .then((response) => {
       return sorted(response.body);
-    });  
+    });
 }
 
 /**
  * Creates chat group
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -68,7 +67,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
 
 /**
  * Creates chat thread
- * 
+ *
  * @param token token
  * @param title title
  * @param type type
@@ -77,7 +76,7 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
 
 /**
  * Creates chat thread
- *  
+ *
  * @param token token
  * @param groupId group id
  * @param title thread title
@@ -113,7 +112,7 @@ const createChatThread = (token: string, groupId: number, title: string, answerT
 
 /**
  * Finds chat thread
- * 
+ *
  * @param token token
  * @param id chat thread id
  * @param expectStatus expected http status. Defaults to 200
@@ -127,12 +126,12 @@ const findChatThread = (token: string, id: number, expectStatus?: number): Promi
     .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
-    });  
+    });
 }
 
 /**
  * Lists chat threads
- * 
+ *
  * @param token token
  * @returns promise for chat groups
  */
@@ -157,15 +156,15 @@ const listChatThreads = (token: string, groupId?: number, groupType?: ChatGroupT
       result.sort((a, b) => {
         return a.id! - b.id!;
       });
-      
-      return result;      
-    });  
+
+      return result;
+    });
 }
 
 
 /**
  * Updates chat thread
- * 
+ *
  * @param token token
  * @param id id
  * @param groupId group id
@@ -203,7 +202,7 @@ const updateChatThread = (token: string, id: number, groupId: number, title: str
 
 /**
  * Deletes chat group
- * 
+ *
  * @param token token
  * @param id chat group id
  * @returns promise for delete
@@ -218,7 +217,7 @@ const deleteChatGroup = async (token: string, id: number) => {
 
 /**
  * Deletes chat thread
- * 
+ *
  * @param token token
  * @param threadId chat thread id
  * @returns promise for delete
@@ -233,16 +232,16 @@ const deleteChatThread = async (token: string, threadId: number) => {
 
 test("Test thread user permission create", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
-  
+
   const createdPermission = await chatPermissions.createChatThreadUserPermission(token, createdChatThread.id!, auth.getUser2Id(), "ACCESS");
   const foundPermissions = await chatPermissions.listChatThreadUserPermissions(token, createdChatThread.id!);
 
   t.deepEquals(foundPermissions, [createdPermission]);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -252,7 +251,7 @@ test("Test thread user permission create", async (t) => {
 
 test("Test thread user permission list", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
@@ -263,7 +262,7 @@ test("Test thread user permission list", async (t) => {
   t.equal(foundPermissions.length, 1);
   t.deepEquals(foundPermissions, [ createdPermission1 ]);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -273,7 +272,7 @@ test("Test thread user permission list", async (t) => {
 
 test("Test thread user permission update", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Test thread user permission update)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
@@ -286,7 +285,7 @@ test("Test thread user permission update", async (t) => {
   const foundPermission: ChatThreadUserPermission = await chatPermissions.findChatThreadUserPermission(token, createdChatThread.id!, createdPermission.id!);
   t.equal(foundPermission.scope, "ACCESS");
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -297,7 +296,7 @@ test("Test thread user permission update", async (t) => {
 test("Test thread group permission create", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
@@ -306,7 +305,7 @@ test("Test thread group permission create", async (t) => {
 
   t.deepEquals(foundPermissions, [createdPermission]);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -317,7 +316,7 @@ test("Test thread group permission create", async (t) => {
 test("Test thread group permission list", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
@@ -328,7 +327,7 @@ test("Test thread group permission list", async (t) => {
   t.equal(foundPermissions.length, 1);
   t.deepEquals(foundPermissions, [ createdPermission1 ]);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -339,7 +338,7 @@ test("Test thread group permission list", async (t) => {
 test("Test thread group permission update", async (t) => {
   const token = await auth.getTokenUser1([ApplicationRoles.CREATE_CHAT_GROUPS]);
   const userGroups = await listUserGroups(token);
-  
+
   const createdChatGroup = await createChatGroup(token, "Group title (Finds chat group)", "CHAT");
   const createdChatThread = await createChatThread(token, createdChatGroup.id!, "Thread title");
 
@@ -352,7 +351,7 @@ test("Test thread group permission update", async (t) => {
   const foundPermission: ChatThreadGroupPermission = await chatPermissions.findChatThreadGroupPermission(token, createdChatThread.id!, createdPermission.id!);
   t.equal(foundPermission.scope, "ACCESS");
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -371,9 +370,9 @@ test("Create chat thread", async (t) => {
     await mqtt.expectMessage({
       "operation": "CREATED",
       "id": createdChatThread.id
-    });    
+    });
 
-    await deleteChatThread(token, createdChatThread.id!);    
+    await deleteChatThread(token, createdChatThread.id!);
     await deleteChatGroup(token, createdChatGroup.id!);
   } finally {
     await mqtt.unsubscribe("chatthreads");
@@ -390,10 +389,10 @@ test("Finds chat group", async (t) => {
 
   const foundChatThread = await findChatThread(token, createdChatThread.id!);
   await findChatThread(token, 1234, 404);
-  
+
   t.deepEqual(foundChatThread, createdChatThread);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -417,7 +416,7 @@ test("Updates chat group", async (t) => {
   t.equal(updatedChatThread.imageUrl, "http://www.exmaple.com/image");
   t.equal(updatedChatThread.expiresAt, expiresAt);
 
-  await deleteChatThread(token, createdChatThread.id!);    
+  await deleteChatThread(token, createdChatThread.id!);
   await deleteChatGroup(token, createdChatGroup.id!);
 
   t.equal((await listChatThreads(token)).length, 0);
@@ -440,12 +439,12 @@ test("Lists chat group", async (t) => {
     await createChatThread(token, createdGroups[1].id!, "Thread 2.1"),
     await createChatThread(token, createdGroups[1].id!, "Thread 2.2"),
     await createChatThread(token, createdGroups[2].id!, "Thread 3.1")
-  ]); 
-  
+  ]);
+
   t.deepEqual(await listChatThreads(token), createdChatThreads);
   t.deepEqual(await listChatThreads(token, createdGroups[0].id!), [ createdChatThreads[0], createdChatThreads[1] ]);
   t.deepEqual(await listChatThreads(token, undefined, "CHAT"), [ createdChatThreads[0], createdChatThreads[1], createdChatThreads[2], createdChatThreads[3] ]);
-  
+
   await Promise.all(createdChatThreads.map((createdChatThread) => {
     return deleteChatThread(token, createdChatThread.id!);
   }));
@@ -488,14 +487,14 @@ test("Lists chat thread permissions", async (t) => {
   const createdChatThreads1 = await Promise.all([
     await createChatThread(token, createdGroups1[0].id!, "Thread 1.1"),
     await createChatThread(token, createdGroups1[0].id!, "Thread 1.2"),
-  ]); 
+  ]);
 
   const createdChatThreads2 = await Promise.all([
     await createChatThread(token, createdGroups2[0].id!, "Thread 2.1"),
     await createChatThread(token, createdGroups2[0].id!, "Thread 2.2"),
     await createChatThread(token, createdGroups2[1].id!, "Thread 3.1")
-  ]); 
-  
+  ]);
+
   await chatPermissions.createChatGroupGroupPermission(token, createdGroups1[0].id!, userGroup1!.id!, "MANAGE");
   await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[0].id!, userGroup2!.id!, "MANAGE");
   await chatPermissions.createChatGroupGroupPermission(token, createdGroups2[1].id!, userGroup2!.id!, "MANAGE");
@@ -510,7 +509,7 @@ test("Lists chat thread permissions", async (t) => {
 
   t.deepEqual(await listChatThreads(token1), createdChatThreads1);
   t.deepEqual(await listChatThreads(token2), createdChatThreads2);
-  
+
   await Promise.all(createdChatThreads1.map((createdChatThread) => {
     return deleteChatThread(token, createdChatThread.id!);
   }));
@@ -541,12 +540,12 @@ test("Deletes chat thread", async (t) => {
     await findChatThread(token, createdChatThread.id!, 200);
     await deleteChatThread(token, createdChatThread.id!);
     await findChatThread(token, createdChatThread.id!, 404);
-    
+
     await mqtt.expectMessage({
       "operation": "DELETED",
       "id": createdChatThread.id
     });
-    
+
     await deleteChatGroup(token, createdChatGroup.id!);
   } finally {
     await mqtt.unsubscribe("chatthreads");

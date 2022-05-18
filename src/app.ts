@@ -90,7 +90,10 @@ process.on("unhandledRejection", (error) => {
   }));
 
   app.use((req, res, next) => {
-    logger.info(`${req.method} request into ${req.path}`);
+    if (!req.path.includes("/system/ping")) {
+      logger.info(`${req.method} request into ${req.path}`);
+    }
+
     next();
   });
 
@@ -113,6 +116,4 @@ process.on("unhandledRejection", (error) => {
 
   mqtt.connect();
   taskQueue.start();
-
-
 })();

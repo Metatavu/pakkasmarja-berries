@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import { WeekDeliveryPrediction } from "../rest/model/models";
@@ -12,7 +11,7 @@ const weeklyDeliveryPredictionData = require(`${testDataDir}/week-delivery-predi
 
 /**
  * Creates week delivery prediction
- * 
+ *
  * @param token token
  * @returns promise for week delivery prediction
  */
@@ -32,7 +31,7 @@ const createWeekDeliveryPrediction = (token: string): Promise<WeekDeliveryPredic
 
 /**
  * Updates week delivery prediction
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for week delivery prediction
@@ -52,7 +51,7 @@ const updateWeekDeliveryPrediction = (token: string, id: string): Promise<WeekDe
 
 /**
  * Finds week delivery prediction
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for week delivery prediction
@@ -70,7 +69,7 @@ const findWeekDeliveryPrediction = (token: string, id: string): Promise<WeekDeli
 
 /**
  * Lists week delivery predictions
- * 
+ *
  * @param token token
  * @param userId userid
  * @returns promise for list of week delivery predictions
@@ -93,9 +92,9 @@ const listWeekDeliveryPredictions = (token: string, userId?: string): Promise<We
 
 /**
  * Get days byte value
- * 
+ *
  * @param days days
- * @return byte value 
+ * @return byte value
  */
 const getDaysByteValue = (days: any) => {
   const MONDAY = 1 << 0;
@@ -250,7 +249,7 @@ test("Delete week delivery prediction created by same user", async (t) => {
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204);
-    
+
     const dbItems = await listWeekDeliveryPredictions(token, createdWeekDeliveryPrediction.userId);
     t.equal(0, dbItems.length);
   } finally {
@@ -270,7 +269,7 @@ test("Delete week delivery prediction created by other user", async (t) => {
       .set("Authorization", `Bearer ${token1}`)
       .set("Accept", "application/json")
       .expect(204);
-    
+
     const dbItems = await listWeekDeliveryPredictions(token2, createdWeekDeliveryPrediction.userId);
     t.equal(0, dbItems.length);
   } finally {
@@ -291,7 +290,7 @@ test("Delete week delivery prediction - Forbidden", async (t) => {
       .set("Authorization", `Bearer ${token2}`)
       .set("Accept", "application/json")
       .expect(403);
-    
+
     const dbItems = await listWeekDeliveryPredictions(token1, createdWeekDeliveryPrediction.userId);
     t.equal(1, dbItems.length);
   } finally {

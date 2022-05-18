@@ -1,4 +1,3 @@
-import config from "./config";
 import * as request from "supertest";
 import { Operation } from "../rest/model/models";
 import TestConfig from "./test-config";
@@ -10,22 +9,22 @@ export default new class Operations {
 
   /**
    * Creates new operation and waits for it's completion
-   * 
-   * @param {String} accessToken access token 
+   *
+   * @param {String} accessToken access token
    * @param {String} type operation type
    */
   createOperationAndWait(accessToken: string, type: string) {
     return this.createOperation(accessToken, type)
       .then((response: any) => {
         const operation: Operation = response.body;
-        return this.waitOperationReport(accessToken, operation.operationReportId || "");
+        return this.waitOperationReport(accessToken, operation.operationReportId || "");
       });
   }
 
   /**
    * Creates new operation
-   * 
-   * @param {String} accessToken access token 
+   *
+   * @param {String} accessToken access token
    * @param {String} type operation type
    */
   createOperation(accessToken: string, type: string) {
@@ -40,8 +39,8 @@ export default new class Operations {
   }
 
   /**
-   * Waits for operation report to have zero pending tasks 
-   * 
+   * Waits for operation report to have zero pending tasks
+   *
    * @param {String} accessToken access token
    * @param {int} operationReportId operation report id
    */
@@ -50,27 +49,31 @@ export default new class Operations {
       let intervalId: NodeJS.Timer;
       let timeoutId: NodeJS.Timer;
 
-      intervalId = setInterval(() => {
-        this.checkOperationReport(accessToken, operationReportId)
-          .then((result) => {
-            const operationReport = result.body;
-            if (operationReport.failedCount !== 0) {
-              this.getOperationItems(accessToken, operationReportId)
-                .then((itemsResult) => {
-                  reject(JSON.stringify(itemsResult.body));
-                });
-            } else if (operationReport.pendingCount === 0) {
-              clearInterval(intervalId);
-              clearTimeout(timeoutId);
-              resolve(operationReport);
-            }
-          });
-      }, 300);
+      intervalId = setInterval(async () => {
+        const operationReportResult = await this.checkOperationReport(accessToken, operationReportId);
+        const operationReport = operationReportResult.body;
+        const { failedCount, pendingCount } = operationReport;
+
+        if (failedCount !== 0) {
+          clearInterval(intervalId);
+          clearTimeout(timeoutId);
+
+          const itemsResult = await this.getOperationItems(accessToken, operationReportId);
+          return reject(JSON.stringify(itemsResult.body));
+        }
+
+        if (pendingCount === 0) {
+          clearInterval(intervalId);
+          clearTimeout(timeoutId);
+
+          return resolve(operationReport);
+        }
+      }, 1000);
 
       timeoutId = setTimeout(() => {
         clearInterval(intervalId);
         clearTimeout(timeoutId);
-        reject("Timeout");          
+        reject("Timeout");
       }, 60000);
 
     });
@@ -78,8 +81,8 @@ export default new class Operations {
 
   /**
    * Request a operation report
-   * 
-   * @param {String} accessToken access token 
+   *
+   * @param {String} accessToken access token
    * @param {int} operationReportId operation report id
    */
   checkOperationReport(accessToken: string, operationReportId: string) {
@@ -92,8 +95,8 @@ export default new class Operations {
 
   /**
    * Lists operation items by operation report id
-   * 
-   * @param {String} accessToken access token 
+   *
+   * @param {String} accessToken access token
    * @param {int} operationReportId operation report id
    */
   getOperationItems(accessToken: string, operationReportId: string) {
@@ -103,5 +106,5 @@ export default new class Operations {
       .set("Accept", "application/json")
       .expect(200);
   }
-  
+
 }

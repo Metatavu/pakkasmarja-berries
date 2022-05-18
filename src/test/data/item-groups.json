@@ -14,5 +14,13 @@
     "category": "FRESH",
     "minimumProfitEstimation": 0,
     "prerequisiteContractItemGroupId": "89723408-0f51-11e8-baa0-dfe7c7eae257"
+  },
+  "6a67344b-57e2-4ec1-ba63-aa0432c6b827": {
+    "id": "6a67344b-57e2-4ec1-ba63-aa0432c6b827",
+    "name": "100/Test Group 3",
+    "displayName": "Test Group 3",
+    "category": "FRESH",
+    "minimumProfitEstimation": 0,
+    "prerequisiteContractItemGroupId": null
   }
 }

@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import database from "./database";

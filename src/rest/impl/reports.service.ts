@@ -1,13 +1,12 @@
 import { Application, Response, Request } from "express";
 import * as Keycloak from "keycloak-connect";
-import models, { ProductModel, DeliveryPlaceModel, DeliveryQualityModel, DeliveryModel } from "../../models";
+import models, { ProductModel, DeliveryPlaceModel } from "../../models";
 import * as _ from "lodash";
 import { getLogger, Logger } from "log4js";
 import slugify from "slugify";
 import { Stream } from "stream";
 import * as pug from "pug";
 import ReportsService from "../api/reports.service";
-import { Contact, DeliveryQuality, DeliveryPlace, Product, ItemGroupCategory, Address } from "../model/models";
 import userManagement, { UserProperty } from "../../user-management";
 import pdf from "../../pdf";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
@@ -85,7 +84,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -182,7 +181,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Parses a date string
-   * 
+   *
    * @param date date
    * @return moment
    */
@@ -192,9 +191,9 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Generates report data for delivery report
-   * 
+   *
    * @param user user
-   * @param productIds product ids 
+   * @param productIds product ids
    * @param startDate start date
    * @param endDate end date
    * @return report data
@@ -222,7 +221,7 @@ export default class ReportsServiceImpl extends ReportsService {
       productMap[product.id!] = product;
     }
 
-    const deliveryQualities = await models.listDeliveryQualities(); 
+    const deliveryQualities = await models.listDeliveryQualities();
     const deliveryQualityMap: { [key: number]: DeliveryPlaceModel } = {};
     for (let i = 0; i < deliveryQualities.length; i++) {
       const deliveryQuality = deliveryQualities[i];
@@ -242,7 +241,7 @@ export default class ReportsServiceImpl extends ReportsService {
       const delivery = groupedDeliveries[0];
       const deliveryPlaceId = delivery.deliveryPlaceId;
       const deliveryDate = moment(delivery.createdAt).format("DD.MM.YYYY");
-      
+
       const deliveries: DeliveryReportDataDelivery[] = groupedDeliveries.map((delivery) => {
         const product = productMap[delivery.productId];
         const unitPrice = delivery.unitPriceWithBonus || 0;
@@ -287,7 +286,7 @@ export default class ReportsServiceImpl extends ReportsService {
           totalAmountUnits:  totalAmountUnits.toFixed(2),
           totalAmountKgs: totalAmountKgs.toFixed(2),
           unitName: product.unitName
-        } 
+        }
       }).value();
 
     const alv0 = _.sumBy(deliveries, delivery => delivery.unitPriceWithBonus || 0);
@@ -303,7 +302,7 @@ export default class ReportsServiceImpl extends ReportsService {
           streetAddress: userManagement.getSingleAttribute(user, UserProperty.STREET_1)
         },
         displayName: userManagement.getUserDisplayName(user),
-        sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_ID) || null
+        sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) || null
       },
       dateNow: moment().format("DD.MM.YYYY"),
       startDate: moment(startDate).format("DD.MM.YYYY"),
@@ -315,7 +314,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Renders report document as HTML
-   * 
+   *
    * @param baseUrl baseUrl
    * @param reportData report data
    * @return report
@@ -338,7 +337,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Renders report document as HTML
-   * 
+   *
    * @param baseUrl baseUrl
    * @param reportData report data
    * @return report
@@ -359,7 +358,7 @@ export default class ReportsServiceImpl extends ReportsService {
 
   /**
    * Renders a pug template
-   * 
+   *
    * @param {String} template template name
    * @param {Object} model model
    * @return {String} rendered HTML
@@ -370,9 +369,9 @@ export default class ReportsServiceImpl extends ReportsService {
   }
 
   /**
-   * Slugifys document name 
-   * 
-   * @param {*} documentName 
+   * Returns URL-friendly document name
+   *
+   * @param {*} documentName
    */
   private getDocumentSlug(documentName: string): string {
     return slugify(documentName);

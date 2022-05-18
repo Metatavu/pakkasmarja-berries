@@ -25,3 +25,8 @@ This guide assumes that you are running on linux and have installed docker, dock
 - In terminal where environment is running, press <kbd>Ctrl</kbd>+<kbd>C</kbd> and wait until containers have shut down.
 
 - Run   `docker-compose down && docker-compose rm`.
+
+## Build ERP services
+
+./gradlew clean build -PtargetEnvironment=local && 
+docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest .

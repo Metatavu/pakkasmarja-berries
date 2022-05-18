@@ -3,21 +3,17 @@ import { getLogger, Logger } from "log4js";
 import models, { ContractModel, ChatGroupModel, ThreadModel } from "../models";
 import * as Queue from "better-queue";
 import * as SQLStore from "better-queue-sql";
-import signature from "../signature";
 import userManagement, { UserProperty } from "../user-management";
-import { config } from "../config";  
+import { config } from "../config";
 import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-management/chat-thread-permission-controller";
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
-import { SapAddressTypeEnum, SapBPAddress, SapBusinessPartner, SapContract, SapContractLine, SapContractStatusEnum, SapDeliveryPlace, SapItemGroup, SapVatLiableEnum } from "../sap/service-layer-client/types";
-import * as moment from "moment";
-import SapServiceFactory from "../sap/service-layer-client";
 import { createStackedReject, logReject } from "../utils";
-import { ContractStatus } from "../rest/model/contractStatus";
-import SapContractsServiceImpl from "../sap/impl/contracts";
 import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 import { ChatGroupType } from '../rest/model/chatGroupType';
+import { HttpError, SapAddressType, SapBusinessPartner } from "../generated/erp-services-client/api";
+import ErpClient from "../erp/client";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries
@@ -25,17 +21,15 @@ import { ChatGroupType } from '../rest/model/chatGroupType';
 export default new class TaskQueue {
 
   private logger: Logger;
-  private contractDocumentStatusQueue: Queue;
-  private contractDocumentStatusBatchQueue: Queue;
   private sapContactUpdateQueue: Queue;
-  private sapDeliveryPlaceUpdateQueue: Queue;
-  private sapItemGroupUpdateQueue: Queue;
-  private sapContractUpdateQueue: Queue;
-  private updateCurrentYearApprovedContractsToSapQueue: Queue;
-  private sapContractSapIdSyncQueue: Queue;
   private sapContractDeliveredQuantityUpdateQueue: Queue;
   private questionGroupThreadsQueue: Queue;
   private chatPermissionsCacheQueue: Queue;
+
+  /**
+   * Saved date of last sync of contacts and SAP business partners
+   */
+  private contactsLastUpdatedAt: Date | undefined;
 
   /**
    * Constructor
@@ -46,26 +40,21 @@ export default new class TaskQueue {
    */
   constructor () {
     this.logger = getLogger();
+    this.contactsLastUpdatedAt = undefined;
   }
 
-  public start() {
-    this.contractDocumentStatusQueue = this.createQueue("contractDocumentStatus", this.checkContractDocumentSignatureStatusTask.bind(this));
-    this.contractDocumentStatusBatchQueue = this.createQueue("contractDocumentStatusBatch", this.fillCheckContractDocumentSignatureStatusQueueTask.bind(this));
-    this.sapContactUpdateQueue = this.createQueue("sapContactUpdate", this.sapContactUpdateTask.bind(this));
-    this.sapDeliveryPlaceUpdateQueue = this.createQueue("sapDeliveryPlaceUpdate", this.sapDeliveryPlaceUpdateTask.bind(this));
-    this.sapItemGroupUpdateQueue = this.createQueue("sapItemGroupUpdate", this.sapItemGroupUpdateTask.bind(this));
-    this.sapContractUpdateQueue = this.createQueue("sapContractUpdate", this.sapContractUpdateTask.bind(this));
-    this.updateCurrentYearApprovedContractsToSapQueue = this.createQueue("updateCurrentYearApprovedContractsToSap", this.updateCurrentYearApprovedContractsToSapTask.bind(this));
-    this.sapContractSapIdSyncQueue = this.createQueue("sapContractSapIdSync", this.sapContractSapIdSyncTask.bind(this));
-    this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask.bind(this));
-    this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask.bind(this));
-    this.chatPermissionsCacheQueue = this.createQueue("chatPermissionsCacheQueue", this.cacheUsersChatPermissionsTask.bind(this));
+  public start = () => {
+    this.sapContactUpdateQueue = this.createQueue("sapContactUpdate", this.sapContactUpdateTask);
+    this.sapContractDeliveredQuantityUpdateQueue = this.createQueue("sapContractDeliveredQuantityUpdate", this.sapContractDeliveredQuantityUpdateTask);
+    this.questionGroupThreadsQueue = this.createQueue("questionGroupThreadsQueue", this.checkQuestionGroupUsersThreadsTask);
+    this.chatPermissionsCacheQueue = this.createQueue("chatPermissionsCacheQueue", this.cacheUsersChatPermissionsTask);
 
-    this.enqueueQuestionGroupUsersThreadsTask();
-    this.enqueueContractDeliveredQuantityUpdateQueue();
-    this.enqueueCacheUsersChatPermissionsTask();
-    // FIXME!
-    // this.enqueueContractDocumentStatusBatchQueue();
+    if (!this.inTestMode()) {
+      this.enqueueSapContactUpdate();
+      this.enqueueContractDeliveredQuantityUpdateQueue();
+      this.enqueueQuestionGroupUsersThreadsTask();
+      this.enqueueCacheUsersChatPermissionsTask();
+    }
   }
 
   /**
@@ -74,10 +63,11 @@ export default new class TaskQueue {
    * @param {String} name name
    * @param {Function} fn fn
    */
-  private createQueue(name: string, fn: Queue.ProcessFunctionCb<any>): Queue {
+  private createQueue = (name: string, fn: Queue.ProcessFunctionCb<any>): Queue => {
     const queuesConfig: any = config().tasks.queues;
 
-    const options = (queuesConfig || {})[name] || {};
+    const options = (queuesConfig || {})[name] || {};
+
     const queue: Queue = new Queue(fn, options);
 
     queue.use(new SQLStore({
@@ -91,19 +81,21 @@ export default new class TaskQueue {
       charset: "utf8mb4"
     }));
 
-    queue.on("task_progress", (taskId: string, completed: number, total: number) => {
+    queue.on("task_progress", (taskId: string) => {
       this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} progressing...`);
     });
 
     queue.on("task_finish", (taskId: string, result: any) => {
       this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} finished`);
+
       if (result && result.operationReportItemId) {
         models.updateOperationReportItem(result.operationReportItemId, result.message, true, true);
       }
     });
 
     queue.on("task_failed", (taskId: string, result: any) => {
-      this.logger.info(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
+      this.logger.warn(`[taskqueue] Task with id ${taskId} in queue ${name} failed`);
+
       if (result && result.operationReportItemId) {
         models.updateOperationReportItem(result.operationReportItemId, result.message, true, false);
       }
@@ -113,166 +105,24 @@ export default new class TaskQueue {
   }
 
   /**
-   * Adds task to contractDocumentStatusQueue
-   *
-   * @param {int} contractDocumentId id
-   */
-  enqueueContractDocumentStatusTask(contractDocumentId: number) {
-    this.contractDocumentStatusQueue.push({id: contractDocumentId, contractDocumentId: contractDocumentId});
-  }
-
-  /**
-   * Adds task to contractDocumentStatusBatchQueue
-   */
-  enqueueContractDocumentStatusBatchQueue() {
-    this.contractDocumentStatusBatchQueue.push({id: 1});
-  }
-
-  /**
    * Adds task to sapContractDeliveredQuantityUpdateQueue
    */
-  private enqueueContractDeliveredQuantityUpdateQueue() {
-    this.sapContractDeliveredQuantityUpdateQueue.push({id: 1});
+  private enqueueContractDeliveredQuantityUpdateQueue = () => {
+    this.sapContractDeliveredQuantityUpdateQueue.push({ id: 1 });
   }
 
   /**
-   * Enqueues SAP contact update task
+   * Enqueues SAP business partners update task
    *
-   * @param {Object} businessPartner SAP business partner object
+   * @param operationReportId operation report ID when task is triggered manually
    */
-  async enqueueSapContactUpdate(operationReportId: number, businessPartner: SapBusinessPartner) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
+  public enqueueSapContactUpdate = async (operationReportId?: number) => {
     this.sapContactUpdateQueue.push({
-      id: businessPartner.CardCode,
-      businessPartner: businessPartner,
-      operationReportItemId: operationReportItem.id
+      id: 1,
+      operationReportItemId: operationReportId ?
+        (await models.createOperationReportItem(operationReportId, null, false, false)).id :
+        undefined
     });
-  }
-
-  /**
-   * Enqueues SAP item group update task
-   *
-   * @param {Object} itemGroup SAP item group object
-   */
-  async enqueueSapItemGroupUpdate(operationReportId: number, itemGroup: SapItemGroup) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
-    this.sapItemGroupUpdateQueue.push({
-      id: itemGroup.Number,
-      itemGroup: itemGroup,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Enqueues SAP delivery place update task
-   *
-   * @param operationReportId operation report ID
-   * @param {Object} deliveryPlace SAP delivery place object
-   */
-  async enqueueSapDeliveryPlaceUpdate(operationReportId: number, deliveryPlace: SapDeliveryPlace) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
-    this.sapDeliveryPlaceUpdateQueue.push({
-      id: deliveryPlace.Code,
-      deliveryPlace: deliveryPlace,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Enqueues SAP contract update task
-   *
-   * @param {String} operationReportId operationReportId
-   * @param {Object} contract SAP contract object
-   * @param {Object} contractLine SAP contract line object
-   */
-  async enqueueSapContractUpdate(operationReportId: number, contract: SapContract, contractLine: SapContractLine) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
-    this.sapContractUpdateQueue.push({
-      contract: contract,
-      contractLine: contractLine,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Enqueues update current year approved contracts to SAP task
-   *
-   * @param operationReportId operation report ID
-   * @param contract contract model object
-   */
-  async enqueueUpdateCurrentYearApprovedContractsToSap(operationReportId: number, contract: ContractModel) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, null, false, false);
-
-    this.updateCurrentYearApprovedContractsToSapQueue.push({
-      contract: contract,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Adds task to sapContractSapIdSync queue
-   *
-   * @param {int} contractDocumentId id
-   * @param {int} contractId id
-   */
-  async enqueueSapContractSapIdSyncTask(operationReportId: number, contractId: number) {
-    const operationReportItem = await models.createOperationReportItem(operationReportId, `Update contract ${contractId} sap id`, false, false);
-
-    this.sapContractSapIdSyncQueue.push({
-      id: contractId,
-      operationReportItemId: operationReportItem.id
-    });
-  }
-
-  /**
-   * Fills the checkContractDocumentSignatureStatus queue with unsigned contract documents
-   */
-  async fillCheckContractDocumentSignatureStatusQueueTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    try {
-      const unsignedContractDocuments = await models.listContractDocumentsBySigned(false);
-      unsignedContractDocuments.forEach((unsignedContractDocument) => {
-        this.enqueueContractDocumentStatusTask(unsignedContractDocument.id);
-      });
-    } catch (err) {
-      this.logger.error("Error processing queue", err);
-    } finally {
-      callback(null);
-      this.enqueueContractDocumentStatusBatchQueue();
-    }
-  }
-
-  /**
-   * Task to check contract document signature status from visma sign
-   *
-   * @param {object} data data given to task
-   * @param {function} callback callbackcheckContractDocumentSignatureStatus function
-   */
-  async checkContractDocumentSignatureStatusTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    try {
-      const contractDocument = await models.findContractDocumentById(data.contractDocumentId);
-      if (!contractDocument) {
-        // Contract document has been removed, resolve task
-        callback(null);
-        return;
-      }
-
-      if (!contractDocument.signed) {
-        const response = await signature.getDocumentStatus(contractDocument.vismaSignDocumentId);
-        const documentStatus = response ? response.status : null;
-        if (documentStatus === "signed") {
-          models.updateContractDocumentSigned(data.contractDocumentId, true);
-          models.updateContractStatus(contractDocument.contractId, "APPROVED");
-        }
-      }
-    } catch(err) {
-      this.logger.error(`Error finding document status with ${err}`);
-    } finally {
-      callback(null);
-    }
   }
 
   /**
@@ -281,64 +131,117 @@ export default new class TaskQueue {
    * @param {Object} data task data
    * @param {Function} callback task callback
    */
-  async sapContactUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+  public sapContactUpdateTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
+    const operationReportItemId: number | undefined = data.operationReportItemId;
+
     try {
-      const businessPartner: SapBusinessPartner = data.businessPartner;
-      const sapId = businessPartner.CardCode;
-      const email = businessPartner.EmailAddress;
-      const companyName = businessPartner.CardName;
-      const phone1 = businessPartner.Phone1;
-      const phone2 = businessPartner.Phone2;
-      const billingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.BILLING);
-      const billStreet = billingInfo ? billingInfo.Street : null;
-      const billZip = billingInfo ? billingInfo.ZipCode : null;
-      const billCity = billingInfo ? billingInfo.City : null;
-      const shippingInfo = businessPartner.BPAddresses.find((BPAddress: SapBPAddress) => BPAddress.AddressType === SapAddressTypeEnum.SHIPPING);
-      const shipStreet = shippingInfo ? shippingInfo.Street : null;
-      const shipZip = shippingInfo ? shippingInfo.ZipCode : null;
-      const shipCity = shippingInfo ? shippingInfo.City : null;
-      const bankAccountInfo = businessPartner.BPBankAccounts.length > 0 ? businessPartner.BPBankAccounts[0] : undefined;
-      const iban = bankAccountInfo ? bankAccountInfo.IBAN : null;
-      const bic = bankAccountInfo ? bankAccountInfo.BICSwiftCode : null;
-      const taxCode = businessPartner.FederalTaxID;
-      const sapVatLiable = businessPartner.VatLiable;
-      const audit = businessPartner.U_audit;
-      const vatLiable = this.translateSapVatLiable(sapVatLiable);
+      const businessPartnersApi = await ErpClient.getBusinessPartnersApi();
+      const updateStartTime = new Date();
+      const businessPartnersResult = await businessPartnersApi.listBusinessPartners(
+        this.contactsLastUpdatedAt, // updatedAt
+        0, // firstResult
+        10000 // maxResults
+      );
+      const businessPartners = businessPartnersResult.body;
 
-      if (!email) {
-        this.logger.error(`Could not synchronize user with SAP id ${sapId} because email is null`);
+      const updateResults: string[] = [];
 
-        callback({
-          message: `Could not synchronize user with SAP id ${sapId} because email is null`,
-          operationReportItemId: data.operationReportItemId
-        });
+      for (const businessPartner of businessPartners) {
+        try {
+          const user = await this.tryUpdateContactFromBusinessPartner(businessPartner);
+          updateResults.push(`  ${businessPartner.code}: Synced to user ${user.email || user.username}`);
+        } catch (error) {
+          updateResults.push(`  ${businessPartner.code}: ${error}`);
+        }
 
-        return;
+        // Wait a bit between requests to ease Keycloak load
+        await new Promise<void>(resolve => setTimeout(resolve, 1000));
       }
 
-      let user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapId);
+      this.contactsLastUpdatedAt = this.inTestMode() ? undefined : updateStartTime;
+
+      let resultMessage = `SAP contacts update finished. Results:\n${updateResults.join("\n")}`;
+
+      this.logger.info(resultMessage);
+
+      callback(null, {
+        message: resultMessage,
+        operationReportItemId: operationReportItemId
+      });
+    } catch (error) {
+      const errorMessage = error instanceof HttpError ?
+        `${error.statusCode} - ${error.message}` :
+        error.toString();
+
+      const reason = `Error processing queue - ${errorMessage}`;
+
+      this.logger.error(reason);
+
+      callback({
+        message: reason,
+        operationReportItemId: operationReportItemId
+      });
+    }
+
+    if (!this.inTestMode() && !operationReportItemId) {
+      this.enqueueSapContactUpdate();
+    }
+  }
+
+  /**
+   * Tries to update contact from given business partner
+   *
+   * @param businessPartner business partner
+   */
+  private tryUpdateContactFromBusinessPartner = async (businessPartner: SapBusinessPartner): Promise<UserRepresentation> => {
+    try {
+      const businessPartnerCode = businessPartner.code;
+      const legacySapId = businessPartner.legacyCode;
+      const companyName = businessPartner.companyName;
+      const phoneNumbers = businessPartner.phoneNumbers;
+      const addresses = businessPartner.addresses || [];
+      const billingInfo = addresses.find(address => address.type === SapAddressType.Billing);
+      const billStreet = billingInfo ? billingInfo.streetAddress : null;
+      const billZip = billingInfo ? billingInfo.postalCode : null;
+      const billCity = billingInfo ? billingInfo.city : null;
+      const shippingInfo = addresses.find(address => address.type === SapAddressType.Delivery);
+      const shipStreet = shippingInfo ? shippingInfo.streetAddress : null;
+      const shipZip = shippingInfo ? shippingInfo.postalCode : null;
+      const shipCity = shippingInfo ? shippingInfo.city : null;
+      const bankAccountInfo = businessPartner.bankAccounts ? businessPartner.bankAccounts[0] : undefined;
+      const iban = bankAccountInfo ? bankAccountInfo.iban : null;
+      const bic = bankAccountInfo ? bankAccountInfo.bic : null;
+      const taxCode = businessPartner.federalTaxId;
+      const vatLiable = this.translateSapVatLiable(businessPartner.vatLiable);
+
+      let user = await userManagement.findUserByProperty(
+        UserProperty.SAP_BUSINESS_PARTNER_CODE,
+        businessPartnerCode.toString()
+      );
+
+      if (!user && legacySapId) {
+        user = await userManagement.findUserByProperty(
+          UserProperty.SAP_ID,
+          legacySapId.toString()
+        );
+
+        if (user) {
+          userManagement.setSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE, businessPartnerCode.toString());
+          userManagement.setSingleAttribute(user, UserProperty.SAP_ID, undefined);
+        }
+      }
+
       if (!user) {
-        user = await userManagement.findUserByEmail(email);
+        throw new Error(`Could not find user with code ${businessPartnerCode} nor with legacy code ${legacySapId}`);
       }
 
-      if (!user) {
-        this.logger.error(`Could not find user with SAP id ${sapId} nor with email ${email}`);
-        callback({
-          message: `Could not find user with SAP id ${sapId} nor with email ${email}`,
-          operationReportItemId: data.operationReportItemId
-        });
-        return;
-      }
-
-      userManagement.setSingleAttribute(user, UserProperty.SAP_ID, sapId);
-      userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phone1);
-      userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phone2);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phoneNumbers && phoneNumbers.length > 0 ? phoneNumbers[0] : undefined);
+      userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phoneNumbers && phoneNumbers.length > 1 ? phoneNumbers[1] : undefined);
       userManagement.setSingleAttribute(user, UserProperty.COMPANY_NAME, companyName);
       userManagement.setSingleAttribute(user, UserProperty.BIC, bic);
       userManagement.setSingleAttribute(user, UserProperty.IBAN, iban);
       userManagement.setSingleAttribute(user, UserProperty.TAX_CODE, taxCode);
       userManagement.setSingleAttribute(user, UserProperty.VAT_LIABLE, vatLiable);
-      userManagement.setSingleAttribute(user, UserProperty.AUDIT, audit);
       userManagement.setSingleAttribute(user, UserProperty.CITY_1, billCity);
       userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_1, billZip);
       userManagement.setSingleAttribute(user, UserProperty.STREET_1, billStreet);
@@ -346,102 +249,9 @@ export default new class TaskQueue {
       userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_2, shipZip);
       userManagement.setSingleAttribute(user, UserProperty.STREET_2, shipStreet);
 
-      await userManagement.updateUser(user);
-
-      callback(null, {
-        message: `Synchronized contact details from SAP ${email} / ${sapId}`,
-        operationReportItemId: data.operationReportItemId
-      });
-    } catch (err) {
-      this.logger.error(`Error processing queue ${err}`);
-      callback({
-        message: err,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
-   * Resolves and updates SAP Contract's sapId
-   *
-   * @param {Object} data task data
-   * @param {Function} callback task callback
-   */
-  async sapContractSapIdSyncTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    const failTask = (reason: string) => {
-      this.logger.error(reason);
-      callback({
-        message: reason,
-        operationReportItemId: data.operationReportItemId
-      });
-    };
-
-    try {
-      const contract = await models.findContractById(data.id);
-      const userId = contract.userId;
-      const year = contract.year;
-
-      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-      if (!itemGroup) {
-        throw new Error(`Item group with ID ${contract.itemGroupId} could not be found`);
-      }
-
-      const user = await userManagement.findUser(userId);
-      if (!user) {
-        throw new Error(`User with user ID "${userId}" could not be found`);
-      }
-
-      const itemGroupSapId = itemGroup.sapId;
-      if (!itemGroupSapId) {
-        throw new Error(`Item group SAP ID could not be resolved`);
-      }
-
-      const userSapId = userManagement.getSingleAttribute(user, UserProperty.SAP_ID);
-      if (!userSapId) {
-        throw new Error(`User SAP ID could not be resolved`);
-      }
-
-      const sapContractsService = SapServiceFactory.getContractsService();
-      const userActiveSapContracts = await sapContractsService.listActiveContractsByBusinessPartner(userSapId);
-      if (!userActiveSapContracts) {
-        throw new Error(`Failed to list SAP contracts for user with SAP ID "${userSapId}"`);
-      }
-
-      const sapContract = (
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.APPROVED) ||
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.ON_HOLD) ||
-        userActiveSapContracts.find(contract => contract.Status === SapContractStatusEnum.DRAFT)
-      );
-
-      if (!sapContract) {
-        throw new Error(`Active SAP contract could not be found`);
-      }
-
-      const contractLines = sapContract.BlanketAgreements_ItemsLines;
-      if (contractLines.every(line => line.ItemGroup !== Number(itemGroupSapId))) {
-        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not contain lines for item group in App contract`);
-      }
-
-      if (!sapContract.DocNum) {
-        throw new Error(`Contract ${contract.id} SAP creation failed because SAP contract did not have document number`);
-      }
-
-      const contractSapId = `${year}-${sapContract.DocNum}-${itemGroupSapId}`;
-      if (!contractSapId) {
-        throw new Error(`Contract SAP ID could not be resolved`);
-      }
-
-      await models.updateContractSapId(contract.id, contractSapId);
-
-      const successMessage = `Contract ${contract.id} SAP id changed to ${contractSapId}`;
-
-      this.logger.info(successMessage);
-      callback(null, {
-        message: successMessage,
-        operationReportItemId: data.operationReportItemId
-      });
+      return userManagement.updateUser(user);
     } catch (error) {
-      return failTask(`Contract ${data.id} SAP ID creation failed. Reason: ${error}`);
+      return Promise.reject(`Error: ${error}`);
     }
   }
 
@@ -451,32 +261,16 @@ export default new class TaskQueue {
    * @param {Object} data task data
    * @param {Function} callback task callback
    */
-  async sapContractDeliveredQuantityUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+  public sapContractDeliveredQuantityUpdateTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     try {
-      const sapContractsService = SapServiceFactory.getContractsService();
-      const sapContracts = await sapContractsService.listContracts();
+      const contractsApi = await ErpClient.getContractsApi();
+      const contractsResponse = await contractsApi.listContracts();
+      const sapContracts = contractsResponse.body;
 
       const sapDeliveredQuantities = {};
 
-      sapContracts.forEach((sapContract) => {
-        const sapContractLines = sapContract.BlanketAgreements_ItemsLines;
-        sapContractLines.forEach(sapContractLine => {
-          const { DocNum, StartDate } = sapContract;
-          const { ItemGroup, CumulativeQuantity } = sapContractLine;
-
-          if (!DocNum || !StartDate || !ItemGroup) {
-            return;
-          }
-
-          const year = moment(StartDate).format("YYYY");
-          const sapId = `${year}-${DocNum}-${ItemGroup}`;
-
-          if (CumulativeQuantity !== undefined) {
-            sapDeliveredQuantities[sapId] = sapDeliveredQuantities[sapId] ?
-              sapDeliveredQuantities[sapId] + CumulativeQuantity :
-              CumulativeQuantity;
-          }
-        });
+      sapContracts.forEach(sapContract => {
+        sapDeliveredQuantities[sapContract.id!] = sapContract.deliveredQuantity;
       });
 
       const contracts: ContractModel[] = await models.listContractsByStatusAndSapIdNotNull("APPROVED");
@@ -484,7 +278,7 @@ export default new class TaskQueue {
       let syncCount = 0;
       const failedSapIds: string[] = [];
 
-      contracts.forEach((contract: ContractModel) => {
+      contracts.forEach(contract => {
         const sapId = contract.sapId;
         if (sapId) {
           const deliveredQuantity = sapDeliveredQuantities[sapId];
@@ -511,7 +305,11 @@ export default new class TaskQueue {
         operationReportItemId: data.operationReportItemId
       });
     } catch (error) {
-      const reason = `Error processing queue ${error}`;
+      const errorMessage = error instanceof HttpError ?
+        `${error.statusCode} - ${error.message}` :
+        error.toString();
+
+      const reason = `Error processing queue ${errorMessage}`;
       this.logger.error(reason);
       callback({
         message: reason,
@@ -528,454 +326,27 @@ export default new class TaskQueue {
    * @param {SapVatLiableEnum | null} sapVatLiable vat liable from SAP
    * @requires {String} vat liable in application format
    */
-  private translateSapVatLiable(sapVatLiable: SapVatLiableEnum | null) {
+  private translateSapVatLiable = (sapVatLiable?: SapBusinessPartner.VatLiableEnum) => {
+    if (!sapVatLiable) {
+      return null;
+    }
+
     switch (sapVatLiable) {
-      case SapVatLiableEnum.Y:
+      case SapBusinessPartner.VatLiableEnum.Fi:
         return "YES";
-      case SapVatLiableEnum.N:
+      case SapBusinessPartner.VatLiableEnum.NotLiable:
         return "NO";
-      case SapVatLiableEnum.EU:
+      case SapBusinessPartner.VatLiableEnum.Eu:
         return "EU";
-      case null:
       default:
         return null;
     }
   }
 
   /**
-   * Executes a SAP delivery place update task
-   *
-   * @param {Object} data task data
-   * @param {Function} callback task callback
-   */
-  private async sapDeliveryPlaceUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    try {
-      const sapDeliveryPlace: SapDeliveryPlace = data.deliveryPlace;
-      const sapId = sapDeliveryPlace.Code;
-      if (!sapId) {
-        this.logger.error(`Could not find SapId from delivery place`);
-        callback({
-          message: "Could not find SapId from delivery place",
-          operationReportItemId: data.operationReportItemId
-        });
-        return;
-      }
-
-      const name = sapDeliveryPlace.Name;
-      if (!name) {
-        this.logger.error(`Could not find name from delivery place with SapId ${sapId}`);
-        callback({
-          message: `Could not find name from delivery place with SapId ${sapId}`,
-          operationReportItemId: data.operationReportItemId
-        });
-        return;
-      }
-
-      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapId);
-      if (deliveryPlace) {
-        models.updateDeliveryPlace(deliveryPlace.id, name);
-
-        callback(null, {
-          message: `Updated delivery place from SAP ${name} / ${sapId}`,
-          operationReportItemId: data.operationReportItemId
-        });
-      } else {
-        models.createDeliveryPlace(sapId, name);
-
-        callback(null, {
-          message: `Created new delivery place from SAP ${name} / ${sapId}`,
-          operationReportItemId: data.operationReportItemId
-        });
-      }
-
-    } catch (err) {
-      this.logger.error(`Error processing delivery place update queue ${err}`);
-      callback({
-        message: err,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
-   * Executes a SAP item group update task
-   *
-   * @param {Object} data task data
-   * @param {Function} callback task callback
-   */
-  private async sapItemGroupUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    try {
-      const sapItemGroup: SapItemGroup = data.itemGroup;
-      const sapId = `${sapItemGroup.Number}`;
-      const name = sapItemGroup.GroupName;
-      if (!name) {
-        callback({
-          message: `Failed to resolve SAP item group ${sapId} name`,
-          operationReportItemId: data.operationReportItemId
-        });
-        return;
-      }
-
-      const displayName = this.resolveSapItemGroupDisplayName(sapId);
-
-      const category = this.resolveSapItemGroupCategory(sapId);
-      if (!category) {
-        callback({
-          message: `Failed to resolve SAP item group ${sapId} category`,
-          operationReportItemId: data.operationReportItemId
-        });
-        return;
-      }
-
-      const prerequisiteContractItemGroupId = await this.resolveSapPrerequisiteContractItemGroupId(sapId);
-      if (prerequisiteContractItemGroupId === false) {
-        await this.enqueueSapItemGroupUpdate(data.operationReportItemId, data.itemGroup);
-
-        callback(null, {
-          message: "Required prerequisite contract item group was not found, retrying",
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const minimumProfitEstimation = this.resolveSapMinimumProfitEstimation(sapId);
-
-      const itemGroup = await models.findItemGroupBySapId(sapId);
-      if (itemGroup) {
-        models.updateItemGroup(itemGroup.id, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
-      } else {
-        models.createItemGroup(sapId, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
-      }
-
-      callback(null, {
-        message: `Synchronized item group details from SAP ${name} / ${sapId}`,
-        operationReportItemId: data.operationReportItemId
-      });
-    } catch (err) {
-      this.logger.error(`Error processing item group update queue ${err}`);
-      callback({
-        message: err,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
-   * Executes a SAP contract update task
-   *
-   * @param {Object} data task data
-   * @param {Function} callback task callback
-   */
-  private async sapContractUpdateTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
-    try {
-      const sapContract: SapContract = data.contract;
-      const sapContractLine: SapContractLine = data.contractLine;
-      const status = this.resolveSapContractStatus(sapContract);
-      const sapItemGroupId = `${sapContractLine.ItemGroup}`;
-      const sapDeliveryPlaceId = sapContractLine.U_PFZ_ToiP;
-      const sapUserId = sapContract.BPCode;
-      const year = moment(sapContract.StartDate ? sapContract.StartDate : undefined).year();
-      const sapId = `${year}-${sapContract.DocNum}-${sapItemGroupId}`;
-
-      const deliveryPlace = await models.findDeliveryPlaceBySapId(sapDeliveryPlaceId || "");
-      if (!deliveryPlace) {
-        callback({
-          message: `Failed to synchronize SAP contract ${sapId} because delivery place ${sapDeliveryPlaceId} was not found from the system`,
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const itemGroup = await models.findItemGroupBySapId(`${sapItemGroupId}`);
-      if (!itemGroup) {
-        callback({
-          message: `Failed to synchronize SAP contract ${sapId} because item group ${sapItemGroupId} was not found from the system`,
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const user = await userManagement.findUserByProperty(UserProperty.SAP_ID, sapUserId);
-      if (!user || !user.id) {
-        callback({
-          message: `Failed to synchronize SAP contract ${sapId} because user ${sapUserId} was not found from the system`,
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const contractQuantity = this.resolveSapContractQuantity(sapContract, sapContractLine);
-      if (!contractQuantity) {
-        callback({
-          message: `Failed to synchronize SAP contract ${sapId} because planned quantity of item group ${sapItemGroupId} was not found from SAP contract`,
-          operationReportItemId: data.operationReportItemId
-        });
-
-        return;
-      }
-
-      const deliveredQuantity = sapContractLine.CumulativeQuantity || 0;
-      const userId = user.id;
-      const itemGroupId = itemGroup.id;
-      const deliveryPlaceId = deliveryPlace.id;
-      const startDate = sapContract.StartDate ? moment(sapContract.StartDate).toDate() : null;
-      const endDate = sapContract.EndDate ? moment(sapContract.EndDate).toDate() : null;
-      const signDate = sapContract.SigningDate ? moment(sapContract.SigningDate).toDate() : null;
-      const termDate = sapContract.TerminateDate ? moment(sapContract.TerminateDate).toDate() : null;
-      let remarks = null;
-      let proposedQuantity = contractQuantity;
-      let deliveryPlaceComment = null;
-      let quantityComment = null;
-      let rejectComment = null;
-      let areaDetails = null;
-      let deliverAll = false;
-      let proposedDeliverAll = false;
-
-      const contract = await models.findContractBySapId(sapId);
-      if (!contract) {
-        await models.createContract(userId, year, deliveryPlaceId, deliveryPlaceId, itemGroupId, sapId, contractQuantity, deliveredQuantity, proposedQuantity,
-          startDate, endDate, signDate, termDate, status, areaDetails, deliverAll, proposedDeliverAll, remarks, deliveryPlaceComment, quantityComment, rejectComment);
-
-        callback(null, {
-          message: `Created new contract from SAP ${sapId}`,
-          operationReportItemId: data.operationReportItemId
-        });
-      } else {
-        if (contract.proposedQuantity !== null) {
-          proposedQuantity = contract.proposedQuantity;
-        }
-
-        deliveryPlaceComment = contract.deliveryPlaceComment;
-        quantityComment = contract.quantityComment;
-        rejectComment = contract.rejectComment;
-        areaDetails = contract.areaDetails;
-        deliverAll = contract.deliverAll;
-        remarks = contract.remarks;
-
-        await models.updateContract(
-          contract.id,
-          year,
-          deliveryPlaceId,
-          contract.proposedDeliveryPlaceId,
-          itemGroupId,
-          sapId,
-          contractQuantity,
-          deliveredQuantity,
-          proposedQuantity,
-          startDate,
-          endDate,
-          signDate,
-          termDate,
-          status,
-          areaDetails,
-          deliverAll,
-          proposedDeliverAll,
-          remarks,
-          deliveryPlaceComment,
-          quantityComment,
-          rejectComment
-        );
-
-        callback(null, {
-          message: `Updated contract details from SAP ${sapId}`,
-          operationReportItemId: data.operationReportItemId
-        });
-      }
-    } catch (err) {
-      this.logger.error(`Error processing contract update queue ${err}`);
-      callback({
-        message: err,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
-   * Updates current year approved contracts to SAP
-   *
-   * @param data task data
-   * @param callback task callback
-   */
-  private updateCurrentYearApprovedContractsToSapTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
-    const contract: ContractModel | undefined = data.contract;
-    if (!contract) {
-      const reason = "no contract found from task data";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    const user = await userManagement.findUser(contract.userId);
-    if (!user) {
-      const reason = "Contract user not found";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    const userName = user.firstName && user.lastName ?
-      `${user.firstName} ${user.lastName}` :
-      user.username || user.email;
-
-    const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-    if (!itemGroup) {
-      const reason = "Item group not found";
-      logReject(createStackedReject(`updateCurrentYearApprovedContractsToSap task failed: ${reason}`), this.logger);
-      callback({
-        message: `Failed to update contract for user ${userName} because ${reason}`,
-        operationReportItemId: data.operationReportItemId
-      });
-
-      return;
-    }
-
-    try {
-      if (contract.status !== ContractStatus.APPROVED) {
-        throw new Error("contract status was not APPROVED");
-      }
-
-      if (contract.year !== new Date().getFullYear()) {
-        throw new Error("contract year was not current year");
-      }
-
-      const deliveryPlace = await models.findDeliveryPlaceById(contract.deliveryPlaceId);
-      if (!deliveryPlace) {
-        throw new Error("contract delivery place was not found");
-      }
-
-      const itemGroup = await models.findItemGroupById(contract.itemGroupId);
-      if (!itemGroup) {
-        throw new Error("contract item group was not found");
-      }
-
-      const itemGroupSapId = itemGroup.sapId;
-      if (!itemGroupSapId) {
-        throw new Error(`Item group SAP ID could not be resolved`);
-      }
-
-      const sapContract = await SapContractsServiceImpl.createOrUpdateSapContract(contract, deliveryPlace, itemGroup);
-      await models.updateContractSapId(contract.id, `${contract.year}-${sapContract.DocNum}-${itemGroupSapId}`);
-
-      callback(null, {
-        message: `Successfully updated contract for user ${userName} with item group ${itemGroup.name} to SAP`,
-        operationReportItemId: data.operationReportItemId
-      });
-    } catch (error) {
-      logReject(createStackedReject(
-        `updateCurrentYearApprovedContractsToSapTask failed for contract ${contract.externalId}`, error),
-        this.logger
-      );
-
-      const errorMessage = error instanceof Error ? error.message : error;
-      callback({
-        message: `Failed to update contract for user ${userName} with item group ${itemGroup.name} because ${errorMessage}`,
-        operationReportItemId: data.operationReportItemId
-      });
-    }
-  }
-
-  /**
-   * Resolves item group category for given SAP id
-   *
-   * @param {String} sapId sapId
-   */
-  private resolveSapItemGroupCategory(sapId: string) {
-    const itemGroupCategories = config().sap["item-group-categories"] || {};
-    const categories = Object.keys(itemGroupCategories);
-
-    for (let i = 0; i < categories.length; i++) {
-      const category = categories[i];
-      const sapIds = itemGroupCategories[category];
-      if (sapIds.indexOf(sapId) !== -1) {
-        return category;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Resolves item group minimum profit estimation for given SAP id
-   *
-   * @param {String} sapId sapId
-   */
-  private resolveSapMinimumProfitEstimation(sapId: string) {
-    const itemGroupMinimumProfitEstimations = config().sap["item-group-minimum-profit-estimation"] || {};
-    return itemGroupMinimumProfitEstimations[sapId] || 0;
-  }
-
-  /**
-   * Resolves status for given SAP contract
-   *
-   * @param contract SAP contract
-   * @returns status as string
-   */
-  private resolveSapContractStatus(contract: SapContract) {
-    if (contract.Status === SapContractStatusEnum.TERMINATED) {
-      return "TERMINATED";
-    } else {
-      return "APPROVED";
-    }
-  }
-
-  /**
-   * Resolves contract quantity from given SAP contract and SAP contract line
-   *
-   * @param sapContract SAP contract object
-   * @param sapContractLine SAP contract line object
-   */
-  private resolveSapContractQuantity(sapContract: SapContract, sapContractLine: SapContractLine) {
-    const itemGroup = sapContractLine.ItemGroup;
-    if (!itemGroup) {
-      return undefined;
-    }
-
-    const quantityPropertyKey = `U_TR_${itemGroup}`;
-    const quantity: number | undefined = sapContract[quantityPropertyKey];
-    if (!quantity || typeof quantity !== "number") {
-      return undefined;
-    }
-
-    return quantity;
-  }
-
-  /**
-   * Resolves prerequisite contract item group id for given SAP id or null if not specified
-   *
-   * @param {String} sapId sapId
-   * @return {String} prerequisite contract item group id for given SAP id
-   */
-  private async resolveSapPrerequisiteContractItemGroupId(sapId: string): Promise<number|null|false> {
-    const itemGroupPrerequisites = config().sap["item-group-prerequisites"] || {};
-    const prerequisitesSapId = itemGroupPrerequisites[sapId];
-    if (!prerequisitesSapId) {
-      return null;
-    }
-
-    const itemGroup = await models.findItemGroupBySapId(prerequisitesSapId);
-    if (itemGroup) {
-      return itemGroup.id;
-    }
-
-    return false;
-  }
-
-  /**
    * Adds task to chat permissions cache queue
    */
-  private enqueueCacheUsersChatPermissionsTask() {
+  private enqueueCacheUsersChatPermissionsTask = () => {
     this.chatPermissionsCacheQueue.push({id: 1});
   }
 
@@ -985,10 +356,10 @@ export default new class TaskQueue {
    * @param data data
    * @param callback callback
    */
-  private async cacheUsersChatPermissionsTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+  private cacheUsersChatPermissionsTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     try {
       await this.cacheUsersChatPermissions();
-    } finally {
+    } finally {
       callback(null);
     }
   }
@@ -996,7 +367,7 @@ export default new class TaskQueue {
   /**
    * Caches users chat permissions
    */
-  private async cacheUsersChatPermissions() {
+  private cacheUsersChatPermissions = async () => {
     this.logger.info("Updating users chat permissions");
 
     const users = await userManagement.listAllUsers();
@@ -1093,7 +464,7 @@ export default new class TaskQueue {
   /**
    * Adds task to sapContractDeliveredQuantityUpdateQueue
    */
-  private enqueueQuestionGroupUsersThreadsTask() {
+  private enqueueQuestionGroupUsersThreadsTask = () => {
     this.questionGroupThreadsQueue.push({id: 1});
   }
 
@@ -1103,10 +474,10 @@ export default new class TaskQueue {
    * @param data data
    * @param callback callback
    */
-  private async checkQuestionGroupUsersThreadsTask(data: any, callback: Queue.ProcessFunctionCb<any>) {
+  private checkQuestionGroupUsersThreadsTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     try {
       await this.checkQuestionGroupUsersThreads();
-    } finally {
+    } finally {
       callback(null);
     }
   }
@@ -1114,7 +485,7 @@ export default new class TaskQueue {
   /**
    * Checks question group user threads
    */
-  private async checkQuestionGroupUsersThreads() {
+  private checkQuestionGroupUsersThreads = async () => {
     this.logger.info("Checking question group user threads...");
 
     const users = await userManagement.listAllUsers();
@@ -1287,19 +658,13 @@ export default new class TaskQueue {
    * @param chatGroup chat group
    * @param user user
    */
-  private async removeUserChatGroupUnreads(chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void>  {
+  private removeUserChatGroupUnreads = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<void> => {
     await models.deleteUnreadsByPathLikeAndUserId(`chat-${chatGroup.id}-%`, user.id!);
   }
 
   /**
-   * Resolves display name for given SAP id
-   *
-   * @param {String} sapId sapId
-   * @return {String} display name or null if not found
+   * Returns whether application is in test mode or not
    */
-  private resolveSapItemGroupDisplayName(sapId: string) {
-    const displayNames = config().sap["item-group-display-names"] || {};
-    return displayNames[sapId];
-  }
+  private inTestMode = () => config().mode === "TEST";
 
 }

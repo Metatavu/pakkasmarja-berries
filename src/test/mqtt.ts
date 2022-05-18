@@ -7,7 +7,7 @@ import mqtt, { OnMessageCallback } from "../mqtt";
 export default new class Mqtt {
 
   private onMessageHandler: OnMessageCallback;
-  private messages: any[] = [];
+  private messages: any[] = [];
 
   /**
    * Constructor
@@ -18,7 +18,7 @@ export default new class Mqtt {
 
   /**
    * Subscribes MQTT topic
-   * 
+   *
    * @param subtopic subtopic
    */
   public async subscribe(subtopic: string) {
@@ -29,7 +29,7 @@ export default new class Mqtt {
 
   /**
    * Unsubscribes from MQTT topic
-   * 
+   *
    * @param subtopic subtopic
    */
   public async unsubscribe(subtopic: string) {
@@ -39,7 +39,7 @@ export default new class Mqtt {
 
   /**
    * Waits for message count to be given count and returns messages
-   * 
+   *
    * @param count count
    * @returns messages
    */
@@ -47,7 +47,7 @@ export default new class Mqtt {
     const timeout = (new Date().getTime() + 5000);
     do {
       const result = await this.expectMessageWithDelay(expected);
-      
+
       if (result) {
         return true;
       }
@@ -65,12 +65,12 @@ export default new class Mqtt {
   private expectMessageWithDelay(expected: any): Promise<boolean> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        
-        for (let i = 0; i < this.messages.length; i++) {
+
+        for (let i = 0; i < this.messages.length; i++) {
           if (_.isEqual(expected, this.messages[i])) {
             return resolve(true);
           }
-        } 
+        }
 
         resolve(false);
       }, 100);
@@ -87,11 +87,11 @@ export default new class Mqtt {
 
   /**
    * Message handler
-   * 
+   *
    * @param message message
    */
   private onMessage(message: any) {
     this.messages.push(message);
   }
-  
+
 }

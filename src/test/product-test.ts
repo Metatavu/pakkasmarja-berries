@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import { Product, ProductPrice } from "../rest/model/models";
@@ -12,7 +11,7 @@ const productData = require(`${testDataDir}/product.json`);
 
 /**
  * Creates product
- * 
+ *
  * @param token token
  * @returns promise for product
  */
@@ -32,7 +31,7 @@ const createProduct = (token: string): Promise<Product> => {
 
 /**
  * Creates product price
- * 
+ *
  * @param token token
  * @param product product
  * @returns promise for product
@@ -60,7 +59,7 @@ const createProductPrice = async (token: string, product: Product) => {
 
 /**
  * Updates product
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for product
@@ -81,7 +80,7 @@ const updateProduct = (token: string, id: string): Promise<Product> => {
 
 /**
  * Finds product
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for product
@@ -99,7 +98,7 @@ const findProduct = (token: string, id: string): Promise<Product> => {
 
 /**
  * Lists products
- * 
+ *
  * @param token token
  * @param userId userid
  * @returns promise for list of products
@@ -212,7 +211,7 @@ test("Delete product", async (t) => {
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204);
-    
+
     const dbItems = await listProducts(token);
     t.equal(0, dbItems.length);
   } finally {
@@ -231,7 +230,7 @@ test("Delete product - Forbidden", async (t) => {
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
       .expect(204);
-    
+
     const dbItems = await listProducts(token);
     t.equal(0, dbItems.length);
   } finally {
@@ -251,7 +250,7 @@ test("Delete product created by other user", async (t) => {
       .set("Authorization", `Bearer ${token1}`)
       .set("Accept", "application/json")
       .expect(204);
-    
+
     const dbItems = await listProducts(token2);
     t.equal(0, dbItems.length);
   } finally {
@@ -272,7 +271,7 @@ test("Delete product - Forbidden", async (t) => {
       .set("Authorization", `Bearer ${token2}`)
       .set("Accept", "application/json")
       .expect(403);
-    
+
     const dbItems = await listProducts(token1);
     t.equal(1, dbItems.length);
   } finally {
@@ -348,7 +347,7 @@ test("Find product price", async (t) => {
       .then((response) => {
         return response.body;
       });
-    
+
     t.notEqual(foundPrice, null);
     t.notEqual(foundPrice.id, null);
     t.equal(foundPrice.unit, "€ / kg");
@@ -382,7 +381,7 @@ test("List product prices", async (t) => {
       .then((response) => {
         return response.body;
       });
-    
+
     t.notEqual(prices, null);
     t.equals(prices.length, 1);
 
@@ -396,7 +395,7 @@ test("List product prices", async (t) => {
       .then((response) => {
         return response.body;
       });
-    
+
     t.notEqual(prices, null);
     t.equals(prices.length, 2);
   } finally {
@@ -447,7 +446,7 @@ test("Update product price", async (t) => {
       .then((response) => {
         return response.body;
       });
-    
+
     t.equal(updatedProductPrice.unit, "$ / lb");
     t.equal(updatedProductPrice.price, "200");
   } finally {

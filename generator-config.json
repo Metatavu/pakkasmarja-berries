@@ -1,0 +1,5 @@
+{
+  "prependFormOrBodyParameters": true,
+  "modelPropertyNaming": "camelCase",
+  "templateDir": "open-api/typescript-node-client"
+}

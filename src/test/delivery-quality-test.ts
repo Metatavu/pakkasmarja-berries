@@ -1,4 +1,4 @@
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import { DeliveryQuality, ItemGroupCategory } from "../rest/model/models";
@@ -11,7 +11,7 @@ const deliveryQualityData = require(`${testDataDir}/delivery-quality.json`);
 
 /**
  * Creates delivery quality
- * 
+ *
  * @param token token
  * @returns promise for DeliveryQuality
  */
@@ -31,7 +31,7 @@ const createDeliveryQuality = (token: string): Promise<DeliveryQuality> => {
 
 /**
  * Updates delivery quality
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for DeliveryQuality
@@ -52,7 +52,7 @@ const updateDeliveryQuality = (token: string, id: string): Promise<DeliveryQuali
 
 /**
  * Finds delivery quality
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for delivery quality
@@ -70,7 +70,7 @@ const findDeliveryQuality = (token: string, id: string): Promise<DeliveryQuality
 
 /**
  * Lists delivery qualities
- * 
+ *
  * @param token token
  * @param userId userid
  * @returns promise for list of delivery qualities

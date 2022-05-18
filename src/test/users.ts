@@ -1,5 +1,4 @@
-import config from "./config";
-import { Test } from "blue-tape"; 
+import { Test } from "blue-tape";
 import * as request from "supertest";
 import * as path from "path";
 import auth from "./auth";
@@ -12,17 +11,17 @@ const contactDatas = require(path.resolve(testDataDir, 'contacts.json'));
  * Users utility class for tests
  */
 export default new class Users {
-  
+
   /**
    * Resets user back to original state
-   * 
+   *
    * @param {String} userId
    * @param {Object} t tape
    * @return {Promise} promise
    */
   async resetUser(userId: string, t: Test) {
     const user = contactDatas[userId];
-  
+
     return request(TestConfig.HOST)
       .put(`/rest/v1/contacts/${user.id}`)
       .set("Authorization", `Bearer ${await auth.getAdminToken()}`)
@@ -30,16 +29,16 @@ export default new class Users {
       .set("Accept", "application/json")
       .expect(200)
       .then(response => {
-        t.deepEqual(response.body, user, "user should be reseted back to original state");
+        t.deepEqual(response.body, user, "user should be reset back to original state");
       });
   }
-  
+
   /**
    * Resets users password
-   * 
+   *
    * @param {String} userId
    * @param {String} userName
-   * @param {String} oldPassword  
+   * @param {String} oldPassword
    * @param {String} newPassword
    * @return {Promise} promise
    */
@@ -54,7 +53,7 @@ export default new class Users {
 
   /**
    * Resets users back to original state
-   * 
+   *
    * @param {String} userId
    * @param {Object} t tape
    * @return {Promise} promise

@@ -1,5 +1,4 @@
-import config from "./config";
-import * as test from "blue-tape"; 
+import * as test from "blue-tape";
 import * as request from "supertest";
 import auth from "./auth";
 import * as fs from "fs";
@@ -17,7 +16,7 @@ interface FileUploadResponse {
 
 /**
  * Creates file
- * 
+ *
  * @param token token
  * @returns promise for file
  */
@@ -35,7 +34,7 @@ const createFile = (token: string): Promise<FileUploadResponse> => {
 
 /**
  * Finds file
- * 
+ *
  * @param token token
  * @param url url
  * @returns promise for file
@@ -52,7 +51,7 @@ const findFile = (token: string, url: string): Promise<any> => {
 
 /**
  * Creates publicFile
- * 
+ *
  * @param token token
  * @param url url to file
  * @returns promise for publicFile
@@ -76,7 +75,7 @@ const createPublicFile = (token: string, url: string): Promise<PublicFile> => {
 
 /**
  * Updates publicFile
- * 
+ *
  * @param token token
  * @param id id
  * @param url url
@@ -101,7 +100,7 @@ const updatePublicFile = (token: string, id: string, url: string): Promise<Publi
 
 /**
  * Finds publicFile
- * 
+ *
  * @param token token
  * @param id id
  * @returns promise for publicFile
@@ -119,7 +118,7 @@ const findPublicFile = (token: string, id: string): Promise<PublicFile> => {
 
 /**
  * Lists publicFiles
- * 
+ *
  * @param token token
  * @returns promise for list of publicFiles
  */
@@ -137,7 +136,7 @@ const listPublicFiles = (token: string): Promise<PublicFile[]> => {
 
 /**
  * Deletes public file
- * 
+ *
  * @param token access token
  * @param id id
  */
