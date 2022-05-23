@@ -11,7 +11,9 @@
     "coverage": "node_modules/.bin/istanbul report",
     "build": "tsc",
     "build-erp-services-client": "openapi-generator-cli generate -i pakkasmarja-erp-services-spec/swagger.yaml -o src/generated/erp-services-client -c generator-config.json -g typescript-node",
-    "build-odata-client": "openapi-generator-cli generate -i odata-mock-spec/swagger.yaml -o src/generated/odata-client -c generator-config.json -g typescript-node"
+    "build-odata-client": "openapi-generator-cli generate -i odata-mock-spec/swagger.yaml -o src/generated/odata-client -c generator-config.json -g typescript-node",
+    "build-visma-sign-client": "openapi-generator-cli generate -i visma-sign-client-spec/swagger.yaml -o src/generated/visma-sign-client -c generator-config.json -g typescript-node",
+    "build-clients": "npm run build-erp-services-client && npm run build-odata-client && npm run build-visma-sign-client"
   },
   "author": {
     "name": "Metatavu",
@@ -62,7 +64,6 @@
     "tmp": "0.0.33",
     "umzug": "^2.2.0",
     "uuid": "^3.3.2",
-    "visma-sign-client": "0.0.7",
     "wkhtmltopdf": "^0.3.4",
     "wpapi": "^1.2.1",
     "xml2js": "^0.4.19",
