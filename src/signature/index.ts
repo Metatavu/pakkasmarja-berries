@@ -154,7 +154,7 @@ export default new class Signature {
   addFile(documentId: string, data: Buffer, filename: string) {
     const filesApi = new FilesApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("POST", requestDate, data, `/api/v1/document/${documentId}/files`);
+    const authHeader = this.createAuthHeader("POST", requestDate, data, `/api/v1/document/${documentId}/files?filename=${filename}`);
 
     if (!authHeader) {
       return;
