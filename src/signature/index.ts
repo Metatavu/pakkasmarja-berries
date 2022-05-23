@@ -266,7 +266,7 @@ export default new class Signature {
       clientId,
       clientSecret,
       method,
-      body,
+      this.getRequestBody(body),
       contentType,
       requestDate,
       path
