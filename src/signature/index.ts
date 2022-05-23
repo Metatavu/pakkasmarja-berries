@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import { AuthenticationsApi, DocumentsApi, FilesApi, InvitationsApi } from "src/generated/visma-sign-client/api";
+import { AuthenticationsApi, DocumentsApi, FilesApi, InvitationsApi } from "../generated/visma-sign-client/api";
 import { config, VismaSign } from "../config";
 import { VismaSignClientUtils } from "./utils";
 
@@ -203,7 +203,7 @@ export default new class Signature {
 
     return invitationsApi.fullfillInvitation(body, invitationId, {
       headers: this.createHeaders(authHeader, body, requestDate)
-    });
+    }).then(result => ({ location: result.response.headers.location }));
   }
 
   /**
@@ -223,7 +223,7 @@ export default new class Signature {
 
     return filesApi.getDocumentFile(documentId, 0, {
       headers: this.createHeaders(authHeader, undefined, requestDate)
-    });
+    }).then(response => response.body);
   }
 
   /**
@@ -243,7 +243,7 @@ export default new class Signature {
 
     return documentsApi.getDocumentStatus(documentId, {
       headers: this.createHeaders(authHeader, undefined, requestDate)
-    });
+    }).then(response => response.body);
   }
 
   /**
@@ -260,7 +260,7 @@ export default new class Signature {
 
     return authenticationsApi.getAuthenticationMethods(undefined, {
       headers: this.createHeaders(authHeader, undefined, requestDate)
-    });
+    }).then(response => response.body);
   }
 
 }
