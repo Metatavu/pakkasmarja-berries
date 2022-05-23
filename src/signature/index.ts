@@ -9,12 +9,20 @@ import { VismaSignClientUtils } from "./utils";
 type RequestContentType = "application/json" | "application/pdf";
 
 /**
+ * Document data
+ */
+type DocumentData = {
+  name: string,
+  affiliates?: [{ code: any }]
+}
+
+/**
  * Request header options
  */
 type RequestHeaderOptions = {
   body: any;
   contentType: RequestContentType;
-  method: string;
+  method: "POST" | "GET" | "PUT" | "DELETE";
   path: string;
   requestDate: Date;
 };
@@ -49,13 +57,12 @@ export default new class Signature {
    * @returns {Promise} Promise that resolves to the created document
    */
   async createDocument(name: string): Promise<string> {
-    const documentData: { name: string, affiliates?: [{ code: any }] } = {
-      name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
+    const documentData: DocumentData = {
+      name: `${name}_${moment().format("YYYYMMDDHHmmss")}`,
+      affiliates: vismaSignConfig && vismaSignConfig.affiliateCode ?
+        [{ code: vismaSignConfig.affiliateCode }] :
+        undefined
     };
-
-    if (vismaSignConfig && vismaSignConfig.affiliateCode) {
-      documentData.affiliates = [{ code: vismaSignConfig.affiliateCode }];
-    }
 
     const requestBody = { document: documentData };
 
@@ -241,36 +248,27 @@ export default new class Signature {
    * @param options header options
    */
   createHeaders(options: RequestHeaderOptions) {
-    const { body, requestDate, contentType } = options;
+    if (!vismaSignConfig) throw new Error("Service configuration missing");
+
+    const { clientId, clientSecret } = vismaSignConfig;
+    const { method, body, requestDate, contentType, path } = options;
+
+    const authorization = VismaSignClientUtils.createAuthorizationHeader({
+      clientId: clientId,
+      clientSecret: clientSecret,
+      method: method,
+      body: this.getRequestBody(body),
+      contentType: contentType,
+      date: requestDate,
+      path: path
+    });
 
     return {
-      "Authorization": this.createAuthHeader(options),
+      "Authorization": authorization,
       "contentMD5": VismaSignClientUtils.createBodyHash(this.getRequestBody(body)),
       "Date": VismaSignClientUtils.formatDate(requestDate),
       "Content-Type": contentType
     }
-  }
-
-  /**
-   * Creates an auth header
-   *
-   * @param options auth header options
-   */
-  createAuthHeader(options: RequestHeaderOptions) {
-    if (!vismaSignConfig) throw new Error("Service configuration missing");
-
-    const { clientId, clientSecret } = vismaSignConfig;
-    const { method, body, contentType, requestDate, path } = options;
-
-    return VismaSignClientUtils.createAuthorizationHeader(
-      clientId,
-      clientSecret,
-      method,
-      this.getRequestBody(body),
-      contentType,
-      requestDate,
-      path
-    );
   }
 
   /**

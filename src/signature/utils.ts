@@ -1,33 +1,46 @@
 import * as crypto from "crypto";
 import * as moment from "moment";
 
+/**
+ * Authorization header params
+ */
+type AuthorizationHeaderParams = {
+  clientId: string;
+  clientSecret: string;
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  body: string | Buffer;
+  contentType: "application/json" | "application/pdf";
+  date: Date;
+  path: string;
+};
+
+/**
+ * Utility class for Visma Sign client
+ */
 export class VismaSignClientUtils {
 
   /**
-   * Function to create authorization header to the visma sign api
+   * Function to create authorization header to the Visma Sign client
    *
-   * @param {string} clientId - Your clint id
-   * @param {string} clientSecret - Your client secret in base64 encoded format
-   * @param {string} method - http method, GET, POST, PUT, DELETE
-   * @param {string} body - request body in JSON format
-   * @param {string} contentType - Content type, must be the same as in request headers
-   * @param {date} date - Date that was sent in request headers
-   * @param {string} path - The request path
+   * @param {AuthorizationHeaderParams} params - params to create authorization header
+   * @param {string} params.clientId - Your client id
+   * @param {string} params.clientSecret - Your client secret in base64 encoded format
+   * @param {string} params.method - http method, GET, POST, PUT, DELETE
+   * @param {string} params.body - request body in JSON format
+   * @param {string} params.contentType - Content type, must be the same as in request headers
+   * @param {date} params.date - Date that was sent in request headers
+   * @param {string} params.path - The request path
    * @returns {string} A string that can be placed into Authorization - header
    */
-  static createAuthorizationHeader(
-    clientId: string,
-    clientSecret: string,
-    method: string,
-    body: string | Buffer,
-    contentType: string,
-    date: Date,
-    path: string
-  ) {
+  static createAuthorizationHeader(params: AuthorizationHeaderParams) {
+    const { body, clientId, clientSecret, contentType, date, method, path } = params;
+
     const bodyHash = VismaSignClientUtils.createBodyHash(body);
     const formattedDate = VismaSignClientUtils.formatDate(date);
+
     const hmacString = [ method, bodyHash, contentType, formattedDate, path ].join("\n");
     const encrypted = VismaSignClientUtils.encrypt(clientSecret, hmacString);
+
     return `Onnistuu ${clientId}:${encrypted}`;
   }
 
@@ -40,6 +53,7 @@ export class VismaSignClientUtils {
    */
   static encrypt(clientSecret: string, data: string) {
     const hmac = crypto.createHmac("sha512", Buffer.from(clientSecret, "base64"));
+
     return hmac.update(Buffer.from(data, "utf8")).digest("base64");
   }
 
