@@ -3,7 +3,7 @@ import { AuthenticationsApi, DocumentsApi, FilesApi, InvitationsApi } from "../g
 import { config, VismaSign } from "../config";
 import { VismaSignClientUtils } from "./utils";
 
-const vismaSignConfig: VismaSign | null = config()["visma-sign"] || null;
+const vismaSignConfig: VismaSign | null = config()["visma-sign"] || null;
 
 /**
  * Digital signature functionalities for Pakkasmarja Berries
@@ -19,7 +19,7 @@ export default new class Signature {
    */
   async requestSignature(documentId: string, filename: string, pdfFile: Buffer) {
     await this.addFile(documentId, pdfFile, filename);
-    return await this.createInvitation(documentId);
+    return this.createInvitation(documentId);
   }
 
   /**
@@ -63,23 +63,24 @@ export default new class Signature {
 
   /**
    * Creates headers
-   * 
+   *
    * @param authHeader auth header
    * @param body request body
    * @param requestDate request date
    */
-  createHeaders (authHeader: string, body: any, requestDate: Date) {
+  createHeaders(authHeader: string, body: any, requestDate: Date, contentType?: string) {
     return {
       "Authorization": authHeader,
       "contentMD5": body ? VismaSignClientUtils.createBodyHash(JSON.stringify(body)) : "",
-      "Date": VismaSignClientUtils.formatDate(requestDate)
+      "Date": VismaSignClientUtils.formatDate(requestDate),
+      "Content-Type": contentType || "application/json"
     }
   }
 
   /**
    * Creates an auth header
-   * 
-   * @param method request method 
+   *
+   * @param method request method
    * @param requestDate request date
    * @param body request body
    * @param path request path
@@ -92,10 +93,10 @@ export default new class Signature {
     const { clientId, clientSecret } = vismaSignConfig;
 
     return VismaSignClientUtils.createAuthorizationHeader(
-      clientId, 
-      clientSecret, 
+      clientId,
+      clientSecret,
       method,
-      body ? JSON.stringify(body) : "", 
+      body ? JSON.stringify(body) : "",
       "application/json",
       requestDate,
       path
@@ -157,11 +158,11 @@ export default new class Signature {
     const authHeader = this.createAuthHeader("POST", requestDate, data, `/api/v1/document/${documentId}/files?filename=${filename}`);
 
     if (!authHeader) {
-      return;
+      throw new Error("Authentication failed");
     }
 
     return filesApi.addDocumentFile(data, documentId, filename, {
-      headers: this.createHeaders(authHeader, data, requestDate)
+      headers: this.createHeaders(authHeader, data, requestDate, "application/pdf")
     });
   }
 
@@ -181,7 +182,7 @@ export default new class Signature {
     }
     return invitationsApi.createDocumentInvitation([{}], documentId, {
       headers: this.createHeaders(authHeader, [{}], requestDate)
-    }).then((response) => response.body[0]);
+    }).then(response => response.body[0]);
   }
 
   /**
