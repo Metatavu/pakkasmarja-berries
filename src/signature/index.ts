@@ -1,34 +1,14 @@
-import * as VismaSignClient from "visma-sign-client";
 import * as moment from "moment";
+import { AuthenticationsApi, DocumentsApi, FilesApi, InvitationsApi } from "../generated/visma-sign-client/api";
 import { config, VismaSign } from "../config";
+import { VismaSignClientUtils } from "./utils";
 
-const InvitationFulfillment = VismaSignClient.InvitationFulfillment;
 const vismaSignConfig: VismaSign | null = config()["visma-sign"] || null;
 
-if (vismaSignConfig) {
-  VismaSignClient.ApiClient.instance.clientId = vismaSignConfig.clientId;
-  VismaSignClient.ApiClient.instance.clientSecret = vismaSignConfig.clientSecret;
-}
 /**
  * Digital signature functionalities for Pakkasmarja Berries
  */
 export default new class Signature {
-
-  private documentsApi: any;
-  private filesApi: any;
-  private invitationsApi: any;
-  private authenticationsApi: any;
-
-  /**
-   * Constructor
-   */
-  constructor () {
-    this.documentsApi = new VismaSignClient.DocumentsApi();
-    this.filesApi = new VismaSignClient.FilesApi();
-    this.invitationsApi = new VismaSignClient.InvitationsApi();
-    this.authenticationsApi = new VismaSignClient.AuthenticationsApi();
-  }
-
   /**
    * Request signature for pdf file
    *
@@ -48,7 +28,7 @@ export default new class Signature {
    * @param {String} name name
    * @returns {Promise} Promise that resolves to the created document
    */
-  createDocument(name: string): Promise<any> {
+  createDocument(name: string): Promise<any> | undefined {
     const documentData: { name: string, affiliates?: [{ code: any }] } = {
       name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
     };
@@ -59,14 +39,62 @@ export default new class Signature {
       }];
     }
 
-    const document = VismaSignClient.Document.constructFromObject({
-      document: documentData
-    });
+    const documentsApi = new DocumentsApi();
+    const document = { document: documentData };
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("POST", requestDate, document, "/api/v1/document/");
 
-    return this.documentsApi.createDocument(document).then((data: any) => {
+    if (!authHeader) {
+      return;
+    }
+
+    return documentsApi.createDocument(document, {
+      headers: this.createHeaders(authHeader, document, requestDate)
+    }).then((data: any) => {
       const location = data.location;
       return location.substring(location.lastIndexOf("/") + 1);
     });
+  }
+
+  /**
+   * Creates headers
+   * 
+   * @param authHeader auth header
+   * @param body request body
+   * @param requestDate request date
+   */
+  createHeaders (authHeader: string, body: any, requestDate: Date) {
+    return {
+      "Authorization": authHeader,
+      "contentMD5": body ? VismaSignClientUtils.createBodyHash(JSON.stringify(body)) : "",
+      "Date": VismaSignClientUtils.formatDate(requestDate)
+    }
+  }
+
+  /**
+   * Creates an auth header
+   * 
+   * @param method request method 
+   * @param requestDate request date
+   * @param body request body
+   * @param path request path
+   */
+  createAuthHeader (method: string, requestDate: Date, body: any, path: string) {
+    if (!vismaSignConfig) {
+      return;
+    }
+
+    const { clientId, clientSecret } = vismaSignConfig;
+
+    return VismaSignClientUtils.createAuthorizationHeader(
+      clientId, 
+      clientSecret, 
+      method,
+      body ? JSON.stringify(body) : "", 
+      "application/json;charset=utf-8",
+      requestDate,
+      path
+    );
   }
 
   /**
@@ -76,7 +104,18 @@ export default new class Signature {
    * @returns {Promise} Promise for cancel response
    */
   cancelDocument(documentId: string) {
-    return this.documentsApi.cancelDocument(documentId);
+    const documentsApi = new DocumentsApi();
+
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("POST", requestDate, undefined, `/document/${documentId}/cancel`);
+
+    if (!authHeader) {
+      return;
+    }
+
+    return documentsApi.cancelDocument(documentId, {
+      headers: this.createHeaders(authHeader, undefined, requestDate)
+    });
   }
 
   /**
@@ -86,7 +125,17 @@ export default new class Signature {
    * @returns {Promise} Promise for cancel response
    */
   deleteDocument(documentId: string) {
-    return this.documentsApi.deleteDocument(documentId);
+    const documentsApi = new DocumentsApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("DELETE", requestDate, undefined, `/document/${documentId}`);
+
+    if (!authHeader) {
+      return;
+    }
+
+    return documentsApi.deleteDocument(documentId, {
+      headers: this.createHeaders(authHeader, undefined, requestDate)
+    });
   }
 
   /**
@@ -98,12 +147,17 @@ export default new class Signature {
    * @returns {Promise} Promise that resolves if file was properly added
    */
   addFile(documentId: string, data: Buffer, filename: string) {
-    const options: { filename?: string } = {};
-    if (filename) {
-      options.filename = filename;
+    const filesApi = new FilesApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("POST", requestDate, data, `/document/${documentId}/files`);
+
+    if (!authHeader) {
+      return;
     }
 
-    return this.filesApi.addDocumentFile(data, documentId, options);
+    return filesApi.addDocumentFile(data, documentId, filename, {
+      headers: this.createHeaders(authHeader, data, requestDate)
+    });
   }
 
   /**
@@ -113,7 +167,16 @@ export default new class Signature {
    * @returns {Promise} Promise that resolves into redirect url
    */
   createInvitation(documentId: string) {
-    return this.invitationsApi.createDocumentInvitation([{}], documentId).then((data: any[]) => data[0]);
+    const invitationsApi = new InvitationsApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("POST", requestDate, [{}], `/document/${documentId}/invitations`);
+
+    if (!authHeader) {
+      return;
+    }
+    return invitationsApi.createDocumentInvitation([{}], documentId, {
+      headers: this.createHeaders(authHeader, [{}], requestDate)
+    }).then((response) => response.body[0]);
   }
 
   /**
@@ -125,13 +188,22 @@ export default new class Signature {
    * @param {String} authService auth service id
    */
   fulfillInvitation(invitationId: string, returnUrl: string, identifier: string, authService: string) {
-    const body = InvitationFulfillment.constructFromObject({
+    const invitationsApi = new InvitationsApi();
+    const requestDate = new Date();
+    const body = {
       "returnUrl": returnUrl,
       "identifier": identifier,
       "authService": authService
-    });
+    }
+    const authHeader = this.createAuthHeader("POST", requestDate, body, `/invitation/${invitationId}/signature`);
 
-    return this.invitationsApi.fulfillInvitation(body, invitationId);
+    if (!authHeader) {
+      return;
+    }
+
+    return invitationsApi.fullfillInvitation(body, invitationId, {
+      headers: this.createHeaders(authHeader, body, requestDate)
+    }).then(result => ({ location: result.response.headers.location }));
   }
 
   /**
@@ -141,7 +213,17 @@ export default new class Signature {
    * @returns {Blob} file as a blob
    */
   getDocumentFile(documentId: string) {
-    return this.filesApi.getDocumentFile(documentId, 0);
+    const filesApi = new FilesApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/document/${documentId}/files/0`);
+
+    if (!authHeader) {
+      return;
+    }
+
+    return filesApi.getDocumentFile(documentId, 0, {
+      headers: this.createHeaders(authHeader, undefined, requestDate)
+    }).then(response => response.body);
   }
 
   /**
@@ -151,14 +233,34 @@ export default new class Signature {
    * @returns {Promise} for document status
    */
   getDocumentStatus(documentId: string) {
-    return this.documentsApi.getDocumentStatus(documentId);
+    const documentsApi = new DocumentsApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/document/${documentId}`);
+
+    if (!authHeader) {
+      return;
+    }
+
+    return documentsApi.getDocumentStatus(documentId, {
+      headers: this.createHeaders(authHeader, undefined, requestDate)
+    }).then(response => response.body);
   }
 
   /**
    * Returns authentication methods
    */
   getAuthenticationMethods() {
-    return this.authenticationsApi.getAuthenticationMethods();
+    const authenticationsApi = new AuthenticationsApi();
+    const requestDate = new Date();
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/auth/methods`);
+
+    if (!authHeader) {
+      return;
+    }
+
+    return authenticationsApi.getAuthenticationMethods(undefined, {
+      headers: this.createHeaders(authHeader, undefined, requestDate)
+    }).then(response => response.body);
   }
 
 }

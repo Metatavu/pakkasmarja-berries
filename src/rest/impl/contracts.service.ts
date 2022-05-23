@@ -1075,9 +1075,9 @@ export default class ContractsServiceImpl extends ContractsService {
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
     const appUrl = `${req.protocol}://${req.get("host")}`;
     const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}&redirectUrl=${redirectUrl}`;
-    const fulfillResult = await signature.fulfillInvitation(invitation.uuid, returnUrl, ssn, authService);
+    const fulfillResult = await signature.fulfillInvitation(invitation && invitation.uuid ? invitation.uuid : "", returnUrl, ssn, authService);
 
-    const result: ContractDocumentSignRequest = {redirectUrl: fulfillResult.location };
+    const result: ContractDocumentSignRequest = { redirectUrl: fulfillResult && fulfillResult.location ? fulfillResult.location : "" };
 
     res.send(result);
   }
@@ -1413,7 +1413,7 @@ export default class ContractsServiceImpl extends ContractsService {
         return {
           documentName: documentName,
           filename: `${documentSlug}.pdf`,
-          data: documentFile
+          data: documentFile as any
         };
       }
     }

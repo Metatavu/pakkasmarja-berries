@@ -1,6 +1,6 @@
 options:
   machineType: N1_HIGHCPU_32
-timeout: 900s
+timeout: 2000s
 steps:
 - name: gcr.io/cloud-builders/docker
   id: docker-build

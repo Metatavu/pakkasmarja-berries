@@ -6,6 +6,7 @@ import { getLogger } from "log4js";
 import ErpClient from "../erp/client";
 import userManagement, { UserProperty } from "../user-management";
 import { SapContractStatus } from "../generated/erp-services-client/api";
+import { DocumentStatus } from "../generated/visma-sign-client/api";
 
 /**
  * Sign routes
@@ -35,7 +36,7 @@ export default class SignRoutes {
     if (vismaSignDocumentId) {
       try {
         const documentStatus = await Signature.getDocumentStatus(vismaSignDocumentId);
-        success = documentStatus && documentStatus.status === "signed";
+        success = !!documentStatus && !!documentStatus.status && documentStatus.status === DocumentStatus.StatusEnum.Signed;
 
         if (success) {
           const contractDocument = await models.findContractDocumentByVismaSignDocumentId(vismaSignDocumentId);
