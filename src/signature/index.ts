@@ -91,7 +91,7 @@ export default new class Signature {
       clientSecret, 
       method,
       body ? JSON.stringify(body) : "", 
-      "application/json;charset=utf-8",
+      "application/json",
       requestDate,
       path
     );
@@ -107,7 +107,7 @@ export default new class Signature {
     const documentsApi = new DocumentsApi();
 
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("POST", requestDate, undefined, `/document/${documentId}/cancel`);
+    const authHeader = this.createAuthHeader("POST", requestDate, undefined, `/api/v1/document/${documentId}/cancel`);
 
     if (!authHeader) {
       return;
@@ -127,7 +127,7 @@ export default new class Signature {
   deleteDocument(documentId: string) {
     const documentsApi = new DocumentsApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("DELETE", requestDate, undefined, `/document/${documentId}`);
+    const authHeader = this.createAuthHeader("DELETE", requestDate, undefined, `/api/v1/document/${documentId}`);
 
     if (!authHeader) {
       return;
@@ -149,7 +149,7 @@ export default new class Signature {
   addFile(documentId: string, data: Buffer, filename: string) {
     const filesApi = new FilesApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("POST", requestDate, data, `/document/${documentId}/files`);
+    const authHeader = this.createAuthHeader("POST", requestDate, data, `/api/v1/document/${documentId}/files`);
 
     if (!authHeader) {
       return;
@@ -169,7 +169,7 @@ export default new class Signature {
   createInvitation(documentId: string) {
     const invitationsApi = new InvitationsApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("POST", requestDate, [{}], `/document/${documentId}/invitations`);
+    const authHeader = this.createAuthHeader("POST", requestDate, [{}], `/api/v1/document/${documentId}/invitations`);
 
     if (!authHeader) {
       return;
@@ -195,7 +195,7 @@ export default new class Signature {
       "identifier": identifier,
       "authService": authService
     }
-    const authHeader = this.createAuthHeader("POST", requestDate, body, `/invitation/${invitationId}/signature`);
+    const authHeader = this.createAuthHeader("POST", requestDate, body, `/api/v1/invitation/${invitationId}/signature`);
 
     if (!authHeader) {
       return;
@@ -215,7 +215,7 @@ export default new class Signature {
   getDocumentFile(documentId: string) {
     const filesApi = new FilesApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/document/${documentId}/files/0`);
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/api/v1/document/${documentId}/files/0`);
 
     if (!authHeader) {
       return;
@@ -235,7 +235,7 @@ export default new class Signature {
   getDocumentStatus(documentId: string) {
     const documentsApi = new DocumentsApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/document/${documentId}`);
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/api/v1/document/${documentId}`);
 
     if (!authHeader) {
       return;
@@ -252,7 +252,7 @@ export default new class Signature {
   getAuthenticationMethods() {
     const authenticationsApi = new AuthenticationsApi();
     const requestDate = new Date();
-    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/auth/methods`);
+    const authHeader = this.createAuthHeader("GET", requestDate, undefined, `/api/v1/auth/methods`);
 
     if (!authHeader) {
       return;
