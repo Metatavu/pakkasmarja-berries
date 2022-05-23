@@ -115,7 +115,7 @@ export default new class Signature {
   getRequestBody(body: any, contentType?: string) {
     if (!body) return "";
     if (contentType === "application/pdf") return body;
-    return JSON.parse(body);
+    return JSON.stringify(body);
   }
 
   /**
