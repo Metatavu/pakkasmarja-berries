@@ -98,11 +98,24 @@ export default new class Signature {
       clientId,
       clientSecret,
       method,
-      body ? JSON.stringify(body) : "",
+      this.getRequestBody(body, contentType),
       contentType || "application/json",
       requestDate,
       path
     );
+  }
+
+  /**
+   * Get request body
+   *
+   * @param {any} body body
+   * @param {String} contentType content type
+   * @returns {String} request body
+   */
+  getRequestBody(body: any, contentType?: string) {
+    if (!body) return "";
+    if (contentType === "application/pdf") return body;
+    return JSON.parse(body);
   }
 
   /**
