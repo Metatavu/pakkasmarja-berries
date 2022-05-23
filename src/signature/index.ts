@@ -28,7 +28,7 @@ export default new class Signature {
    * @param {String} name name
    * @returns {Promise} Promise that resolves to the created document
    */
-  createDocument(name: string): Promise<any> | undefined {
+  async createDocument(name: string): Promise<string> {
     const documentData: { name: string, affiliates?: [{ code: any }] } = {
       name: `${name}_${moment().format("YYYYMMDDHHmmss")}`
     };
@@ -45,14 +45,19 @@ export default new class Signature {
     const authHeader = this.createAuthHeader("POST", requestDate, document, "/api/v1/document/");
 
     if (!authHeader) {
-      return;
+      throw new Error("Authentication failed");
     }
 
     return documentsApi.createDocument(document, {
       headers: this.createHeaders(authHeader, document, requestDate)
-    }).then((data: any) => {
-      const location = data.location;
-      return location.substring(location.lastIndexOf("/") + 1);
+    }).then(({ response, body }) => {
+      const locationHeader = response.headers["location"];
+
+      if (response.statusCode !== 201 || !locationHeader) {
+        throw new Error(`Could not create document. Response body ${JSON.stringify(body)}`);
+      }
+
+      return locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
     });
   }
 
@@ -103,7 +108,7 @@ export default new class Signature {
    * @param {String} documentId id of the document which file is to be cancel
    * @returns {Promise} Promise for cancel response
    */
-  cancelDocument(documentId: string) {
+  async cancelDocument(documentId: string) {
     const documentsApi = new DocumentsApi();
 
     const requestDate = new Date();
