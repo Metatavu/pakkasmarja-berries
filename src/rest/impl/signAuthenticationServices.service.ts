@@ -13,7 +13,12 @@ export default class SignAuthenticationServicesServiceImpl extends SignAuthentic
    */
   async listSignAuthenticationServices(req: Request, res: Response) {
     const authenticationMethods = await signature.getAuthenticationMethods();
-    
+
+    if (!authenticationMethods || !authenticationMethods.methods) {
+      this.sendNotFound(res, "Authentication methods not found");
+      return;
+    }
+
     const respose = authenticationMethods.methods.map((method: any) => {
       const result: SignAuthenticationService = {
         identifier: method.identifier,

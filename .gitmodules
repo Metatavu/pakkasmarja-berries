@@ -4,3 +4,6 @@
 [submodule "odata-mock-spec"]
 	path = odata-mock-spec
 	url = https://github.com/Metatavu/odata-mock-spec.git
+[submodule "visma-sign-client-spec"]
+	path = visma-sign-client-spec
+	url = https://github.com/Metatavu/visma-sign-client-spec.git
