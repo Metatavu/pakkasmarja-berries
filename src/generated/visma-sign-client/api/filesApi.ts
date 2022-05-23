@@ -136,7 +136,7 @@ export class FilesApi {
             headers: localVarHeaderParams,
             uri: localVarPath,
             useQuerystring: this._useQuerystring,
-            json: true,
+            json: false,
             body: ObjectSerializer.serialize(body, "RequestFile")
         };
 
