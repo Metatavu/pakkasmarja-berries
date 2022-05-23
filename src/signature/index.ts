@@ -72,7 +72,7 @@ export default new class Signature {
   createHeaders(authHeader: string, body: any, requestDate: Date, contentType?: string) {
     return {
       "Authorization": authHeader,
-      "contentMD5": body ? VismaSignClientUtils.createBodyHash(this.getRequestBody(body)) : "",
+      "contentMD5": body ? VismaSignClientUtils.createBodyHash(this.getRequestBody(body, contentType)) : "",
       "Date": VismaSignClientUtils.formatDate(requestDate),
       "Content-Type": contentType || "application/json"
     }
