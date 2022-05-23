@@ -1048,7 +1048,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    if (existingContractDocument != null) {
+    if (existingContractDocument !== null) {
       if (existingContractDocument.signed) {
         this.sendBadRequest(res, "Contract document is already signed");
         return;
@@ -1071,13 +1071,24 @@ export default class ContractsServiceImpl extends ContractsService {
 
     const redirectUrl = req.query.redirectUrl ? encodeURIComponent(req.query.redirectUrl) : "";
     const vismaSignDocumentId = await signature.createDocument(document.documentName);
+
     await models.createContractDocument(type, contract.id, vismaSignDocumentId);
+
     const invitation = await signature.requestSignature(vismaSignDocumentId, document.filename, fileBuffer);
+
     const appUrl = `${req.protocol}://${req.get("host")}`;
     const returnUrl = `${appUrl}/signcallback?vismaSignId=${vismaSignDocumentId}&type=contract-document&contractId=${contractId}&type=${type}&redirectUrl=${redirectUrl}`;
-    const fulfillResult = await signature.fulfillInvitation(invitation && invitation.uuid ? invitation.uuid : "", returnUrl, ssn, authService);
 
-    const result: ContractDocumentSignRequest = { redirectUrl: fulfillResult && fulfillResult.location ? fulfillResult.location : "" };
+    const fulfillResult = await signature.fulfillInvitation(
+      invitation && invitation.uuid ? invitation.uuid : "",
+      returnUrl,
+      ssn,
+      authService
+    );
+
+    const result: ContractDocumentSignRequest = {
+      redirectUrl: fulfillResult && fulfillResult.location ? fulfillResult.location : ""
+    };
 
     res.send(result);
   }
