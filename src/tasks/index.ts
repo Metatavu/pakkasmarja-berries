@@ -169,11 +169,8 @@ export default new class TaskQueue {
         operationReportItemId: operationReportItemId
       });
     } catch (error) {
-      const errorMessage = error instanceof HttpError ?
-        `${error.statusCode} - ${error.message}` :
-        error.toString();
-
-      const reason = `Error processing queue - ${errorMessage}`;
+      const errorMessage = this.stringifyError(error);
+      const reason = `Error processing queue: ${errorMessage}`;
 
       this.logger.error(reason);
 
@@ -305,11 +302,9 @@ export default new class TaskQueue {
         operationReportItemId: data.operationReportItemId
       });
     } catch (error) {
-      const errorMessage = error instanceof HttpError ?
-        `${error.statusCode} - ${error.message} with response body ${error.body}` :
-        error.toString();
+      const errorMessage = this.stringifyError(error);
+      const reason = `Error processing queue: ${errorMessage}`;
 
-      const reason = `Error processing queue ${errorMessage}`;
       this.logger.error(reason);
       callback({
         message: reason,
@@ -666,5 +661,20 @@ export default new class TaskQueue {
    * Returns whether application is in test mode or not
    */
   private inTestMode = () => config().mode === "TEST";
+
+  /**
+   * Returns stringified error message from given error
+   *
+   * @param error error
+   */
+  private stringifyError = (error: any) => {
+    if (error instanceof HttpError) {
+      return `${error.statusCode} - ${error.message} with response body ${error.body}`;
+    } else if (error instanceof Error) {
+      return `${error.message}: ${error.stack}`;
+    } else {
+      return JSON.stringify(error);
+    }
+  }
 
 }

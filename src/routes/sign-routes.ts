@@ -5,7 +5,7 @@ import { createStackedReject, logReject } from "../utils";
 import { getLogger } from "log4js";
 import ErpClient from "../erp/client";
 import userManagement, { UserProperty } from "../user-management";
-import { SapContractStatus } from "../generated/erp-services-client/api";
+import { HttpError, SapContractStatus } from "../generated/erp-services-client/api";
 import { DocumentStatus } from "../generated/visma-sign-client/api";
 
 /**
@@ -98,8 +98,12 @@ export default class SignRoutes {
               await models.updateContractSapId(contractId, response.body.id!);
             } catch (error) {
               logReject(
-                createStackedReject(`Could not update contract of signed contract document ${id} to SAP`, error),
-                getLogger()
+                createStackedReject(
+                  `Could not update contract of signed contract document ${id} to SAP`,
+                  error instanceof HttpError ?
+                    new Error(`${error.message}: ${JSON.stringify(error.body) || ""}`) :
+                    error
+                ), getLogger()
               );
             }
           } else {
