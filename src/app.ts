@@ -90,7 +90,7 @@ process.on("unhandledRejection", (error) => {
   }));
 
   app.use((req, res, next) => {
-    if (!req.path.includes("/system/ping")) {
+    if (!req.path.includes("/system/ping") && req.method !== "OPTIONS") {
       logger.info(`${req.method} request into ${req.path}`);
     }
 
