@@ -197,7 +197,7 @@ export default new class UserManagement {
    * @param {UserRepresentation} user user object
    * @return {Promise} promise that resolves on success and rejects on failure
    */
-  public async updateUser(user: UserRepresentation ) {
+  public async updateUser(user: UserRepresentation) {
     const client = await this.getClient();
     await client.users.update({
       id: user.id!,
@@ -1044,7 +1044,7 @@ export default new class UserManagement {
    * @return Promise for keycloak admin client
    */
   private async getClient(): Promise<KcAdminClient> {
-    if (!this.client || this.requireFreshClient) {
+    if (!this.client || this.requireFreshClient) {
       await this.client.auth({
         username: config().keycloak.admin.username,
         password: config().keycloak.admin.password,

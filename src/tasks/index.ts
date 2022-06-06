@@ -669,7 +669,7 @@ export default new class TaskQueue {
    */
   private stringifyError = (error: any) => {
     if (error instanceof HttpError) {
-      return `${error.statusCode} - ${error.message} with response body ${JSON.stringify(error.body, null, 2)}`;
+      return `${error.statusCode} - ${error.message} to '${error.response.url}' with response body ${JSON.stringify(error.body, null, 2)}`;
     } else if (error instanceof Error) {
       return `${error.message}: ${error.stack}`;
     } else {
