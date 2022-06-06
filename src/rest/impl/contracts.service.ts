@@ -585,11 +585,13 @@ export default class ContractsServiceImpl extends ContractsService {
 
       const updatedDatabaseContract = await models.findContractById(databaseContract.id);
 
-      this.sendContractChangePushNotification(
-        updatedDatabaseContract.userId,
-        `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
-        `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
-      );
+      if (payload.status !== "APPROVED" || updatedDatabaseContract.status !== "APPROVED") {
+        this.sendContractChangePushNotification(
+          updatedDatabaseContract.userId,
+          `Sopimus ${itemGroup.displayName || itemGroup.name} / ${year} päivittyi`,
+          `Sopimus ${itemGroup.displayName || itemGroup.name} siirtyi tilaan ${this.getContractStatusDisplayName(updatedDatabaseContract.status)}`
+        );
+      }
 
       res.status(200).send(await this.translateDatabaseContract(updatedDatabaseContract));
     } catch (error) {
