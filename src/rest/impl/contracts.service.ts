@@ -529,7 +529,7 @@ export default class ContractsServiceImpl extends ContractsService {
       }
     }
 
-    if (status === "APPROVED" && databaseContract.status !== "APPROVED") {
+    if (status === "APPROVED" && !databaseContract.sapId && !payload.sapId) {
       try {
         const user = await userManagement.findUser(databaseContract.userId);
         const businessPartnerCode = user ?
