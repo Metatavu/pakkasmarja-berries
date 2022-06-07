@@ -11,7 +11,7 @@ import { config } from "../../config";
  * Implementation for ItemGroups REST service
  */
 export default class ItemGroupsServiceImpl extends ItemGroupsService {
-  
+
   /**
    * @inheritdoc
    */
@@ -49,11 +49,11 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
     }
 
     const createdItemGroup = await models.createItemGroup(null, name, displayName, category, minimumProfitEstimation, prerequisiteContractItemGroupId);
-    
-    const type = this.inTestMode() ? "2019" : `${(new Date()).getFullYear()}`;  
+
+    const type = this.inTestMode() ? "2019" : `${(new Date()).getFullYear()}`;
     const documentTemplate = await models.createDocumentTemplate("Insert Contents", null, null);
-    await models.createItemGroupDocumentTemplate(type, createdItemGroup.id, documentTemplate.id); 
-    
+    await models.createItemGroupDocumentTemplate(type, createdItemGroup.id, documentTemplate.id);
+
     res.status(200).send(await this.translateDatabaseItemGroup(createdItemGroup));
   }
 
@@ -63,16 +63,16 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
     if (!databaseItemGroup) {
       this.sendNotFound(res);
       return;
     }
-    
+
     res.status(200).send(await this.translateDatabaseItemGroup(databaseItemGroup));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -82,7 +82,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
     const itemGroups = await Promise.all(databaseItemGroups.map((databaseItemGroup) => {
       return this.translateDatabaseItemGroup(databaseItemGroup);
     }));
-    
+
     res.status(200).send(itemGroups);
   }
 
@@ -101,7 +101,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseItemGroupDocumentTemplate = await models.findItemGroupDocumentTemplateByExternalId(id);
     if (!databaseItemGroupDocumentTemplate) {
       this.sendNotFound(res);
@@ -229,7 +229,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendForbidden(res, "You  do not have permission to create item group prices");
       return;
     }
-    
+
     const itemGroupId = req.params.itemGroupId;
     if (!itemGroupId) {
       this.sendNotFound(res);
@@ -271,7 +271,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendForbidden(res, "You  do not have permission to update item group prices");
       return;
     }
-    
+
     const itemGroupId = req.params.itemGroupId;
     const priceId = req.params.priceId;
 
@@ -318,7 +318,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendForbidden(res, "You  do not have permission to delete item group prices");
       return;
     }
-    
+
     const itemGroupId = req.params.itemGroupId;
     const priceId = req.params.priceId;
 
@@ -357,14 +357,14 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendForbidden(res, "You do not have permission to update item group document templates");
       return;
     }
-    
+
     const itemGroupId = req.params.itemGroupId;
     const id = req.params.id;
     if (!itemGroupId || !id) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseItemGroupDocumentTemplate = await models.findItemGroupDocumentTemplateByExternalId(id);
     if (!databaseItemGroupDocumentTemplate) {
       this.sendNotFound(res);
@@ -401,13 +401,13 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       this.sendInternalServerError(res, "Failed to update document template");
       return;
     }
-    
+
     res.status(200).send(this.translateItemGroupDocumentTemplate(databaseItemGroupDocumentTemplate, databaseItemGroup, updatedDocumentTemplate));
   }
 
   /**
    * Translates Database item group into REST entity
-   * 
+   *
    * @param {Object} itemGroup Sequelize item group model
    * @return {ItemGroup} REST entity
    */
@@ -416,12 +416,13 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
     const category: ItemGroupCategory = itemGroup.category == "FROZEN" ? "FROZEN" : "FRESH";
 
     const result: ItemGroup = {
-      "id": itemGroup.externalId,
-      "name": itemGroup.name,
-      "displayName": itemGroup.displayName || null,
-      "category": category,
-      "minimumProfitEstimation": itemGroup.minimumProfitEstimation,
-      "prerequisiteContractItemGroupId": prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
+      id: itemGroup.externalId,
+      sapId: itemGroup.sapId,
+      name: itemGroup.name,
+      displayName: itemGroup.displayName || null,
+      category: category,
+      minimumProfitEstimation: itemGroup.minimumProfitEstimation,
+      prerequisiteContractItemGroupId: prerequisiteContractItemGroup ? prerequisiteContractItemGroup.externalId : null
     };
 
     return result;
@@ -429,19 +430,19 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
 
   /**
    * Translates Database ItemGroupDocumentTemplate into REST entity
-   * 
+   *
    * @param {*} databaseItemGroupDocumentTemplate Sequelize item group document template
    * @param {*} databaseItemGroup Sequelize item group model
    * @param {*} databaseDocumentTemplate Sequelize document template
    */
   translateItemGroupDocumentTemplate(databaseItemGroupDocumentTemplate: ItemGroupDocumentTemplateModel, databaseItemGroup: ItemGroupModel, databaseDocumentTemplate: DocumentTemplateModel) {
     const result: ItemGroupDocumentTemplate = {
-      "id": databaseItemGroupDocumentTemplate.externalId,
-      "itemGroupId": databaseItemGroup.externalId,
-      "type": databaseItemGroupDocumentTemplate.type,
-      "contents": databaseDocumentTemplate.contents,
-      "header": databaseDocumentTemplate.header || null,
-      "footer": databaseDocumentTemplate.footer || null
+      id: databaseItemGroupDocumentTemplate.externalId,
+      itemGroupId: databaseItemGroup.externalId,
+      type: databaseItemGroupDocumentTemplate.type,
+      contents: databaseDocumentTemplate.contents,
+      header: databaseDocumentTemplate.header || null,
+      footer: databaseDocumentTemplate.footer || null
     };
 
     return result;
@@ -449,17 +450,17 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
 
   /**
    * Translates Database ItemGroupPrice into REST entity
-   * 
+   *
    * @param {ItemGroupPrice} databasePrice Sequelize item group price
    * @param {ItemGroup} itemGroup Sequelize item group
    */
   translateItemGroupPrice(databasePrice: ItemGroupPriceModel, itemGroup: ItemGroupModel) {
     const result: ItemGroupPrice = {
-      "id": databasePrice.externalId,
-      "group": databasePrice.groupName,
-      "unit": databasePrice.unit,
-      "price": databasePrice.price,
-      "year": databasePrice.year
+      id: databasePrice.externalId,
+      group: databasePrice.groupName,
+      unit: databasePrice.unit,
+      price: databasePrice.price,
+      year: databasePrice.year
     };
 
     return result;
