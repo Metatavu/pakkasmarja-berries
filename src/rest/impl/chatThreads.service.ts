@@ -12,6 +12,7 @@ import mqtt from "../../mqtt";
 import userManagement from "../../user-management";
 import chatThreadPermissionController from "../../user-management/chat-thread-permission-controller";
 import * as i18n from "i18n";
+import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 
 /**
  * Threads REST service
@@ -21,7 +22,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async createChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async createChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
     const chatThreadId = parseInt(req.params.chatThreadId);
 
     const chatThread = await models.findThread(chatThreadId);
@@ -95,7 +96,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       this.sendForbidden(res);
       return;
     }
-    
+
     const chatThreadPermissionId = req.params.permissionId;
     const userGroupId = chatThreadPermissionController.getThreadPermissionIdUserGroupId(chatThreadPermissionId);
     if (!userGroupId) {
@@ -112,7 +113,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const scope = this.translateApplicationScope(await chatThreadPermissionController.getUserGroupChatThreadScope(chatThread, userGroup));
     if (!scope) {
       this.sendNotFound(res);
-      return;      
+      return;
     }
 
     const result: ChatThreadGroupPermission = {
@@ -128,7 +129,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async listChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
+  public async listChatThreadGroupPermissions(req: Request, res: Response): Promise<void> {
     const chatThreadId = parseInt(req.params.chatThreadId);
 
     const chatThread = await models.findThread(chatThreadId);
@@ -149,27 +150,14 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     }
 
     const userGroups = await userManagement.listGroups(0, 999);
-    
-    const result = (await Promise.all(userGroups.map(async (userGroup) => {      
-      const scope = this.translateApplicationScope(await chatThreadPermissionController.getUserGroupChatThreadScope(chatThread, userGroup));
-      if (!scope) {
-        return null;
-      }
 
-      const result: ChatThreadGroupPermission = {
-        chatThreadId: chatThread.id,
-        userGroupId: userGroup.id!,
-        id: chatThreadPermissionController.getChatThreadGroupPermissionId(chatThread, userGroup.id!),
-        scope: scope
-      };
-  
-      return result;
-    })))
-    .filter((permission) => {
-      return permission;
-    });
-    
-    res.status(200).send(result);
+    const permissionResults = await Promise.all(
+      userGroups.map(userGroup => this.getChatThreadUserGroupPermissions(chatThread, userGroup))
+    );
+
+    const permissions = permissionResults.filter((permission): permission is ChatThreadGroupPermission => !!permission);
+
+    res.status(200).send(permissions);
   }
 
   /**
@@ -209,7 +197,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       this.sendInternalServerError(res, "Could not find user group");
       return;
     }
-    
+
     const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
@@ -231,7 +219,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async createChatThreadUserPermission(req: Request, res: Response): Promise<void> {
+  public async createChatThreadUserPermission(req: Request, res: Response): Promise<void> {
     const chatThreadId = parseInt(req.params.chatThreadId);
 
     const chatThread = await models.findThread(chatThreadId);
@@ -304,7 +292,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       this.sendForbidden(res);
       return;
     }
-    
+
     const chatThreadPermissionId = req.params.permissionId;
     const userId = chatThreadPermissionController.getThreadPermissionIdUserId(chatThreadPermissionId);
     if (!userId) {
@@ -321,7 +309,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const scope = this.translateApplicationScope(await chatThreadPermissionController.getUserChatThreadScope(chatThread, user));
     if (!scope) {
       this.sendNotFound(res);
-      return;      
+      return;
     }
 
     const result: ChatThreadUserPermission = {
@@ -337,7 +325,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async listChatThreadUserPermissions(req: Request, res: Response): Promise<void> {
+  public async listChatThreadUserPermissions(req: Request, res: Response): Promise<void> {
     const chatThreadId = parseInt(req.params.chatThreadId);
 
     const chatThread = await models.findThread(chatThreadId);
@@ -361,8 +349,8 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const users = await userManagement.listUsers({
       max: 999
     });
-    
-    const result = (await Promise.all(users.map(async (user) => {      
+
+    const result = (await Promise.all(users.map(async (user) => {
       const scope = this.translateApplicationScope(await chatThreadPermissionController.getUserChatThreadScope(chatThread, user));
       if (!scope) {
         return null;
@@ -374,13 +362,13 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
         id: chatThreadPermissionController.getChatThreadUserPermissionId(chatThread, user.id!),
         scope: scope
       };
-  
+
       return result;
     })))
     .filter((permission) => {
       return permission;
     });
-    
+
     res.status(200).send(result);
   }
 
@@ -421,7 +409,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       this.sendInternalServerError(res, "Could not find user");
       return;
     }
-    
+
     const scope = this.translatePermissionScope(body.scope);
     if (!scope) {
       this.sendBadRequest(res, `Invalid scope ${body.scope}`);
@@ -443,7 +431,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async createChatThread(req: Request, res: Response): Promise<void> {
+  public async createChatThread(req: Request, res: Response): Promise<void> {
     const payload: ChatThread = req.body;
     const chatGroupId = payload.groupId;
     const chatGroup = await models.findChatGroup(chatGroupId);
@@ -457,7 +445,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
+    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
 
     const ownerId = this.getLoggedUserId(req);
     const thread = await models.createThread(
@@ -471,7 +459,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       allowOther,
       payload.expiresAt);
 
-    const resource = await chatThreadPermissionController.createChatThreadResource(thread);    
+    const resource = await chatThreadPermissionController.createChatThreadResource(thread);
     await chatThreadPermissionController.createChatThreadPermission(thread, resource, "chat-thread:access", []);
     const createPollPredefinedTextPromises = (payload.pollPredefinedTexts || []).map((predefinedText) => {
       return models.createThreadPredefinedText(thread.id, predefinedText);
@@ -489,7 +477,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async deleteChatThread(req: Request, res: Response): Promise<void> {
+  public async deleteChatThread(req: Request, res: Response): Promise<void> {
     const chatThreadId = parseInt(req.params.chatThreadId);
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
@@ -523,7 +511,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async findChatThread(req: Request, res: Response): Promise<void> {
+  public async findChatThread(req: Request, res: Response): Promise<void> {
     const chatThreadId = req.params.chatThreadId;
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
@@ -551,7 +539,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   public async listChatThreads(req: Request, res: Response): Promise<void> {
     const groupId = req.query.groupId;
     const groupType: ChatGroupType = req.query.groupType;
-    const ownerId: string | undefined = req.query.ownerId;
+    const ownerId: string | undefined = req.query.ownerId;
 
     const allChatGroups = await Promise.all(groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType));
 
@@ -571,7 +559,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     const chatGroups = traverseGroups.concat(accessGroups);
     const chatGroupMap = _.keyBy(chatGroups, "id");
     const chatGroupIds = _.map(chatGroups, "id");
-    const accessGroupIds = _.map(accessGroups, "id");    
+    const accessGroupIds = _.map(accessGroups, "id");
     const chatThreads = await models.listThreads(chatGroupIds, ownerId);
 
     const threads = await Promise.all(Promise.filter(chatThreads, async (thread) => {
@@ -581,7 +569,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
       return await this.isThreadAccessPermission(req, thread, chatGroupMap[thread.groupId]);
     }));
-    
+
     res.status(200).send(await Promise.all(threads.map((thread) => {
       return this.translateChatThread(req, thread, chatGroupMap[thread.groupId]);
     })));
@@ -590,7 +578,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   /**
    * @inheritdoc
    */
-  public async updateChatThread(req: Request, res: Response): Promise<void> {
+  public async updateChatThread(req: Request, res: Response): Promise<void> {
     const payload: ChatThread = req.body;
 
     const chatThreadId = req.params.chatThreadId;
@@ -611,11 +599,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
+    const allowOther = payload.pollAllowOther === undefined || payload.pollAllowOther === null ? true : payload.pollAllowOther;
 
     await models.updateThread(
       thread.id,
-      thread.ownerId || null,
+      thread.ownerId || null,
       payload.title,
       payload.description,
       payload.imageUrl,
@@ -629,7 +617,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return predefinedTextObject.text;
     });
 
-    const payloadPredefinedTexts = payload.pollPredefinedTexts || [];
+    const payloadPredefinedTexts = payload.pollPredefinedTexts || [];
     for (let i = 0; i < payloadPredefinedTexts.length; i++) {
       const payloadPredefinedText = payloadPredefinedTexts[i];
       const existingIndex = existingPredefinedTexts.indexOf(payloadPredefinedText);
@@ -673,7 +661,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     if (!type) {
       return this.sendBadRequest(res, "Type is required");
     }
-    
+
     const expectedTypes = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
     const accept = this.getBareContentType(req.header("accept")) || expectedTypes[0];
 
@@ -694,10 +682,10 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
   /**
    * Returns thread summary report as xlsx
-   * 
+   *
    * @param {http.ClientRequest} req client request object
    * @param {http.ServerResponse} res server response object
-   * @param {Object} thread thread 
+   * @param {Object} thread thread
    */
   private async sendChatThreadSummaryReportXLSX(req: Request, res: Response, thread: ThreadModel) {
     const predefinedTexts = (await models.listThreadPredefinedTextsByThreadId(thread.id)).map((predefinedText: ThreadPredefinedTextModel) => {
@@ -711,7 +699,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     const predefinedTextCounts = {};
 
-    const userAnswerMap: { [key: string]: string } = {};
+    const userAnswerMap: { [key: string]: string } = {};
 
     for (let i = 0; i < messages.length; i++) {
       const message = messages[i];
@@ -725,11 +713,11 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     for (let i = 0; i < userAnswers.length; i++) {
       const userAnswer = userAnswers[i];
-      predefinedTextCounts[userAnswer] = (predefinedTextCounts[userAnswer] || 0) + 1;  
+      predefinedTextCounts[userAnswer] = (predefinedTextCounts[userAnswer] || 0) + 1;
     }
 
     const otherAnswers = _.without.apply(_, [userAnswers].concat(predefinedTexts));
-          
+
     const columnHeaders = [
       i18n.__("chatThreadSummaryReport.answer"),
       i18n.__("chatThreadSummaryReport.count")
@@ -758,14 +746,38 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
     res.status(200).send(excel.buildXLSX(name, columnHeaders, rows));
   }
 
+  /**
+   * Returns permissions of given user group to given chat thread
+   *
+   * @param chatThread chat thread
+   * @param userGroup user group
+   */
+  private async getChatThreadUserGroupPermissions(
+    chatThread: ThreadModel,
+    userGroup: GroupRepresentation
+  ): Promise<ChatThreadGroupPermission | null> {
+    const chatThreadScope = await chatThreadPermissionController.getUserGroupChatThreadScope(chatThread, userGroup);
+    const applicationScope = this.translateApplicationScope(chatThreadScope);
+
+    if (!applicationScope) {
+      return null;
+    }
+
+    return {
+      chatThreadId: chatThread.id,
+      userGroupId: userGroup.id!,
+      id: chatThreadPermissionController.getChatThreadGroupPermissionId(chatThread, userGroup.id!),
+      scope: applicationScope
+    };;
+  }
 
   /**
    * Translates application scope into REST scope
-   * 
+   *
    * @param scope scope to be translated
    * @returns translated scope
    */
-  private translatePermissionScope(scope: ChatThreadPermissionScope | null): ApplicationScope | null {
+  private translatePermissionScope(scope: ChatThreadPermissionScope | null): ApplicationScope | null {
     if (!scope) {
       return null;
     }
@@ -780,26 +792,22 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
   /**
    * Translates application scope into REST scope
-   * 
+   *
    * @param scope scope to be translated
    * @returns translated scope
    */
-  private translateApplicationScope(scope: ApplicationScope | null): ChatThreadPermissionScope | null {
-    if (!scope) {
-      return null;
-    }
-
+  private translateApplicationScope(scope: ApplicationScope | null): ChatThreadPermissionScope | null {
     switch (scope) {
       case "chat-thread:access":
         return "ACCESS";
+      default:
+        return null;
     }
-
-    return null;
   }
 
   /**
-   * Translates database chat thread into REST chat thread 
-   * 
+   * Translates database chat thread into REST chat thread
+   *
    * @param {Object} databaseChatThread database chat thread
    */
   private async translateChatThread(req: Request, databaseChatThread: ThreadModel, databaseChatGroup: ChatGroupModel) {
@@ -813,8 +821,8 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     const permissionType = await this.isThreadManagePermission(req, databaseChatThread, databaseChatGroup) ? "MANAGE" : "ACCESS";
 
-    const title = databaseChatGroup.type == "QUESTION" && databaseChatThread.ownerId 
-      ? userManagement.getUserDisplayName(await userManagement.findUser(databaseChatThread.ownerId)) 
+    const title = databaseChatGroup.type == "QUESTION" && databaseChatThread.ownerId
+      ? userManagement.getUserDisplayName(await userManagement.findUser(databaseChatThread.ownerId))
       : databaseChatThread.title;
 
     const predefinedTextObjects = await models.listThreadPredefinedTextsByThreadId(databaseChatThread.id);
@@ -824,14 +832,14 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
 
     const result: ChatThread = {
       id: databaseChatThread.id,
-      title: title || "",
+      title: title || "",
       description: databaseChatThread.description,
       imageUrl: databaseChatThread.imageUrl,
       groupId: databaseChatThread.groupId,
       pollPredefinedTexts: predefinedTexts,
       answerType: answerType,
       permissionType: permissionType,
-      expiresAt: databaseChatThread.expiresAt || null,
+      expiresAt: databaseChatThread.expiresAt || null,
       pollAllowOther: databaseChatThread.pollAllowOther
     };
 

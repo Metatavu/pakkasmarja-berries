@@ -17,8 +17,8 @@ export const CHAT_THREAD_SCOPES: ApplicationScope[] = ["chat-thread:access"];
 export default new class ChatThreadPermissionController extends AbstractPermissionController {
 
   /**
-   * Resolves a scope for given user group in given chat group 
-   * 
+   * Resolves a scope for given user group in given chat group
+   *
    * @param chatGroup chat group
    * @param userGroup user group
    * @returns scope for given user group in given chat group
@@ -29,7 +29,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
       return null;
     }
 
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
       if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy)) {
         return CHAT_THREAD_SCOPES[i];
       }
@@ -40,7 +40,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Sets a scope for given user group into given chat thread
-   * 
+   *
    * @param chatThread chat thread
    * @param userGroup user group
    * @param scope scope
@@ -51,7 +51,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
       return null;
     }
 
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
       if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy)) {
         if (scope != CHAT_THREAD_SCOPES[i]) {
           await this.removeChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], groupPolicy);
@@ -68,7 +68,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Returns chat thread scope permission's name
-   * 
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @return chat thread scope permission's name
@@ -79,7 +79,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Returns chat thread permission id
-   * 
+   *
    * @param chatThreadId chat thread id
    * @param userGroupId user group id
    * @return chat thread permission id
@@ -89,19 +89,19 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Extracts user group id from thread permission id 
-   * 
-   * @param threadPermissionId thread permission id 
+   * Extracts user group id from thread permission id
+   *
+   * @param threadPermissionId thread permission id
    * @return user group id
    */
   public getThreadPermissionIdUserGroupId(threadPermissionId: string): string | null {
     const match = /(chat-thread.[0-9]{1,}-user-group-)([a-z0-9-]*)/.exec(threadPermissionId);
     return match ? match[2] || null : null;
   }
-  
+
   /**
    * Sets a scope for given user into given chat thread
-   * 
+   *
    * @param chatThread chat thread
    * @param user user
    * @param scope scope
@@ -112,7 +112,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
       return null;
     }
 
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
       if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], userPolicy)) {
         if (scope != CHAT_THREAD_SCOPES[i]) {
           await this.removeChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], userPolicy);
@@ -129,7 +129,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Returns chat thread permission id
-   * 
+   *
    * @param chatThreadId chat thread id
    * @param userId user id
    * @return chat thread permission id
@@ -139,9 +139,9 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Extracts user id from thread permission id 
-   * 
-   * @param threadPermissionId thread permission id 
+   * Extracts user id from thread permission id
+   *
+   * @param threadPermissionId thread permission id
    * @return user id
    */
   public getThreadPermissionIdUserId(threadPermissionId: string): string | null {
@@ -150,8 +150,8 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Resolves a scope for given user in given chat thread 
-   * 
+   * Resolves a scope for given user in given chat thread
+   *
    * @param chatGroup chat group
    * @param user user
    * @returns scope for given user in given chat thread
@@ -162,7 +162,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
       return null;
     }
 
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
       if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], userPolicy)) {
         return CHAT_THREAD_SCOPES[i];
       }
@@ -172,8 +172,8 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Resolves scopes for given user in given chat thread 
-   * 
+   * Resolves scopes for given user in given chat thread
+   *
    * @param chatGroup chat group
    * @param user user
    * @returns list of scopes for given user in given chat thread
@@ -185,7 +185,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
     }
 
     const scopes = [];
-    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) { 
+    for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
       if (await this.hasChatThreadPermissionPolicy(chatThread, CHAT_THREAD_SCOPES[i], userPolicy)) {
         scopes.push(CHAT_THREAD_SCOPES[i]);
       }
@@ -196,7 +196,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Finds resource for a chat thread
-   * 
+   *
    * @param chatThread chat thread
    * @return resource or null if not found
    */
@@ -207,7 +207,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Creates resource for a thread resource
-   * 
+   *
    * @param chatGroup chat thread
    * @return created resource
    */
@@ -219,7 +219,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Finds chat thread permission
-   *  
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @reutrns found permission or null if not found
@@ -230,7 +230,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Creates chat thread permission
-   * 
+   *
    * @param chatThread chat thread
    * @param resource resource
    * @param scope scope
@@ -242,7 +242,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Adds a policy to chat thread scope permission
-   * 
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @param groupPolicy policy
@@ -255,13 +255,13 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
     const policyIds = await this.getChatThreadPermissionPolicyIds(chatThread, scope);
     permission.policies = policyIds.concat([policy.id!]);
-    
+
     return await userManagement.updateScopePermission(permission.id, permission);
   }
 
   /**
    * Removes a policy from chat thread scope permission
-   * 
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @param groupPolicy policy
@@ -271,8 +271,8 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Returns whether given policy is is associated with chat thread permission  
-   * 
+   * Returns whether given policy is is associated with chat thread permission
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @param groupPolicy group policy
@@ -284,8 +284,8 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
   }
 
   /**
-   * Returns associated permission policy ids for chat thread 
-   * 
+   * Returns associated permission policy ids for chat thread
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @return associated permission policy ids
@@ -296,7 +296,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
 
   /**
    * Returns chat thread's URI
-   * 
+   *
    * @param id chat thread id
    * @return chat thread's URI
    */
