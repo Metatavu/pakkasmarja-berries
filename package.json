@@ -20,7 +20,7 @@
     "email": "devs@metatavu.fi"
   },
   "dependencies": {
-    "async": "2.6.1",
+    "async": "2.6.4",
     "aws-sdk": "^2.639.0",
     "better-queue": "^3.8.10",
     "better-queue-sql": "^1.0.5",
