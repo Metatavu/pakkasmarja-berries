@@ -1,6 +1,7 @@
 {
   "89723408-0f51-11e8-baa0-dfe7c7eae257": {
     "id": "89723408-0f51-11e8-baa0-dfe7c7eae257",
+    "sapId": "1234",
     "name": "123456/Test Group 1",
     "displayName": "Test Group 1",
     "category": "FROZEN",
@@ -9,6 +10,7 @@
   },
   "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20": {
     "id": "98be1d32-0f51-11e8-bb59-3b8b6bbe9a20",
+    "sapId": "2345",
     "name": "234567/Test Group 2",
     "displayName": null,
     "category": "FRESH",
@@ -17,6 +19,7 @@
   },
   "6a67344b-57e2-4ec1-ba63-aa0432c6b827": {
     "id": "6a67344b-57e2-4ec1-ba63-aa0432c6b827",
+    "sapId": "100",
     "name": "100/Test Group 3",
     "displayName": "Test Group 3",
     "category": "FRESH",

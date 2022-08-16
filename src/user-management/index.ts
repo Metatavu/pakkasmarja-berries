@@ -283,7 +283,7 @@ export default new class UserManagement {
    * @param uri URI
    * @return Promise for found resource or null if not found
    */
-  public async findResourceByUri(uri: string): Promise<ResourceRepresentation | null> {
+  public async findResourceByUri(uri: string): Promise<ResourceRepresentation | null> {
     const client = await this.getClient();
     const results = await client.clients.listAuthzResources({
       id: await this.getRestClientInternalId(),
@@ -332,7 +332,7 @@ export default new class UserManagement {
    * @param name name
    * @return Promise for found policy or null if not found
    */
-  public async findGroupPolicyByName(name: string): Promise<GroupPolicyRepresentation | null> {
+  public async findGroupPolicyByName(name: string): Promise<GroupPolicyRepresentation | null> {
     const client = await this.getClient();
     const results = await client.clients.listAuthzGroupPolicies({
       id: await this.getRestClientInternalId(),
@@ -356,7 +356,7 @@ export default new class UserManagement {
       realm: config().keycloak.admin.realm
     });
 
-    return results || [];
+    return results || [];
   }
 
   /**
@@ -518,7 +518,7 @@ export default new class UserManagement {
    * @return Promise for found permissions
    */
   public async findPermissionsByNames(names: string[]): Promise<PolicyRepresentation[]> {
-    const permissionPromises: Promise<PolicyRepresentation | null>[] = names.map((name: string) => {
+    const permissionPromises: Promise<PolicyRepresentation | null>[] = names.map((name: string) => {
       return this.findPermissionByName(name);
     });
 
@@ -624,7 +624,7 @@ export default new class UserManagement {
         return !!policy;
       })
       .map((policy) => {
-        return policy!.roles || [];
+        return policy!.roles || [];
       }))
       .map((role) => {
         return role.id;
@@ -650,7 +650,7 @@ export default new class UserManagement {
         return !!policy;
       })
       .map((policy) => {
-        return policy!.groups || [];
+        return policy!.groups || [];
       }))
       .map((group) => {
         return group.id!
@@ -672,7 +672,7 @@ export default new class UserManagement {
         return !!policy;
       })
       .map((policy) => {
-        return policy!.users || [];
+        return policy!.users || [];
       })))
       .filter((userId) => {
         return !foundUserIds.includes(userId);
@@ -680,7 +680,7 @@ export default new class UserManagement {
 
     for (let i = 0; i < userIds.length; i++) {
       const user = await this.findUser(userIds[i]);
-      if (user) {
+      if (user) {
         result.push(user);
       }
     }
@@ -820,7 +820,7 @@ export default new class UserManagement {
       id: user.id,
       realm: config().keycloak.admin.realm
     });
-    return userRoleRepresentations.realmMappings || []
+    return userRoleRepresentations.realmMappings || []
   }
 
   /**
@@ -889,7 +889,7 @@ export default new class UserManagement {
    * @param user user
    * @returns display name for an user
    */
-  public getUserDisplayName(user: UserRepresentation | null): string | null {
+  public getUserDisplayName(user: UserRepresentation | null): string | null {
     if (!user) {
       return null;
     }
@@ -950,7 +950,7 @@ export default new class UserManagement {
    */
   public getUserImage(user: UserRepresentation) {
     const shasum = crypto.createHash("sha1");
-    shasum.update((user.email || "").toLowerCase());
+    shasum.update((user.email || "").toLowerCase());
     const hash = shasum.digest("hex");
     return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
   }
@@ -971,7 +971,7 @@ export default new class UserManagement {
    * @return {String} attribute value or null if not found
    */
   public getSingleAttribute(user: any, names: UserProperty|UserProperty[]): string|null {
-    let attributes = user.attributes || {};
+    let attributes = user.attributes || {};
 
     for (let [key, value] of Object.entries(attributes)) {
       if (!Array.isArray(value)) {
@@ -1083,7 +1083,7 @@ export default new class UserManagement {
       realm: config().keycloak.admin.realm
     });
 
-    if (!clients.length) {
+    if (!clients.length) {
       throw new Error("Failed to resolve REST client's id");
     }
 
@@ -1095,9 +1095,9 @@ export default new class UserManagement {
   *
   * @param accessToken token
   */
-  private getAccessTokenUserId(accessToken: string): string | null {
+  private getAccessTokenUserId(accessToken: string): string | null {
     const decodedToken: any = jwt_decode(accessToken);
-    return decodedToken ? decodedToken.sub || null : null;
+    return decodedToken ? decodedToken.sub || null : null;
   }
 
   /**
@@ -1107,8 +1107,8 @@ export default new class UserManagement {
    * @param scopes scopes
    * @param userId user id
    */
-  private async getCachedPermission(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
-    return this.permissionCache ? await this.permissionCache.get(resourceName, scopes, userId) : null;
+  private async getCachedPermission(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
+    return this.permissionCache ? this.permissionCache.get(resourceName, scopes, userId) : null;
   }
 
   /**

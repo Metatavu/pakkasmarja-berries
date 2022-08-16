@@ -10,7 +10,6 @@ import chatThreadPermissionController, { CHAT_THREAD_SCOPES } from "../user-mana
 import chatGroupPermissionController, { CHAT_GROUP_SCOPES } from "../user-management/chat-group-permission-controller";
 import { CHAT_GROUP_TRAVERSE } from "../rest/application-scopes";
 import { createStackedReject, logReject } from "../utils";
-import RolePolicyRepresentation from 'keycloak-admin/lib/defs/rolePolicyRepresentation';
 import { ChatGroupType } from '../rest/model/chatGroupType';
 import { HttpError, SapAddressType, SapBusinessPartner } from "../generated/erp-services-client/api";
 import ErpClient from "../erp/client";
@@ -160,7 +159,11 @@ export default new class TaskQueue {
 
       this.contactsLastUpdatedAt = this.inTestMode() ? undefined : updateStartTime;
 
-      let resultMessage = `SAP contacts update finished. Results:\n${updateResults.join("\n")}`;
+      const displayedResults = updateResults.length ?
+        `Results:\n${updateResults.join("\n")}` :
+        "Everything up to date.";
+
+      let resultMessage = `SAP contacts update finished. ${displayedResults}`;
 
       this.logger.info(resultMessage);
 
@@ -353,46 +356,75 @@ export default new class TaskQueue {
    */
   private cacheUsersChatPermissionsTask = async (data: any, callback: Queue.ProcessFunctionCb<any>) => {
     try {
-      await this.cacheUsersChatPermissions();
+      await this.cacheChatPermissions();
     } finally {
       callback(null);
+      this.enqueueCacheUsersChatPermissionsTask();
     }
   }
 
   /**
-   * Caches users chat permissions
+   * Caches chat permissions for all users
    */
-  private cacheUsersChatPermissions = async () => {
+  private cacheChatPermissions = async () => {
     this.logger.info("Updating users chat permissions");
 
-    const users = await userManagement.listAllUsers();
-    const chatGroups = await models.listChatGroups(ChatGroupType.CHAT);
+    try {
+      const users = await userManagement.listAllUsers();
+      const chatGroups = await models.listChatGroups(ChatGroupType.CHAT);
 
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
 
-      try {
-        const permittedGroupIds = [];
         this.logger.info(`Caching permissions for user ${user.username} (${i + 1}/${users.length})`);
 
-        for (let j = 0; j < chatGroups.length; j++) {
-          if (await this.cacheUserChatGroupPermissions(chatGroups[j], user)) {
-            permittedGroupIds.push(chatGroups[j].id);
-          }
+        try {
+          const permittedGroupIds = await this.cacheUserChatGroupsPermissions(user, chatGroups);
+          await this.cacheUserChatThreadsPermissions(user, permittedGroupIds);
+        } catch (error) {
+          logReject(createStackedReject(`Permission caching failed for user ${user.username}`, error), this.logger);
         }
-        const chatThreads = await models.listThreads(permittedGroupIds);
-        for (let n = 0; n < chatThreads.length; n++) {
-          await this.cacheUserChatThreadPermissions(chatThreads[n], user);
-        }
-      } catch (error) {
-        logReject(createStackedReject(`Permission caching failed for user ${user.username}`, error), this.logger);
       }
+    } catch (error) {
+      logReject(createStackedReject(`Permission caching failed. `, error), this.logger);
     }
 
     this.logger.info("Done caching user chat permissions");
+  }
 
-    this.logger.info("Starting new task for updating user permissions cache");
-    this.enqueueCacheUsersChatPermissionsTask();
+  /**
+   * Caches user chat groups permissions
+   *
+   * @param user user
+   * @param chatGroups all chat groups
+   * @returns permitted chat group IDs for given user
+   */
+  private async cacheUserChatGroupsPermissions(user: UserRepresentation, chatGroups: ChatGroupModel[]) {
+    const permittedChatGroupIds = [];
+
+    for (let i = 0; i < chatGroups.length; i++) {
+      const chatGroup = chatGroups[i];
+
+      const hadAnyPermissionToGroup = await this.cacheUserChatGroupPermissions(chatGroup, user);
+
+      if (hadAnyPermissionToGroup) {
+        permittedChatGroupIds.push(chatGroup.id);
+      }
+    }
+
+    return permittedChatGroupIds;
+  }
+
+  /**
+   * Caches chat threads permissions for given user from given chat groups
+   *
+   * @param user user
+   * @param groupIds chat group IDs of threads to cache permissions for
+   */
+  private async cacheUserChatThreadsPermissions(user: UserRepresentation, groupIds: number[]) {
+    const chatThreads = await models.listThreads(groupIds);
+
+    return Promise.all(chatThreads.map(thread => this.cacheUserChatThreadPermissions(thread, user)));
   }
 
   /**
@@ -410,6 +442,7 @@ export default new class TaskQueue {
       const permittedScopes = await this.getChatGroupPermissionScopes(chatGroup, user);
       const permissionName = chatGroupPermissionController.getChatGroupResourceName(chatGroup);
       let hadAnyPermission = false;
+
       for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) {
         let scope = CHAT_GROUP_SCOPES[i];
         let permission = false;
@@ -423,14 +456,14 @@ export default new class TaskQueue {
       return hadAnyPermission;
     } catch (error) {
       logReject(createStackedReject(`Failed to cache chat group permissions for user ${user.id}`, error), this.logger);
-      return Promise.reject(error);
+      throw error;
     }
   }
 
   /**
    * Caches users chat thread permissions
    *
-   * @param chatGroup chat group
+   * @param chatThread chat thread
    * @param user user
    */
   private cacheUserChatThreadPermissions = async (chatThread: ThreadModel, user: UserRepresentation) => {
@@ -443,7 +476,7 @@ export default new class TaskQueue {
       const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
 
       for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
-        let scope = CHAT_GROUP_SCOPES[i];
+        let scope = CHAT_THREAD_SCOPES[i];
         let permission = false;
         if (permittedScopes.indexOf(scope) > -1) {
           permission = true;
@@ -474,6 +507,7 @@ export default new class TaskQueue {
       await this.checkQuestionGroupUsersThreads();
     } finally {
       callback(null);
+      this.enqueueQuestionGroupUsersThreadsTask();
     }
   }
 
@@ -494,8 +528,6 @@ export default new class TaskQueue {
     }
 
     this.logger.info("Done checking question group user threads.");
-
-    this.enqueueQuestionGroupUsersThreadsTask();
   }
 
   /**
@@ -507,7 +539,7 @@ export default new class TaskQueue {
   private checkUserQuestionGroupThread = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
     const expectedAccess = await this.hasChatGroupTraversePermission(chatGroup, user);
 
-    if (!expectedAccess) {
+    if (!expectedAccess) {
       this.removeUserQuestionGroupThreadAccess(chatGroup, user);
     } else {
       this.addUserQuestionGroupThreadAccess(chatGroup, user);
@@ -530,7 +562,7 @@ export default new class TaskQueue {
       await chatThreadPermissionController.setUserChatThreadScope(chatThread, user, null);
 
       const messageCount = await models.countMessagesByThread(chatThread.id);
-      if (messageCount == 0) {
+      if (messageCount === 0) {
         const accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
         if (accessPermission && accessPermission.id) {
           this.logger.info(`Delete access permission from empty chat thread ${chatThread.id}`);
@@ -553,11 +585,11 @@ export default new class TaskQueue {
    */
   private addUserQuestionGroupThreadAccess = async (chatGroup: ChatGroupModel, user: UserRepresentation) => {
     let chatThread = await models.findThreadByGroupIdAndOwnerId(chatGroup.id, user.id!);
-    const title = userManagement.getUserDisplayName(user) || "";
+    const title = userManagement.getUserDisplayName(user) || "";
 
     if (!chatThread) {
       this.logger.info(`Creating new question group ${chatGroup.id} thread for user ${user.id}`);
-      chatThread = await models.createThread(chatGroup.id, user.id || null, title, null, "question", null, "TEXT", false, null);
+      chatThread = await models.createThread(chatGroup.id, user.id || null, title, null, "question", null, "TEXT", false, null);
     } else {
       await models.updateThreadTitle(chatThread.id, title);
     }
@@ -568,7 +600,7 @@ export default new class TaskQueue {
       resource = await chatThreadPermissionController.createChatThreadResource(chatThread);
     }
 
-    let accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
+    const accessPermission = await chatThreadPermissionController.findChatThreadPermission(chatThread, "chat-thread:access");
     if (!accessPermission) {
       this.logger.info(`Creating new access permission for chat thread ${chatThread.id}`);
       await chatThreadPermissionController.createChatThreadPermission(chatThread, resource, "chat-thread:access", []);
@@ -610,30 +642,27 @@ export default new class TaskQueue {
    * @returns list of allowed scopes for user
    */
   private getChatGroupPermissionScopes = async (chatGroup: ChatGroupModel, user: UserRepresentation): Promise<string[]> => {
+    const groupScopes: string[] = [];
+
     const userGroups = await userManagement.listUserUserGroups(user);
-    let allScopes: string[] = [];
+
     for (let i = 0; i < userGroups.length; i++) {
-      const userGroup = userGroups[i];
-      let groupScopes = await chatGroupPermissionController.getUserGroupChatGroupScopes(chatGroup, userGroup);
-      allScopes = allScopes.concat(groupScopes);
+      groupScopes.push(...await chatGroupPermissionController.getUserGroupChatGroupScopes(chatGroup, userGroups[i]));
     }
 
-    const allRolePolicies = await userManagement.listRolePolicies()
-    const userRolePolicies: RolePolicyRepresentation[] = []
-    const userRoleIds = (await userManagement.listUserRoles(user)).map((role) => role.id)
+    const [ allRolePolicies, userRoles ] = await Promise.all([
+      userManagement.listRolePolicies(),
+      userManagement.listUserRoles(user)
+    ]);
 
-    allRolePolicies.forEach((rolePolicy) => {
-      (rolePolicy.roles || []).forEach((policyRole) => {
-        if (userRoleIds.includes(policyRole.id)) {
-          userRolePolicies.push(rolePolicy)
-        }
-      });
+    const userRolePolicies = allRolePolicies.filter(rolePolicy => {
+      const roles = rolePolicy.roles || [];
+      return roles.some(role => userRoles.some(userRole => userRole.id === role.id));
     });
 
     const roleScopes = await chatGroupPermissionController.getUserRoleChatGroupScopes(chatGroup, userRolePolicies);
-    allScopes = allScopes.concat(roleScopes);
 
-    return allScopes;
+    return [ ...groupScopes, ...roleScopes ];
   }
 
   /**
