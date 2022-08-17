@@ -380,7 +380,9 @@ export default new class TaskQueue {
 
         try {
           const permittedGroupIds = await this.cacheUserChatGroupsPermissions(user, chatGroups);
+          this.logger.info(`Cached group permissions for user ${user.username}`);
           await this.cacheUserChatThreadsPermissions(user, permittedGroupIds);
+          this.logger.info(`Cached thread permissions for user ${user.username}`);
         } catch (error) {
           logReject(createStackedReject(`Permission caching failed for user ${user.username}`, error), this.logger);
         }
@@ -423,8 +425,7 @@ export default new class TaskQueue {
    */
   private async cacheUserChatThreadsPermissions(user: UserRepresentation, groupIds: number[]) {
     const chatThreads = await models.listThreads(groupIds);
-
-    return Promise.all(chatThreads.map(thread => this.cacheUserChatThreadPermissions(thread, user)));
+    await Promise.all(chatThreads.map(thread => this.cacheUserChatThreadPermissions(thread, user)));
   }
 
   /**
@@ -446,13 +447,15 @@ export default new class TaskQueue {
       for (let i = 0; i < CHAT_GROUP_SCOPES.length; i++) {
         let scope = CHAT_GROUP_SCOPES[i];
         let permission = false;
-        if (permittedScopes.indexOf(scope) > -1) {
+
+        if (permittedScopes.includes(scope)) {
           permission = true;
           hadAnyPermission = true;
         }
 
-        await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+        await userManagement.updateCachedPermission(permissionName, [ scope ], user.id, permission);
       }
+
       return hadAnyPermission;
     } catch (error) {
       logReject(createStackedReject(`Failed to cache chat group permissions for user ${user.id}`, error), this.logger);
@@ -476,13 +479,14 @@ export default new class TaskQueue {
       const permissionName = chatThreadPermissionController.getChatThreadResourceName(chatThread);
 
       for (let i = 0; i < CHAT_THREAD_SCOPES.length; i++) {
-        let scope = CHAT_THREAD_SCOPES[i];
+        const scope = CHAT_THREAD_SCOPES[i];
         let permission = false;
-        if (permittedScopes.indexOf(scope) > -1) {
+
+        if (permittedScopes.includes(scope)) {
           permission = true;
         }
 
-        await userManagement.updateCachedPermission(permissionName, [scope], user.id, permission);
+        await userManagement.updateCachedPermission(permissionName, [ scope ], user.id, permission);
       }
     } catch (error) {
       logReject(createStackedReject(`Failed to cache chat thread permissions for user ${user.id}`, error), this.logger);

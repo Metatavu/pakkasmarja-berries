@@ -2,7 +2,7 @@ import userManagement from "../user-management";
 import AbstractPermissionController from "./abstract-permission-controller";
 import { ThreadModel } from "../models";
 import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
-import { ApplicationScope, CHAT_GROUP_ACCESS, CHAT_GROUP_MANAGE } from "../rest/application-scopes";
+import { ApplicationScope } from "../rest/application-scopes";
 import GroupPolicyRepresentation from "keycloak-admin/lib/defs/groupPolicyRepresentation";
 import ResourceRepresentation from "keycloak-admin/lib/defs/resourceRepresentation";
 import PolicyRepresentation, { DecisionStrategy } from "keycloak-admin/lib/defs/policyRepresentation";
@@ -23,7 +23,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param userGroup user group
    * @returns scope for given user group in given chat group
    */
-  public async getUserGroupChatThreadScope(chatThread: ThreadModel, userGroup: GroupRepresentation): Promise<ApplicationScope | null> {
+  public async getUserGroupChatThreadScope(chatThread: ThreadModel, userGroup: GroupRepresentation): Promise<ApplicationScope | null> {
     const groupPolicy = await this.resolveGroupPolicy(userGroup.id!);
     if (!groupPolicy) {
       return null;
@@ -94,9 +94,9 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param threadPermissionId thread permission id
    * @return user group id
    */
-  public getThreadPermissionIdUserGroupId(threadPermissionId: string): string | null {
+  public getThreadPermissionIdUserGroupId(threadPermissionId: string): string | null {
     const match = /(chat-thread.[0-9]{1,}-user-group-)([a-z0-9-]*)/.exec(threadPermissionId);
-    return match ? match[2] || null : null;
+    return match ? match[2] || null : null;
   }
 
   /**
@@ -106,7 +106,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param user user
    * @param scope scope
    */
-  public async setUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation, scope: ApplicationScope | null): Promise<null> {
+  public async setUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation, scope: ApplicationScope | null): Promise<null> {
     const userPolicy = await this.resolveUserPolicy(user.id!);
     if (!userPolicy) {
       return null;
@@ -144,9 +144,9 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param threadPermissionId thread permission id
    * @return user id
    */
-  public getThreadPermissionIdUserId(threadPermissionId: string): string | null {
+  public getThreadPermissionIdUserId(threadPermissionId: string): string | null {
     const match = /(chat-thread.[0-9]{1,}-user-)([a-z0-9-]*)/.exec(threadPermissionId);
-    return match ? match[2] || null : null;
+    return match ? match[2] || null : null;
   }
 
   /**
@@ -156,7 +156,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param user user
    * @returns scope for given user in given chat thread
    */
-  public async getUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation): Promise<ApplicationScope | null> {
+  public async getUserChatThreadScope(chatThread: ThreadModel, user: UserRepresentation): Promise<ApplicationScope | null> {
     const userPolicy = await this.resolveUserPolicy(user.id!);
     if (!userPolicy) {
       return null;
@@ -200,7 +200,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param chatThread chat thread
    * @return resource or null if not found
    */
-  public async findChatThreadResource(chatThread: ThreadModel): Promise<ResourceRepresentation | null> {
+  public async findChatThreadResource(chatThread: ThreadModel): Promise<ResourceRepresentation | null> {
     const resourceUri = this.getChatThreadUri(chatThread.id);
     return await userManagement.findResourceByUri(resourceUri);
   }
@@ -224,7 +224,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param scope scope
    * @reutrns found permission or null if not found
    */
-  public findChatThreadPermission(chatThread: ThreadModel, scope: ApplicationScope): Promise<PolicyRepresentation | null> {
+  public findChatThreadPermission(chatThread: ThreadModel, scope: ApplicationScope): Promise<PolicyRepresentation | null> {
     return userManagement.findPermissionByName(this.getPermissionName(chatThread, scope));
   }
 
@@ -236,7 +236,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param scope scope
    * @param policyIds policy ids
    */
-  public createChatThreadPermission(chatThread: ThreadModel, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
+  public createChatThreadPermission(chatThread: ThreadModel, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
     return userManagement.createScopePermission(this.getPermissionName(chatThread, scope), [ resource.id || (resource as any)._id ], [ scope ], policyIds, DecisionStrategy.AFFIRMATIVE);
   }
 
@@ -247,7 +247,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param scope scope
    * @param groupPolicy policy
    */
-  private async addChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
+  private async addChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
     const permission = await userManagement.findPermissionByName(this.getPermissionName(chatThread, scope));
     if (!permission || !permission.id) {
       throw new Error(`Failed to find permission ${this.getPermissionName(chatThread, scope)}`);
@@ -266,7 +266,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param scope scope
    * @param groupPolicy policy
    */
-  private async removeChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
+  private async removeChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
     return this.removePermissionPolicy(this.getPermissionName(chatThread, scope), policy);
   }
 
@@ -278,7 +278,7 @@ export default new class ChatThreadPermissionController extends AbstractPermissi
    * @param groupPolicy group policy
    * @returns whether given policy is is associated with chat thread permission
    */
-  private async hasChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
+  private async hasChatThreadPermissionPolicy(chatThread: ThreadModel, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
     const policyIds = await this.getChatThreadPermissionPolicyIds(chatThread, scope);
     return policyIds.includes(policy.id!);
   }
