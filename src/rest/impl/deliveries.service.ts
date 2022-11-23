@@ -59,10 +59,14 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const amount = req.body.amount as number | undefined;
+    if (req.body.amount === undefined || req.body.amount === null) {
+      this.sendBadRequest(res, "Missing required body param amount.");
+      return;
+    }
 
-    if (amount === undefined) {
-      this.sendBadRequest(res, "Amount is required.");
+    const amount = parseFloat(req.body.amount);
+    if (Number.isNaN(amount)) {
+      this.sendBadRequest(res, `Invalid amount "${amount}".`);
       return;
     }
 
