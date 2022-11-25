@@ -59,7 +59,21 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const amount = req.body.amount;
+    if (req.body.amount === undefined || req.body.amount === null) {
+      this.sendBadRequest(res, "Missing required body param amount.");
+      return;
+    }
+
+    const amount = parseFloat(req.body.amount);
+    if (Number.isNaN(amount)) {
+      this.sendBadRequest(res, `Invalid amount "${amount}".`);
+      return;
+    }
+
+    if (amount <= 0) {
+      this.sendBadRequest(res, "Amount cannot be negative or 0.");
+      return;
+    }
 
     const deliveryPlaceId = req.body.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -101,13 +115,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const unitPrice = parseFloat(productPrice);
-      let unitPriceWithBonus = 0;
 
-      if (amount > 0) {
-        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-        const totalPrice = unitPrice * amount + bonusPrice;
-        unitPriceWithBonus = totalPrice / amount;
-      }
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
 
       if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
@@ -422,7 +433,17 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const amount = payload.amount;
+    const amount = req.body.amount as number | undefined;
+
+    if (amount === undefined) {
+      this.sendBadRequest(res, "Amount is required.");
+      return;
+    }
+
+    if (amount <= 0) {
+      this.sendBadRequest(res, "Amount cannot be negative or 0.");
+      return;
+    }
 
     const deliveryPlaceId = payload.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -475,13 +496,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const unitPrice = parseFloat(productPrice);
-      let unitPriceWithBonus = 0;
 
-      if(amount > 0){
-        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-        const totalPrice = unitPrice * amount + bonusPrice;
-        unitPriceWithBonus = totalPrice / amount;
-      }
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
 
       if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
