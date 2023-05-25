@@ -22,7 +22,8 @@
     "sapId": "654321",
     "audit": null,
     "avatarUrl": "https://www.gravatar.com/avatar/25b74dba63b569e00bbe8d2b928e76aed841a566?d=identicon",
-    "displayName": "New SAP ID New SAP."
+    "displayName": "New SAP ID New SAP.",
+    "equipmentInspected": false
   },
   "040cbeaa-b330-4094-9b7a-c04dea9e2891": {
     "id": "040cbeaa-b330-4094-9b7a-c04dea9e2891",
@@ -53,6 +54,7 @@
     "sapId": "987654",
     "audit": null,
     "avatarUrl": "https://www.gravatar.com/avatar/710a24cc7dddc65fbea586542152b74ca43e7128?d=identicon",
-    "displayName": "Legacy SAP ID Legacy SAP."
+    "displayName": "Legacy SAP ID Legacy SAP.",
+    "equipmentInspected": false
   }
 }
