@@ -24,6 +24,7 @@ export enum UserProperty {
   SAP_ID = "sapId",
   SAP_BUSINESS_PARTNER_CODE = "sapBusinessPartnerCode",
   SAP_SALES_PERSON_CODE = "sapSalesPersonCode",
+  EQUIPMENT_INSPECTED = "equipmentInspected",
   COMPANY_NAME = "yritys",
   BIC = "BIC",
   IBAN = "IBAN",
