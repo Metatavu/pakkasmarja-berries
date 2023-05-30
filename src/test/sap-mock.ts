@@ -1,4 +1,5 @@
 import { EntriesApi } from "../generated/odata-client/api";
+import testConfig from "./test-config";
 
 const testDataDir = `${__dirname}/../../src/test/data/`;
 const businessPartners = require(`${testDataDir}/erp/business-partners.json`);
@@ -92,7 +93,7 @@ export default new class SapMock {
    * @returns entries API
    */
   private getEntriesApi = () => {
-    return new EntriesApi("http://sap-mock:8080");
+    return new EntriesApi(testConfig.SAP_TEST_CLIENT_HOST);
   }
 
 };
