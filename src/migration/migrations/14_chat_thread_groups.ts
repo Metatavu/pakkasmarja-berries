@@ -16,7 +16,7 @@ const logger: Logger = getLogger();
 const GROUP_SCOPES = ["chat-group:access", "chat-group:manage", "chat-group:traverse"];
 const THREAD_SCOPES = ["chat-thread:access"];
 
-type QuestionGroupRole = "manager" | "user";
+type QuestionGroupRole = "manager" | "user";
 
 interface QuestionGroupUserGroup {
   questionGroupId: number,
@@ -25,8 +25,8 @@ interface QuestionGroupUserGroup {
 }
 
 interface QuestionGroupUser {
-  questionGroupId: number, 
-  userId: string, 
+  questionGroupId: number,
+  userId: string,
   threadId: number
 }
 
@@ -39,7 +39,7 @@ class PermissionController {
 
   /**
    * Sets a scope for given user into given chat thread
-   * 
+   *
    * @param chatThreadId chat thread
    * @param user user
    * @param scope scope
@@ -57,7 +57,7 @@ class PermissionController {
 
   /**
    * Sets a scope for given user group into given chat thread
-   * 
+   *
    * @param chatThreadId chat thread
    * @param userGroup user group
    * @param scope scope
@@ -75,7 +75,7 @@ class PermissionController {
 
   /**
    * Sets a scope for given user group into given chat group
-   * 
+   *
    * @param chatThreadId chat group
    * @param userGroup user group
    * @param scope scope
@@ -93,14 +93,14 @@ class PermissionController {
 
   /**
    * Creates permissions for chat group
-   * 
+   *
    * @param chatGroupId chat group id
    * @param resource resource
    */
   public async createChatGroupPermissions(chatGroupId: number, resource: ResourceRepresentation) {
     const chatAdminPolicy = await userManagement.findRolePolicyByName("chat-admin");
-    
-    if (!chatAdminPolicy || !chatAdminPolicy.id) {
+
+    if (!chatAdminPolicy || !chatAdminPolicy.id) {
       throw new Error("Failed to lookup chat admin policy");
     }
 
@@ -111,7 +111,7 @@ class PermissionController {
 
   /**
    * Creates permissions for chat thread
-   * 
+   *
    * @param chatThreadId chat thread id
    * @param resource resource
    */
@@ -121,31 +121,31 @@ class PermissionController {
 
   /**
    * Creates chat group permission
-   * 
+   *
    * @param chatThreadId chat group
    * @param resource resource
    * @param scope scope
    * @param policyIds policy ids
    */
-  private createChatGroupPermission(chatGroupId: number, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
+  private createChatGroupPermission(chatGroupId: number, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
     return userManagement.createScopePermission(this.getGroupPermissionName(chatGroupId, scope), [ resource.id || (resource as any)._id ], [ scope ], policyIds, DecisionStrategy.AFFIRMATIVE);
   }
 
   /**
    * Creates chat thread permission
-   * 
+   *
    * @param chatThread chat thread
    * @param resource resource
    * @param scope scope
    * @param policyIds policy ids
    */
-  private createChatThreadPermission(chatThreadId: number, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
+  private createChatThreadPermission(chatThreadId: number, resource: ResourceRepresentation, scope: ApplicationScope, policyIds: string[]) {
     return userManagement.createScopePermission(this.getThreadPermissionName(chatThreadId, scope), [ resource.id || (resource as any)._id ], [ scope ], policyIds, DecisionStrategy.AFFIRMATIVE);
   }
 
   /**
    * Adds a policy to chat group scope permission
-   * 
+   *
    * @param chatThreadId chat group
    * @param scope scope
    * @param groupPolicy policy
@@ -158,18 +158,18 @@ class PermissionController {
 
     const policyIds = await this.getChatGroupPermissionPolicyIds(chatGroupId, scope);
     permission.policies = policyIds.concat([groupPolicy.id!]);
-    
+
     return await userManagement.updateScopePermission(permission.id, permission);
   }
 
   /**
    * Adds a policy to chat thread scope permission
-   * 
+   *
    * @param chatThreadId chat thread
    * @param scope scope
    * @param groupPolicy policy
    */
-  private async addChatThreadPermissionPolicy(chatThreadId: number, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
+  private async addChatThreadPermissionPolicy(chatThreadId: number, scope: ApplicationScope, policy: UserPolicyRepresentation | GroupPolicyRepresentation) {
     const permission = await userManagement.findPermissionByName(this.getThreadPermissionName(chatThreadId, scope));
     if (!permission || !permission.id) {
       throw new Error(`Failed to find permission ${this.getThreadPermissionName(chatThreadId, scope)}`);
@@ -177,13 +177,13 @@ class PermissionController {
 
     const policyIds = await this.getChatThreadPermissionPolicyIds(chatThreadId, scope);
     permission.policies = policyIds.concat([policy.id!]);
-    
+
     return await userManagement.updateScopePermission(permission.id, permission);
   }
 
   /**
-   * Returns associated permission policy ids for chat group 
-   * 
+   * Returns associated permission policy ids for chat group
+   *
    * @param chatGroupId chat group
    * @param scope scope
    * @return associated permission policy ids
@@ -193,8 +193,8 @@ class PermissionController {
   }
 
   /**
-   * Returns associated permission policy ids for chat thread 
-   * 
+   * Returns associated permission policy ids for chat thread
+   *
    * @param chatThreadId chat thread
    * @param scope scope
    * @return associated permission policy ids
@@ -204,18 +204,18 @@ class PermissionController {
   }
 
   /**
-   * Returns associated permission policy ids for given permission 
-   * 
+   * Returns associated permission policy ids for given permission
+   *
    * @param permissionName name of permission
    * @return associated permission policy ids
    */
   private async getPermissionNamePolicyIds(permissionName: string): Promise<string[]> {
     return this.getPermissionPolicyIds(await userManagement.findPermissionByName(permissionName));
   }
-  
+
   /**
-   * Returns associated permission policy ids for given permission 
-   * 
+   * Returns associated permission policy ids for given permission
+   *
    * @param permissionName name of permission
    * @return associated permission policy ids
    */
@@ -225,7 +225,7 @@ class PermissionController {
     }
 
     const policies = await userManagement.listAuthzPermissionAssociatedPolicies(permission.id!);
-    
+
     return policies.map((policy) => {
       return policy.id!;
     });
@@ -233,7 +233,7 @@ class PermissionController {
 
   /**
    * Finds or creates group policies for given group id
-   * 
+   *
    * @param userGroupId user group id
    * @returns promise for group policy
    */
@@ -249,7 +249,7 @@ class PermissionController {
 
   /**
    * Finds or creates user policies for given user id
-   * 
+   *
    * @param user user id
    * @returns promise for user policy
    */
@@ -265,7 +265,7 @@ class PermissionController {
 
   /**
    * Returns chat group scope permission's name
-   * 
+   *
    * @param chatGroup chat group
    * @param scope scope
    * @return chat group scope permission's name
@@ -276,7 +276,7 @@ class PermissionController {
 
   /**
    * Returns chat thread scope permission's name
-   * 
+   *
    * @param chatThread chat thread
    * @param scope scope
    * @return chat thread scope permission's name
@@ -288,8 +288,8 @@ class PermissionController {
 
 /**
  * Copies question groups into ChatGroups maintainig their ids
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  */
 const copyQuestionGroups = async (query: Sequelize.QueryInterface) => {
   return (await query.sequelize.query("INSERT INTO ChatGroups (id, type, title, imageUrl, archived, createdAt, updatedAt) SELECT id, 'QUESTION', title, imageUrl, archived, createdAt, updatedAt from QuestionGroups"));
@@ -297,8 +297,8 @@ const copyQuestionGroups = async (query: Sequelize.QueryInterface) => {
 
 /**
  * Returns thread user group roles from database
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  */
 const getChatThreadsByRole = async (query: Sequelize.QueryInterface, role: string): Promise<ThreadUserGroup[]> => {
   return (await query.sequelize.query(`SELECT threadId, userGroupId FROM ThreadUserGroupRoles WHERE role = '${role}'`))[0];
@@ -306,8 +306,8 @@ const getChatThreadsByRole = async (query: Sequelize.QueryInterface, role: strin
 
 /**
  * Returns question user group roles from database
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  */
 const getQuestionGroupRoles = async (query: Sequelize.QueryInterface): Promise<QuestionGroupUserGroup[]> => {
   return (await query.sequelize.query("SELECT questionGroupId, userGroupId, role FROM QuestionGroupUserGroupRoles"))[0];
@@ -315,8 +315,8 @@ const getQuestionGroupRoles = async (query: Sequelize.QueryInterface): Promise<Q
 
 /**
  * Returns question user group thread users from database
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  */
 const getQuestionGroupThreadUsers = async (query: Sequelize.QueryInterface): Promise<QuestionGroupUser[]> => {
   return (await query.sequelize.query("SELECT questionGroupId, userId, threadId from QuestionGroupUserThreads"))[0];
@@ -324,8 +324,8 @@ const getQuestionGroupThreadUsers = async (query: Sequelize.QueryInterface): Pro
 
 /**
  * Creates new chat group into the database
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  * @param type type
  * @param name name
  */
@@ -335,8 +335,8 @@ const insertChatGroup = async (query: Sequelize.QueryInterface, type: string, na
 
 /**
  * Updates group id for a chat thread
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  * @param threadId thread id
  * @param groupId group id
  */
@@ -346,8 +346,8 @@ const updateThreadGroupId = async (query: Sequelize.QueryInterface, threadId: nu
 
 /**
  * Updates owner id for a chat thread
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  * @param threadId thread id
  * @param ownerId owner id
  */
@@ -357,7 +357,7 @@ const updateThreadOwnerId = async (query: Sequelize.QueryInterface, threadId: nu
 
 /**
  * Returns thread's title
- * 
+ *
  * @param query query
  * @param threadId thread id
  * @returns thread's title
@@ -369,34 +369,34 @@ const getThread = async (query: Sequelize.QueryInterface, threadId: number): Pro
 
 /**
  * Finds or creates new group resource into the Keycloak
- * 
- * @param id group id 
+ *
+ * @param id group id
  */
 const createGroupResource = async (id: number): Promise<ResourceRepresentation> => {
   const name = `chat-group-${id}`;
   const uri = `/rest/v1/chatGroups/${id}`;
-  
-  let resource = await userManagement.findResourceByUri(uri);        
+
+  let resource = await userManagement.findResourceByUri(uri);
   if (!resource) {
     resource = await userManagement.createResource(name, name, uri, "chat-group", GROUP_SCOPES);
-  } 
+  }
 
   return resource!;
 };
 
 /**
  * Finds or creates new thread resource into the Keycloak
- * 
- * @param id thread id 
+ *
+ * @param id thread id
  */
 const createThreadResource = async (id: number) => {
   const name = `chat-thread-${id}`;
   const uri = `/rest/v1/chatThreads/${id}`;
-  
-  let resource = await userManagement.findResourceByUri(uri);        
+
+  let resource = await userManagement.findResourceByUri(uri);
   if (!resource) {
     resource = await userManagement.createResource(name, name, uri, "chat-thread", THREAD_SCOPES);
-  } 
+  }
 
   return resource;
 };
@@ -405,7 +405,7 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
   const permissionController = new PermissionController();
 
   // Copy existing question groups into newly created table
-        
+
   copyQuestionGroups(query);
 
   // Add question group roles (manage for managers, traverse for users)
@@ -418,7 +418,7 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
     return questionGroup.questionGroupId;
   }));
 
-  for (let i = 0; i < questionGroupIds.length; i++) {
+  for (let i = 0; i < questionGroupIds.length; i++) {
     logger.info(`Migrating chat group ${i + 1} / ${questionGroupIds.length}`);
     const chatGroupId = questionGroupIds[i];
     const resource = await createGroupResource(chatGroupId);
@@ -442,7 +442,7 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
     return questionGroupUser.threadId;
   }));
 
-  for (let j = 0; j < threadIds.length; j++) {
+  for (let j = 0; j < threadIds.length; j++) {
     logger.info(`Migrating chat threads ${j + 1} / ${threadIds.length}`);
 
     const threadId = threadIds[j];
@@ -453,12 +453,12 @@ const migrateQuestionGroups = async (query: Sequelize.QueryInterface) => {
   for (let j = 0; j < questionGroupUsers.length; j++) {
     const questionGroupId = questionGroupUsers[j].questionGroupId;
 
-    logger.info(`Migrating group ${questionGroupId} chat user ${j + 1} / ${questionGroupUsers.length}`);
+    logger.info(`Migrating group ${questionGroupId} chat user ${j + 1} / ${questionGroupUsers.length}`);
 
     const userId = questionGroupUsers[j].userId;
     const chatThreadId = questionGroupUsers[j].threadId;
     const user = await userManagement.findUser(userId);
-    
+
     if (user) {
       await permissionController.setUserChatThreadScope(chatThreadId, user, "chat-thread:access");
       await updateThreadOwnerId(query, chatThreadId, user.id!);
@@ -482,9 +482,9 @@ const migrateRoleChatGroups = async (query: Sequelize.QueryInterface, role: stri
     if (!threadGroupds[threadId]) {
       const thread = await getThread(query, threadId);
       const chatGroupId = await insertChatGroup(query, "CHAT", thread.title, thread.imageUrl);
-      
+
       await updateThreadGroupId(query, threadId, chatGroupId);
-      
+
       const threadResource = await createThreadResource(threadId);
       const groupResource = await createGroupResource(chatGroupId);
 
@@ -498,7 +498,7 @@ const migrateRoleChatGroups = async (query: Sequelize.QueryInterface, role: stri
     const scope: ApplicationScope = role == "manager" ? "chat-group:manage" : "chat-group:access";
     await permissionController.setUserGroupChatGroupScope(threadGroupds[threadId], userGroup, scope);
   }
-  
+
 };
 
 const migrateChatGroups = async (query: Sequelize.QueryInterface) => {
@@ -510,7 +510,7 @@ const migrateChatGroups = async (query: Sequelize.QueryInterface) => {
 
 const createChatAdminRole = async () => {
   let role = await userManagement.findRealmRole("create-chat-groups");
-  if (!role) {
+  if (!role) {
     role = await userManagement.createRealmRole("create-chat-groups");
   }
 
@@ -527,16 +527,16 @@ module.exports = {
 
     await createChatAdminRole();
 
-    // Create new chat groups table 
+    // Create new chat groups table
 
     await query.createTable("ChatGroups", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       type: { type: Sequelize.STRING(191), allowNull: false },
       title: { type: Sequelize.STRING(191), allowNull: false },
-      imageUrl: { type: Sequelize.STRING(191) },      
+      imageUrl: { type: Sequelize.STRING(191) },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
       createdAt: { type: Sequelize.DATE, allowNull: false },
-      updatedAt: { type: Sequelize.DATE, allowNull: false }        
+      updatedAt: { type: Sequelize.DATE, allowNull: false }
     });
 
     // Add groupId and remove originId columns from Threads table
@@ -545,7 +545,7 @@ module.exports = {
     await query.addColumn("Threads", "ownerId", { type: Sequelize.STRING(191), allowNull: true });
     await query.removeColumn("Threads", "originId");
 
-    // Migrate question groups 
+    // Migrate question groups
 
     await migrateQuestionGroups(query);
 
@@ -562,7 +562,7 @@ module.exports = {
     await query.dropTable("ThreadUserGroupRoles");
     await query.dropTable("QuestionGroupUserGroupRoles");
     await query.dropTable("QuestionGroupUserThreads");
-    
-    await query.changeColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: false, references: { model: "ChatGroups", key: "id" } }); 
+
+    await query.changeColumn("Threads", "groupId", { type: Sequelize.BIGINT, allowNull: false, references: { model: "ChatGroups", key: "id" } });
   }
 };

@@ -84,7 +84,7 @@ export default new class ChatPermissions {
       .get(`/rest/v1/chatGroups/${id}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
-      .expect(expectStatus || 200)
+      .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
       });
@@ -187,7 +187,7 @@ export default new class ChatPermissions {
       .get(`/rest/v1/chatThreads/${chatThreadId}/groupPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
-      .expect(expectStatus || 200)
+      .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
       });
@@ -272,7 +272,7 @@ export default new class ChatPermissions {
       .get(`/rest/v1/chatThreads/${chatThreadId}/userPermissions`)
       .set("Authorization", `Bearer ${token}`)
       .set("Accept", "application/json")
-      .expect(expectStatus || 200)
+      .expect(expectStatus || 200)
       .then((response) => {
         return response.body;
       });

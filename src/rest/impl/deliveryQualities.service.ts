@@ -10,10 +10,10 @@ import uuid = require("uuid");
  * Implementation for Products REST service
  */
 export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -22,8 +22,8 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
   }
 
   public async listDeliveryQualities(req: Request, res: Response) {
-    const itemGroupCategory = req.query.itemGroupCategory;
-    const productId = req.query.productId;
+    const itemGroupCategory = req.query.itemGroupCategory as any;
+    const productId = req.query.productId as any;
 
     const deliveryQualities = await models.listDeliveryQualities(itemGroupCategory, productId);
     res.status(200).send(await Promise.all(deliveryQualities.map((deliveryQuality) => {
@@ -101,7 +101,7 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
       this.sendBadRequest(res, "Missing required param deliveryQualityId");
       return;
     }
-    
+
     const payload: DeliveryQuality = req.body;
     if (!payload) {
       this.sendBadRequest(res, "Missing required payload");
@@ -157,14 +157,14 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
       this.sendNotFound(res);
       return;
     }
-    
+
     const qualityProducts = await models.listQualityProductsByDeliveryQualityId(deliveryQualityId);
     const existingDeliveryQualityProductIds = qualityProducts.map((deliveryQualityIds) => {
       return deliveryQualityIds.productId;
     });
 
-    const payloadQualityProductIds = payload.deliveryQualityProductIds || [];
-    
+    const payloadQualityProductIds = payload.deliveryQualityProductIds || [];
+
     for (let i = 0; i < payloadQualityProductIds.length; i++) {
       const payloadQualityProductId = payloadQualityProductIds[i];
       const existingIndex = existingDeliveryQualityProductIds.indexOf(payloadQualityProductId);
@@ -205,14 +205,14 @@ export default class DeliveryQualitiesServiceImpl extends DeliveryQualitiesServi
 
   /**
    * Translates database deliveryQuality into REST entity
-   * 
-   * @param deliveryQuality deliveryQuality 
+   *
+   * @param deliveryQuality deliveryQuality
    */
   private async translateDatabaseDeliveryQuality(deliveryQuality: DeliveryQualityModel) : Promise<DeliveryQuality | null> {
   if (!deliveryQuality.id) {
     return null;
   }
-    
+
   const deliveryQualityProducts : DeliveryQualityProductModel[] = await models.listQualityProductsByDeliveryQualityId(deliveryQuality.id);
   const deliveryQualityProductIds = deliveryQualityProducts.length < 1 ? [] : deliveryQualityProducts.map((deliveryQualityProduct) => {
     return deliveryQualityProduct.productId;

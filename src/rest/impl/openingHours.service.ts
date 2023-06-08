@@ -24,10 +24,10 @@ export interface IdentifiedRESTItem {
  * Implementation for Products REST service
  */
 export default class OpeningHoursServiceImpl extends OpeningHoursService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -40,10 +40,10 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
    */
   async listOpeningHourPeriods(req: Request, res: Response) {
     const deliveryPlaceExternalId: string = req.params.deliveryPlaceId;
-    const rangeStart: Date = req.query.rangeStart;
-    const rangeEnd: Date = req.query.rangeEnd;
-    const firstResult: number = parseInt(req.query.firstResult) || 0;
-    const maxResults: number | undefined = parseInt(req.query.maxResults) || undefined;
+    const rangeStart: Date = req.query.rangeStart as any;
+    const rangeEnd: Date = req.query.rangeEnd as any;
+    const firstResult: number = parseInt(req.query.firstResult as any) || 0;
+    const maxResults: number | undefined = parseInt(req.query.maxResults as any) || undefined;
 
     if (!deliveryPlaceExternalId) {
       this.sendBadRequest(res, "Missing required parameter deliveryPlaceId from request");
@@ -286,7 +286,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
       return;
     }
-    
+
     if (!periodExternalId) {
       this.sendBadRequest(res, "Missing required parameter from request: periodId");
       return;
@@ -297,7 +297,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       this.sendNotFound(res, "Delivery place not found");
       return;
     }
-    
+
     const periodModel = await models.findOpeningHourPeriod(periodExternalId);
     if (!periodModel) {
       this.sendNotFound(res, "Period not found");
@@ -310,7 +310,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
         return models.deleteOpeningHourDayIntervals(day.id)
       })
     );
-    
+
     await models.deleteOpeningHourDays(periodModel.id);
     await models.deleteOpeningHourPeriod(periodModel.id);
 
@@ -444,7 +444,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
     await models.updateOpeningHourException(exceptionExternalId, exceptionDate);
     const existingModels = await models.listOpeningHourExceptionIntervals(exceptionModel.id);
-    
+
     const createInterval = (interval: OpeningHourInterval) =>
       models.createOpeningHourExceptionInterval(exceptionModel.id, interval.opens, interval.closes);
 
@@ -488,7 +488,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       this.sendBadRequest(res, "Missing required parameter from request: deliveryPlaceId");
       return;
     }
-    
+
     if (!exceptionExternalId) {
       this.sendBadRequest(res, "Missing required parameter from request: exceptionId");
       return;
@@ -499,7 +499,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
       this.sendNotFound(res, "Delivery place not found");
       return;
     }
-    
+
     const exceptionModel = await models.findOpeningHourException(exceptionExternalId);
     if (!exceptionModel) {
       this.sendNotFound(res, "Period not found");
@@ -512,7 +512,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
         return models.deleteOpeningHourDayIntervals(day.id)
       })
     );
-    
+
     await models.deleteOpeningHourExceptionIntervals(exceptionModel.id);
     await models.deleteOpeningHourException(exceptionModel.id);
 
@@ -522,7 +522,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Creates REST structure for opening hour period
-   * 
+   *
    * @param periodModel opening hour period model
    */
   private createPeriodRestStructure = async (periodModel: OpeningHourPeriodModel): Promise<OpeningHourPeriod> => {
@@ -547,7 +547,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Creates REST structure for opening hour exception
-   * 
+   *
    * @param exceptionModel opening hour exception model
    */
   private createExceptionRestStructure = async (exceptionModel: OpeningHourExceptionModel): Promise<OpeningHourException> => {
@@ -564,7 +564,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Translates database opening hour period into REST entity
-   * 
+   *
    * @param databaseOpeningHourPeriod sequelize opening hour period model
    * @param databaseOpeningHourDays list of sequelize opening hour day models
    * @return period as REST entity
@@ -582,7 +582,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Translates database opening hour exception into REST entity
-   * 
+   *
    * @param databaseOpeningHourException sequelize opening hour exception model
    * @returns exception as REST entity
    */
@@ -598,7 +598,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Translates database opening hour day into REST entity
-   * 
+   *
    * @param databaseOpeningHourDay sequelize opening hour day model
    * @param databaseOpeningHourDayIntervals sequelize opening hour day interval models
    * @return weekday as REST entity
@@ -615,7 +615,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Translates database opening hour interval into REST entity
-   * 
+   *
    * @param databaseOpeningHourInterval sequelize opening hour interval model
    * @return interval as REST entity
    */
@@ -631,7 +631,7 @@ export default class OpeningHoursServiceImpl extends OpeningHoursService {
 
   /**
    * Syncs database state to match given items list state
-   * 
+   *
    * @param D item in database
    * @param I item from REST
    * @param items list of REST items

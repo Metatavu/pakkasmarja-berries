@@ -10,7 +10,6 @@ import chatThreadPermissionController from "../../user-management/chat-thread-pe
 import userManagement from "../../user-management";
 import chatGroupPermissionController from "../../user-management/chat-group-permission-controller";
 import pushNotifications from "../../push-notifications";
-import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 
 /**
  * Messages REST service
@@ -25,7 +24,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const payload: ChatMessage = req.body;
     const loggedUserId = this.getLoggedUserId(req);
 
-    const thread = await models.findThread(chatThreadId);
+    const thread = await models.findThread(chatThreadId as any);
     if (!thread) {
       this.sendNotFound(res);
       return;
@@ -41,7 +40,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       this.sendForbidden(res);
       return;
     }
-    
+
     const message = await models.createMessage(thread.id, this.getLoggedUserId(req), payload.contents, payload.image);
     res.status(200).send(this.translateChatMessage(message));
 
@@ -64,7 +63,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const chatThreadId = req.params.chatThreadId;
     const messageId = req.params.messageId;
 
-    const thread = await models.findThread(chatThreadId);
+    const thread = await models.findThread(chatThreadId as any);
     if (!thread) {
       this.sendNotFound(res);
       return;
@@ -76,13 +75,13 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    const chatMessage = await models.findMessage(messageId);
-    if (!chatMessage || chatMessage.threadId != thread.id) {
+    const chatMessage = await models.findMessage(messageId as any);
+    if (!chatMessage || chatMessage.threadId != thread.id) {
       this.sendNotFound(res);
       return;
     }
 
-    if (chatMessage.userId != this.getLoggedUserId(req)) {    
+    if (chatMessage.userId != this.getLoggedUserId(req)) {
       if (!(await this.isThreadManagePermission(req, thread, chatGroup))) {
         this.sendForbidden(res);
         return;
@@ -105,7 +104,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   public async findChatMessage(req: Request, res: Response): Promise<void> {
     const chatThreadId = req.params.chatThreadId;
     const chatMessageId = req.params.messageId;
-    const message = await models.findMessage(chatMessageId);
+    const message = await models.findMessage(chatMessageId as any);
     if (!message) {
       this.sendNotFound(res);
       return;
@@ -115,7 +114,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       this.sendNotFound(res);
       return;
     }
-    
+
     const thread = await models.findThread(message.threadId);
     if (!thread) {
       this.sendInternalServerError(res);
@@ -140,8 +139,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * @inheritdoc
    */
   public async listChatMessages(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
-    
+    const chatThreadId = req.params.chatThreadId as any;
+
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
       this.sendBadRequest(res, "Invalid thread id");
@@ -154,11 +153,11 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    const createdBefore = req.query.createdBefore ? moment(req.query.createdBefore).toDate() : null;
-    const createdAfter = req.query.createdAfter ? moment(req.query.createdAfter).toDate() : null;
+    const createdBefore = req.query.createdBefore ? moment(req.query.createdBefore as any).toDate() : null;
+    const createdAfter = req.query.createdAfter ? moment(req.query.createdAfter as any).toDate() : null;
     const userId = thread.answerType === "POLL" ? this.getLoggedUserId(req) : req.query.userId || null;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     if (!(await this.isThreadAccessPermission(req, thread, chatGroup))) {
       this.sendForbidden(res);
@@ -175,8 +174,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * @inheritdoc
    */
   public async updateChatMessage(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
-    const messageId = req.params.messageId;
+    const chatThreadId = req.params.chatThreadId as any;
+    const messageId = req.params.messageId as any;
     const payload: ChatMessage = req.body;
 
     const thread = await models.findThread(chatThreadId);
@@ -192,7 +191,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     }
 
     const chatMessage = await models.findMessage(messageId);
-    if (!chatMessage || chatMessage.threadId != thread.id) {
+    if (!chatMessage || chatMessage.threadId != thread.id) {
       this.sendNotFound(res);
       return;
     }
@@ -217,8 +216,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * @inheritdoc
    */
   public async getMessageReadAmount(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
-    const messageId = req.params.messageId;
+    const chatThreadId = req.params.chatThreadId as any;
+    const messageId = req.params.messageId as any;
 
     const chatThread = await models.findThread(chatThreadId);
     if (!chatThread) {
@@ -233,7 +232,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     }
 
     const chatMessage = await models.findMessage(messageId);
-    if (!chatMessage || chatMessage.threadId != chatThread.id) {
+    if (!chatMessage || chatMessage.threadId != chatThread.id) {
       this.sendNotFound(res);
       return;
     }
@@ -244,7 +243,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    const permissionNames: string[] = [
+    const permissionNames: string[] = [
       chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
       chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access")
     ];
@@ -253,7 +252,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     const permittedUsers = await userManagement.listPermissionsUsers(permissions);
     const receivingUsers = permittedUsers.filter(user => user.id !== chatMessage.userId);
     const path = `chat-${chatGroup.id}-${chatThread.id}-${chatMessage.id}`;
-    
+
     let messageReadUserCount: number = 0;
     for await (let user of receivingUsers) {
       const userUnreads = await models.listUnreadsByPathLikeAndUserId(path, user.id!);
@@ -269,8 +268,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
    * @inheritdoc
    */
   public async getMessageRead(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
-    const messageId = req.params.messageId;
+    const chatThreadId = req.params.chatThreadId as any;
+    const messageId = req.params.messageId as any;
 
     const chatThread = await models.findThread(chatThreadId);
     if (!chatThread) {
@@ -285,7 +284,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
     }
 
     const chatMessage = await models.findMessage(messageId);
-    if (!chatMessage || chatMessage.threadId != chatThread.id) {
+    if (!chatMessage || chatMessage.threadId != chatThread.id) {
       this.sendNotFound(res);
       return;
     }
@@ -297,7 +296,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
       return;
     }
 
-    const permissionNames: string[] = hasThreadManagePermission ? [
+    const permissionNames: string[] = hasThreadManagePermission ? [
       chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
       chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access")
     ] : [
@@ -321,8 +320,8 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
   }
 
   /**
-   * Translates database chat message into REST chat message 
-   * 
+   * Translates database chat message into REST chat message
+   *
    * @param {Object} databaseChatMessage database chat message
    */
   private translateChatMessage(databaseChatMessage: MessageModel) {
@@ -341,11 +340,11 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
 
   /**
    * Sends notifications about created message to users with permissions to the message
-   * 
+   *
    * @param message message
    */
   private async sendNotifications(loggedUserId: string, chatGroup: ChatGroupModel, chatThread: ThreadModel, message: MessageModel) {
-    const permissionNames: string[] = [
+    const permissionNames: string[] = [
       chatThreadPermissionController.getPermissionName(chatThread, "chat-thread:access"),
       chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:access"),
       chatGroupPermissionController.getPermissionName(chatGroup, "chat-group:manage")
@@ -375,7 +374,7 @@ export default class ChatMessagesServiceImpl extends ChatMessagesService {
 
   /**
    * Sends push notification to given user
-   * 
+   *
    * @param userId user id
    * @param title title
    * @param body body

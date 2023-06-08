@@ -11,10 +11,10 @@ import * as uuid from "uuid/v4";
  * Implementation for WeekDeliveryPredictions REST service
  */
 export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPredictionsService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -82,7 +82,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
       this.sendNotFound(res);
       return;
     }
-    
+
     const loggedUserId = this.getLoggedUserId(req);
 
     if (loggedUserId !== databaseWeekDeliveryPredication.userId && !this.hasRealmRole(req, ApplicationRoles.DELETE_WEEK_DELIVERY_PREDICTIONS)) {
@@ -106,7 +106,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
       this.sendNotFound(res);
       return;
     }
-    
+
     const loggedUserId = this.getLoggedUserId(req);
 
     if (loggedUserId !== databaseWeekDeliveryPredication.userId && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_WEEK_DELIVERY_PREDICTION)) {
@@ -127,10 +127,10 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
     const userId = req.query.userId || null;
     const weekNumber = req.query.weekNumber || null;
     const year = req.query.year || null;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
-    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
+    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId as any);
 
     if (itemGroupId && !databaseItemGroup) {
       this.sendNotFound(res);
@@ -144,7 +144,15 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
 
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
-    const weekDeliveryPredictions: WeekDeliveryPredictionModel[] = await models.listWeekDeliveryPredictions(databaseItemGroupId, itemGroupType, userId, weekNumber, year, firstResult, maxResults);
+    const weekDeliveryPredictions: WeekDeliveryPredictionModel[] = await models.listWeekDeliveryPredictions(
+      databaseItemGroupId,
+      itemGroupType as any,
+      userId as any,
+      weekNumber as any,
+      year as any,
+      firstResult,
+      maxResults
+    );
     res.status(200).send(await Promise.all(weekDeliveryPredictions.map((weekDeliveryPrediction) => {
       return this.translateDatabaseWeekDeliveryPredictions(weekDeliveryPrediction);
     })));
@@ -205,23 +213,23 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
 
     const weekDeliveryPredictionId = req.params.weekDeliveryPredictionId;
     const databaseWeekDeliveryPredication = await models.findWeekDeliveryPredictionById(weekDeliveryPredictionId);
-    
+
     if (!databaseWeekDeliveryPredication || !databaseWeekDeliveryPredication.id) {
       this.sendNotFound(res);
       return;
     }
 
-    const daysBitValue = this.getDaysBitValue(days); 
+    const daysBitValue = this.getDaysBitValue(days);
 
     await models.updateWeekDeliveryPrediction(databaseWeekDeliveryPredication.id, databaseItemGroup.id, amount, weekNumber, year, daysBitValue);
     const updatedWeekDeliveryPredication = await models.findWeekDeliveryPredictionById(databaseWeekDeliveryPredication.id);
-    
+
     res.status(200).send(await this.translateDatabaseWeekDeliveryPredictions(updatedWeekDeliveryPredication));
   }
 
   /**
    * Get bit value of days object
-   * 
+   *
    * @param days days object
    * @return bit value number
    */
@@ -241,9 +249,9 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
 
   /**
    * Get days object
-   * 
+   *
    * @param days days
-   * @return days 
+   * @return days
    */
   private getDaysObject(days: number) {
     const dayBitmasks = this.getDayBitmasks();
@@ -263,7 +271,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
 
   /**
    * Returns bitmasks for days
-   * 
+   *
    * @return Object of days and bit masks
    */
   private getDayBitmasks() {
@@ -277,10 +285,10 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
       sunday: 1 << 6
     };
   }
-  
+
   /**
    * Translates Database week delivery predictions place into REST entity
-   * 
+   *
    * @param {Object} weekDeliveryPrediction Sequelize week delivery prediction model
    * @return {WeekDeliveryPredictionModel} REST entity
    */
@@ -296,7 +304,7 @@ export default class WeekDeliveryPredictionsServiceImpl extends WeekDeliveryPred
       "year": weekDeliveryPrediction.year,
       "days": this.getDaysObject(weekDeliveryPrediction.days)
     };
-    
+
     return result;
   }
 }

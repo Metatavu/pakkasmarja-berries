@@ -69,7 +69,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const contract: Contract = _.isObject(req.body) ? req.body : null;
+    const contract: Contract = _.isObject(req.body) ? req.body as any : null;
     if (!contract) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -203,7 +203,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const workSheets = xlsx.parse(req.file.buffer);
+    const workSheets = xlsx.parse(importFile.buffer);
     if (!_.isObject(workSheets) || !workSheets.length) {
       this.sendBadRequest(res, "No worksheets in imported xlsx file");
       return;
@@ -443,7 +443,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const payload: Contract = _.isObject(req.body) ? req.body : null;
+    const payload: Contract = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -694,7 +694,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const payload: ContractDocumentTemplate = _.isObject(req.body) ? req.body : null;
+    const payload: ContractDocumentTemplate = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -758,7 +758,7 @@ export default class ContractsServiceImpl extends ContractsService {
     }
 
     const contractId = req.params.contractId;
-    const type = req.query.type;
+    const type = req.query.type as any;
     if (!contractId) {
       this.sendNotFound(res);
       return;
@@ -820,7 +820,7 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const payload: ContractDocumentTemplate = _.isObject(req.body) ? req.body : null;
+    const payload: ContractDocumentTemplate = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -841,11 +841,11 @@ export default class ContractsServiceImpl extends ContractsService {
    * @inheritdoc
    */
   async listContractPrices(req: Request, res: Response) {
-    const contractId = req.params.contractId;
-    const sortBy = req.query.sortBy;
-    const sortDir = req.query.sortDir;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const contractId = req.params.contractId as any;
+    const sortBy = req.query.sortBy as any;
+    const sortDir = req.query.sortDir as any;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     if (!contractId) {
       this.sendNotFound(res);
@@ -883,12 +883,12 @@ export default class ContractsServiceImpl extends ContractsService {
    */
   async listContracts(req: Request, res: Response) {
     const listAll = req.query.listAll === "true";
-    const itemGroupCategory = req.query.itemGroupCategory;
-    const itemGroupExternalId = req.query.itemGroupId;
-    const year = req.query.year;
-    const status = req.query.status;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const itemGroupCategory = req.query.itemGroupCategory as any;
+    const itemGroupExternalId = req.query.itemGroupId as any;
+    const year = req.query.year as any;
+    const status = req.query.status as any;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     if (listAll && !this.hasRealmRole(req, ApplicationRoles.LIST_ALL_CONTRACTS)) {
       this.sendForbidden(res, "You have no permission to list this contracts prices");
@@ -940,8 +940,8 @@ export default class ContractsServiceImpl extends ContractsService {
       return;
     }
 
-    const itemGroupExternalId = req.query.itemGroupId;
-    const contactExternalId = req.query.contactId;
+    const itemGroupExternalId = req.query.itemGroupId as any;
+    const contactExternalId = req.query.contactId as any;
     const status = "APPROVED";
     const mode = config().mode;
     const year = mode === "TEST" ? 2017 : new Date().getFullYear();
@@ -978,10 +978,10 @@ export default class ContractsServiceImpl extends ContractsService {
    * @inheritdoc
    */
   async createContractDocumentSignRequest(req: Request, res: Response) {
-    const contractId = req.params.id;
-    const type = req.params.type;
-    const ssn = req.query.ssn;
-    const authService = req.query.authService;
+    const contractId = req.params.id as any;
+    const type = req.params.type as any;
+    const ssn = req.query.ssn as any;
+    const authService = req.query.authService as any;
 
     if (!contractId || !type) {
       this.sendNotFound(res);
@@ -1071,7 +1071,7 @@ export default class ContractsServiceImpl extends ContractsService {
       }
     }
 
-    const redirectUrl = req.query.redirectUrl ? encodeURIComponent(req.query.redirectUrl) : "";
+    const redirectUrl = req.query.redirectUrl ? encodeURIComponent(req.query.redirectUrl as any) : "";
     const vismaSignDocumentId = await signature.createDocument(document.documentName);
 
     await models.createContractDocument(type, contract.id, vismaSignDocumentId);

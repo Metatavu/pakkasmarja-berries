@@ -12,7 +12,7 @@ export default new class Database {
 
   /**
    * Executes SQL script
-   * 
+   *
    * @param sql sql script
    * @return promise for results
    */
@@ -30,13 +30,13 @@ export default new class Database {
       const statement = statements[i];
       await connection.execute(statement);
     }
-    
+
     connection.destroy();
   }
-  
+
   /**
    * Executes a SQL file
-   * 
+   *
    * @param {String} parentFolder parent folder
    * @param {String} file file name
    * @return {Promise} promise for results
@@ -45,10 +45,10 @@ export default new class Database {
     const sql = await this.readFile(parentFolder, file);
     return await this.executeSql(sql);
   }
-  
+
   /**
    * Executes SQL files
-   * 
+   *
    * @param {String} parentFolder parent folder
    * @param {String[]} files file names
    * @return {Promise} promise for results
@@ -59,7 +59,7 @@ export default new class Database {
 
       try {
         await this.executeFile(parentFolder, file);
-      } catch (e) {
+      } catch (e) {
         fail(`Failed to execute sql file ${file} with exception ${e.message}`);
       }
     }
@@ -67,7 +67,7 @@ export default new class Database {
 
   /**
    * Read file as promise
-   * 
+   *
    * @param parentFolder parent folder
    * @param file file name
    * @returns Promise for a file contents
@@ -83,5 +83,5 @@ export default new class Database {
       });
     });
   }
-  
+
 }

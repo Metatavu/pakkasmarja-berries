@@ -43,7 +43,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       return;
     }
 
-    const newsArticleId: number = req.params.newsArticleId;
+    const newsArticleId: number = req.params.newsArticleId as any;
     if (!newsArticleId) {
       this.sendNotFound(res);
       return;
@@ -59,7 +59,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
     const path = `news-${databaseNewsArticle.id}`;
     await models.deleteUnreadsByPath(path);
-    
+
     mqtt.publish("newsarticles", {
       "operation": "DELETED",
       "id": databaseNewsArticle.id
@@ -72,18 +72,18 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
    * @inheritdoc
    */
   public async findNewsArticle(req: Request, res: Response): Promise<void> {
-    const newsArticleId = req.params.newsArticleId;
+    const newsArticleId = req.params.newsArticleId as any;
     if (!newsArticleId) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseNewsArticle = await models.findNewsArticleById(newsArticleId);
     if (!databaseNewsArticle) {
       this.sendNotFound(res);
       return;
     }
-    
+
     res.status(200).send(await this.translateDatabaseNewsArticle(databaseNewsArticle));
   }
   /**
@@ -103,12 +103,12 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
       return;
     }
 
-    const newsArticleId = req.params.newsArticleId;
+    const newsArticleId = req.params.newsArticleId as any;
     if (!newsArticleId) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseNewsArticle = await models.findNewsArticleById(newsArticleId);
     if (!databaseNewsArticle) {
       this.sendNotFound(res);
@@ -118,7 +118,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
     const body: NewsArticle = req.body;
     const imageUrl = body.imageUrl || null;
     models.updateNewsArticle(databaseNewsArticle.id, body.title, body.contents, imageUrl, true);
-    
+
     mqtt.publish("newsarticles", {
       "operation": "UPDATED",
       "id": newsArticleId
@@ -129,7 +129,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
   /**
    * Sends notifications about created news to users
-   * 
+   *
    * @param newsArticle newsArticle
    */
   private async sendNotifications(newsArticle: NewsArticle) {
@@ -151,7 +151,7 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
   /**
    * Sends push notification to given user
-   * 
+   *
    * @param userId user id
    * @param title title
    * @param body body
@@ -170,11 +170,11 @@ export default class NewsArticlesServiceImpl extends NewsArticlesService {
 
   /**
    * Translates NewArticle from database model into REST model
-   * 
+   *
    * @param newsArticleModel database model
    * @returns REST model
    */
-  private translateDatabaseNewsArticle(newsArticleModel: NewsArticleModel): NewsArticle | null {
+  private translateDatabaseNewsArticle(newsArticleModel: NewsArticleModel): NewsArticle | null {
     if (!newsArticleModel) {
       return null;
     }

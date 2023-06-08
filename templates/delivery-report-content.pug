@@ -8,12 +8,12 @@ html(lang='en')
     title Toimitukset
     style(type='text/css').
       .header {
-        font-weight:bold; 
+        font-weight:bold;
         font-size:1.2em;
       }
 
       table {
-        width:100%; 
+        width:100%;
         table-layout: fixed;
         font-size: 12px;
         margin-top: 20px;
@@ -24,7 +24,7 @@ html(lang='en')
 
       table th {
         font-size:0.85em;
-        padding-bottom: 5px; 
+        padding-bottom: 5px;
       }
 
   body(onload="subst()")
@@ -42,13 +42,13 @@ html(lang='en')
             =contact.address.streetAddress
           .value
             =contact.address.postalCode
-            | 
+            |
             =contact.address.city
         .col-4
           .header Hyv&auml;ksytyt toimitukset
           .value
             =startDate
-            | - 
+            | -
             =endDate
         .col-4.text-right
           .header Päivämäärä
@@ -86,15 +86,15 @@ html(lang='en')
                 =deliveryGroup.date
                 strong(style='padding:0px 10px;')
                   |Toimituspaikka:
-                  =deliveryGroup.deliveryPlace 
+                  =deliveryGroup.deliveryPlace
             each delivery in deliveryGroup.deliveries
               tr
                 td
                   =delivery.time
-                  | 
+                  |
                 td
                   =delivery.product.sapItemCode
-                  | - 
+                  | -
                   =delivery.product.name
                 td
                   =delivery.deliveryQuality
@@ -122,7 +122,7 @@ html(lang='en')
           tr
             td(colspan=5)
             td(style='text-align: left; border-top: 1px solid #000', colspan=2)
-              strong Yhteens&auml; alv 0% 
+              strong Yhteens&auml; alv 0%
             td(style='text-align: right; border-top: 1px solid #000', colspan=2)
               span
                 =alv0
@@ -130,12 +130,12 @@ html(lang='en')
           tr(style='padding 15px 0px')
             td(colspan=5)
             td(style='text-align: left', colspan=2)
-              strong Yhteens&auml; alv 14% 
+              strong Yhteens&auml; alv 14%
             td(style='text-align: right', colspan=2)
               span
                 =alv14
                 |&nbsp;&euro;
-                
+
       .header Toimitukset tuotteittain
 
       table.products-table
@@ -157,13 +157,13 @@ html(lang='en')
               td(style='text-align: right', colspan=1)
                 span
                   =productTotal.totalAmountUnits
-                  | 
+                  |
                   =productTotal.unitName
               td(style='text-align: right', colspan=1)
                 span
                   =productTotal.totalAmountKgs
                   |&nbsp;kg
-            
+
     p(style="margin: 50px; text-align: center")
-      strong Huomaathan, 
+      strong Huomaathan,
       span ett&auml; mahdolliset j&auml;lkik&auml;teen tehdyt korjaukset, hyvitykset tai palautukset eiv&auml;t v&auml;ltt&auml;m&auml;tt&auml; n&auml;y t&auml;ss&auml; raportissa!

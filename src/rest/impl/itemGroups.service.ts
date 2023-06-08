@@ -78,7 +78,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
    */
   async listItemGroups(req: Request, res: Response) {
     const contractUserId = req.query.contractUserId || null;
-    const databaseItemGroups = await models.listItemGroups(contractUserId);
+    const databaseItemGroups = await models.listItemGroups(contractUserId as any);
     const itemGroups = await Promise.all(databaseItemGroups.map((databaseItemGroup) => {
       return this.translateDatabaseItemGroup(databaseItemGroup);
     }));
@@ -198,9 +198,9 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
   async listItemGroupPrices(req: Request, res: Response) {
     const itemGroupId = req.params.itemGroupId;
     const sortBy = req.query.sortBy;
-    const sortDir = req.query.sortDir;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const sortDir = req.query.sortDir as any;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     if (!itemGroupId) {
       this.sendNotFound(res);
@@ -242,7 +242,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body : null;
+    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -297,7 +297,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body : null;
+    const payload: ItemGroupPrice = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -388,7 +388,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    const payload: ItemGroupDocumentTemplate = _.isObject(req.body) ? req.body : null;
+    const payload: ItemGroupDocumentTemplate = _.isObject(req.body) ? req.body as any : null;
     if (!payload) {
       this.sendBadRequest(res, "Failed to parse body");
       return;

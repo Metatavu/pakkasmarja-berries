@@ -346,12 +346,12 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
     const deliveryPlaceId = req.query.deliveryPlaceId || null;
     const timeBefore = req.query.timeBefore || null;
     const timeAfter = req.query.timeAfter || null;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     let databaseDeliveryPlaceId = null;
     if (deliveryPlaceId) {
-      const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId);
+      const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId as any);
       if (!databaseDeliveryPlace) {
         this.sendBadRequest(res, "Malformed delivery place id");
         return;
@@ -359,7 +359,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       databaseDeliveryPlaceId = databaseDeliveryPlace ? databaseDeliveryPlace.id : null;
     }
 
-    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
+    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId as any);
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
     const loggedUserId = this.getLoggedUserId(req);
@@ -373,7 +373,18 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const deliveries: DeliveryModel[] = await models.listDeliveries(status, userId, itemGroupCategory, databaseItemGroupId, productId ? [ productId ] : null, databaseDeliveryPlaceId, timeBefore, timeAfter, firstResult, maxResults);
+    const deliveries: DeliveryModel[] = await models.listDeliveries(
+      status as any,
+      userId as any,
+      itemGroupCategory as any,
+      databaseItemGroupId,
+      productId ? [ productId as any ] : null,
+      databaseDeliveryPlaceId,
+      timeBefore as any,
+      timeAfter as any,
+      firstResult,
+      maxResults
+    );
     res.status(200).send(await Promise.all(deliveries.map((delivery) => {
       return this.translateDatabaseDelivery(delivery);
     })));

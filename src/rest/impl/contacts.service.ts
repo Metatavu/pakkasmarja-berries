@@ -70,7 +70,7 @@ export default class ContactsServiceImpl extends ContactsService {
         return;
       }
 
-      const search = req.query.search;
+      const search = req.query.search as any;
       const users = await userManagement.listUsers({
         search: search,
         max: 9999
@@ -103,7 +103,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    const updateContact: Contact = _.isObject(req.body) ? req.body : null;
+    const updateContact: Contact = _.isObject(req.body) ? req.body as any : null;
     if (!updateContact || !_.isArray(updateContact.phoneNumbers) || !_.isArray(updateContact.addresses)) {
       this.sendBadRequest(res, "Failed to parse body");
       return;
@@ -139,7 +139,7 @@ export default class ContactsServiceImpl extends ContactsService {
       return;
     }
 
-    const updateCredentials = _.isObject(req.body) ? req.body : null;
+    const updateCredentials = _.isObject(req.body) ? req.body as any : null;
     if (!updateCredentials || !updateCredentials.password) {
       this.sendBadRequest(res, "Failed to parse body");
       return;

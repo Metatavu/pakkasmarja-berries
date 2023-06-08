@@ -332,7 +332,8 @@ test("Test listing item group prices - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test listing item group prices - invalid token", async () => {
@@ -340,7 +341,8 @@ test("Test listing item group prices - invalid token", async () => {
     .get("/rest/v1/itemGroups/89723408-0f51-11e8-baa0-dfe7c7eae257/prices")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find item group price", async (t) => {
@@ -413,7 +415,8 @@ test("Test finding item group price - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test finding item group price - invalid token", async () => {
@@ -421,7 +424,8 @@ test("Test finding item group price - invalid token", async () => {
     .get("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test create item group price", async (t) => {
@@ -546,7 +550,8 @@ test("Test delete item group price - without token", async () => {
   return request(TestConfig.HOST)
     .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test delete item group price - invalid token", async () => {
@@ -554,5 +559,6 @@ test("Test delete item group price - invalid token", async () => {
     .delete("/rest/v1/itemGroups/98be1d32-0f51-11e8-bb59-3b8b6bbe9a20/prices/12345678-3103-11e8-bc28-9b65ff9275bf")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });

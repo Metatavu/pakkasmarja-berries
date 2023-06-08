@@ -3,7 +3,7 @@
  */
 export default new class RequestUtils {
 
-  /** 
+  /**
    * Creates binary parser for supertest
   */
   createBinaryParser() {
@@ -13,7 +13,7 @@ export default new class RequestUtils {
       res.on("data", (chunk: any) => {
         res.data += chunk;
       });
-      
+
       res.on("end", () => {
         callback(null, Buffer.from(res.data, "binary"));
       });

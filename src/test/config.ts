@@ -12,7 +12,7 @@ export class TestConfig {
 
   /**
    * Getter for test config
-   * 
+   *
    * @param key config key
    * @returns value
    */

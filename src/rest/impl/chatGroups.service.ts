@@ -89,7 +89,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async findChatGroup(req: Request, res: Response): Promise<void> {
-    const chatGroupId = req.params.chatGroupId;
+    const chatGroupId = req.params.chatGroupId as any;
     const chatGroup = await models.findChatGroup(chatGroupId);
     if (!chatGroup) {
       this.sendNotFound(res);
@@ -108,7 +108,7 @@ export default class ChatGroupsServiceImpl extends ChatGroupsService {
    * @inheritdoc
    */
   public async listChatGroups(req: Request, res: Response): Promise<void> {
-    const groupType: ChatGroupType = req.query.groupType;
+    const groupType: ChatGroupType = req.query.groupType as any;
 
     const chatGroups = await Promise.all(Promise.filter(models.listChatGroups(groupType), (chatGroup) => {
       return this.hasResourcePermission(req, chatGroupPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE]);

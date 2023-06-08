@@ -29,8 +29,8 @@ export default class SignRoutes {
    * @param res response
    */
   private async getSignCallback(req: Request, res: Response) {
-    const vismaSignDocumentId = req.query.vismaSignId;
-    const redirectUrl = req.query.redirectUrl;
+    const vismaSignDocumentId = req.query.vismaSignId as string | undefined;
+    const redirectUrl = req.query.redirectUrl as string | undefined;
 
     let success = false;
     if (vismaSignDocumentId) {

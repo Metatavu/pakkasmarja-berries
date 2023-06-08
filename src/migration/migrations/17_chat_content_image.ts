@@ -1,6 +1,6 @@
 import { QueryInterface } from "sequelize";
 import fetch from "node-fetch";
-import { config } from "../../config";
+import { config } from "../../config";
 import * as fs from "fs";
 import * as uuid from "uuid4";
 import * as Sequelize from "sequelize";
@@ -8,7 +8,7 @@ import * as Sequelize from "sequelize";
 const WP_PATH_SEPARATOR = "/images/wordpress/";
 
 interface Message {
-  id: number, 
+  id: number,
   contents: string
 }
 
@@ -29,8 +29,8 @@ interface NewsArticleWithUrl {
 
 /**
  * Returns chat messages with image content
- * 
- * @param query query interface 
+ *
+ * @param query query interface
  */
 const getImageMessages = async (query: QueryInterface): Promise<Message[]> => {
   return (await query.sequelize.query("SELECT id, contents FROM Messages where contents like '%<img%'"))[0];
@@ -38,7 +38,7 @@ const getImageMessages = async (query: QueryInterface): Promise<Message[]> => {
 
 /**
  * Returns chat threads with image
- * 
+ *
  * @param {Sequelize.query} query query interface
  */
 const getThreadsWithImages = async (query: QueryInterface): Promise<ThreadWithUrl[]> => {
@@ -47,7 +47,7 @@ const getThreadsWithImages = async (query: QueryInterface): Promise<ThreadWithUr
 
 /**
  * Returns chat groups with image
- * 
+ *
  * @param {Sequelize.query} query query interface
  */
 const getChatGroupsWithImages = async (query: QueryInterface):  Promise<ChatGroupWithUrl[]> => {
@@ -56,7 +56,7 @@ const getChatGroupsWithImages = async (query: QueryInterface):  Promise<ChatGrou
 
 /**
  * Returns news articles with image
- * 
+ *
  * @param {Sequelize.query} query query interface
  */
 const getNewsArticlesWithImages = async (query: QueryInterface):  Promise<NewsArticleWithUrl[]> => {
@@ -65,7 +65,7 @@ const getNewsArticlesWithImages = async (query: QueryInterface):  Promise<NewsAr
 
 /**
  * Finds message attachment by id
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {string} id message attachment id
  */
@@ -75,7 +75,7 @@ const getMessageAttachment = async (query: QueryInterface, id: string) => {
 
 /**
  * Updates messages image and contents
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {number} id message id
  * @param {string} image message image url
@@ -87,34 +87,34 @@ const updateMessageImageAndContents = async (query: QueryInterface, id: number, 
 
 /**
  * Updates thread image
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {number} id id
  * @param {string} image image url
  */
-const updateThreadImage = async (query: QueryInterface, id: number, image: string | null) => {
+const updateThreadImage = async (query: QueryInterface, id: number, image: string | null) => {
   return (await query.sequelize.query(`UPDATE Threads SET imageUrl = ${image ? `'${image}'` : "null"} WHERE id = ${id}`));
 };
 
 /**
  * Updates news article image
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {number} id id
  * @param {string} image image url
  */
-const updateNewsArticleImage = async (query: QueryInterface, id: number, image: string | null) => {
+const updateNewsArticleImage = async (query: QueryInterface, id: number, image: string | null) => {
   return (await query.sequelize.query(`UPDATE NewsArticles SET imageUrl = ${image ? `'${image}'` : "null"} WHERE id = ${id}`));
 };
 
 /**
  * Updates chat group image
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {number} id id
  * @param {string} image image url
  */
-const updateChatGroupImage = async (query: QueryInterface, id: number, image: string | null) => {
+const updateChatGroupImage = async (query: QueryInterface, id: number, image: string | null) => {
   return (await query.sequelize.query(`UPDATE ChatGroups SET imageUrl = ${image ? `'${image}'` : "null"} WHERE id = ${id}`));
 };
 
@@ -143,7 +143,7 @@ const getBaseUrl = () => {
 
 /**
  * Resolves file extension
- * 
+ *
  * @param {string} contentType content type
  */
 const getFileExtension = (contentType: string) => {
@@ -160,8 +160,8 @@ const getFileExtension = (contentType: string) => {
 
 /**
  * Extracts image url from chat message
- * 
- * @param {chatMessage} message 
+ *
+ * @param {chatMessage} message
  */
 const getImageUrlFromMessage = (message: Message) => {
   const contents = message.contents;
@@ -178,7 +178,7 @@ const getImageUrlFromMessage = (message: Message) => {
 
 /**
  * Migrates single chat message
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {chatMessage} message message to migrate
  */
@@ -188,10 +188,10 @@ const migrateChatMessage = async(query: QueryInterface, message: Message) => {
     //Image not found, no need to migrate
     return;
   }
-  
+
   const attachmentId = imageUrl.substr(imageUrl.lastIndexOf("/") + 1);
   const attachment = await getMessageAttachment(query, attachmentId);
-  const filename = `${uuid()}${getFileExtension(attachment[0].contentType)}`;  
+  const filename = `${uuid()}${getFileExtension(attachment[0].contentType)}`;
   fs.writeFileSync(`${getImageFolder()}/${filename}`, attachment[0].contents);
   const fileUrl = `${getBaseUrl()}/files/${filename}`;
   await updateMessageImageAndContents(query, message.id, fileUrl, "");
@@ -199,7 +199,7 @@ const migrateChatMessage = async(query: QueryInterface, message: Message) => {
 
 /**
  * Downloads image from Wordpress
- * 
+ *
  * @param imageDbUrl image url
  */
 const downloadWordpressImage = async(imageDbUrl: string) => {
@@ -212,7 +212,7 @@ const downloadWordpressImage = async(imageDbUrl: string) => {
 
 /**
  * Migrates single thread
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {chatThread} thread thread to migrate
  */
@@ -232,7 +232,7 @@ const migrateThread = async (query: QueryInterface, thread: ThreadWithUrl) => {
 
 /**
  * Migrates single news article
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {newsArticle} newsArticle news article to migrate
  */
@@ -252,7 +252,7 @@ const migrateNewsArticle = async (query: QueryInterface, newsArticle: NewsArticl
 
 /**
  * Migrates single chat groups
- * 
+ *
  * @param {Sequelize.query} query query interface
  * @param {chatGroup} chatGroup chat group to migrate
  */

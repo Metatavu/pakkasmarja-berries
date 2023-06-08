@@ -7,9 +7,9 @@ import { SignAuthenticationService } from "../model/models";
  * Implementation for SignAuthenticationService REST service
  */
 export default class SignAuthenticationServicesServiceImpl extends SignAuthenticationServicesService {
-  
+
   /**
-   * @inheritDoc 
+   * @inheritDoc
    */
   async listSignAuthenticationServices(req: Request, res: Response) {
     const authenticationMethods = await signature.getAuthenticationMethods();
@@ -25,7 +25,7 @@ export default class SignAuthenticationServicesServiceImpl extends SignAuthentic
         image: method.image,
         name: method.name
       };
-      
+
       return result;
     });
 

@@ -512,7 +512,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @inheritdoc
    */
   public async findChatThread(req: Request, res: Response): Promise<void> {
-    const chatThreadId = req.params.chatThreadId;
+    const chatThreadId = req.params.chatThreadId as any;
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
       this.sendNotFound(res);
@@ -537,9 +537,9 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
    * @inheritdoc
    */
   public async listChatThreads(req: Request, res: Response): Promise<void> {
-    const groupId = req.query.groupId;
-    const groupType: ChatGroupType = req.query.groupType;
-    const ownerId: string | undefined = req.query.ownerId;
+    const groupId = req.query.groupId as any;
+    const groupType: ChatGroupType = req.query.groupType as any;
+    const ownerId: string | undefined = req.query.ownerId as any;
 
     const allChatGroups = await Promise.all(groupId ? [ models.findChatGroup(groupId) ] : models.listChatGroups(groupType));
 
@@ -581,7 +581,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
   public async updateChatThread(req: Request, res: Response): Promise<void> {
     const payload: ChatThread = req.body;
 
-    const chatThreadId = req.params.chatThreadId;
+    const chatThreadId = req.params.chatThreadId as any;
     const thread = await models.findThread(chatThreadId);
     if (!thread) {
       this.sendNotFound(res);
@@ -651,7 +651,7 @@ export default class ChatThreadsServiceImpl extends ChatThreadsService {
       return;
     }
 
-    const threadId = req.params.threadId;
+    const threadId = req.params.threadId as any;
     const type = req.params.type;
     const thread = await models.findThread(threadId);
     if (!thread) {
