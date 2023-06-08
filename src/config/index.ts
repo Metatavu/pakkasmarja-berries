@@ -239,6 +239,7 @@ export interface ErrorNotifications {
  */
 export interface Notifications {
   contactUpdates: string[];
+  deliveryRejections?: string[];
   frozen: string;
   fresh: string;
   deliveries: string;

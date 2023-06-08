@@ -630,7 +630,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           `Toimitus viimeksi päivitetty: ${moment(databaseDelivery.updatedAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`
         ]
 
-        const additionalInfotoShipper: string[] = category === "FRESH" ? [
+        const additionalInfoToShipper: string[] = category === "FRESH" ? [
           "Tuoremarjatoimisto",
           "puh. 020 709 9588",
           contactConfig!.notifications!.fresh || ""
@@ -642,7 +642,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         /**Email data for shipper */
         const subjectToShipper = `Marjatoimitus hylätty`;
-        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToShipper.join("\n")}\n\nLisätietoja:\n${additionalInfotoShipper.join("\n")}\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToShipper.join("\n")}\n\nLisätietoja:\n${additionalInfoToShipper.join("\n")}\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         /**Email data for recipient */
         const subjectToRecipient = `Ilmoitus toimituksen hylkäyksestä lähetetty`;
@@ -651,20 +651,16 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         if (
           contactConfig &&
           contactConfig.notifications &&
-          contactConfig.notifications.fresh &&
-          contactConfig.notifications.frozen &&
-          contactConfig.notifications.deliveries
+          contactConfig.notifications.deliveryRejections
         ) {
-          const recipientEmail = category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
-          const shipperEmail = deliveryContact.email;
-
-          recipientEmail.forEach(recipientEmail => {
-            mailer.send(sender, recipientEmail, subjectToRecipient, contentsToRecipient);
+          contactConfig.notifications.deliveryRejections.forEach(rejectionEmail => {
+            mailer.send(sender, rejectionEmail, subjectToRecipient, contentsToRecipient);
           });
+        }
 
-          if (shipperEmail) {
-            mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper, imageAttachment);
-          }
+        const shipperEmail = deliveryContact.email;
+        if (shipperEmail) {
+          mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper, imageAttachment);
         }
       }
     }

@@ -137,9 +137,9 @@
   "contacts": {
     "notifications": {
       "contactUpdates": [ "contact.updates@example.org" ],
+      "deliveryRejections": [ "rejecteddelivery.deliveries@example.com" ],
       "fresh": "rejecteddelivery.fresh@example.com",
       "frozen": "rejecteddelivery.frozen@example.com",
-      "deliveries": "rejecteddelivery.deliveries@example.com",
       "errors": {
         "fresh": [ "errors.fresh@example.org" ],
         "frozen": [ "errors.frozen@example.org" ]
