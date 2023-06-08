@@ -20,6 +20,7 @@
     "email": "devs@metatavu.fi"
   },
   "dependencies": {
+    "@sentry/node": "^7.54.0",
     "async": "2.6.1",
     "aws-sdk": "^2.639.0",
     "better-queue": "^3.8.10",
