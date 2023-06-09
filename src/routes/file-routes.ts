@@ -39,7 +39,7 @@ export default class FileRoutes {
    */
   public postFileUpload(req: Request, res: Response) {
     res.send({
-      url: `${this.getBaseUrl()}/files/${req.file?.filename}`
+      url: `${this.getBaseUrl()}/files/${req.file ? req.file.filename : ""}`
     });
   }
 
