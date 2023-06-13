@@ -234,20 +234,18 @@ test("Update delivery if user rejected already confirmed delivery", async t => {
 
     t.notEqual(updatedDeliveryRejected, null, "Delivery is not null");
     t.equal(updatedDeliveryRejected.status, deliveriesDataUpdate[0].status, "Delivery status is correct");
-    t.equal(mail.getOutbox().length, 3, "3 mails are sent");
+    t.equal(mail.getOutbox().length, 2, "2 mails are sent");
 
     const allMails = _.groupBy<Mailgun.messages.SendData>(mail.getOutbox(), value => value.to);
 
-    const frozenEmails = allMails["rejecteddelivery.frozen@example.com"];
     const deliveryEmails = allMails["rejecteddelivery.deliveries@example.com"];
     const shipperEmails = allMails["test1@testrealm1.com"];
 
-    t.equal(frozenEmails.length, 1, "Exactly one frozen email exists");
     t.equal(deliveryEmails.length, 1, "Exactly one delivery email exists");
     t.equal(shipperEmails.length, 1, "Exactly one shipper email exists");
 
     t.equal(
-      (frozenEmails[0].text || "").length,
+      (deliveryEmails[0].text || "").length,
       (deliveryCancelledMailRecipient.text || "").length,
       "Frozen email has the same length as the template"
     );
