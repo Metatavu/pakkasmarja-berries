@@ -1,7 +1,7 @@
 {
   "mode": "TEST",
   "session-secret": "sekriet",
-  "baseUrl": "http://pakkasmarja-api:3000",
+  "baseUrl": "http://pakkasmarja-berries-api:3000",
   "cache": {
     "enabled": true,
     "expire-time": 60000
@@ -18,7 +18,7 @@
   "keycloak": {
     "admin": {
       "realm": "pm",
-      "baseUrl": "http://test-keycloak:8080/auth",
+      "baseUrl": "http://pakkasmarja-berries-keycloak:8080/auth",
       "username": "admin",
       "password": "admin",
       "grant_type": "password",
@@ -26,7 +26,7 @@
     },
     "rest": {
       "realm": "pm",
-      "auth-server-url": "http://test-keycloak:8080/auth",
+      "auth-server-url": "http://pakkasmarja-berries-keycloak:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
       "verify-token-audience": true,
@@ -38,7 +38,7 @@
     },
     "app": {
       "realm": "pm",
-      "auth-server-url": "http://test-keycloak:8080/auth",
+      "auth-server-url": "http://pakkasmarja-berries-keycloak:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
       "verify-token-audience": true,
@@ -51,7 +51,7 @@
   },
   "client": {
     "server": {
-      "host": "pakkasmarja-api",
+      "host": "pakkasmarja-berries-api",
       "port": "3000",
       "secure": false
     }
@@ -66,7 +66,7 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "pm-mysql",
+    "host": "pakkasmarja-berries-mysql",
     "database": "pm",
     "username": "pm",
     "password": "random",

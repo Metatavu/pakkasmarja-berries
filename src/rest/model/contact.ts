@@ -17,6 +17,7 @@ export interface Contact {
     readonly displayName: string  | null;
     readonly avatarUrl: string  | null;
     sapId: string  | null;
+    equipmentInspected: boolean  | null;
     firstName: string  | null;
     lastName: string  | null;
     companyName: string  | null;
@@ -35,6 +36,7 @@ export interface ContactOpt {
     readonly displayName?: string;
     readonly avatarUrl?: string;
     sapId?: string;
+    equipmentInspected?: boolean;
     firstName?: string;
     lastName?: string;
     companyName?: string;

@@ -59,7 +59,21 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const amount = req.body.amount;
+    if (req.body.amount === undefined || req.body.amount === null) {
+      this.sendBadRequest(res, "Missing required body param amount.");
+      return;
+    }
+
+    const amount = parseFloat(req.body.amount);
+    if (Number.isNaN(amount)) {
+      this.sendBadRequest(res, `Invalid amount "${amount}".`);
+      return;
+    }
+
+    if (amount <= 0) {
+      this.sendBadRequest(res, "Amount cannot be negative or 0.");
+      return;
+    }
 
     const deliveryPlaceId = req.body.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -101,13 +115,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const unitPrice = parseFloat(productPrice);
-      let unitPriceWithBonus = 0;
 
-      if (amount > 0) {
-        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-        const totalPrice = unitPrice * amount + bonusPrice;
-        unitPriceWithBonus = totalPrice / amount;
-      }
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
 
       if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
@@ -422,7 +433,17 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       return;
     }
 
-    const amount = payload.amount;
+    const amount = req.body.amount as number | undefined;
+
+    if (amount === undefined) {
+      this.sendBadRequest(res, "Amount is required.");
+      return;
+    }
+
+    if (amount <= 0) {
+      this.sendBadRequest(res, "Amount cannot be negative or 0.");
+      return;
+    }
 
     const deliveryPlaceId = payload.deliveryPlaceId;
     if (!deliveryPlaceId) {
@@ -475,13 +496,10 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       }
 
       const unitPrice = parseFloat(productPrice);
-      let unitPriceWithBonus = 0;
 
-      if(amount > 0){
-        const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
-        const totalPrice = unitPrice * amount + bonusPrice;
-        unitPriceWithBonus = totalPrice / amount;
-      }
+      const bonusPrice = amount * product.units * product.unitSize * deliveryQuality.priceBonus;
+      const totalPrice = unitPrice * amount + bonusPrice;
+      const unitPriceWithBonus = totalPrice / amount;
 
       if (unitPrice < 0 || unitPriceWithBonus < 0) {
         this.sendInternalServerError(res, "Failed to resolve price");
@@ -612,7 +630,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           `Toimitus viimeksi päivitetty: ${moment(databaseDelivery.updatedAt).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}`
         ]
 
-        const additionalInfotoShipper: string[] = category === "FRESH" ? [
+        const additionalInfoToShipper: string[] = category === "FRESH" ? [
           "Tuoremarjatoimisto",
           "puh. 020 709 9588",
           contactConfig!.notifications!.fresh || ""
@@ -624,7 +642,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
         /**Email data for shipper */
         const subjectToShipper = `Marjatoimitus hylätty`;
-        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToShipper.join("\n")}\n\nLisätietoja:\n${additionalInfotoShipper.join("\n")}\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
+        const contentsToShipper = `Vastaanottaja on hylännyt toimituksen, jonka ajankohta oli ${moment(databaseDelivery.time).format("DD.MM.YYYY")} klo ${moment(databaseDelivery.time).format("HH.mm")}.${latestDeliveryNote ? `\n\n${additionalRejectionInfo}` : ""}\n\nToimituksen tiedot:\n\n${deliveryInfoToShipper.join("\n")}\n\nLisätietoja:\n${additionalInfoToShipper.join("\n")}\n\n--------------------------------------------------\nTämä on automaattinen sähköposti. Älä vastaa tähän\n--------------------------------------------------`;
 
         /**Email data for recipient */
         const subjectToRecipient = `Ilmoitus toimituksen hylkäyksestä lähetetty`;
@@ -633,20 +651,16 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
         if (
           contactConfig &&
           contactConfig.notifications &&
-          contactConfig.notifications.fresh &&
-          contactConfig.notifications.frozen &&
-          contactConfig.notifications.deliveries
+          contactConfig.notifications.deliveryRejections
         ) {
-          const recipientEmail = category == "FRESH" ? [contactConfig.notifications.fresh] : [contactConfig.notifications.frozen, contactConfig.notifications.deliveries];
-          const shipperEmail = deliveryContact.email;
-
-          recipientEmail.forEach(recipientEmail => {
-            mailer.send(sender, recipientEmail, subjectToRecipient, contentsToRecipient);
+          contactConfig.notifications.deliveryRejections.forEach(rejectionEmail => {
+            mailer.send(sender, rejectionEmail, subjectToRecipient, contentsToRecipient);
           });
+        }
 
-          if (shipperEmail) {
-            mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper, imageAttachment);
-          }
+        const shipperEmail = deliveryContact.email;
+        if (shipperEmail) {
+          mailer.send(sender, shipperEmail, subjectToShipper, contentsToShipper, imageAttachment);
         }
       }
     }

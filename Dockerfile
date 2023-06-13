@@ -1,5 +1,8 @@
 FROM node:dubnium
 
+# Add archive repository for debian stretch. This is needed for APT to find packages.
+RUN echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list
+
 # Install Redis
 RUN apt update
 RUN apt install redis-server sshfs -y

@@ -1,6 +1,7 @@
 version: "3"
 services:
-  sap-mock:
+  pakkasmarja-berries-sap-mock:
+    container_name: pakkasmarja-berries-sap-mock
     image: metatavu/odata-mock:latest
     environment:
       ODATA_MOCK_EDM_FILE: /opt/odata/edm.xml
@@ -10,16 +11,18 @@ services:
       ODATA_MOCK_SESSION_PASSWORD: sappass
     volumes:
       - ./test-volumes/odata-mock:/opt/odata
-  erp-service:
+  pakkasmarja-berries-erp-service:
+    container_name: pakkasmarja-berries-erp-service
     image: metatavu/erp-service:latest
     environment:
-      FI_METATAVU_PAKKASMARJA_SAP_API_URL: http://sap-mock:8080/odata
+      FI_METATAVU_PAKKASMARJA_SAP_API_URL: http://pakkasmarja-berries-sap-mock:8080/odata
       FI_METATAVU_PAKKASMARJA_SAP_COMPANY_DB: companydb
       FI_METATAVU_PAKKASMARJA_SAP_USER_NAME: sapuser
       FI_METATAVU_PAKKASMARJA_SAP_USER_PASSWORD: sappass
-      QUARKUS_OIDC_AUTH_SERVER_URL: http://test-keycloak:8080/auth/realms/pm
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://pakkasmarja-berries-keycloak:8080/auth/realms/pm
       QUARKUS_OIDC_CLIENT_ID: erp
-  pm-mysql:
+  pakkasmarja-berries-mysql:
+    container_name: pakkasmarja-berries-mysql
     image: mysql:5.7
     command: --lower_case_table_names=1
     environment:
@@ -29,7 +32,8 @@ services:
       MYSQL_PASSWORD: random
     ports:
       - 3306:3306
-  test-keycloak:
+  pakkasmarja-berries-keycloak:
+    container_name: pakkasmarja-berries-keycloak
     image: jboss/keycloak:4.8.3.Final
     environment:
       KEYCLOAK_USER: admin
@@ -40,17 +44,18 @@ services:
       - 8080:8080
     volumes:
       - ./test-volumes/keycloak:/opt/docker
-  pakkasmarja-api:
+  pakkasmarja-berries-api:
+    container_name: pakkasmarja-berries-api
     build: .
     environment:
       STARTUP_DELAY: 35
     ports:
       - 3002:3000
     depends_on:
-      - pm-mysql
-      - test-keycloak
+      - pakkasmarja-berries-mysql
+      - pakkasmarja-berries-keycloak
     healthcheck:
-        test: curl http://test-keycloak:8080
+        test: curl http://pakkasmarja-berries-keycloak:8080
         interval: 2s
         timeout: 5s
         retries: 30
@@ -60,18 +65,20 @@ services:
       - /tmp/pakkasmail:/tmp/pakkasmail
       - /tmp/pakkaspush:/tmp/pakkaspush
       - /tmp/sapxml:/tmp/sapxml
-  pakkasmarja-tests:
+  pakkasmarja-berries-tests:
+    container_name: pakkasmarja-berries-tests
     build:
       context: .
       dockerfile: Dockerfile.tests
     environment:
-      TEST_HOST: http://pakkasmarja-api:3000
+      TEST_HOST: http://pakkasmarja-berries-api:3000
+      SAP_TEST_CLIENT_HOST: http://pakkasmarja-berries-sap-mock:8080
     depends_on:
-      - pakkasmarja-api
-      - pm-mysql
-      - test-keycloak
-      - sap-mock
-      - erp-service
+      - pakkasmarja-berries-api
+      - pakkasmarja-berries-mysql
+      - pakkasmarja-berries-keycloak
+      - pakkasmarja-berries-sap-mock
+      - pakkasmarja-berries-erp-service
     volumes:
       - ./test-volumes/pakkasmarja-api/config.json:/usr/src/pakkasmarja/config.json
       - ./test-volumes/pakkasmarja-api/app-config.json:/usr/src/pakkasmarja/app-config.json

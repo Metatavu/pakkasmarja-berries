@@ -281,6 +281,7 @@ export default class ContactsServiceImpl extends ContactsService {
       const result: Contact = {
         id: user.id,
         sapId: userManagement.getSingleAttribute(user, UserProperty.SAP_BUSINESS_PARTNER_CODE) || null,
+        equipmentInspected: userManagement.getSingleAttribute(user, UserProperty.EQUIPMENT_INSPECTED) === "true",
         firstName: user.firstName || null,
         lastName: user.lastName || null,
         companyName: userManagement.getSingleAttribute(user, UserProperty.COMPANY_NAME) || null,
@@ -326,6 +327,7 @@ export default class ContactsServiceImpl extends ContactsService {
     userManagement.setSingleAttribute(user, UserProperty.TAX_CODE, contact.taxCode);
     userManagement.setSingleAttribute(user, UserProperty.VAT_LIABLE, contact.vatLiable);
     userManagement.setSingleAttribute(user, UserProperty.AUDIT, contact.audit);
+    userManagement.setSingleAttribute(user, UserProperty.EQUIPMENT_INSPECTED, contact.equipmentInspected ? "true" : "false");
     userManagement.setSingleAttribute(user, UserProperty.PHONE_1, phoneNumbers.length > 0 ? phoneNumbers[0] : null);
     userManagement.setSingleAttribute(user, UserProperty.PHONE_2, phoneNumbers.length > 1 ? phoneNumbers[1] : null);
     userManagement.setSingleAttribute(user, UserProperty.POSTAL_CODE_1, addresses.length > 0 ? addresses[0].postalCode : null);

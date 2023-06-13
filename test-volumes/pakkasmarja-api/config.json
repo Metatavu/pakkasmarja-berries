@@ -42,7 +42,7 @@
   "keycloak": {
     "admin": {
       "realm": "pm",
-      "baseUrl": "http://test-keycloak:8080/auth",
+      "baseUrl": "http://pakkasmarja-berries-keycloak:8080/auth",
       "username": "admin",
       "password": "admin",
       "grant_type": "password",
@@ -50,7 +50,7 @@
     },
     "rest": {
       "realm": "pm",
-      "auth-server-url": "http://test-keycloak:8080/auth",
+      "auth-server-url": "http://pakkasmarja-berries-keycloak:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
       "verify-token-audience": true,
@@ -61,7 +61,7 @@
       "policy-enforcer": {}
     },
     "erp": {
-      "url": "http://erp-service:8080",
+      "url": "http://pakkasmarja-berries-erp-service:8080",
       "clientId": "erp",
       "username": "erp",
       "password": "erp",
@@ -69,7 +69,7 @@
     },
     "app": {
       "realm": "pm",
-      "auth-server-url": "http://test-keycloak:8080/auth",
+      "auth-server-url": "http://pakkasmarja-berries-keycloak:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
       "verify-token-audience": true,
@@ -82,7 +82,7 @@
   },
   "client": {
     "server": {
-      "host":  "pakkasmarja-api",
+      "host":  "pakkasmarja-berries-api",
       "port": "3000",
       "secure": false
     }
@@ -97,7 +97,7 @@
     "server-key": "NA"
   },
   "mysql": {
-    "host": "pm-mysql",
+    "host": "pakkasmarja-berries-mysql",
     "database": "pm",
     "username": "pm",
     "password": "random",
@@ -137,9 +137,9 @@
   "contacts": {
     "notifications": {
       "contactUpdates": [ "contact.updates@example.org" ],
+      "deliveryRejections": [ "rejecteddelivery.deliveries@example.com" ],
       "fresh": "rejecteddelivery.fresh@example.com",
       "frozen": "rejecteddelivery.frozen@example.com",
-      "deliveries": "rejecteddelivery.deliveries@example.com",
       "errors": {
         "fresh": [ "errors.fresh@example.org" ],
         "frozen": [ "errors.frozen@example.org" ]
