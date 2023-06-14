@@ -159,35 +159,37 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
       const databaseDelivery = await models.createDelivery(uuid(), productId, userId, time, status, amount, price, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, false);
 
-      try {
-        await this.createSapPurchaseDeliveryNote(
-          databaseDelivery,
-          databaseDeliveryPlace,
-          product,
-          Number(deliveryContactSapId),
-          Number(sapSalesPersonCode),
-          unitPriceWithBonus,
-          itemGroup.category as ItemGroupCategory
-        );
-
-        if (databaseDelivery.id) {
-          await models.updateDelivery(databaseDelivery.id, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
-        }
-
-        const loans: DeliveryLoan[] | undefined = req.body.loans;
-        if (!!loans && Array.isArray(loans) && !!loans.length) {
-          const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
-
-          await this.createSapStockTransfer(
-            loans,
+      if (!config().sap.itemGroupsIgnoredFromSap.includes(itemGroup.externalId)) {
+        try {
+          await this.createSapPurchaseDeliveryNote(
+            databaseDelivery,
+            databaseDeliveryPlace,
+            product,
             Number(deliveryContactSapId),
             Number(sapSalesPersonCode),
-            new Date(databaseDelivery.time),
-            deliveryNotes.map(note => note.text || "")
+            unitPriceWithBonus,
+            itemGroup.category as ItemGroupCategory
           );
+
+          if (databaseDelivery.id) {
+            await models.updateDelivery(databaseDelivery.id, productId, userId, time, status, amount, unitPrice, unitPriceWithBonus, qualityId, databaseDeliveryPlace.id, true);
+          }
+
+          const loans: DeliveryLoan[] | undefined = req.body.loans;
+          if (!!loans && Array.isArray(loans) && !!loans.length) {
+            const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
+
+            await this.createSapStockTransfer(
+              loans,
+              Number(deliveryContactSapId),
+              Number(sapSalesPersonCode),
+              new Date(databaseDelivery.time),
+              deliveryNotes.map(note => note.text || "")
+            );
+          }
+        } catch (error) {
+          logReject(error, getLogger());
         }
-      } catch (error) {
-        logReject(error, getLogger());
       }
 
       res.status(200).send(await this.translateDatabaseDelivery(databaseDelivery));
@@ -550,7 +552,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
       databaseDelivery = await models.findDeliveryById(deliveryId);
 
       try {
-        if (!databaseDelivery.inSap) {
+        if (!config().sap.itemGroupsIgnoredFromSap.includes(itemGroup.externalId) && !databaseDelivery.inSap) {
           await this.createSapPurchaseDeliveryNote(
             databaseDelivery,
             databaseDeliveryPlace,

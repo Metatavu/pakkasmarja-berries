@@ -287,7 +287,7 @@ export default new class TaskQueue {
           } else {
             const deliveredQuantityBefore = contract.deliveredQuantity;
             models.updateContractDeliveredQuantity(contract.id, deliveredQuantity);
-            this.logger.info(`Updated delivered quantity of contract ${contract.id} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
+            this.logger.info(`Updated delivered quantity of contract ${contract.sapId} from ${deliveredQuantityBefore} into ${deliveredQuantity}`);
             syncCount++;
           }
         }

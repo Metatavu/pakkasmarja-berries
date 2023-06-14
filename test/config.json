@@ -101,7 +101,8 @@
       "ORANGE_BOX": "302603"
     },
     "xml-fileupload-path": "/tmp/sapxml",
-    "batchProducts": []
+    "batchProducts": [],
+    "itemGroupsIgnoredFromSap": []
   },
   "uploadDirectory": "/tmp/",
   "contacts": {
