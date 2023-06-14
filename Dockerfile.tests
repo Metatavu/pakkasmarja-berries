@@ -1,4 +1,4 @@
-FROM node:dubnium
+FROM node:lts-fermium
 
 # Copy package.json and run npm scripts
 WORKDIR /usr/src/pakkasmarja

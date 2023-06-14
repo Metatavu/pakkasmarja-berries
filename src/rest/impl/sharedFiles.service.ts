@@ -38,7 +38,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
    * @inheritdoc
    */
   public async listSharedFiles(req: Request, res: Response) {
-    const pathPrefix = req.query.pathPrefix || "";
+    const pathPrefix = (req.query.pathPrefix || "") as string;
     if (!this.bucket) {
       this.sendInternalServerError(res, "S3 bucket name not found");
       return;
@@ -83,8 +83,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
    * @inheritdoc
    */
   public async getSharedFile(req: Request, res: Response) {
-    const pathPrefix = req.query.pathPrefix;
-    const fileName = req.query.fileName;
+    const pathPrefix = req.query.pathPrefix as any;
+    const fileName = req.query.fileName as any;
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
@@ -127,8 +127,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
-    const pathPrefix = req.query.pathPrefix;
-    const fileName = req.query.fileName;
+    const pathPrefix = req.query.pathPrefix as any;
+    const fileName = req.query.fileName as any;
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
@@ -144,7 +144,7 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
-    const fileData = req.file.buffer;
+    const fileData = (req.file as any).buffer;
     const contentTypeObject = await fileType.fromBuffer(fileData);
     const contentType = contentTypeObject ? contentTypeObject.mime : undefined;
     const fullPath = pathPrefix ? `${pathPrefix}${fileName}` : fileName;
@@ -198,8 +198,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
-    const pathPrefix = req.query.pathPrefix;
-    const folderName = req.query.folderName;
+    const pathPrefix = req.query.pathPrefix as string;
+    const folderName = req.query.folderName as string;
 
     if (!folderName) {
       this.sendBadRequest(res, "Query parameter for folderName was not given");
@@ -267,8 +267,8 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
       return;
     }
 
-    const pathPrefix = req.query.pathPrefix;
-    const fileName = req.query.fileName;
+    const pathPrefix = req.query.pathPrefix as string;
+    const fileName = req.query.fileName as string;
 
     if (!fileName) {
       this.sendBadRequest(res, "Query parameter for fileName was not given");
@@ -360,18 +360,18 @@ export default class SharedFilesServiceImpl extends SharedFilesService {
         Prefix: fullPath,
         Delimiter: "/"
       }
-  
+
       this.s3.listObjectsV2(s3ListParams, (error, data) => {
         if (error) {
           this.sendInternalServerError(res, error);
           return reject(error);
         }
-  
+
         if (data.Contents && data.Contents.filter(item => item.Key !== fullPath).length > 0) {
           this.sendForbidden(res, "Deleting non-empty folder is forbidden. Delete all its contents first");
           return resolve(false);
         }
-  
+
         const folders = data.CommonPrefixes;
         if (folders && folders.length > 0) {
           const index = folders.findIndex(folder => this.parsePathFromKey(folder.Prefix || "") === fullPath);

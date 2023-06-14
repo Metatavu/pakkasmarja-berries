@@ -9,10 +9,10 @@ import ApplicationRoles from "../application-roles";
  * Implementation for OperationReports REST service
  */
 export default class OperationReportsServiceImpl extends OperationReportsService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -28,12 +28,12 @@ export default class OperationReportsServiceImpl extends OperationReportsService
       this.sendForbidden(res, "You do not have permission to list operation reports");
       return;
     }
-    
-    const type = req.query.type;
-    const sortBy = req.query.sortBy;
-    const orderDir = req.query.sortDir;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 20;
+
+    const type = req.query.type as any;
+    const sortBy = req.query.sortBy as any;
+    const orderDir = req.query.sortDir as any;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 20;
 
     if (sortBy && sortBy !== "CREATED") {
       this.sendBadRequest(res, `invalid sort by ${sortBy}`);
@@ -48,7 +48,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
     const orderBy = sortBy === "CREATED" ? "createdAt" : null;
     const reports = type ? await models.listOperationReportsByType(type, orderBy, orderDir, firstResult, maxResults) : await models.listOperationReports(orderBy, orderDir, firstResult, maxResults);
     const count = type ? await models.countOperationReportsByType(type) : await models.countOperationReports();
-            
+
     const result = await Promise.all(reports.map((report: OperationReportModel) => {
       return this.translateDatabaseOperationReport(report);
     }));
@@ -65,7 +65,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
       this.sendForbidden(res, "You do not have permission to view operation reports");
       return;
     }
-    
+
     const operatioReportId = req.params.id;
     if (!operatioReportId) {
       this.sendNotFound(res);
@@ -89,7 +89,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
       this.sendForbidden(res, "You do not have permission to list operation reports");
       return;
     }
-    
+
     const operatioReportId = req.params.id;
     if (!operatioReportId) {
       this.sendNotFound(res);
@@ -112,7 +112,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
 
   /**
    * Translates Database operation report into REST entity
-   * 
+   *
    * @param {Object} operationReport Sequelize operation report model
    * @return {Promise} Promise for REST entity
    */
@@ -135,7 +135,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
 
   /**
    * Translates Database operation report item into REST entity
-   * 
+   *
    * @param {Object} operationReportItem Sequelize operation report item model
    * @return {OperationReportItem} REST entity
    */
@@ -147,7 +147,7 @@ export default class OperationReportsServiceImpl extends OperationReportsService
       "message": message,
       "status": status
     };
-    
+
     return result;
   }
 }

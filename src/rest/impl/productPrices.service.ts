@@ -13,7 +13,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
 
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -22,7 +22,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   }
 
   /**
-   * @inheritdoc 
+   * @inheritdoc
    */
   public async createProductPrice(req: Request, res: Response) {
     const productId = req.params.productId;
@@ -54,7 +54,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   }
 
   /**
-   * @inheritdoc 
+   * @inheritdoc
    */
   public async deleteProductPrice(req: Request, res: Response) {
     const productId = req.params.productId;
@@ -80,7 +80,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   }
 
   /**
-   * @inheritdoc 
+   * @inheritdoc
    */
   public async findProductPrice(req: Request, res: Response) {
     const productId = req.params.productId;
@@ -101,14 +101,14 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   }
 
   /**
-   * @inheritdoc 
+   * @inheritdoc
    */
   public async listProductPrices(req: Request, res: Response) {
-    const productId = req.params.productId;
-    const sort = req.query.sort;
-    const atTime = req.query.atTime;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const productId = req.params.productId as any;
+    const sort = req.query.sort as any;
+    const atTime = req.query.atTime as any;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
     if (!productId) {
       this.sendBadRequest(res, "Missing required param productId");
@@ -135,7 +135,7 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
   }
 
   /**
-   * @inheritdoc 
+   * @inheritdoc
    */
   public async updateProductPrice(req: Request, res: Response) {
     const productId = req.params.productId;
@@ -179,8 +179,8 @@ export default class ProductPricesServiceImpl extends ProductPricesService {
 
   /**
    * Translates database product price into REST entity
-   * 
-   * @param productPrice productPrice 
+   *
+   * @param productPrice productPrice
    */
   private async translateDatabaseProductPrice(productPrice: ProductPriceModel) {
     const result: ProductPrice = {

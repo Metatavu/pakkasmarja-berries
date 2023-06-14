@@ -79,7 +79,7 @@ const findChatGroup = (token: string, id: number, expectStatus?: number): Promis
     .get(`/rest/v1/chatGroups/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
-    .expect(expectStatus || 200)
+    .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
     });
@@ -112,7 +112,7 @@ const listChatGroups = (token: string): Promise<ChatGroup[]> => {
  * @param imageUrl image url
  * @returns promise for chat group
  */
-const updateChatGroup = (token: string, id: number, title: string, type: ChatGroupType, imageUrl: string | null): Promise<ChatGroup> => {
+const updateChatGroup = (token: string, id: number, title: string, type: ChatGroupType, imageUrl: string | null): Promise<ChatGroup> => {
   const payload: ChatGroup = {
     id: id,
     title: title,

@@ -10,10 +10,10 @@ import ApplicationRoles from "../application-roles";
  * Implementation for Public Files REST service
  */
 export default class DataSheetsServiceImpl extends DataSheetsService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -30,13 +30,13 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
       return;
     }
 
-    const data: string | null[][] = req.body.data;
+    const data: string | null[][] = req.body.data;
     const name: string = req.body.name;
 
     const createdDataSheet = await models.createDataSheet(uuid(), name, JSON.stringify(data));
     res.status(200).send(this.translateDataSheet(createdDataSheet));
   }
-  
+
     /**
    * @inheritdoc
    */
@@ -46,7 +46,7 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
       return;
     }
 
-    const dataSheetId = req.params.dataSheetId;
+    const dataSheetId = req.params.dataSheetId as any;
     await models.deleteDataSheet(dataSheetId);
     res.status(204).send();
   }
@@ -60,7 +60,7 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
       return;
     }
 
-    const dataSheetId = req.params.dataSheetId;
+    const dataSheetId = req.params.dataSheetId as any;
     const dataSheet = await models.findDataSheetById(dataSheetId);
     if (!dataSheet) {
       res.status(404).send();
@@ -79,7 +79,7 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
       return;
     }
 
-    const name = req.query.name;
+    const name = req.query.name as any;
     const dataSheets = await models.listDataSheetsByName(name);
     res.status(200).send(dataSheets.map((dataSheet) => this.translateDataSheet(dataSheet)));
   }
@@ -92,9 +92,9 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
       this.sendForbidden(res, "You  do not have permission to manage data sheets");
       return;
     }
-    
-    const dataSheetId = req.params.dataSheetId;
-    const data: string | null[][] = req.body.data;
+
+    const dataSheetId = req.params.dataSheetId as any;
+    const data: string | null[][] = req.body.data;
     const name: string = req.body.name;
 
     await models.updateDataSheet(dataSheetId, name, JSON.stringify(data));
@@ -109,7 +109,7 @@ export default class DataSheetsServiceImpl extends DataSheetsService {
 
   /**
    * Translates data sheet for the rest endpoint
-   * 
+   *
    * @param databaseDataSheet Stored data sheet entity
    */
   private translateDataSheet(databaseDataSheet: DataSheetModel): DataSheet {

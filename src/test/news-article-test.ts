@@ -48,7 +48,7 @@ const findNewsArticle = (token: string, id: number, expectStatus?: number): Prom
     .get(`/rest/v1/newsArticles/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
-    .expect(expectStatus || 200)
+    .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
     });

@@ -39,7 +39,7 @@ export default class OperationsServiceImpl extends OperationsService {
       return;
     }
 
-    const operation: Operation = _.isObject(req.body) ? req.body : null;
+    const operation: Operation = _.isObject(req.body) ? req.body as any : null;
     if (!operation) {
       this.sendBadRequest(res, "Failed to parse body");
       return;

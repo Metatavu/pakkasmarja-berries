@@ -69,7 +69,8 @@ test("Test listing contacts - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/contacts")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test listing contacts - invalid token", async () => {
@@ -77,7 +78,8 @@ test("Test listing contacts - invalid token", async () => {
     .get("/rest/v1/contacts")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find contact", async (t) => {
@@ -116,7 +118,8 @@ test("Test find contact - without token", async () => {
   return request(TestConfig.HOST)
     .get(`/rest/v1/contacts/${testUser2}`)
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find contact - invalid token", async () => {
@@ -124,7 +127,8 @@ test("Test find contact - invalid token", async () => {
     .get(`/rest/v1/contacts/${testUser2}`)
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find contact - not found", async () => {
@@ -248,7 +252,8 @@ test("Test update contact - without token", async () => {
     .put(`/rest/v1/contacts/${updateData.id}`)
     .send(updateData)
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test update contact - invalid token", async () => {
@@ -274,7 +279,8 @@ test("Test update contact - invalid token", async () => {
     .set("Authorization", "Bearer FAKE")
     .send(updateData)
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test update contact - not found", async () => {

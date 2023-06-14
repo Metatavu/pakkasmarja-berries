@@ -8,6 +8,7 @@ import * as i18n from "i18n";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
 import * as path from "path";
+import * as Sentry from "@sentry/node";
 import dotenv = require("dotenv");
 
 import Migration from "./migration";
@@ -55,6 +56,27 @@ process.on("unhandledRejection", (error) => {
 
   const port = config().port || 3000;
   const app = express();
+
+  // Sentry
+  const sentryConfig = config().sentry || {};
+  Sentry.init({
+    dsn: sentryConfig.dsn,
+    environment: sentryConfig.environment,
+    integrations: [
+      // enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true }),
+      // enable Express.js middleware tracing
+      new Sentry.Integrations.Express({ app }),
+      // Automatically instrument Node.js libraries and frameworks
+      ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+    ],
+  });
+
+  // RequestHandler creates a separate execution context, so that all
+  // transactions/spans/breadcrumbs are isolated across requests
+  app.use(Sentry.Handlers.requestHandler());
+  // TracingHandler creates a trace for every incoming request
+  app.use(Sentry.Handlers.tracingHandler());
 
   const httpServer = http.createServer(app);
   const SequelizeStore = ConnectSessionSequelize(session.Store);
@@ -113,6 +135,9 @@ process.on("unhandledRejection", (error) => {
   new MqttRoutes(app, keycloak);
   new SignRoutes(app);
   new FileRoutes(app, keycloak);
+
+  // The error handler must be before any other error middleware and after all controllers
+  app.use(Sentry.Handlers.errorHandler());
 
   mqtt.connect();
   taskQueue.start();
