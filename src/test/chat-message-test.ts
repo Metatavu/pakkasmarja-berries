@@ -97,9 +97,9 @@ const createChatGroup = (token: string, title: string, type: ChatGroupType): Pro
 const createChatThread = (token: string, groupId: number, title: string, answerType?: ChatThread.AnswerTypeEnum, description?: string, imageUrl?: string, expiresAt?: Date, pollPredefinedTexts?: string[]): Promise<ChatGroup> => {
   const payload: ChatThread = {
     id: null,
-    answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
+    answerType: answerType || ChatThread.AnswerTypeEnum.TEXT,
     permissionType: null,
-    description: description || null,
+    description: description || null,
     expiresAt: expiresAt || null,
     groupId: groupId,
     imageUrl: imageUrl || null,
@@ -163,7 +163,7 @@ const findChatMessage = (token: string, threadId: number, messageId: number, exp
     .get(`/rest/v1/chatThreads/${threadId}/messages/${messageId}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
-    .expect(expectStatus || 200)
+    .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
     });

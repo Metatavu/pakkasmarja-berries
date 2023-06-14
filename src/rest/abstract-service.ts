@@ -151,7 +151,7 @@ export default class AbstractService {
   protected sendNotFound(res: Response, message?: string) {
     const response: NotFound = {
       "code": 404,
-      "message": message || "Not found"
+      "message": message || "Not found"
     };
 
     res.status(404).send(response);
@@ -169,7 +169,7 @@ export default class AbstractService {
       "message": message || "Bad Request"
     };
 
-    this.baseLogger.warn(`Bad request with message ${message || "Bad Request"}`);
+    this.baseLogger.warn(`Bad request with message ${message || "Bad Request"}`);
 
     res.status(400).send(response);
   }
@@ -186,7 +186,7 @@ export default class AbstractService {
       "message": message || "Conflict"
     };
 
-    this.baseLogger.warn(`Conflict with message ${message || "Conflict"}`);
+    this.baseLogger.warn(`Conflict with message ${message || "Conflict"}`);
 
     res.status(409).send(response);
   }

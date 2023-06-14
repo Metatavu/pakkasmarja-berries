@@ -13,7 +13,7 @@ export default new class Pdf {
 
   /**
    * Extract PDF data from buffer
-   * 
+   *
    * @param {Buffer} buffer buffer
    * @return {Promise} promise for extracted pdf data
    */
@@ -30,7 +30,7 @@ export default new class Pdf {
             reject(err);
             return;
           }
-          
+
           this.extractPdfDataFromFile(path)
             .then((pdfData) => {
               fs.unlinkSync(path);
@@ -41,14 +41,14 @@ export default new class Pdf {
               reject(err);
             });
         });
-          
+
       });
     });
   }
-  
+
   /**
    * Extract PDF data from file
-   * 
+   *
    * @param {String} file file
    * @return {Promise} promise for extracted pdf data
    */
@@ -57,11 +57,11 @@ export default new class Pdf {
       const pdfParser = new PDFParser(this, 1);
       pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
       pdfParser.on("pdfParser_dataReady", (pdfData: any) => resolve({
-        pdfData: pdfData, 
+        pdfData: pdfData,
         rawTextContent: pdfParser.getRawTextContent()
       }));
       pdfParser.loadPDF(file);
     });
   }
-  
+
 }

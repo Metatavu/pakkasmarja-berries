@@ -8,7 +8,7 @@ import * as Keycloak from "keycloak-connect";
  * File routes
  */
 export default class FileRoutes {
-  
+
   constructor (app: Application, keycloak: Keycloak) {
     const upload = multer({storage: this.getStorage()});
     app.get("/files/:fileId", [ keycloak.protect() ], this.getFileData.bind(this));
@@ -30,7 +30,7 @@ export default class FileRoutes {
 
     res.sendFile(`${path}/${fileId}`);
   }
-  
+
   /**
    * Handles file upload
    *
@@ -39,7 +39,7 @@ export default class FileRoutes {
    */
   public postFileUpload(req: Request, res: Response) {
     res.send({
-      url: `${this.getBaseUrl()}/files/${req.file.filename}`
+      url: `${this.getBaseUrl()}/files/${req.file ? req.file.filename : ""}`
     });
   }
 

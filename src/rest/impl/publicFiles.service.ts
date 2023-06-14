@@ -9,10 +9,10 @@ import { PublicFile } from "../model/models";
  * Implementation for Public Files REST service
  */
 export default class PublicFilesServiceImpl extends PublicFilesService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -28,12 +28,12 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
     const createdPublicFile = await models.createPublicFile(uuid(), publicFileUrl);
     res.status(200).send(this.translatePublicFile(createdPublicFile));
   }
-  
+
     /**
    * @inheritdoc
    */
   public async deletePublicFile(req: Request, res: Response): Promise<void> {
-    const publicFileId = req.params.publicFileId;
+    const publicFileId = req.params.publicFileId as any;
     await models.deletePublicFile(publicFileId);
     res.status(204).send();
   }
@@ -42,7 +42,7 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
    * @inheritdoc
    */
   public async findPublicFile(req: Request, res: Response): Promise<void> {
-    const publicFileId = req.params.publicFileId;
+    const publicFileId = req.params.publicFileId as any;
     const publicFile = await models.findPublicFileById(publicFileId);
     if (!publicFile) {
       res.status(404).send();
@@ -56,8 +56,8 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
    * @inheritdoc
    */
   public async listPublicFiles(req: Request, res: Response): Promise<void> {
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 20;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 20;
     const publicFiles = await models.listPublicFiles(firstResult, maxResults);
     res.status(200).send(publicFiles.map((publicFile) => this.translatePublicFile(publicFile)));
   }
@@ -66,7 +66,7 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
    * @inheritdoc
    */
   public async updatePublicFile(req: Request, res: Response): Promise<void> {
-    const publicFileId = req.params.publicFileId;
+    const publicFileId = req.params.publicFileId as any;
     const publicFileUrl = req.body.url;
     await models.updatePublicFile(publicFileId, publicFileUrl);
 
@@ -80,7 +80,7 @@ export default class PublicFilesServiceImpl extends PublicFilesService {
 
   /**
    * Translates public file for the rest endpoint
-   * 
+   *
    * @param databasePublicFile Stored public file entity
    */
   private translatePublicFile(databasePublicFile: PublicFileModel): PublicFile {

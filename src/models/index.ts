@@ -265,7 +265,7 @@ export interface OperationReportItemModel {
 /**
  * Interface for week delivery prediction
  */
-export interface WeekDeliveryPredictionModel { 
+export interface WeekDeliveryPredictionModel {
   id: string | null;
   itemGroupId: number;
   userId: string;
@@ -278,7 +278,7 @@ export interface WeekDeliveryPredictionModel {
 /**
  * Interface for product
  */
-export interface ProductModel { 
+export interface ProductModel {
   id: string | null;
   itemGroupId: number;
   name: string;
@@ -294,15 +294,15 @@ export interface ProductModel {
 /**
  * Interface for delivery
  */
-export interface DeliveryModel { 
+export interface DeliveryModel {
   id: string | null;
   productId: string;
   userId: string;
   time: Date;
   status: DeliveryStatus;
   amount: number;
-  unitPrice: number | null;
-  unitPriceWithBonus: number | null;
+  unitPrice: number | null;
+  unitPriceWithBonus: number | null;
   qualityId: string | null;
   deliveryPlaceId: number;
   warehouseCode: string | null;
@@ -314,7 +314,7 @@ export interface DeliveryModel {
 /**
  * Interface for delivery note
  */
-export interface DeliveryNoteModel { 
+export interface DeliveryNoteModel {
   id: string | null;
   deliveryId: string;
   text: string | null;
@@ -326,7 +326,7 @@ export interface DeliveryNoteModel {
 /**
  * Interface for public file
  */
-export interface PublicFileModel { 
+export interface PublicFileModel {
   id: string | null;
   url: string
 }
@@ -358,7 +358,7 @@ export interface DeliveryQualityModel {
 /**
  * Interface for unread
  */
-export interface UnreadModel { 
+export interface UnreadModel {
   id: string | null;
   path: string;
   userId: string;
@@ -369,7 +369,7 @@ export interface UnreadModel {
 /**
  * Interface for unread
  */
-export interface DataSheetModel { 
+export interface DataSheetModel {
   id: string | null;
   name: string;
   data: string;
@@ -390,7 +390,7 @@ export interface DeliveryQualityProductModel {
 
 const PRINT_MODEL_INTERFACES = false;
 
-export class Models { 
+export class Models {
 
   private sequelize: Sequelize.Sequelize;
   private Thread: Sequelize.Model<any, ThreadModel>;
@@ -419,14 +419,14 @@ export class Models {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, defaultValue: Sequelize.UUIDV4 },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } }
     });
-    
+
     this.defineModel("ConnectSession", {
       sid: { type: Sequelize.STRING(191), primaryKey: true },
       userId: { type: Sequelize.STRING(191) },
       expires: { type: Sequelize.DATE },
       data: { type: Sequelize.TEXT }
     });
-    
+
     this.defineModel("UserSettings", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
@@ -439,7 +439,7 @@ export class Models {
         fields: ["userId", "settingKey"]
       }]
     });
-    
+
     this.ChatGroup = this.defineModel("ChatGroup", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       type: { type: Sequelize.STRING(191), allowNull: false },
@@ -447,7 +447,7 @@ export class Models {
       imageUrl: { type: Sequelize.STRING(191) },
       archived: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false}
     });
-    
+
     this.Thread = this.defineModel("Thread", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       title: { type: Sequelize.STRING(191) },
@@ -467,7 +467,7 @@ export class Models {
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
       text: { type: Sequelize.STRING(191), allowNull: false }
     });
-    
+
     this.Message = this.defineModel("Message", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       threadId: { type: Sequelize.BIGINT, allowNull: false, references: { model: this.sequelize.models.Thread, key: "id" } },
@@ -475,14 +475,14 @@ export class Models {
       contents: { type: Sequelize.TEXT, allowNull: true },
       image: { type: Sequelize.TEXT, allowNull: true }
     });
-    
+
     this.defineModel("NewsArticle", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       title: { type: Sequelize.STRING(191), allowNull: false },
       contents: { type: "LONGTEXT", allowNull: false },
       imageUrl: { type: Sequelize.STRING(191), validate: { isUrl: true } }
     });
-    
+
     this.defineModel("ItemRead", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       userId: { type: Sequelize.STRING(191), allowNull: false, validate: { isUUID: 4 } },
@@ -494,7 +494,7 @@ export class Models {
         fields: ["userId", "itemId"]
       }]
     });
-    
+
     this.defineModel("ItemGroup", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       sapId: { type: Sequelize.STRING(191), allowNull: true },
@@ -581,7 +581,7 @@ export class Models {
       opens: { type: Sequelize.DATE, allowNull: false },
       closes: { type: Sequelize.DATE, allowNull: false }
     });
-    
+
     this.defineModel("Contract", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
@@ -617,7 +617,7 @@ export class Models {
         fields: ["sapId"]
       }]
     });
-    
+
     this.defineModel("DocumentTemplate", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       contents: { type: "LONGTEXT", allowNull: false },
@@ -642,7 +642,7 @@ export class Models {
         fields: ["type", "itemGroupId"]
       }]
     });
-    
+
     this.defineModel("ContractDocumentTemplate", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       externalId: { type: Sequelize.UUID, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
@@ -674,13 +674,13 @@ export class Models {
         fields: ["type", "contractId"]
       }]
     });
-    
+
     this.defineModel("OperationReport", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       externalId: { type: Sequelize.UUID, unique: true, validate: { isUUID: 4 }, defaultValue: Sequelize.UUIDV4 },
       type: { type: Sequelize.STRING(191), allowNull: false }
     });
-    
+
     this.defineModel("OperationReportItem", {
       id: { type: Sequelize.BIGINT, autoIncrement: true, primaryKey: true, allowNull: false },
       message: { type: "LONGBLOB", allowNull: true },
@@ -733,7 +733,7 @@ export class Models {
       text: { type: Sequelize.TEXT, allowNull: true },
       image: { type: Sequelize.STRING(191), allowNull: true },
     });
-    
+
     this.PublicFile = this.defineModel("PublicFile", {
       id: { type: Sequelize.UUID, primaryKey: true, allowNull: false, validate: { isUUID: 4 } },
       url: { type: Sequelize.STRING(191), allowNull: false }
@@ -772,12 +772,12 @@ export class Models {
       name: { type: Sequelize.STRING(191), allowNull: false },
       data: { type: "LONGTEXT", allowNull: false }
     });
-    
+
   }
 
   /**
    * Defines new database model.
-   * 
+   *
    * @param {String} name model name
    * @param {Object} attributes model attributes
    * @param {Object} options model options
@@ -824,9 +824,9 @@ export class Models {
 
     console.log(`export interface ${name}Model {\n${properties.join(",\n")}\n}\n`);
   }
-  
+
   // User settings
-  
+
   upsertUserSetting(userId: string, settingKey: string, settingValue: string) {
     return this.sequelize.models.UserSettings.upsert({
       userId: userId,
@@ -834,7 +834,7 @@ export class Models {
       settingValue: settingValue
     });
   }
-  
+
   getUserSettings(userId: string) {
     return this.sequelize.models.UserSettings.findAll({ where: { userId: userId } });
   }
@@ -843,28 +843,28 @@ export class Models {
     return this.sequelize.models.UserSettings.findOne({ where: { userId: userId, settingKey: settingKey } });
   }
   // Sessions
-  
+
   findSession(id: number) {
     return this.sequelize.models.Session.findOne({ where: { id : id } });
   }
-  
+
   createSession(userId: string) {
     return this.sequelize.models.Session.create({
       userId: userId
     });
   }
-  
+
   deleteSession(id: number) {
     return this.sequelize.models.Session.destroy({ where: { id : id } });
   }
 
   /**
    * Creates new chat group
-   * 
+   *
    * @param type chat group type
    * @param title chat group title
-   * @param imageUrl chat group image url 
-   * @returns Promise for created chat group  
+   * @param imageUrl chat group image url
+   * @returns Promise for created chat group
    */
   public createChatGroup(type: "CHAT" | "QUESTION", title: string, imageUrl: string | null): PromiseLike<ChatGroupModel> {
     return this.ChatGroup.create({
@@ -876,9 +876,9 @@ export class Models {
 
   /**
    * Finds single chat group from the database
-   * 
+   *
    * @param id chat group id
-   * @returns Promise for found chat group or null if not found  
+   * @returns Promise for found chat group or null if not found
    */
   public findChatGroup(id: number): PromiseLike<ChatGroupModel> {
     return this.ChatGroup.findOne({ where: { id : id } });
@@ -886,7 +886,7 @@ export class Models {
 
   /**
    * Lists chat groups
-   * 
+   *
    * @param type filter by group type
    * @param firstResult first result
    * @param maxResults max results
@@ -899,8 +899,8 @@ export class Models {
       where.type = type;
     }
 
-    return this.ChatGroup.findAll({ 
-      where: where, 
+    return this.ChatGroup.findAll({
+      where: where,
       offset: firstResult,
       limit: maxResults,
       order: [ [ "id", "ASC" ] ]
@@ -909,8 +909,8 @@ export class Models {
 
   /**
    * Updates chat group
-   * 
-   * @param id thread id 
+   *
+   * @param id thread id
    * @param title title
    * @param imageUrl image url
    */
@@ -925,10 +925,10 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Deletes chat group
-   * 
+   *
    * @param id id
    * @return promise for delete
    */
@@ -938,7 +938,7 @@ export class Models {
 
   /**
    * Creates new thread
-   * 
+   *
    * @param {Number} groupId owner id
    * @param {String} ownerId owner id
    * @param {String} title title
@@ -963,35 +963,35 @@ export class Models {
       archived: false
     } as any);
   }
-  
+
   /**
    * Finds single thread from the database
-   * 
+   *
    * @param id thread id
-   * @returns Promise for found thread or null if not found  
+   * @returns Promise for found thread or null if not found
    */
   public findThread(id: number): PromiseLike<ThreadModel> {
     return this.Thread.findOne({ where: { id : id } });
   }
 
   /**
-   * Finds single thread by chat group id and owner id 
-   * 
+   * Finds single thread by chat group id and owner id
+   *
    * @param groupId chatGroupId
-   * @returns Promise for found thread or null if not found  
+   * @returns Promise for found thread or null if not found
    */
   public findThreadByGroupIdAndOwnerId(groupId: number, ownerId: string): PromiseLike<ThreadModel> {
-    return this.Thread.findOne({ 
-      where: { 
-        groupId : groupId, 
-        ownerId: ownerId 
-      } 
+    return this.Thread.findOne({
+      where: {
+        groupId : groupId,
+        ownerId: ownerId
+      }
     });
   }
 
   /**
    * Lists threads
-   * 
+   *
    * @param groupIds filter by group ids
    * @param ownerId owner id (optional)
    * @param firstResult first result
@@ -1009,18 +1009,18 @@ export class Models {
       where.ownerId = ownerId;
     }
 
-    return this.Thread.findAll({ 
-      where: where, 
-      offset: firstResult, 
-      limit: maxResults,       
+    return this.Thread.findAll({
+      where: where,
+      offset: firstResult,
+      limit: maxResults,
       order: [ [ "id", "ASC" ] ]
     });
   }
 
   /**
    * Updates thread
-   * 
-   * @param {Number} id thread id 
+   *
+   * @param {Number} id thread id
    * @param {String} ownerId owner id
    * @param {String} title title
    * @param {String} description description
@@ -1050,8 +1050,8 @@ export class Models {
 
   /**
    * Updates thread title
-   * 
-   * @param id thread id 
+   *
+   * @param id thread id
    * @param title title
    */
   public updateThreadTitle(id: number, title: string) {
@@ -1066,7 +1066,7 @@ export class Models {
 
   /**
    * Archives a thread
-   * 
+   *
    * @param id thread id
    * @return promise for update
    */
@@ -1075,26 +1075,26 @@ export class Models {
   }
   /**
    * Deletes a thread
-   * 
+   *
    * @param id id
    * @return promise for delete
    */
   public deleteThread(id: number) {
     return this.Thread.destroy({ where: { id : id } });
   }
-  
+
   // Messages
-  
+
   /**
    * Creates new chat message
-   * 
+   *
    * @param threadId thread id
    * @param userId user id
    * @param contents contents
    * @returns created message
    */
   public createMessage(threadId: number, userId: string, contents: string | null, image: string | null): PromiseLike<MessageModel> {
-    return this.Message.create({ 
+    return this.Message.create({
       threadId: threadId,
       userId: userId,
       contents: contents,
@@ -1104,35 +1104,35 @@ export class Models {
 
   /**
    * Finds a chat message
-   * 
+   *
    * @param id id
    * @returns found message or null if not found
    */
   public findMessage(id: number) {
     return this.Message.findOne({ where: { id : id } });
   }
-  
+
   /**
-   * Finds last message posted into a thread by user 
-   * 
-   * @param {Number} threadId thread id 
+   * Finds last message posted into a thread by user
+   *
+   * @param {Number} threadId thread id
    * @param {String} userId contract's user id
    * @return {Object} last message posted into a thread by user or null if not found
    */
   public findLastMessageByThreadIdAndUserId(threadId: number, userId: string): PromiseLike<MessageModel | null> {
-    return this.Message.findOne({ 
-      where: { 
+    return this.Message.findOne({
+      where: {
         threadId: threadId,
-        userId: userId 
-      }, 
-      limit: 1, 
-      order: [ [ "createdAt", "DESC" ] ] 
+        userId: userId
+      },
+      limit: 1,
+      order: [ [ "createdAt", "DESC" ] ]
     });
   }
 
   /**
    * Lists messages by thread id
-   * 
+   *
    * @param threadId thread id
    * @param firstResult first result
    * @param maxResults max results
@@ -1142,13 +1142,13 @@ export class Models {
     if (!threadId) {
       return Bluebird.resolve([]);
     }
-    
+
     return this.sequelize.models.Message.findAll({ where: { threadId : threadId }, offset: firstResult, limit: maxResults, order: [ [ "createdAt", "DESC" ] ] });
   }
 
   /**
    * Lists messages
-   * 
+   *
    * @param threadId thread id
    * @param createdBefore created before
    * @param createdAfter created after
@@ -1184,18 +1184,18 @@ export class Models {
       where.userId = userId;
     }
 
-    return this.sequelize.models.Message.findAll({ 
-      where: where, 
-      offset: firstResult, 
-      limit: maxResults, 
+    return this.sequelize.models.Message.findAll({
+      where: where,
+      offset: firstResult,
+      limit: maxResults,
       order: [ [ "createdAt", "DESC" ] ] });
   }
 
   /**
    * Updates a message
-   * 
+   *
    * @param id id
-   * @param contents contents 
+   * @param contents contents
    * @return promise for update
    */
   public updateMessage(id: number, contents: string | null, image: string | null): PromiseLike<[number, any]> {
@@ -1208,20 +1208,20 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Returns last message creation date for given set of threads
-   * 
+   *
    * @param threadIds thread ids
    * @return promise for last message creation date for given set of threads
    */
   public getLatestMessageCreatedByThreadIds(threadIds: number[]) {
     return this.sequelize.models.Message.max("createdAt", { where: { threadId: { $in: threadIds } } });
   }
-  
+
   /**
    * Deletes a message
-   * 
+   *
    * @param id id
    * @return promise for delete
    */
@@ -1231,24 +1231,24 @@ export class Models {
 
   /**
    * Counts messages in a thread
-   * 
+   *
    * @param threadId thread id
    * @returns promise for message count
    */
   public countMessagesByThread(threadId: number): PromiseLike<number> {
-    return this.sequelize.models.Message.count({ 
+    return this.sequelize.models.Message.count({
       where: {
         threadId : threadId
       }
     });
   }
-  
+
   // News Articles
-  
+
   /**
    * Creates new article
-   * 
-   * @param title title 
+   *
+   * @param title title
    * @param contents contents
    * @param imageUrl image URL
    * @returns promise for news article
@@ -1260,20 +1260,20 @@ export class Models {
       imageUrl: imageUrl
     });
   }
-  
+
   /**
    * Finds an new article
-   * 
+   *
    * @param id news article id
    * @returns promise for news article or null if not found
    */
   findNewsArticleById(id: number): PromiseLike<NewsArticleModel | null> {
     return this.sequelize.models.NewsArticle.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Lists news articles
-   * 
+   *
    * @param firstResult first result
    * @param maxResults max results
    * @returns promise for news articles
@@ -1281,12 +1281,12 @@ export class Models {
   listNewsArticles(firstResult?: number, maxResults?: number): PromiseLike<NewsArticleModel[]> {
     return this.sequelize.models.NewsArticle.findAll({ offset: firstResult, limit: maxResults });
   }
-  
+
   /**
    * Updates new article
-   * 
+   *
    * @param id news article id
-   * @param title title 
+   * @param title title
    * @param contents contents
    * @param imageUrl image URL
    * @param silentUpdate silent update
@@ -1304,23 +1304,23 @@ export class Models {
       silent: silentUpdate ? silentUpdate : false
     });
   }
-  
+
   /**
    * Deletes a news article
-   * 
+   *
    * @param id news article id
    * @returns promise for delete
    */
   deleteNewsArticle(id: number): PromiseLike<number> {
     return this.sequelize.models.NewsArticle.destroy({ where: {id: id} });
   }
-  
+
   // Public files
-  
+
   /**
    * Creates public file
-   * 
-   * @param url url 
+   *
+   * @param url url
    * @returns promise for public file
    */
   public createPublicFile(id: string, url: string): PromiseLike<PublicFileModel> {
@@ -1329,20 +1329,20 @@ export class Models {
       url: url
     });
   }
-  
+
   /**
    * Finds a public file
-   * 
+   *
    * @param id public file id
    * @returns promise for public file or null if not found
    */
   public findPublicFileById(id: number): PromiseLike<PublicFileModel | null> {
     return this.PublicFile.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Lists public files
-   * 
+   *
    * @param firstResult first result
    * @param maxResults max results
    * @returns promise for public files
@@ -1350,12 +1350,12 @@ export class Models {
   public listPublicFiles(firstResult?: number, maxResults?: number): PromiseLike<PublicFileModel[]> {
     return this.PublicFile.findAll({ offset: firstResult, limit: maxResults });
   }
-  
+
   /**
    * Updates public file
-   * 
+   *
    * @param id public file id
-   * @param url url 
+   * @param url url
    * @returns promise for update
    */
   public updatePublicFile(id: number, url: string): PromiseLike<[number, any]> {
@@ -1367,10 +1367,10 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Deletes a public file
-   * 
+   *
    * @param id public file id
    * @returns promise for delete
    */
@@ -1379,22 +1379,22 @@ export class Models {
   }
 
   // ItemRead
-  
+
   createItemRead(itemId: number, userId: string) {
     return this.sequelize.models.ItemRead.create({
         itemId: itemId,
         userId: userId
     });
   }
-  
+
   findItemRead(itemId: number, userId: string) {
     return this.sequelize.models.ItemRead.findOne({ where: { userId: userId, itemId: itemId } });
   }
-  
+
   findItemReads(itemIds: number[], userId: string) {
     return this.sequelize.models.ItemRead.findAll({ where: { userId: userId, itemId: { $in: itemIds } } });
   }
-  
+
   updateItemRead(id: number, itemId: number, userId: string) {
     return this.sequelize.models.ItemRead.update({
       itemId: itemId,
@@ -1405,47 +1405,47 @@ export class Models {
       }
     });
   }
-  
+
   upsertItemRead(itemId: number, userId: string) {
     return this.findItemRead(itemId, userId)
       .then((itemRead) => {
         if (itemRead) {
-          return this.updateItemRead(itemRead.id, itemId, userId);  
+          return this.updateItemRead(itemRead.id, itemId, userId);
         } else {
           return this.createItemRead(itemId, userId);
         }
       });
   }
-  
+
   // QuestionGroupUserGroupRole
-  
+
   createQuestionGroupUserGroupRole(questionGroupId: number, userGroupId: number, role: string) {
     return this.sequelize.models.QuestionGroupUserGroupRole.create({
-      questionGroupId: questionGroupId, 
+      questionGroupId: questionGroupId,
       userGroupId: userGroupId,
       role: role
     });
   }
-  
+
   findQuestionGroupUserGroupRole(questionGroupId: number, userGroupId: number) {
     return this.sequelize.models.QuestionGroupUserGroupRole.findOne({ where: { questionGroupId: questionGroupId, userGroupId: userGroupId } });
   }
-  
+
   listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId: number) {
     return this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : questionGroupId } });
   }
-  
+
   listQuestionGroupUserGroupRolesByQuestionGroupIds(questionGroupIds: number[]) {
     return this.sequelize.models.QuestionGroupUserGroupRole.findAll({ where: { questionGroupId : { $in: questionGroupIds } } });
   }
-  
+
   listQuestionGroupUserGroupIds(questionGroupId: number) {
     return this.listQuestionGroupUserGroupRolesByQuestionGroupId(questionGroupId)
       .then((questionGroupUserGroupRole) => {
         return _.map(questionGroupUserGroupRole, "userGroupId");
       });
   }
-  
+
   updateQuestionGroupUserGroupRole(id: number, role: string) {
     return this.sequelize.models.QuestionGroupUserGroupRole.update({
       role: role
@@ -1455,23 +1455,23 @@ export class Models {
       }
     });
   }
-  
+
   upsertQuestionGroupUserGroupRole(questionGroupId: number, userGroupId: number, role: string) {
     return this.findQuestionGroupUserGroupRole(questionGroupId, userGroupId)
       .then((questionGroupUserGroupRole) => {
         if (questionGroupUserGroupRole) {
-          return this.updateQuestionGroupUserGroupRole(questionGroupUserGroupRole.id, role);  
+          return this.updateQuestionGroupUserGroupRole(questionGroupUserGroupRole.id, role);
         } else {
           return this.createQuestionGroupUserGroupRole(questionGroupId, userGroupId, role);
         }
       });
   }
-  
+
   // ItemGroups
-  
+
   /**
    * new item group
-   * 
+   *
    * @param {String} sapId sapId
    * @param {String} name name
    * @param {String} displayName display name
@@ -1490,10 +1490,10 @@ export class Models {
       prerequisiteContractItemGroupId: prerequisiteContractItemGroupId
     });
   }
-  
+
   /**
    * Updates item group
-   * 
+   *
    * @param {int} id item group id
    * @param {String} name name
    * @param {String} displayName displayName
@@ -1515,40 +1515,40 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Finds a item group by id
-   * 
+   *
    * @param {int} id item group id
    * @return {Promise} promise for item group
    */
   findItemGroupById(id: number): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Finds a item group by externalId
-   * 
+   *
    * @param {String} externalId item group externalId
    * @return {Promise} promise for item group
    */
   findItemGroupByExternalId(externalId: string): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { externalId : externalId } });
   }
-  
+
   /**
    * Finds a item group by sapId
-   * 
+   *
    * @param {String} sapId item group sapId
    * @return {Promise} promise for item group
    */
   findItemGroupBySapId(sapId: string): Bluebird<ItemGroupModel> {
     return this.sequelize.models.ItemGroup.findOne({ where: { sapId : sapId } });
   }
-  
+
   /**
    * Lists item groups
-   * 
+   *
    * @param {int} firstResult first result
    * @param {int} maxResults max results
    * @return {Promise} promise for item groups
@@ -1559,10 +1559,10 @@ export class Models {
   }
 
   /**
-   * Creates a where clause for listing item groups. 
-   * 
+   * Creates a where clause for listing item groups.
+   *
    * All parameters are optional and ignored if not given
-   * 
+   *
    * @param contractUserId contractUserId
    */
   private createItemGroupsWhere(contractUserId: string | null) {
@@ -1580,14 +1580,14 @@ export class Models {
 
     if (contractUserSQL) {
       where.id = { [Sequelize.Op.in]: this.sequelize.literal(`(${contractUserSQL})`) };
-    } 
+    }
 
     return where;
   }
-  
+
   /**
    * Deletes an item group
-   * 
+   *
    * @param {int} id item group id
    * @return {Promise} promise that resolves on successful removal
    */
@@ -1596,10 +1596,10 @@ export class Models {
   }
 
   // ItemGroupPrice
-  
+
   /**
    * new item group price
-   * 
+   *
    * @param {int} itemGroupId item group id
    * @param {String} groupName group
    * @param {String} unit unit
@@ -1616,32 +1616,32 @@ export class Models {
       year: year
     });
   }
-    
+
   /**
    * Finds a item group price by id
-   * 
+   *
    * @param {int} id item group id
    * @return {Promise} promise for item group
    */
   findItemGroupPriceById(id: number): Bluebird<ItemGroupPriceModel> {
     return this.sequelize.models.ItemGroupPrice.findOne({ where: { id : id } });
   }
-    
+
   /**
    * Finds an item group price by externalId
-   * 
+   *
    * @param {String} externalId item group external id
    * @return {Promise} promise for delivery place
    */
   findItemGroupPriceByExternalId(externalId: string): Bluebird<ItemGroupPriceModel> {
     return this.sequelize.models.ItemGroupPrice.findOne({ where: { externalId : externalId } });
   }
-    
+
   /**
    * Lists item group prices.
-   * 
+   *
    * All parameters are optional and ignored if not given
-   * 
+   *
    * @param {int} itemGroupId item group id
    * @param {int} firstResult first result
    * @param {int} maxResults max results
@@ -1660,9 +1660,9 @@ export class Models {
       where.year = year;
     }
 
-    return this.sequelize.models.ItemGroupPrice.findAll({ 
+    return this.sequelize.models.ItemGroupPrice.findAll({
       where: where,
-      offset: firstResult || undefined, 
+      offset: firstResult || undefined,
       limit: maxResults || undefined,
       order: [[ orderBy || "createdAt", orderDir || "DESC" ] ]
     });
@@ -1670,7 +1670,7 @@ export class Models {
 
   /**
    * Update item group price
-   * 
+   *
    * @param {int} id item group id
    * @param {int} itemGroupId item group id
    * @param {String} groupName group
@@ -1695,19 +1695,19 @@ export class Models {
 
   /**
    * Deletes an item group price
-   * 
+   *
    * @param {int} id item group price id
    * @return {Promise} promise that resolves on successful removal
    */
   deleteItemGroupPrice(id: number): Bluebird<number> {
     return this.sequelize.models.ItemGroupPrice.destroy({ where: { id : id } });
-  }    
-  
+  }
+
   // DeliveryPlaces
-  
+
   /**
    * new delivery place
-   * 
+   *
    * @param {String} sapId sapId
    * @param {String} name name
    * @return {Promise} promise for created delivery place
@@ -1718,40 +1718,40 @@ export class Models {
       name: name
     });
   }
-    
+
   /**
    * Finds a delivery place by id
-   * 
+   *
    * @param {int} id delivery place id
    * @return {Promise} promise for delivery place
    */
   findDeliveryPlaceById(id: number) {
     return this.sequelize.models.DeliveryPlace.findOne({ where: { id : id } });
   }
-    
+
   /**
    * Finds a delivery place by externalId
-   * 
+   *
    * @param {String} externalId delivery place externalId
    * @return {Promise} promise for delivery place
    */
   findDeliveryPlaceByExternalId(externalId: string) {
     return this.sequelize.models.DeliveryPlace.findOne({ where: { externalId : externalId } });
   }
-    
+
   /**
    * Finds a delivery place by sapId
-   * 
+   *
    * @param {String} sapId delivery place sapId
    * @return {Promise} promise for delivery place
    */
   findDeliveryPlaceBySapId(sapId: string) {
     return this.sequelize.models.DeliveryPlace.findOne({ where: { sapId : sapId } });
   }
-    
+
   /**
    * Lists delivery places
-   * 
+   *
    * @param {int} firstResult first result
    * @param {int} maxResults max results
    * @return {Promise} promise for delivery places
@@ -1763,10 +1763,10 @@ export class Models {
       limit: maxResults
     });
   }
-    
+
   /**
    * Updates delivery place
-   * 
+   *
    * @param {int} id delivery place id
    * @param {String} name name
    * @return {Promise} promise for updated delivery place
@@ -1780,10 +1780,10 @@ export class Models {
       }
     });
   }
-    
+
   /**
    * Deletes an delivery place
-   * 
+   *
    * @param {int} id delivery place id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -1795,7 +1795,7 @@ export class Models {
 
   /**
    * Creates new opening hour period
-   * 
+   *
    * @param deliveryPlaceId delivery place id
    * @param beginDate time when period begins
    * @param endDate time when period ends
@@ -1811,7 +1811,7 @@ export class Models {
 
   /**
    * Lists opening hour periods
-   * 
+   *
    * @param deliveryPlaceId delivery place
    * @param rangeStart date range start. Ignored if null
    * @param rangeEnd date range end. Ignored if null
@@ -1826,7 +1826,7 @@ export class Models {
       deliveryPlaceId: deliveryPlaceId
     };
 
-    if (rangeStart || rangeEnd) {
+    if (rangeStart || rangeEnd) {
       const range: any = {};
 
       if (rangeStart) {
@@ -1843,8 +1843,8 @@ export class Models {
     const options: any = {
       where: where,
       order: [ [ "endDate", "DESC" ] ],
-      offset: firstResult || undefined,
-      limit: maxResults || undefined
+      offset: firstResult || undefined,
+      limit: maxResults || undefined
     };
 
     return this.sequelize.models.OpeningHourPeriod.findAll(options);
@@ -1852,7 +1852,7 @@ export class Models {
 
   /**
    * Finds an opening hour period by externalId
-   * 
+   *
    * @param {string} externalId opening hour period externalId
    * @returns {Promise} promise for found opening hour period
    */
@@ -1862,7 +1862,7 @@ export class Models {
 
   /**
    * Updates opening hour period
-   * 
+   *
    * @param {number} id opening hour period id
    * @param {Date} beginDate time when period begins
    * @param {Date} endDate time when period ends
@@ -1877,7 +1877,7 @@ export class Models {
 
   /**
    * Deletes an opening hour period
-   * 
+   *
    * @param id opening hour period id
    * @returns Promise that resolves on successful removal
    */
@@ -1889,7 +1889,7 @@ export class Models {
 
   /**
    * Creates new opening hour day
-   * 
+   *
    * @param {number} periodId opening hour period id
    * @param {string} dayType week day
    */
@@ -1902,7 +1902,7 @@ export class Models {
 
   /**
    * Lists opening hour days
-   * 
+   *
    * @param {number} periodId opening hour period id
    * @returns {Promise} promise for list of opening hour days
    */
@@ -1912,7 +1912,7 @@ export class Models {
 
   /**
    * Deletes opening hour days by period id
-   * 
+   *
    * @param {number} periodId opening hour period id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -1922,7 +1922,7 @@ export class Models {
 
   /**
    * Creates new opening hour day interval
-   * 
+   *
    * @param {number} dayId opening hour day id
    * @param {Date} opens opening time
    * @param {Date} closes closing time
@@ -1938,7 +1938,7 @@ export class Models {
 
   /**
    * Lists opening hour day intervals
-   * 
+   *
    * @param {number} dayId opening hour day id
    * @returns {Promise} promise for listed opening hour day intervals
    */
@@ -1948,7 +1948,7 @@ export class Models {
 
   /**
    * Finds opening hour day interval by external id
-   * 
+   *
    * @param {string} externalId external id
    * @returns {Promise} promise for found opening hour day interval
    */
@@ -1958,7 +1958,7 @@ export class Models {
 
   /**
    * Updates an opening hour day interval
-   * 
+   *
    * @param {number} externalId external id
    * @param {Date} opens opening time
    * @param {Date} closes closing time
@@ -1973,7 +1973,7 @@ export class Models {
 
   /**
    * Deletes an opening hour day interval
-   * 
+   *
    * @param {number} id interval id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -1983,7 +1983,7 @@ export class Models {
 
   /**
    * Deletes an opening hour day intervals by day id
-   * 
+   *
    * @param {number} dayId opening hour day id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -1993,7 +1993,7 @@ export class Models {
 
   /**
    * Creates new opening hour exception
-   * 
+   *
    * @param {number} deliveryPlaceId delivery place id
    * @param {Date} exceptionDate date of exception
    * @returns {Promise} promise for created opening hour exception
@@ -2007,7 +2007,7 @@ export class Models {
 
   /**
    * Lists opening hour exceptions
-   * 
+   *
    * @param {number} deliveryPlaceId delivery place id
    * @returns {Promise} promise for list of opening hour exceptions
    */
@@ -2017,7 +2017,7 @@ export class Models {
 
   /**
    * Lists opening hour exceptions by delivery place and date range.
-   * 
+   *
    * @param deliveryPlaceId delivery place
    * @param rangeStart date range start
    * @param rangeEnd date range end
@@ -2037,7 +2037,7 @@ export class Models {
 
   /**
    * Finds an opening hour exception
-   * 
+   *
    * @param {string} externalId external id
    * @return {Promise} promise for found opening hour exception
    */
@@ -2049,7 +2049,7 @@ export class Models {
 
   /**
    * Updates an opening hour exception
-   * 
+   *
    * @param {string} externalId external id
    * @param {Date} exceptionDate date of exception
    * @returns {Promise} promise for number of updated rows
@@ -2063,7 +2063,7 @@ export class Models {
 
   /**
    * Deletes an opening hour exception
-   * 
+   *
    * @param {number} id id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -2073,7 +2073,7 @@ export class Models {
 
   /**
    * Creates new opening hour exception interval
-   * 
+   *
    * @param {number} exceptionId exception id
    * @param {Date} opens opening time
    * @param {Date} closes closing time
@@ -2089,7 +2089,7 @@ export class Models {
 
   /**
    * Lists opening hour exception intervals
-   * 
+   *
    * @param {number} exceptionId opening hour exception id
    * @returns {Promise} promise for list of opening hour exception intervals
    */
@@ -2099,7 +2099,7 @@ export class Models {
 
   /**
    * Finds opening hour exception interval
-   * 
+   *
    * @param {number} id opening hour id
    * @returns {Promise} promise for found opening hour exception interval
    */
@@ -2109,7 +2109,7 @@ export class Models {
 
   /**
    * Updates an opening hour exception interval
-   * 
+   *
    * @param {string} externalId external id
    * @param {Date} opens opening time
    * @param {Date} closes closing time
@@ -2124,7 +2124,7 @@ export class Models {
 
   /**
    * Deletes an opening hour exception interval
-   * 
+   *
    * @param {number} id id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -2134,7 +2134,7 @@ export class Models {
 
   /**
    * Deletes opening hour exception intervals by exception id
-   * 
+   *
    * @param {number} exceptionId exception id
    * @returns {Promise} promise that resolves on successful removal
    */
@@ -2146,7 +2146,7 @@ export class Models {
 
   /**
    * Create new contract
-   * 
+   *
    * @param userId contract's user id
    * @param year year
    * @param deliveryPlaceId delivery place id
@@ -2157,7 +2157,7 @@ export class Models {
    * @param deliveredQuantity delivered quantity
    * @param proposedQuantity proposed quantity
    * @param startDate start date
-   * @param endDate end date 
+   * @param endDate end date
    * @param signDate sign date
    * @param termDate term date
    * @param status status
@@ -2168,13 +2168,13 @@ export class Models {
    * @param deliveryPlaceComment delivery place comment
    * @param quantityComment quantity comment
    * @param rejectComment reject  comment
-   * 
+   *
    * @returns {Promise} promise for new contract
    */
-  public createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
-    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
-    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+  public createContract(userId: string, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number,
+    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null,
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null,
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null,
     quantityComment: string|null, rejectComment: string|null): PromiseLike<ContractModel> {
 
     return this.sequelize.models.Contract.create({
@@ -2192,7 +2192,7 @@ export class Models {
       signDate: signDate,
       termDate: termDate,
       status: status,
-      areaDetails: areaDetails, 
+      areaDetails: areaDetails,
       deliverAll: deliverAll,
       proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
@@ -2203,11 +2203,11 @@ export class Models {
   }
 
   /**
-   * Updates a contract status 
-   * 
-   * @param {int} id 
-   * @param {String} status 
-   * 
+   * Updates a contract status
+   *
+   * @param {int} id
+   * @param {String} status
+   *
    * @returns {Promise} promise for update
    */
   public updateContractStatus(id: number, status: string): Bluebird<[number, any]> {
@@ -2221,11 +2221,11 @@ export class Models {
   }
 
   /**
-   * Updates a contract sapId 
-   * 
-   * @param {int} id 
-   * @param {String} sapId 
-   * 
+   * Updates a contract sapId
+   *
+   * @param {int} id
+   * @param {String} sapId
+   *
    * @returns {Promise} promise for update
    */
   public updateContractSapId(id: number, sapId: string): Bluebird<[number, any]> {
@@ -2239,11 +2239,11 @@ export class Models {
   }
 
   /**
-   * Updates a contract deliveredQuantity 
-   * 
-   * @param {int} id 
-   * @param {String} deliveredQuantity 
-   * 
+   * Updates a contract deliveredQuantity
+   *
+   * @param {int} id
+   * @param {String} deliveredQuantity
+   *
    * @returns {Promise} promise for update
    */
   public updateContractDeliveredQuantity(id: number, deliveredQuantity: string): Bluebird<[number, any]> {
@@ -2257,8 +2257,8 @@ export class Models {
   }
 
   /**
-   * Updates a contract 
-   * 
+   * Updates a contract
+   *
    * @param id contract id
    * @param userId contract's user id
    * @param year year
@@ -2271,7 +2271,7 @@ export class Models {
    * @param deliveredQuantity delivered quantity
    * @param proposedQuantity proposed quantity
    * @param startDate start date
-   * @param endDate end date 
+   * @param endDate end date
    * @param signDate sign date
    * @param termDate term date
    * @param status status
@@ -2281,13 +2281,13 @@ export class Models {
    * @param deliveryPlaceComment delivery place comment
    * @param quantityComment quantity comment
    * @param rejectComment reject  comment
-   * 
+   *
    * @returns {Promise} promise for update
    */
-  public updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number, 
-    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null, 
-    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null, 
-    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null, 
+  public updateContract(id: number, year: number, deliveryPlaceId: number, proposedDeliveryPlaceId: number,
+    itemGroupId: number, sapId: string|null,  contractQuantity: number|null, deliveredQuantity: number|null, proposedQuantity: number|null,
+    startDate: Date|null, endDate: Date|null, signDate: Date|null, termDate: Date|null, status: string, areaDetails: string|null,
+    deliverAll: boolean, proposedDeliverAll: boolean, remarks: string|null, deliveryPlaceComment: string|null,
     quantityComment: string|null, rejectComment: string|null): Bluebird<[number, any]> {
 
     return this.sequelize.models.Contract.update({
@@ -2304,7 +2304,7 @@ export class Models {
       signDate: signDate,
       termDate: termDate,
       status: status,
-      areaDetails: areaDetails, 
+      areaDetails: areaDetails,
       deliverAll: deliverAll,
       proposedDeliverAll: proposedDeliverAll,
       remarks: remarks,
@@ -2320,27 +2320,27 @@ export class Models {
 
   /**
    * Finds a contract by id
-   * 
+   *
    * @param {int} id contract id
    * @return {Promise} promise for contract
    */
   public findContractById(id: number): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Finds a contract by externalId
-   * 
+   *
    * @param {String} externalId contract externalId
    * @return {Promise} promise for contract
    */
   public findContractByExternalId(externalId: string): Bluebird<ContractModel> {
     return this.sequelize.models.Contract.findOne({ where: { externalId : externalId } });
   }
-  
+
   /**
    * Finds a contract by sapId
-   * 
+   *
    * @param {String} sapId contract sapId
    * @return {Promise} promise for contract
    */
@@ -2349,10 +2349,10 @@ export class Models {
   }
 
   /**
-   * Lists contracts. 
-   * 
+   * Lists contracts.
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param {String} userId user id
    * @param {String} itemGroupCategory item group category
    * @param {String} itemGroupId item group id
@@ -2365,22 +2365,22 @@ export class Models {
   public listContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null, firstResult?: number, maxResults?: number): Bluebird<ContractModel[]> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
-    return this.sequelize.models.Contract.findAll({ 
-      where: where, 
-      offset: firstResult, 
+    return this.sequelize.models.Contract.findAll({
+      where: where,
+      offset: firstResult,
       limit: maxResults
     });
   }
 
   /**
    * Lists contracts sap id is not null and have a specified status
-   * 
+   *
    * @param status contract status
    * @param year contract year
    * @return promise of contracts
    */
   public listContractsByStatusAndYear(status: string, year: number): Bluebird<ContractModel[]> {
-    return this.sequelize.models.Contract.findAll({ 
+    return this.sequelize.models.Contract.findAll({
       where: {
         status: status,
         year: year
@@ -2390,12 +2390,12 @@ export class Models {
 
   /**
    * Lists contracts sap id is not null and have a specified status
-   * 
+   *
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
   public listContractsByStatusAndSapIdNotNull(status: string): Bluebird<ContractModel[]> {
-    return this.sequelize.models.Contract.findAll({ 
+    return this.sequelize.models.Contract.findAll({
       where: {
         status: status,
         sapId: {
@@ -2407,12 +2407,12 @@ export class Models {
 
   /**
    * Lists contracts sap id is null and have a specified status
-   * 
+   *
    * @param {String} status status
    * @return {Promise} promise for contracts
    */
   public listContractsByStatusAndSapIdIsNull(status: string): Bluebird<ContractModel[]> {
-    return this.sequelize.models.Contract.findAll({ 
+    return this.sequelize.models.Contract.findAll({
       where: {
         status: status,
         sapId: {
@@ -2423,10 +2423,10 @@ export class Models {
   }
 
   /**
-   * Counts contracts. 
-   * 
+   * Counts contracts.
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param {String} userId user id
    * @param {String} itemGroupCategory item group category
    * @param {String} itemGroupId item group id
@@ -2437,16 +2437,16 @@ export class Models {
   public countContracts(userId: string | null, itemGroupCategory: number | null, itemGroupId: number | null, year: number | null, status: string | null): Bluebird<number> {
     const where = this.createListContractsWhere(userId, itemGroupCategory, itemGroupId, year, status);
 
-    return this.sequelize.models.Contract.count({ 
+    return this.sequelize.models.Contract.count({
       where: where
     });
   }
 
   /**
-   * Creates a where clause for listing / counting contracts. 
-   * 
+   * Creates a where clause for listing / counting contracts.
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param {String} userId user id
    * @param {String} itemGroupCategory item group category
    * @param {String} itemGroupId item group id
@@ -2484,22 +2484,22 @@ export class Models {
 
     return where;
   }
-  
+
   /**
    * Deletes an contract
-   * 
+   *
    * @param {int} id contract id
    * @return {Promise} promise that resolves on successful removal
    */
   public deleteContract(id: number): Bluebird<number> {
     return this.sequelize.models.Contract.destroy({ where: { id : id } });
   }
-  
+
   // DocumentTemplate
 
   /**
    * Creates new document template
-   * 
+   *
    * @param {String} contents contents HTML
    * @param {String} header header HTML
    * @param {String} footer footer HTML
@@ -2511,10 +2511,10 @@ export class Models {
       footer: footer
     });
   }
-  
+
   /**
    * Finds a document template by id
-   * 
+   *
    * @param {int} id document template id
    * @return {Promise} promise for document template
    */
@@ -2524,7 +2524,7 @@ export class Models {
 
   /**
    * Updates a document template
-   * 
+   *
    * @param {int} id document template id
    * @param {String} contents template contents
    * @param {String} header template header
@@ -2533,7 +2533,7 @@ export class Models {
    */
   updateDocumentTemplate(id: number, contents: string, header: string|null, footer: string|null) {
     return this.sequelize.models.DocumentTemplate.update({
-      contents: contents, 
+      contents: contents,
       header: header,
       footer: footer
     }, {
@@ -2542,12 +2542,12 @@ export class Models {
       }
     });
   }
-  
+
   // ContractDocumentTemplate
-    
+
   /**
    * Creates new contract document template
-   * 
+   *
    * @param {String} type type
    * @param {int} contractId contract id
    * @param {int} documentTemplateId document template id
@@ -2562,17 +2562,17 @@ export class Models {
 
   /**
    * Finds a contract document template by externalId
-   * 
+   *
    * @param {String} externalId external id
    * @return {Promise} promise for contract document template
    */
   findContractDocumentTemplateByExternalId(externalId: string): Bluebird<ContractDocumentTemplateModel> {
     return this.sequelize.models.ContractDocumentTemplate.findOne({ where: { externalId: externalId } });
   }
-    
+
   /**
    * Finds a contract document template by type and contract id
-   * 
+   *
    * @param {String} type document template type
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document template
@@ -2580,22 +2580,22 @@ export class Models {
   findContractDocumentTemplateByTypeAndContractId(type: string, contractId: number): Bluebird<ContractDocumentTemplateModel> {
     return this.sequelize.models.ContractDocumentTemplate.findOne({ where: { type : type, contractId: contractId } });
   }
-    
+
   /**
    * List contract document templates by contractId
-   * 
+   *
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document templates
    */
   listContractDocumentTemplateByContractId(contractId: number): Bluebird<ContractDocumentTemplateModel[]> {
     return this.sequelize.models.ContractDocumentTemplate.findAll({ where: { contractId: contractId } });
   }
-  
+
   // ItemGroupDocumentTemplate
-  
+
   /**
    * Creates new item group document template
-   * 
+   *
    * @param {String} type type
    * @param {int} itemGroupId item group id
    * @param {int} documentTemplateId document template id
@@ -2610,7 +2610,7 @@ export class Models {
 
   /**
    * Finds an item group document template by type and itemGroupId id
-   * 
+   *
    * @param {String} type document template type
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document template
@@ -2621,29 +2621,29 @@ export class Models {
 
   /**
    * Finds an item group document template by externalId
-   * 
+   *
    * @param {String} externalId externalId
    * @return {Promise} promise for contract document template
    */
   findItemGroupDocumentTemplateByExternalId(externalId: string): Bluebird<ItemGroupDocumentTemplateModel> {
     return this.sequelize.models.ItemGroupDocumentTemplate.findOne({ where: { externalId: externalId } });
   }
-    
+
   /**
    * List item group document templates by itemGroupId
-   * 
+   *
    * @param {int} contractId contract id
    * @return {Promise} promise for contract document templates
    */
   listItemGroupDocumentTemplateByItemGroupId(itemGroupId: number): Bluebird<ItemGroupDocumentTemplateModel[]> {
     return this.sequelize.models.ItemGroupDocumentTemplate.findAll({ where: { itemGroupId: itemGroupId } });
   }
-  
+
   // ContractDocument
-  
+
   /**
    * Create contract document
-   * 
+   *
    * @param {String} type type
    * @param {int} contractId contract id
    * @param {String} vismaSignDocumentId visma sign document id
@@ -2657,47 +2657,47 @@ export class Models {
       signed: false
     });
   }
-  
+
   /**
    * Finds contract document by id
-   * 
+   *
    * @param {int} id contract id
    * @returns {Promise} Promise for ContractDocument
    */
   findContractDocumentById(id: number): Bluebird<ContractDocumentModel> {
     return this.sequelize.models.ContractDocument.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Finds contract document by contract id and type
-   * 
+   *
    * @param {int} contractId contract id
    * @param {String} type type
    * @returns {Promise} Promise for ContractDocument
    */
   findContractDocumentByContractAndType(contractId: number, type: string): Bluebird<ContractDocumentModel> {
-    return this.sequelize.models.ContractDocument.findOne({ 
+    return this.sequelize.models.ContractDocument.findOne({
       where: {
         type: type,
         contractId: contractId
       }
     });
   }
-  
+
   /**
    * Finds contract document by visma document id
-   * 
+   *
    * @param {String} vismaSignDocumentId vismaSignDocumentId
    * @returns {Promise} Promise for ContractDocument
    */
   findContractDocumentByVismaSignDocumentId(vismaSignDocumentId: string): Bluebird<ContractDocumentModel> {
-    return this.sequelize.models.ContractDocument.findOne({ 
+    return this.sequelize.models.ContractDocument.findOne({
       where: {
         vismaSignDocumentId: vismaSignDocumentId
       }
     });
   }
-  
+
   /**
    * Lists contracts documents by signed
    * :
@@ -2707,10 +2707,10 @@ export class Models {
   listContractDocumentsBySigned(signed: boolean): Bluebird<ContractDocumentModel[]> {
     return this.sequelize.models.ContractDocument.findAll({ where: { signed: signed } });
   }
-  
+
   /**
    * Updates contract document signing status
-   * 
+   *
    * @param {int} id id
    * @param {boolean} signed signed
    * @returns {Promise} Promise for ContractDocument
@@ -2727,18 +2727,18 @@ export class Models {
 
   /**
    * Deletes contract document
-   * 
-   * @param {int} id contract document id 
+   *
+   * @param {int} id contract document id
    */
   deleteContractDocument(id: number): Bluebird<number> {
     return this.sequelize.models.ContractDocument.destroy({ where: { id : id } });
   }
-  
+
   // OperationReport
-  
+
   /**
    * Create operation report
-   * 
+   *
    * @param {String} type type
    * @returns {Promise} Promise for OperationReport
    */
@@ -2750,7 +2750,7 @@ export class Models {
 
   /**
    * Finds a operation report by externalId
-   * 
+   *
    * @param {String} externalId operation report externalId
    * @return {Promise} promise for operation report
    */
@@ -2760,7 +2760,7 @@ export class Models {
 
   /**
    * List operation reports
-   * 
+   *
    * @param orderBy order by column (defaults to createdAt)
    * @param orderDir order direction (defaults to DESC)
    * @param firstResult first result
@@ -2773,7 +2773,7 @@ export class Models {
 
   /**
    * List operation reports by type
-   * 
+   *
    * @param {String} type type
    * @param orderBy order by column (defaults to createdAt)
    * @param orderDir order direction (defaults to DESC)
@@ -2787,7 +2787,7 @@ export class Models {
 
   /**
    * Counts operation reports
-   * 
+   *
    * @returns {Promise} Promise for count
    */
   countOperationReports(): PromiseLike<number> {
@@ -2796,7 +2796,7 @@ export class Models {
 
   /**
    * List operation reports by type
-   * 
+   *
    * @param {String} type type
    * @returns {Promise} Promise for count
    */
@@ -2805,10 +2805,10 @@ export class Models {
   }
 
   // OperationReportItem
-  
+
   /**
    * Create operation report item
-   * 
+   *
    * @param {Integer} operationReportId operationReportId
    * @param {String} message message
    * @param {Boolean} completed completed
@@ -2826,7 +2826,7 @@ export class Models {
 
   /**
    * List operation report items by operationReportId
-   * 
+   *
    * @param {int} operationReportId operationReportId
    * @returns {Promise} Promise for OperationReportItems
    */
@@ -2836,7 +2836,7 @@ export class Models {
 
   /**
    * Count operation report items by operationReportId and completed
-   * 
+   *
    * @param {int} operationReportId operationReportId
    * @param {Boolean} completed completed
    * @returns {Promise} Promise for OperationReportItems count
@@ -2847,7 +2847,7 @@ export class Models {
 
   /**
    * Count operation report items by operationReportId, completed and success
-   * 
+   *
    * @param {int} operationReportId operationReportId
    * @param {Boolean} completed completed
    * @param {Boolean} success success
@@ -2859,7 +2859,7 @@ export class Models {
 
   /**
    * Updates operation report item
-   * 
+   *
    * @param {int} id id
    * @param {String} message message
    * @param {Boolean} completed completed
@@ -2877,10 +2877,10 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Create thread predefined text
-   * 
+   *
    * @param {Integer} threadId thread id
    * @param {String} text text
    * @returns {Promise} Promise for created entity
@@ -2894,7 +2894,7 @@ export class Models {
 
   /**
    * Find ThreadPredefinedTexts
-   * 
+   *
    * @param {int} id
    * @returns {Promise} Promise for ThreadPredefinedText
    */
@@ -2908,7 +2908,7 @@ export class Models {
 
   /**
    * List ThreadPredefinedTexts
-   * 
+   *
    * @param {int} threadId thread id
    * @returns {Promise} Promise for ThreadPredefinedTexts
    */
@@ -2921,10 +2921,10 @@ export class Models {
   }
 
   /**
-   * Updates ThreadPredefinedText 
-   * 
+   * Updates ThreadPredefinedText
+   *
    * @param {int} id id
-   * @param {string} text text 
+   * @param {string} text text
    */
   updateThreadPredefinedText(id: number, text: string): PromiseLike<[number, any]> {
     return this.sequelize.models.ThreadPredefinedText.update({
@@ -2937,17 +2937,17 @@ export class Models {
   }
 
   /**
-   * Deletes predefined text from thread 
-   * 
+   * Deletes predefined text from thread
+   *
    * @param {int} threadId thread id
    * @return {Promise} promise that resolves on successful removal
    */
   deleteThreadPredefinedTextByThreadIdAndText(threadId: number, text: string): PromiseLike<number> {
-    return this.sequelize.models.ThreadPredefinedText.destroy({ 
-      where: { 
+    return this.sequelize.models.ThreadPredefinedText.destroy({
+      where: {
         threadId: threadId,
-        text: text 
-      } 
+        text: text
+      }
     });
   }
 
@@ -2955,7 +2955,7 @@ export class Models {
 
   /**
    * Create week delivery prediction
-   * 
+   *
    * @param id id
    * @param itemGroupId item group id
    * @param userId user id
@@ -2979,7 +2979,7 @@ export class Models {
 
   /**
    * Find week delivery prediction by id
-   * 
+   *
    * @param weekDeliveryPredictionId weekDeliveryPredictionId
    * @return promise on created week delivery prediction
    */
@@ -2993,7 +2993,7 @@ export class Models {
 
   /**
    * Delete week delivery prediction
-   * 
+   *
    * @param weekDeliveryPredictionId weekDeliveryPredictionId
    * @return promise on created week delivery prediction
    */
@@ -3007,7 +3007,7 @@ export class Models {
 
   /**
    * Updates WeekDeliveryPrediction
-   * 
+   *
    * @param id id
    * @param itemGroupId item group id
    * @param amount amount
@@ -3032,36 +3032,36 @@ export class Models {
 
   /**
    * Lists week delivery predictions
-   * 
-   * @param itemGroupId 
-   * @param itemGroupType 
-   * @param userId 
-   * @param weekNumber 
-   * @param year 
-   * @param firstResult 
-   * @param maxResults 
+   *
+   * @param itemGroupId
+   * @param itemGroupType
+   * @param userId
+   * @param weekNumber
+   * @param year
+   * @param firstResult
+   * @param maxResults
    * @return Promise that resolves list of week delivery predictions
    */
   public listWeekDeliveryPredictions(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null, firstResult?: number, maxResults?: number): Bluebird<WeekDeliveryPredictionModel[]> {
     const where = this.createListWeekDeliveryPredictionsWhere(itemGroupId, itemGroupType, userId, weekNumber, year);
 
-    return this.WeekDeliveryPrediction.findAll({ 
-      where: where, 
-      offset: firstResult, 
+    return this.WeekDeliveryPrediction.findAll({
+      where: where,
+      offset: firstResult,
       limit: maxResults
     });
   }
 
   /**
-   * Creates a where clause for listing / counting week delivery predictions. 
-   * 
+   * Creates a where clause for listing / counting week delivery predictions.
+   *
    * All parameters are optional and ignored if not given
-   *  
-   * @param itemGroupId 
-   * @param itemGroupType 
-   * @param userId 
-   * @param weekNumber 
-   * @param year  
+   *
+   * @param itemGroupId
+   * @param itemGroupType
+   * @param userId
+   * @param weekNumber
+   * @param year
    * @return where clause
    */
   private createListWeekDeliveryPredictionsWhere(itemGroupId: number | null, itemGroupType: string | null, userId: string | null, weekNumber: number | null, year: number | null) {
@@ -3099,7 +3099,7 @@ export class Models {
 
   /**
    * Create Product
-   * 
+   *
    * @param id id
    * @param itemGroupId item group id
    * @param name name
@@ -3125,7 +3125,7 @@ export class Models {
 
   /**
    * Update Product
-   * 
+   *
    * @param id id
    * @param itemGroupId item group id
    * @param name name
@@ -3154,7 +3154,7 @@ export class Models {
 
   /**
    * Delete prodcut
-   * 
+   *
    * @param productId productId
    * @return promise on created week delivery prediction
    */
@@ -3168,7 +3168,7 @@ export class Models {
 
   /**
    * Find product by id
-   * 
+   *
    * @param productId productId
    * @return promise on created week delivery prediction
    */
@@ -3182,29 +3182,29 @@ export class Models {
 
   /**
    * Lists products
-   * 
-   * @param itemGroupId itemGroupId 
+   *
+   * @param itemGroupId itemGroupId
    * @param itemGroupCategory itemGroupCategory
    * @param contractUserId contractUserId
-   * @param firstResult 
-   * @param maxResults 
+   * @param firstResult
+   * @param maxResults
    * @return Promise that resolves list of week delivery predictions
    */
   public listProducts(itemGroupId: number | null, itemGroupCategory: string | null, contractUserId: string | null, firstResult?: number, maxResults?: number): Bluebird<ProductModel[]> {
     const where = this.createListProductsWhere(itemGroupId, itemGroupCategory, contractUserId);
 
-    return this.Product.findAll({ 
-      where: where, 
-      offset: firstResult, 
+    return this.Product.findAll({
+      where: where,
+      offset: firstResult,
       limit: maxResults
     });
   }
 
   /**
-   * Creates a where clause for listing / counting products. 
-   * 
+   * Creates a where clause for listing / counting products.
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param itemGroupId itemGroupId
    * @param itemGroupCategory itemGroupCategory
    * @param contractUserId contractUserId
@@ -3254,7 +3254,7 @@ export class Models {
 
   /**
    * Create Delivery
-   * 
+   *
    * @param id id
    * @param productId productId
    * @param userId userId
@@ -3285,7 +3285,7 @@ export class Models {
 
   /**
    * Update Delivery
-   * 
+   *
    * @param id id
    * @param productId productId
    * @param userId userId
@@ -3318,7 +3318,7 @@ export class Models {
 
   /**
    * Find delivery by id
-   * 
+   *
    * @param deliveryId deliveryId
    * @return promise on found delivery
    */
@@ -3332,7 +3332,7 @@ export class Models {
 
    /**
    * Delete delivery
-   * 
+   *
    * @param deliveryId deliveryId
    * @return promise that resolves successful removal
    */
@@ -3346,7 +3346,7 @@ export class Models {
 
   /**
    * Lists deliveries
-   * 
+   *
    * @param status status
    * @param userId userId
    * @param itemGroupCategory itemGroupCategory
@@ -3355,29 +3355,29 @@ export class Models {
    * @param deliveryPlaceId deliveryPlaceId
    * @param timeBefore timeBefore
    * @param timeAfter timeAfter
-   * @param firstResult 
-   * @param maxResults 
+   * @param firstResult
+   * @param maxResults
    * @return Promise that resolves list of deliveries
    */
-  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number | null, maxResults?: number | null): PromiseLike<DeliveryModel[]> {
+  public listDeliveries(status: DeliveryStatus | null, userId: string | null, itemGroupCategory: ItemGroupCategory | null, itemGroupId: number | null, productIds: string[] | null, deliveryPlaceId: number | null, timeBefore: Date | null, timeAfter: Date | null, firstResult?: number | null, maxResults?: number | null): PromiseLike<DeliveryModel[]> {
     if (productIds && productIds.length == 0) {
       return Promise.resolve([]);
     }
-    
+
     const where = this.createListDeliveriesWhere(status, userId, itemGroupCategory, itemGroupId, productIds, deliveryPlaceId, timeBefore, timeAfter);
 
     return this.Delivery.findAll({
-      where: where, 
-      offset: firstResult || undefined, 
-      limit: maxResults || undefined
+      where: where,
+      offset: firstResult || undefined,
+      limit: maxResults || undefined
     });
   }
 
   /**
-   * Creates a where clause for listing / counting deliveries. 
-   * 
+   * Creates a where clause for listing / counting deliveries.
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param status status
    * @param userId userId
    * @param itemGroupCategory itemGroupCategory
@@ -3455,7 +3455,7 @@ export class Models {
 
   /**
    * Create DeliveryNote
-   * 
+   *
    * @param id id
    * @param deliveryId deliveryId
    * @param text text
@@ -3473,7 +3473,7 @@ export class Models {
 
   /**
    * Update DeliveryNote
-   * 
+   *
    * @param id id
    * @param deliveryId deliveryId
    * @param text text
@@ -3494,7 +3494,7 @@ export class Models {
 
   /**
    * Find delivery note by id
-   * 
+   *
    * @param deliveryNoteId deliveryNoteId
    * @return promise on found delivery note
    */
@@ -3508,7 +3508,7 @@ export class Models {
 
    /**
    * Delete delivery note
-   * 
+   *
    * @param deliveryNoteId deliveryNoteId
    * @return promise that resolves successful removal
    */
@@ -3522,22 +3522,22 @@ export class Models {
 
   /**
    * Lists delivery notes
-   * 
+   *
    * @param deliveryId deliveryId
    * @return Promise that resolves list of delivery notes
    */
   public listDeliveryNotes(deliveryId: string | null): Bluebird<DeliveryNoteModel[]> {
     const where = this.createListDeliveryNotesWhere(deliveryId);
 
-    return this.DeliveryNote.findAll({ 
+    return this.DeliveryNote.findAll({
       where: where
     });
   }
   /**
    * Creates a where clause for listing / counting delivery notes
-   * 
+   *
    * All parameters are optional and ignored if not given
-   *  
+   *
    * @param deliveryId deliveryId
    * @return where clause
    */
@@ -3555,8 +3555,8 @@ export class Models {
 
   /**
    * Creates product price
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @param productId productId
    * @param unit unit
    * @param price price
@@ -3573,8 +3573,8 @@ export class Models {
 
   /**
    * Deletes product price
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @returns promise for public file
    */
   deleteProductPrice(id: string): PromiseLike<number> {
@@ -3587,8 +3587,8 @@ export class Models {
 
   /**
    * Finds product price
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @returns promise for public file
    */
   public findProductPrice(id: string): PromiseLike<ProductPriceModel> {
@@ -3601,11 +3601,11 @@ export class Models {
 
   /**
    * Finds latest created price by for a product id
-   * 
+   *
    * @param productId product id
    * @return latest created price by for a product or null if not found
    */
-  public findLatestProductPrice(productId: string): PromiseLike<ProductPriceModel | null> {
+  public findLatestProductPrice(productId: string): PromiseLike<ProductPriceModel | null> {
     return this.ProductPrice.findOne({
       where: {
         productId: productId
@@ -3617,7 +3617,7 @@ export class Models {
 
   /**
    * Finds product price at time
-   * 
+   *
    * @param productId product id
    * @param date date
    * @return product price at a specific time
@@ -3627,7 +3627,7 @@ export class Models {
       where: {
         productId: productId,
         createdAt:{
-          $lte: date 
+          $lte: date
         }
       },
       limit: 1,
@@ -3637,7 +3637,7 @@ export class Models {
 
   /**
    * Lists product prices until time
-   * 
+   *
    * @param productId product id
    * @param date date
    * @param sort "CREATED_AT_ASC" | "CREATED_AT_DESC"
@@ -3651,7 +3651,7 @@ export class Models {
 
     where.productId = productId;
     where.createdAt = {
-      $lte: date 
+      $lte: date
     }
 
     switch (sort) {
@@ -3663,10 +3663,10 @@ export class Models {
         break;
     }
 
-    return this.ProductPrice.findAll({ 
-      where: where, 
+    return this.ProductPrice.findAll({
+      where: where,
       order: order,
-      offset: firstResult, 
+      offset: firstResult,
       limit: maxResults
     });
 
@@ -3674,8 +3674,8 @@ export class Models {
 
   /**
    * Updates product price
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @param productId productId
    * @param unit unit
    * @param price price
@@ -3695,11 +3695,11 @@ export class Models {
 
   /**
    * Lists product prices
-   * 
+   *
    * @param productId productId
    * @param sort sort
-   * @param firstResult 
-   * @param maxResults 
+   * @param firstResult
+   * @param maxResults
    * @return Promise that resolves list of deliveries
    */
   public listProductPrices(productId: string, sort: "CREATED_AT_ASC" | "CREATED_AT_DESC", firstResult?: number, maxResults?: number): Bluebird<ProductPriceModel[]> {
@@ -3717,10 +3717,10 @@ export class Models {
         break;
     }
 
-    return this.ProductPrice.findAll({ 
-      where: where, 
+    return this.ProductPrice.findAll({
+      where: where,
       order: order,
-      offset: firstResult, 
+      offset: firstResult,
       limit: maxResults
     });
   }
@@ -3729,7 +3729,7 @@ export class Models {
 
   /**
    * Creates delivery quality
-   * 
+   *
    * @param id id
    * @param itemGroupCategory itemGroupCategory
    * @param name name
@@ -3752,7 +3752,7 @@ export class Models {
 
   /**
    * Updates delivery quality
-   * 
+   *
    * @param deliveryQualityId deliveryQualityId
    * @param itemGroupCategory itemGroupCategory
    * @param name name
@@ -3777,7 +3777,7 @@ export class Models {
 
   /**
    * Create delivery quality product
-   * 
+   *
    * @param {String} deliveryQualityId deliveryQualityId
    * @param {String} productId productId
    * @returns {Promise} Promise for created entity
@@ -3790,24 +3790,24 @@ export class Models {
   }
 
   /**
-   * Deletes predefined text from thread 
-   * 
+   * Deletes predefined text from thread
+   *
    * @param {String} deliveryQualityId thread id
    * @param {String} productId productId
    * @return {Promise} promise that resolves on successful removal
    */
   public deleteDeliveryQualityProduct(deliveryQualityId: string, productId: string): PromiseLike<number> {
-    return this.sequelize.models.DeliveryQualityProduct.destroy({ 
-      where: { 
+    return this.sequelize.models.DeliveryQualityProduct.destroy({
+      where: {
         deliveryQualityId: deliveryQualityId,
-        productId: productId 
-      } 
+        productId: productId
+      }
     });
   }
 
   /**
    * List delivery quality products by delivery quality id
-   * 
+   *
    * @param {String} deliveryQualityId deliveryQualityId
    * @returns {Promise} Promise for DeliveryQualityProduct
    */
@@ -3821,8 +3821,8 @@ export class Models {
 
   /**
    * Finds delivery quality
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @returns promise for delivery quality
    */
   public findDeliveryQuality(id: string): PromiseLike<DeliveryQualityModel> {
@@ -3835,7 +3835,7 @@ export class Models {
 
   /**
    * Lists delivery qualities
-   * 
+   *
    * @param itemGroupCategory itemGroupCategory
    * @param productId productId
    * @return Promise that resolves list of delivery qualities
@@ -3855,8 +3855,8 @@ export class Models {
 
       where.id = { [Sequelize.Op.in]: this.sequelize.literal(`(${deliveryQualityProductSQL})`) };
     }
-      
-    return this.DeliveryQuality.findAll({ 
+
+    return this.DeliveryQuality.findAll({
       where: where
     });
   }
@@ -3865,7 +3865,7 @@ export class Models {
 
   /**
    * Creates new unread
-   * 
+   *
    * @param id id
    * @param path path
    * @param userId user id
@@ -3881,8 +3881,8 @@ export class Models {
 
   /**
    * Finds unread
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @returns promise for delivery quality
    */
   public findUnreadById(id: string): PromiseLike<UnreadModel> {
@@ -3895,16 +3895,16 @@ export class Models {
 
   /**
    * Lists unreads by path like and user id
-   * 
+   *
    * @param path path like
-   * @param userId user id 
+   * @param userId user id
    * @returns promise for unreads
    */
   public listUnreadsByPathLikeAndUserId(path: string, userId: string): PromiseLike<UnreadModel[]> {
     const where: any = {
       userId: userId
     }
-    
+
     where.path = { [Sequelize.Op.like]: path };
 
     return this.Unread.findAll({
@@ -3914,7 +3914,7 @@ export class Models {
 
   /**
    * Lists unreads by user id
-   * 
+   *
    * @param path path like
    * @returns promise for unreads
    */
@@ -3922,7 +3922,7 @@ export class Models {
     const where: any = {
       userId: userId
     }
-    
+
     return this.Unread.findAll({
       where: where
     });
@@ -3930,8 +3930,8 @@ export class Models {
 
   /**
    * Deletes unread
-   * 
-   * @param id id 
+   *
+   * @param id id
    * @returns promise for deletion
    */
   public deleteUnread(id: string): PromiseLike<number> {
@@ -3944,16 +3944,16 @@ export class Models {
 
   /**
    * Deletes unreads by path like and user id
-   * 
+   *
    * @param path path like
-   * @param userId user id 
+   * @param userId user id
    * @returns promise for deletion
    */
   public deleteUnreadsByPathLikeAndUserId(path: string, userId: string): PromiseLike<number> {
     const where: any = {
       userId: userId
     }
-    
+
     where.path = { [Sequelize.Op.like]: path };
 
     return this.Unread.destroy({
@@ -3963,14 +3963,14 @@ export class Models {
 
   /**
    * Deletes unreads by path like
-   * 
+   *
    * @param path path like
    * @returns promise for deletion
    */
   public deleteUnreadsByPathLike(path: string): PromiseLike<number> {
     const where: any = {
     }
-    
+
     where.path = { [Sequelize.Op.like]: path };
 
     return this.Unread.destroy({
@@ -3980,7 +3980,7 @@ export class Models {
 
   /**
    * Deletes unreads by path
-   * 
+   *
    * @param path path
    * @returns promise for deletion
    */
@@ -3991,13 +3991,13 @@ export class Models {
       }
     });
   }
-  
+
   // data sheets
-  
+
   /**
    * Creates data sheet
-   * 
-   * @param url url 
+   *
+   * @param url url
    * @returns promise for data sheet
    */
   public createDataSheet(id: string, name: string, data: string): PromiseLike<DataSheetModel> {
@@ -4007,36 +4007,36 @@ export class Models {
       data: data
     } as any);
   }
-  
+
   /**
    * Finds a data sheet
-   * 
+   *
    * @param id data sheet id
    * @returns promise for data sheet or null if not found
    */
   public findDataSheetById(id: number): PromiseLike<DataSheetModel | null> {
     return this.DataSheet.findOne({ where: { id : id } });
   }
-  
+
   /**
    * Lists data sheets by name
-   * 
+   *
    * @param name name
    * @returns promise for data sheets
    */
   public listDataSheetsByName(name: string): PromiseLike<DataSheetModel[]> {
-    return this.DataSheet.findAll({ 
+    return this.DataSheet.findAll({
       where: {
         name: name
       }
     });
   }
-  
+
   /**
    * Updates data sheet
-   * 
+   *
    * @param id data sheet id
-   * @param url url 
+   * @param url url
    * @returns promise for update
    */
   public updateDataSheet(id: number, name: string, data: string): PromiseLike<[number, any]> {
@@ -4049,10 +4049,10 @@ export class Models {
       }
     });
   }
-  
+
   /**
    * Deletes a data sheet
-   * 
+   *
    * @param id data sheet id
    * @returns promise for delete
    */

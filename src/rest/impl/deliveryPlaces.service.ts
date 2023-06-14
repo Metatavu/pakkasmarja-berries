@@ -8,33 +8,33 @@ import models, { DeliveryPlaceModel } from "../../models";
  * Implementation for DeliveryPlaces REST service
  */
 export default class DeliveryPlacesServiceImpl extends DeliveryPlacesService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
   constructor(app: Application, keycloak: Keycloak) {
     super(app, keycloak);
   }
-  
+
   async findDeliveryPlace(req: Request, res: Response) {
     const deliveryPlaceId = req.params.id;
     if (!deliveryPlaceId) {
       this.sendNotFound(res);
       return;
     }
-    
+
     const databaseDeliveryPlace = await models.findDeliveryPlaceByExternalId(deliveryPlaceId);
     if (!databaseDeliveryPlace) {
       this.sendNotFound(res);
       return;
     }
-    
+
     res.status(200).send(this.translateDatabaseDeliveryPlace(databaseDeliveryPlace));
   }
-  
+
   /**
    * @inheritdoc
    */
@@ -43,13 +43,13 @@ export default class DeliveryPlacesServiceImpl extends DeliveryPlacesService {
     const deliveryPlaces = databaseDeliveryPlaces.map((databaseDeliveryPlace) => {
       return this.translateDatabaseDeliveryPlace(databaseDeliveryPlace);
     });
-    
+
     res.status(200).send(deliveryPlaces);
   }
-  
+
   /**
    * Translates Database delivery place into REST entity
-   * 
+   *
    * @param {Object} deliveryPlace Sequelize delivery place model
    * @return {DeliveryPlace} REST entity
    */

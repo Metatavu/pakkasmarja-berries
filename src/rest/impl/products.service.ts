@@ -10,10 +10,10 @@ import * as uuid from "uuid/v4";
  * Implementation for Products REST service
  */
 export default class ProductsServiceImpl extends ProductsService {
-  
+
   /**
    * Constructor
-   * 
+   *
    * @param app Express app
    * @param keycloak Keycloak
    */
@@ -43,7 +43,7 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const payload: Product = req.body; 
+    const payload: Product = req.body;
 
     const name = payload.name;
     if (!name) {
@@ -83,8 +83,8 @@ export default class ProductsServiceImpl extends ProductsService {
 
     const createdProduct = await models.createProduct(uuid(), databaseItemGroup.id, name, units, unitSize, unitName, sapItemCode, active);
     res.status(200).send(await this.translateDatabaseProduct(createdProduct));
-  } 
-  
+  }
+
   /**
    * @inheritdoc
    */
@@ -134,10 +134,10 @@ export default class ProductsServiceImpl extends ProductsService {
     const itemGroupId = req.query.itemGroupId || null;
     const itemGroupCategory = req.query.itemGroupCategory || null;
     const contractUserId = req.query.contractUserId || null;
-    const firstResult = parseInt(req.query.firstResult) || 0;
-    const maxResults = parseInt(req.query.maxResults) || 5;
+    const firstResult = parseInt(req.query.firstResult as any) || 0;
+    const maxResults = parseInt(req.query.maxResults as any) || 5;
 
-    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId);
+    const databaseItemGroup = await models.findItemGroupByExternalId(itemGroupId as any);
     const databaseItemGroupId = databaseItemGroup ? databaseItemGroup.id : null;
 
     const loggedUserId = this.getLoggedUserId(req);
@@ -146,7 +146,13 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const products: ProductModel[] = await models.listProducts(databaseItemGroupId, itemGroupCategory, contractUserId, firstResult, maxResults);
+    const products: ProductModel[] = await models.listProducts(
+      databaseItemGroupId,
+      itemGroupCategory as any,
+      contractUserId as any,
+      firstResult,
+      maxResults
+    );
     res.status(200).send(await Promise.all(products.map((product) => {
       return this.translateDatabaseProduct(product);
     })));
@@ -180,7 +186,7 @@ export default class ProductsServiceImpl extends ProductsService {
       return;
     }
 
-    const payload: Product = req.body; 
+    const payload: Product = req.body;
     const name = payload.name;
     if (!name) {
       this.sendBadRequest(res, "Missing required param name");
@@ -229,8 +235,8 @@ export default class ProductsServiceImpl extends ProductsService {
 
   /**
    * Translates database product into REST entity
-   * 
-   * @param product product 
+   *
+   * @param product product
    */
   private async translateDatabaseProduct(product: ProductModel) {
     const itemGroup = await models.findItemGroupById(product.itemGroupId);

@@ -57,20 +57,20 @@ interface DeliveryReportDataProductTotal {
 }
 
 interface DeliveryReportData {
-  dateNow: string | null,
-  startDate: string | null,
-  endDate: string | null,
+  dateNow: string | null,
+  startDate: string | null,
+  endDate: string | null,
   alv0: string,
   alv14: string,
   deliveryGroups: DeliveryReportDataDeliveryGroup[],
   productTotals: DeliveryReportDataProductTotal[],
-  contact: {
-    sapId: string | null,
-    displayName: string | null,
+  contact: {
+    sapId: string | null,
+    displayName: string | null,
     address: {
-      streetAddress: string | null,
-      postalCode: string | null,
-      city: string | null
+      streetAddress: string | null,
+      postalCode: string | null,
+      city: string | null
     }
   }
 }
@@ -99,9 +99,9 @@ export default class ReportsServiceImpl extends ReportsService {
   public async getReport(req: Request, res: Response) {
     const type = req.params.type;
     const format = req.query.format;
-    const startDateParam = req.query.startDate;
-    const endDateParam = req.query.endDate;
-    const productIds = req.query.productIds ? req.query.productIds.split(",") : null;
+    const startDateParam = req.query.startDate as any;
+    const endDateParam = req.query.endDate as any;
+    const productIds = req.query.productIds ? (req.query.productIds as any).split(",") : null;
 
     if (!type) {
       this.sendNotFound(res, "Missing required param type");
@@ -198,7 +198,7 @@ export default class ReportsServiceImpl extends ReportsService {
    * @param endDate end date
    * @return report data
    */
-  private async getDeliveryReportData(user: UserRepresentation, productIds: string[] | null, startDate: moment.Moment, endDate: moment.Moment): Promise<DeliveryReportData> {
+  private async getDeliveryReportData(user: UserRepresentation, productIds: string[] | null, startDate: moment.Moment, endDate: moment.Moment): Promise<DeliveryReportData> {
     const deliveries = await models.listDeliveries("DONE", user.id!,  null, null,  productIds, null, endDate.toDate(), startDate.toDate(), null, null);
 
     const deliveryPlaceMap: { [key: number]: DeliveryPlaceModel } = {};
@@ -242,9 +242,9 @@ export default class ReportsServiceImpl extends ReportsService {
       const deliveryPlaceId = delivery.deliveryPlaceId;
       const deliveryDate = moment(delivery.createdAt).format("DD.MM.YYYY");
 
-      const deliveries: DeliveryReportDataDelivery[] = groupedDeliveries.map((delivery) => {
+      const deliveries: DeliveryReportDataDelivery[] = groupedDeliveries.map((delivery) => {
         const product = productMap[delivery.productId];
-        const unitPrice = delivery.unitPriceWithBonus || 0;
+        const unitPrice = delivery.unitPriceWithBonus || 0;
         const unitPriceAlv14 = unitPrice * 1.14;
         const totalPrice = delivery.amount * unitPrice;
         const totalPriceAlv14 = totalPrice * 1.14;

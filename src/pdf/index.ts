@@ -10,9 +10,9 @@ wkhtmltopdf.command = config().wkhtmltopdf.command;
 
 interface TempFiles {
   headerPath: string|null,
-  footerPath: string|null, 
+  footerPath: string|null,
   cleanup: () => void
-} 
+}
 
 /**
  * PDF rendering functionalities for Pakkasmarja Berries
@@ -20,17 +20,17 @@ interface TempFiles {
 export default new class Pdf {
 
   private logger: Logger = getLogger();
-  
+
   /**
    * Renders PDF from HTML
-   * 
+   *
    * @param {String} html html string
    * @param {String} header header html (optional)
    * @param {String} footer footer html (optional)
    * @param {String} baseUrl base url
    * @return {Promise} promise for pdf stream
    */
-  public renderPdf(html: string, header?: string | null, footer?: string | null, baseUrl?: string | null): Promise<any> {
+  public renderPdf(html: string, header?: string | null, footer?: string | null, baseUrl?: string | null): Promise<any> {
     return this.createTempFiles(header, footer).then((tempFiles: TempFiles) => {
       const options: { debug: boolean, printMediaType: boolean, headerHtml?: string, footerHtml?: string } = {
         "debug": false,
@@ -44,7 +44,7 @@ export default new class Pdf {
       if (tempFiles.footerPath) {
         options.footerHtml = `file://${tempFiles.footerPath}`;
       }
-      
+
       return new Promise((resolve, reject) => {
         wkhtmltopdf(html, options, (err: Error, pdfStream: Stream) => {
           tempFiles.cleanup();
@@ -67,10 +67,10 @@ export default new class Pdf {
       });
     });
   }
-  
+
   /**
    * Creates a temp file
-   * 
+   *
    * @param {String} dirPath directory
    * @param {String} name file name
    * @param {String} data file data
@@ -78,7 +78,7 @@ export default new class Pdf {
    */
   private createTempFile(dirPath: string, name: string, data: string): Promise<string> {
     const filePath = path.join(dirPath, name);
-    
+
     return new Promise((resolve, reject) => {
       fs.writeFile(filePath, data, (err) => {
         if (err) {
@@ -89,16 +89,16 @@ export default new class Pdf {
       });
     });
   }
-  
+
   /**
    * Creates temp files for header and footer files
-   * 
+   *
    * @param {String} header header html (optional)
    * @param {String} footer footer html (optional)
    * @param {Function} callback callback function
    * @return {Promise} promise resolved with temp file names and cleanup callback
    */
-  private createTempFiles(header?: string | null, footer?: string | null): Promise<TempFiles> {
+  private createTempFiles(header?: string | null, footer?: string | null): Promise<TempFiles> {
     return new Promise((resolve, reject) => {
       tmp.dir((err, dirPath, cleanup) => {
         if (err) {
@@ -108,7 +108,7 @@ export default new class Pdf {
 
         const filePromises = [];
 
-        if (header) {
+        if (header) {
           filePromises.push(this.createTempFile(dirPath, 'header.html', header));
         }
 
@@ -122,13 +122,13 @@ export default new class Pdf {
             const footerPath = header ? files[1] : footer ? files[0] : null;
 
             resolve({
-              headerPath: headerPath || null,
-              footerPath: footerPath || null, 
+              headerPath: headerPath || null,
+              footerPath: footerPath || null,
               cleanup: () => {
                 files.forEach((file: string) => {
-                  fs.unlinkSync(file);  
+                  fs.unlinkSync(file);
                 });
-                
+
                 cleanup();
               }
             });
@@ -137,4 +137,4 @@ export default new class Pdf {
       });
     });
   }
-} 
+}

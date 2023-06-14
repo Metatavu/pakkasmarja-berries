@@ -117,7 +117,7 @@ export default class AbstractPermissionController {
    * @return created permission
    */
   protected async createScopePermission(name: string, resource: ResourceRepresentation, scopes: ApplicationScope[], policy: PolicyRepresentation) {
-    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ], DecisionStrategy.AFFIRMATIVE);
+    return userManagement.createScopePermission(name, [ resource.id || (resource as any)._id ], scopes, [ policy.id! ], DecisionStrategy.AFFIRMATIVE);
   }
 
   /**
@@ -145,7 +145,7 @@ export default class AbstractPermissionController {
    */
   protected async createGroupResource (name: string, uri: string, type: string, scopes: ApplicationScope[]): Promise<ResourceRepresentation> {
     let resource = await userManagement.findResourceByUri(uri);
-    if (!resource) {
+    if (!resource) {
       resource = await userManagement.createResource(name, name, uri, type, scopes);
     }
 

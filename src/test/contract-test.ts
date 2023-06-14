@@ -865,7 +865,8 @@ test("Test listing item group prices - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test listing item group prices - invalid token", async () => {
@@ -873,7 +874,8 @@ test("Test listing item group prices - invalid token", async () => {
     .get("/rest/v1/contracts/1d45568e-0fba-11e8-9ac4-a700da67a976/prices")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test list contracts - status", async (t) => {

@@ -71,7 +71,7 @@ const findDataSheet = (token: string, id: string, expectStatus?: number): Promis
     .get(`/rest/v1/dataSheets/${id}`)
     .set("Authorization", `Bearer ${token}`)
     .set("Accept", "application/json")
-    .expect(expectStatus || 200)
+    .expect(expectStatus || 200)
     .then((response) => {
       return response.body;
     });
@@ -195,14 +195,14 @@ test("Lists data sheet", async (t) => {
 
   const foundDataSheets = await listDataSheets(token, "sheet-2");
 
-  t.deepEqual(foundDataSheets, [ createdDataSheets[1] ]);
+  t.deepEqual(foundDataSheets, [ createdDataSheets[1] ]);
 
   await Promise.all(createdDataSheets.map((createdDataSheet) => {
     return deleteDataSheet(token, createdDataSheet.id!);
   }));
 
 
-  for (let i = 0; i < createdDataSheets.length; i++) {
+  for (let i = 0; i < createdDataSheets.length; i++) {
     await deleteDataSheet(token, createdDataSheets[i].id!);
   }
 

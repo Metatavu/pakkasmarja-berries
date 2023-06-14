@@ -2,9 +2,6 @@ import * as _ from "lodash";
 import { Request, Response } from "express";
 import UnreadsService from "../api/unreads.service";
 import { Unread } from "../model/models";
-import userManagement from "../../user-management";
-import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
-import ApplicationRoles from "../application-roles";
 import models, { UnreadModel } from "../../models";
 
 /**
@@ -15,11 +12,11 @@ export default class UnreadsServiceImpl extends UnreadsService {
   /**
    * @inheritdoc
    */
-  public async deleteUnread(req: Request,  res: Response): Promise<void> {
+  public async deleteUnread(req: Request,  res: Response): Promise<void> {
     const unreadId: string = req.params.unreadId;
 
     const unread = await models.findUnreadById(unreadId);
-    if (!unread || !unread.id) {
+    if (!unread || !unread.id) {
       this.sendNotFound(res);
       return;
     }
@@ -34,15 +31,15 @@ export default class UnreadsServiceImpl extends UnreadsService {
     models.deleteUnread(unread.id);
 
     res.status(204).send();
-  } 
+  }
 
   /**
    * @inheritdoc
    */
-  public async listUnreads(req: Request, res: Response): Promise<void> {
+  public async listUnreads(req: Request, res: Response): Promise<void> {
     const pathPrefix = req.query.pathPrefix;
     const loggedUserId = this.getLoggedUserId(req);
-    let userId = req.query.userId;
+    let userId = req.query.userId as any;
 
     if (!userId) {
       userId = loggedUserId;
@@ -62,22 +59,22 @@ export default class UnreadsServiceImpl extends UnreadsService {
 
   /**
    * Translates Unread for REST
-   * 
+   *
    * @param entity database entity
    * @return rest entity
    */
-  private translateUnread(entity: UnreadModel | null): Unread | null {
+  private translateUnread(entity: UnreadModel | null): Unread | null {
     if (!entity) {
       return null;
     }
 
-    const result: Unread = {
+    const result: Unread = {
       id: entity.id,
       path: entity.path,
       createdAt: entity.createdAt,
       userId: entity.userId
     }
-    
+
     return result;
   }
 

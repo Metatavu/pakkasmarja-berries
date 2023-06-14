@@ -14,7 +14,7 @@ export default class PermissionCache {
 
   /**
    * Constructor
-   * 
+   *
    * @param {int} expireTime cache expire time in milliseconds
    */
   constructor(expireTime: number) {
@@ -26,11 +26,11 @@ export default class PermissionCache {
 
   /**
    * Returns data for permission id
-   * 
-   * @param {String} permissionId 
+   *
+   * @param {String} permissionId
    * @returns {Promise} promise for data
    */
-  public async get(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
+  public async get(resourceName: string, scopes: string[], userId: string): Promise<boolean | null> {
     try {
       const getAsync = promisify(this.client.get).bind(this.client);
       const key = this.getKey(resourceName, scopes, userId);
@@ -46,9 +46,9 @@ export default class PermissionCache {
 
   /**
    * Caches permission
-   * 
-   * @param {String} permissionId 
-   * @param {Object} permission 
+   *
+   * @param {String} permissionId
+   * @param {Object} permission
    * @returns {Promise} promise
    */
   public async set(resourceName: string, scopes: string[], userId: string, permission: boolean): Promise<void> {
@@ -59,26 +59,26 @@ export default class PermissionCache {
 
   /**
    * Unsets data from permission id
-   * 
+   *
    * @param {String} permissionId
    * @returns {Promise} promise
    */
-  public async unset(resourceName: string, scopes: string[], userId: string): Promise<any> {   
+  public async unset(resourceName: string, scopes: string[], userId: string): Promise<any> {
     const delAsync = promisify(this.client.del).bind(this.client);
     return await delAsync(this.getKey(resourceName, scopes, userId));
   }
 
   /**
    * Removes all cached entries from cache
-   * 
+   *
    * @returns {Promise} promise for results
    */
-  public async flush(): Promise<any[]> {   
+  public async flush(): Promise<any[]> {
     const keysAsync = promisify(this.client.keys).bind(this.client);
     const delAsync = promisify(this.client.del).bind(this.client);
 
     const keys: string[] = await keysAsync("permission-*");
-    
+
     return await Promise.all(keys.map((key) => {
       return delAsync(key);
     }));
@@ -86,7 +86,7 @@ export default class PermissionCache {
 
   /**
    * Returns key for permission id
-   * 
+   *
    * @param resourceName resource name
    * @param scopes scopes
    * @param userId userId
@@ -99,7 +99,7 @@ export default class PermissionCache {
 
   /**
    * Handles redis client errors
-   * 
+   *
    * @param err error
    */
   private onClientError(err: any) {

@@ -83,7 +83,8 @@ test("Test listing operation reports - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/operationreports")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test listing operation reports - invalid token", async () => {
@@ -91,7 +92,8 @@ test("Test listing operation reports - invalid token", async () => {
     .get("/rest/v1/operationreports")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find operation report", async (t) => {
@@ -114,7 +116,8 @@ test("Test find operation report - without token", async () => {
   return request(TestConfig.HOST)
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find operation report - invalid token", async () => {
@@ -122,7 +125,8 @@ test("Test find operation report - invalid token", async () => {
     .get("/rest/v1/operationreports/8d74dde0-e624-4397-8563-c13ba9c4803e")
     .set("Authorization", "Bearer FAKE")
     .set("Accept", "application/json")
-    .expect(403);
+    .expect(403)
+    .then(() => {});
 });
 
 test("Test find operation report - not found", async () => {

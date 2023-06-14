@@ -17,7 +17,7 @@ export default new class PushNotification {
 
   /**
    * Returns sent pushNotifications as JSON objects
-   * 
+   *
    * @return Array sent pushNotifications as JSON objects
    */
   public getOutbox() {
@@ -64,5 +64,5 @@ export default new class PushNotification {
       parents.push(folder);
     }
   }
-  
+
 }

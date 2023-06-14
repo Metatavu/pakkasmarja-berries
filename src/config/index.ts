@@ -284,6 +284,14 @@ export interface ClientConfig {
 }
 
 /**
+ * Sentry configuration
+ */
+export interface SentryConfig {
+  dsn?: string;
+  environment?: string;
+}
+
+/**
  * Server configuration
  */
 export interface Config {
@@ -306,6 +314,7 @@ export interface Config {
   mqtt: Mqtt;
   uploadDirectory: string;
   client: ClientConfig;
+  sentry?: SentryConfig;
 }
 
 /**
