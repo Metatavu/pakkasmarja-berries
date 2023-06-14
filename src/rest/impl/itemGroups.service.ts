@@ -43,7 +43,7 @@ export default class ItemGroupsServiceImpl extends ItemGroupsService {
       return;
     }
 
-    if (!minimumProfitEstimation) {
+    if (minimumProfitEstimation === undefined || minimumProfitEstimation === null) {
       this.sendBadRequest(res, "Missing required body parameter minimumProfitEstimation");
       return;
     }
