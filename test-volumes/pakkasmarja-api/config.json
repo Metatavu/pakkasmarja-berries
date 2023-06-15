@@ -131,7 +131,8 @@
       "GRAY_BOX": "302601",
       "RED_BOX": "302602"
     },
-    "batchProducts": []
+    "batchProducts": [],
+    "itemGroupsIgnoredFromSap": []
   },
   "uploadDirectory": "/tmp/",
   "contacts": {

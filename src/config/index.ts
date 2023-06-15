@@ -205,6 +205,7 @@ export interface SAP {
   "xml-fileupload-path": string;
   "batchProducts": string[];
   "loanProductIds": SAPLoanProducts;
+  "itemGroupsIgnoredFromSap": string[];
 }
 
 /**
