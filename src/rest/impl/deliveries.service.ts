@@ -176,7 +176,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
           }
 
           const loans: DeliveryLoan[] | undefined = req.body.loans;
-          if (!!loans && Array.isArray(loans) && !!loans.length) {
+          if (!!loans && Array.isArray(loans) && !!loans.length && loans.some(loan => loan.loaned > 0 || loan.returned > 0)) {
             const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
 
             await this.createSapStockTransfer(
@@ -567,7 +567,7 @@ export default class DeliveriesServiceImpl extends DeliveriesService {
 
           const loans: DeliveryLoan[] | undefined = req.body.loans;
 
-          if (!!loans && Array.isArray(loans) && loans.length) {
+          if (!!loans && Array.isArray(loans) && loans.length && loans.some(loan => loan.loaned > 0 || loan.returned > 0)) {
             const deliveryNotes = await models.listDeliveryNotes(databaseDelivery.id);
 
             await this.createSapStockTransfer(
