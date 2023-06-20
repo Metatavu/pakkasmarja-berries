@@ -339,7 +339,7 @@ export default class ContractsServiceImpl extends ContractsService {
             quantityComment: contract.quantityComment || null,
             deliverAll: contract.deliverAll || false,
             proposedDeliverAll: false,
-            status: ContractStatus.DRAFT,
+            status: ContractStatus.APPROVED,
             areaDetails: null,
             startDate: null,
             endDate: null,
