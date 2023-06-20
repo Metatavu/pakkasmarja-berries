@@ -98,7 +98,8 @@
     "loanProductIds": {
       "GRAY_BOX": "302601",
       "RED_BOX": "302602",
-      "ORANGE_BOX": "302603"
+      "ORANGE_BOX": "302603",
+      "GREEN_BOX": "302604"
     },
     "xml-fileupload-path": "/tmp/sapxml",
     "batchProducts": [],
