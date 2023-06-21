@@ -11,10 +11,11 @@
  */
 
 
-export type DeliveryLoanItem = 'GRAY_BOX' | 'RED_BOX' | 'ORANGE_BOX';
+export type DeliveryLoanItem = 'GRAY_BOX' | 'RED_BOX' | 'ORANGE_BOX' | 'GREEN_BOX';
 
 export const DeliveryLoanItem = {
     GRAYBOX: 'GRAY_BOX' as DeliveryLoanItem,
     REDBOX: 'RED_BOX' as DeliveryLoanItem,
-    ORANGEBOX: 'ORANGE_BOX' as DeliveryLoanItem
+    ORANGEBOX: 'ORANGE_BOX' as DeliveryLoanItem,
+    GREENBOX: 'GREEN_BOX' as DeliveryLoanItem
 };
