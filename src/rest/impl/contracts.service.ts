@@ -124,7 +124,7 @@ export default class ContractsServiceImpl extends ContractsService {
 
     let sapId = contract.sapId || null;
 
-    if (contract.status === "APPROVED") {
+    if (contract.status === "APPROVED" && !config().sap.itemGroupsIgnoredFromSap.includes(itemGroup.externalId)) {
       try {
         const user = await userManagement.findUser(userId);
         const businessPartnerCode = user ?
@@ -529,7 +529,12 @@ export default class ContractsServiceImpl extends ContractsService {
       }
     }
 
-    if (status === "APPROVED" && !databaseContract.sapId && !payload.sapId) {
+    if (
+      status === "APPROVED" &&
+      !config().sap.itemGroupsIgnoredFromSap.includes(itemGroup.externalId) &&
+      !databaseContract.sapId &&
+      !payload.sapId
+    ) {
       try {
         const user = await userManagement.findUser(databaseContract.userId);
         const businessPartnerCode = user ?
