@@ -3,7 +3,7 @@ import * as express from "express";
 import * as ConnectSessionSequelize from "connect-session-sequelize";
 import * as session from "express-session";
 import * as Sequelize from "sequelize";
-import * as Keycloak from "keycloak-connect";
+import * as KeycloakConnect from "keycloak-connect";
 import * as i18n from "i18n";
 import * as bodyParser from "body-parser";
 import * as cors from "cors";
@@ -88,7 +88,7 @@ process.on("unhandledRejection", (error) => {
 
   sessionStore.sync();
 
-  const keycloak = new Keycloak({ store: sessionStore }, config().keycloak.rest);
+  const keycloak = new KeycloakConnect({ store: sessionStore }, config().keycloak.rest);
   httpServer.listen(port, () => {
     logger.info("Http server started");
   });

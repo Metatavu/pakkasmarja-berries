@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import models, { ProductModel } from "../../models";
 import ProductsService from "../api/products.service";
 import { Product } from "../model/models";

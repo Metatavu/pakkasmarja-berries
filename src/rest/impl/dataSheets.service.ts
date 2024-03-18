@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import * as uuid from "uuid/v4";
 import models, { DataSheetModel } from "../../models";
 import DataSheetsService from "../api/dataSheets.service";

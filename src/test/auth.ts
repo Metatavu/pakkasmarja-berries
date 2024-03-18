@@ -1,7 +1,7 @@
+import { Configuration } from "@keycloak-admin-client/runtime";
 import config from "./config";
 import * as request from "request";
-import KcAdminClient from "keycloak-admin";
-import { RoleMappingPayload } from "keycloak-admin/lib/defs/roleRepresentation";
+import { RolesApi, UsersApi } from "@keycloak-admin-client/apis";
 
 const keycloakSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
 
@@ -41,9 +41,9 @@ export default new class Auth {
   /**
    * Gets access token from keycloak
    *
-   * @param {username} username
-   * @param {password} password
-   * @return {Promise} promise for results
+   * @param username
+   * @param password
+   * @return promise for results
    */
   public getToken(username: string, password: string) {
     return this.getClientToken(username, password, config.get("keycloak:app:resource"), config.get("keycloak:app:credentials:secret"));
@@ -52,13 +52,12 @@ export default new class Auth {
   /**
    * Gets access token from user with admin permissions
    *
-   * @return {Promise} promise for results
+   * @return promise for results
    */
   public async getAdminToken(roles?: string | string[]) {
     if (roles) {
-      const adminToken = await this.getAdminCliToken();
       const userId = this.getAdminId();
-      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
     }
 
     return this.getToken("admin", "test");
@@ -67,13 +66,12 @@ export default new class Auth {
   /**
    * Removes specified roles from admin
    *
-   * @param {Array} roles list of roles to be removed
-   * @returns {Promise} promise for removed roles
+   * @param roles list of roles to be removed
+   * @returns promise for removed roles
    */
   async removeAdminRoles(roles: string | string[]) {
-    const adminToken = await this.getAdminCliToken();
     const userId = this.getAdminId();
-    return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+    return this.removeRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
   }
 
   /**
@@ -94,7 +92,7 @@ export default new class Auth {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser1Id();
-      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
     }
 
     return this.getToken("test1-testrealm1", "test");
@@ -109,7 +107,7 @@ export default new class Auth {
   async removeUser1Roles(roles?: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser1Id();
-    return this.removeRealmRolesToUser(adminToken, userId, roles ? Array.isArray(roles) ? roles : [roles] : []);
+    return this.removeRealmRolesToUser(userId, roles ? Array.isArray(roles) ? roles : [roles] : []);
   }
 
   /**
@@ -121,7 +119,7 @@ export default new class Auth {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser2Id();
-      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
     }
 
     return this.getToken("test2-testrealm1", "test");
@@ -136,7 +134,7 @@ export default new class Auth {
   async removeUser2Roles(roles: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser2Id();
-    return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
+    return this.removeRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
   }
 
   /**
@@ -193,84 +191,109 @@ export default new class Auth {
   /**
    * Adds realm roles to user
    *
-   * @param {String} adminToken admin token
-   * @param {String} userId user id
-   * @param {Array} roles array of roles to be added
-   * @returns {Promise} promise for added roles
+   * @param userId user id
+   * @param roles array of roles to be added
+   * @returns promise for added roles
    */
-  async addRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
-    const client = await this.getClient();
+  public async addRealmRolesToUser(userId: string, roles: string[]) {
+    const usersApi = this.getAdminUsersApi();
     const realm = config.get("keycloak:app:realm");
-    const roleMappings: RoleMappingPayload[] = roles.map((role: string) => {
-      return { id: this.getRealmRoleId(role), name: role };
+
+    const user = await usersApi.adminRealmsRealmUsersUserIdGet({
+      realm: realm,
+      userId: userId
     });
 
-    return client.users.addRealmRoleMappings({
-      roles: roleMappings,
-      id: userId,
-      realm: realm
+    const updatedUser = {
+      ... user,
+      realmRoles: Array.from(new Set((user.realmRoles || []).concat(roles)))
+    };
+
+    return usersApi.adminRealmsRealmUsersUserIdPut({
+      realm: realm,
+      userId: userId,
+      userRepresentation: updatedUser
     });
   }
 
   /**
    * Removes realm roles to user
    *
-   * @param {String} adminToken admin token
-   * @param {String} userId user id
-   * @param {Array} roles array of roles to be removed
-   * @returns {Promise} promise for removed roles
+   * @param userId user id
+   * @param roles array of roles to be removed
+   * @returns promise for removed roles
    */
-  async removeRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
-    const client = await this.getClient();
+  public async removeRealmRolesToUser(userId: string, roles: string[]) {
+    const usersApi = this.getAdminUsersApi();
     const realm = config.get("keycloak:app:realm");
 
-    const roleMappings: RoleMappingPayload[] = roles.map((role: string) => {
-      return { id: this.getRealmRoleId(role), name: role };
+    const user = await usersApi.adminRealmsRealmUsersUserIdGet({
+      realm: realm,
+      userId: userId
     });
 
-    return client.users.delRealmRoleMappings({
-      roles: roleMappings,
-      id: userId,
-      realm: realm
+    const updatedUser = {
+      ... user,
+      realmRoles: (user.realmRoles || []).filter((role: string) => roles.indexOf(role) === -1)
+    };
+
+    return usersApi.adminRealmsRealmUsersUserIdPut({
+      realm: realm,
+      userId: userId,
+      userRepresentation: updatedUser
     });
   }
 
   /**
    * Creates roles for testing purposes
    *
-   * @returns {Promise} promise for added roles
+   * @returns promise for added roles
    */
   async createRoles() {
     const roles = ["list-all-contacts","delete-week-delivery-predictions","update-other-contacts","update-other-week-delivery-predictions","list-all-week-delivery-predictions","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","create-item-groups","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations","manage-product-prices","create-item-group-prices","update-item-group-prices", "manage-delivery-qualities"];
-    const client = await this.getClient();
+    const rolesApi = this.getAdminRolesApi();
 
     return Promise.all(roles.map((role) => {
-      return client.roles.create({
-        name: role
+      return rolesApi.adminRealmsRealmRolesPost({
+        realm: config.get("keycloak:app:realm"),
+        roleRepresentation: {
+          name: role
+        }
       });
     }));
   }
 
   /**
-   * Returns client
-   *
-   * @returns client
+   * Returns initalized admin users api
+   * 
+   * @returns admin users api
    */
-  private async getClient(): Promise<KcAdminClient> {
+  private getAdminUsersApi = () => {
+    return new UsersApi(this.getAdminApiConfiguration());
+  }
+
+  /**
+   * Return initialized admin roles api
+   * 
+   * @returns admin roles api
+   */
+  private getAdminRolesApi = () => {
+    return new RolesApi(this.getAdminApiConfiguration());
+  }
+
+  /**
+   * Returns admin api configuration
+   * 
+   * @returns admin api configuration
+   */
+  private getAdminApiConfiguration = () => {
     const keycloakConfig = config.get("keycloak:admin");
-    const client: KcAdminClient = new KcAdminClient({
-      baseUrl: keycloakConfig.baseUrl
-    });
 
-    await client.auth({
+    return new Configuration({
+      basePath: keycloakConfig.baseUrl,
       username: keycloakConfig.username,
-      password: keycloakConfig.password,
-      grantType: keycloakConfig.grant_type,
-      clientId: keycloakConfig.client_id,
-      clientSecret: keycloakConfig.client_secret
-    });
-
-    return client;
+      password: keycloakConfig.password
+    }); 
   }
 
 }

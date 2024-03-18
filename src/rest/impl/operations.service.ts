@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import { Response, Request, Application } from "express";
 import { getLogger, Logger } from "log4js";
 import { Operation } from "../model/models";

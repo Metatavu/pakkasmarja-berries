@@ -3,8 +3,8 @@ import { Request, Response } from "express";
 import UserGroupsService from "../api/userGroups.service";
 import { UserGroup } from "../model/models";
 import userManagement from "../../user-management";
-import GroupRepresentation from "keycloak-admin/lib/defs/groupRepresentation";
 import ApplicationRoles from "../application-roles";
+import { GroupRepresentation } from "@keycloak-admin-client/models";
 
 /**
  * Chat Groups REST service

@@ -16,7 +16,10 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": false
+    "noUnusedLocals": false,
+    "paths": {
+      "@keycloak-admin-client/*": ["src/generated/keycloak-admin-client/*"]
+    },
   },
   "include": [
     "src"

@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import models, { DeliveryQualityModel, DeliveryQualityProductModel } from "../../models";
 import DeliveryQualitiesService from "../api/deliveryQualities.service";
 import ApplicationRoles from "../application-roles";

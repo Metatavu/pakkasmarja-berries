@@ -1,4 +1,4 @@
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import { Response, Request, Application } from "express";
 import DeliveryPlacesService from "../api/deliveryPlaces.service";
 import { DeliveryPlace } from "../model/models";

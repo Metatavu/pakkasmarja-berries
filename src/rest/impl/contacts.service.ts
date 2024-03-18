@@ -7,7 +7,7 @@ import mailer from "../../mailer";
 import { Contact, Address, BasicContact } from "../model/models";
 import { config } from "../../config";
 import { getLogger, Logger } from "log4js";
-import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
+import { UserRepresentation } from "@keycloak-admin-client/models";
 
 /**
  * Implementation for Contacts REST service

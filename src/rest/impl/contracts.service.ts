@@ -1,5 +1,5 @@
 import * as _ from "lodash";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import * as path from "path";
 import * as fs from "fs";
 import * as i18n from "i18n";
