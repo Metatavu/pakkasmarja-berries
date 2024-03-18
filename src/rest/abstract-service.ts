@@ -7,11 +7,6 @@ import { InternalServerError } from './model/internalServerError';
 import { NotImplemented } from "./model/models";
 import { getLogger, Logger } from "log4js";
 import moment = require("moment");
-import chatGroupPermissionController from "../user-management/chat-group-permission-controller";
-import userManagement from "../user-management";
-import { ThreadModel, ChatGroupModel } from "../models";
-import { CHAT_GROUP_MANAGE, ApplicationScope, CHAT_THREAD_ACCESS, CHAT_GROUP_ACCESS, CHAT_GROUP_TRAVERSE } from "./application-scopes";
-import chatThreadPermissionController from "../user-management/chat-thread-permission-controller";
 
 /**
  * Abstract base class for all REST services
@@ -19,60 +14,6 @@ import chatThreadPermissionController from "../user-management/chat-thread-permi
 export default class AbstractService {
 
   private baseLogger: Logger = getLogger();
-
-  /**
-   * Returns whether logged user has manage permission to given thread
-   *
-   * @param req request
-   * @param thread thread
-   * @param chatGroup chat group
-   */
-  protected async isThreadManagePermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
-    if (await this.hasResourcePermission(req, chatGroupPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE])) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Returns whether logged user has access permission to given thread
-   *
-   * @param req request
-   * @param thread thread
-   * @param chatGroup chat group
-   */
-  protected async isThreadAccessPermission(req: Request, thread: ThreadModel, chatGroup: ChatGroupModel) {
-    if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatGroupResourceName(chatGroup), [CHAT_GROUP_MANAGE, CHAT_GROUP_ACCESS])) {
-      return true;
-    }
-
-    if (await this.hasResourcePermission(req, chatThreadPermissionController.getChatThreadResourceName(thread), [CHAT_THREAD_ACCESS])) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Checks whether given access token has required scopes
-   *
-   * @param req request
-   * @param resourceName resource name
-   * @param scopes required scopes
-   * @return Promise for whether user has permission to resource or not
-   */
-  public async hasResourcePermission(req: Request, resourceName: string, scopes: ApplicationScope[]): Promise<boolean> {
-    const accessToken = (req as any).kauth.grant.access_token;
-    for (let i = 0; i < scopes.length; i++) {
-      const result: boolean = await userManagement.hasResourcePermission(resourceName, [scopes[i]], accessToken.token);
-      if (result) {
-        return true;
-      }
-    }
-
-    return false;
-  }
 
   /**
    * Gets accesstoken from request
