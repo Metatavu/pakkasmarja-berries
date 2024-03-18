@@ -2,7 +2,7 @@ import { Response, Request, Application } from "express";
 import { config } from "../config";
 import * as uuid from "uuid4";
 import * as multer from "multer";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 
 /**
  * File routes
