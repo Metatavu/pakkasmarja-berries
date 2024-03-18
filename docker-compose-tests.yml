@@ -35,6 +35,8 @@ services:
   pakkasmarja-berries-keycloak:
     container_name: pakkasmarja-berries-keycloak
     image: quay.io/keycloak/keycloak:24.0.1
+    command:
+      - start-dev
     environment:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: admin
