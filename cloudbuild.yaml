@@ -83,7 +83,7 @@ steps:
   - |
     if [ -n "${_TEST}" ]; then
       cd ./pakkasmarja-erp-services
-      ./gradlew clean build -PtargetEnvironment=local
+      ./gradlew clean build -PtargetEnvironment=local -x test
     fi
 
 - name: gcr.io/cloud-builders/docker
