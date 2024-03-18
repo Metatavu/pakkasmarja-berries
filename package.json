@@ -13,7 +13,8 @@
     "build-erp-services-client": "openapi-generator-cli generate -i pakkasmarja-erp-services-spec/swagger.yaml -o src/generated/erp-services-client -c generator-config.json -g typescript-node",
     "build-odata-client": "openapi-generator-cli generate -i odata-mock-spec/swagger.yaml -o src/generated/odata-client -c generator-config.json -g typescript-node",
     "build-visma-sign-client": "openapi-generator-cli generate -i visma-sign-client-spec/swagger.yaml -o src/generated/visma-sign-client -c generator-config.json -g typescript-node",
-    "build-clients": "npm run build-erp-services-client && npm run build-odata-client && npm run build-visma-sign-client"
+    "build-clients": "npm run build-erp-services-client && npm run build-odata-client && npm run build-visma-sign-client",
+    "build-keycloak-admin-client": "openapi-generator-cli generate -i ./keycloak-24.0.1-openapi.yaml -o src/generated/keycloak-admin-client -g typescript-fetch"
   },
   "author": {
     "name": "Metatavu",
@@ -37,8 +38,7 @@
     "file-type": "^14.1.4",
     "i18n": "^0.8.3",
     "jwt-decode": "^2.2.0",
-    "keycloak-admin": "https://github.com/Metatavu/keycloak-nodejs-admin-client/releases/download/1.12.0-alt/keycloak-admin-1.12.0-2.tgz",
-    "keycloak-connect": "4.8.3",
+    "keycloak-connect": "24.0.1",
     "lodash": "^4.17.11",
     "log4js": "^4.0.2",
     "mailgun-js": "^0.22.0",
@@ -64,7 +64,7 @@
     "wkhtmltopdf": "^0.3.4"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.4.26",
+    "@openapitools/openapi-generator-cli": "^2.12.0",
     "@types/better-queue": "^3.8.2",
     "@types/blue-tape": "^0.1.32",
     "@types/bluebird": "^3.5.25",
