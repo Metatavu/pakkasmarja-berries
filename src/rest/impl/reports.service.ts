@@ -10,7 +10,7 @@ import ReportsService from "../api/reports.service";
 import userManagement, { UserProperty } from "../../user-management";
 import pdf from "../../pdf";
 import * as moment from "moment";
-import { UserRepresentation } from "@keycloak-admin-client/models";
+import { UserRepresentation } from "../../generated/keycloak-admin-client/models";
 
 interface HtmlDeliveriesReportData {
   documentName: string,

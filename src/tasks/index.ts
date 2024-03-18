@@ -7,7 +7,7 @@ import userManagement, { UserProperty } from "../user-management";
 import { config } from "../config";
 import { HttpError, SapAddressType, SapBusinessPartner } from "../generated/erp-services-client/api";
 import ErpClient from "../erp/client";
-import { UserRepresentation } from "@keycloak-admin-client/models";
+import { UserRepresentation } from "../generated/keycloak-admin-client/models";
 
 /**
  * Task queue functionalities for Pakkasmarja Berries

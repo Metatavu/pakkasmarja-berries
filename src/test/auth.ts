@@ -1,7 +1,6 @@
-import { Configuration } from "@keycloak-admin-client/runtime";
+import { RolesApi, UsersApi, Configuration } from "../generated/keycloak-admin-client";
 import config from "./config";
 import * as request from "request";
-import { RolesApi, UsersApi } from "@keycloak-admin-client/apis";
 
 const keycloakSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
 

@@ -2,9 +2,7 @@ import * as _ from "lodash";
 import * as crypto from "crypto";
 import UserCache from "./user-cache";
 import { config } from "../config";
-import { UserRepresentation, GroupRepresentation } from "@keycloak-admin-client/models";
-import { GroupsApi, UsersApi } from "@keycloak-admin-client/apis";
-import { Configuration } from "@keycloak-admin-client/runtime";
+import { UserRepresentation, GroupRepresentation, GroupsApi, UsersApi, Configuration } from "../generated/keycloak-admin-client";
 
 export enum UserProperty {
   SAP_ID = "sapId",

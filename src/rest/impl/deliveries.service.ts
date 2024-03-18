@@ -14,7 +14,7 @@ import { getLogger } from "log4js";
 import { createStackedReject, logReject } from "../../utils";
 import ErpClient from "../../erp/client";
 import { BinActionType, HttpError, SapBatchNumber, SapStockTransfer, SapStockTransferLine } from "../../generated/erp-services-client/api";
-import { UserRepresentation } from "@keycloak-admin-client/models";
+import { UserRepresentation } from "../../generated/keycloak-admin-client/models";
 
 /**
  * Implementation for Deliveries REST service

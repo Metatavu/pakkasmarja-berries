@@ -4,7 +4,7 @@ import UserGroupsService from "../api/userGroups.service";
 import { UserGroup } from "../model/models";
 import userManagement from "../../user-management";
 import ApplicationRoles from "../application-roles";
-import { GroupRepresentation } from "@keycloak-admin-client/models";
+import { GroupRepresentation } from "../../generated/keycloak-admin-client/models";
 
 /**
  * Chat Groups REST service
