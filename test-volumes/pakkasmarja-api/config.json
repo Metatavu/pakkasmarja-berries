@@ -43,8 +43,8 @@
     "admin": {
       "realm": "pm",
       "baseUrl": "http://pakkasmarja-berries-keycloak:8080/auth",
-      "username": "admin",
-      "password": "admin",
+      "username": "api-admin",
+      "password": "api-admin",
       "grant_type": "password",
       "client_id": "admin-cli"
     },
@@ -53,7 +53,7 @@
       "auth-server-url": "http://pakkasmarja-berries-keycloak:8080/auth",
       "ssl-required": "external",
       "resource": "pm",
-      "verify-token-audience": true,
+      "verify-token-audience": false,
       "credentials": {
         "secret": "25537085-819b-4137-bd5a-7e439f17ece0"
       },
