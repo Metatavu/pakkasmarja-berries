@@ -24,8 +24,8 @@ services:
   pakkasmarja-berries-mysql:
     container_name: pakkasmarja-berries-mysql
     platform: linux/amd64
-    image: mysql:5.7
-    command: --lower_case_table_names=1
+    image: mysql:8
+    command: --lower_case_table_names=1 --max_connections=1000
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: pm
