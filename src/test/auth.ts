@@ -1,6 +1,7 @@
-import { RolesApi, UsersApi, Configuration } from "../generated/keycloak-admin-client";
+import { RolesApi, UsersApi, Configuration, ClientRoleMappingsApi, RoleMapperApi } from "../generated/keycloak-admin-client";
 import config from "./config";
 import * as request from "request";
+import fetch from "node-fetch";
 
 const keycloakSetup = require(`${__dirname}/../../scripts/kc-setup-for-tests.json`);
 
@@ -12,9 +13,9 @@ export default new class Auth {
   /**
    * Gets access token from keycloak
    *
-   * @param {username} username
-   * @param {password} password
-   * @return {Promise} promise for results
+   * @param username username
+   * @param password password
+   * @return promise for results
    */
   public async getClientToken(username: string, password: string, clientId: string, clientSecret?: string): Promise<string> {
     const realm = config.get("keycloak:app:realm");
@@ -27,7 +28,7 @@ export default new class Auth {
         grant_type: "password",
         username: username,
         password: password
-      }}, (err: any, httpResponse: any, body: string) => {
+      }}, (err: any, _httpResponse: any, body: string) => {
         if (err) {
           reject(err);
         } else {
@@ -53,13 +54,8 @@ export default new class Auth {
    *
    * @return promise for results
    */
-  public async getAdminToken(roles?: string | string[]) {
-    if (roles) {
-      const userId = this.getAdminId();
-      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
-    }
-
-    return this.getToken("admin", "test");
+  public async getAdminToken() {
+    return this.getToken("admin", "admin");
   }
 
   /**
@@ -70,7 +66,8 @@ export default new class Auth {
    */
   async removeAdminRoles(roles: string | string[]) {
     const userId = this.getAdminId();
-    return this.removeRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
+    const adminToken = await this.getAdminCliToken();
+    return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
   }
 
   /**
@@ -79,7 +76,7 @@ export default new class Auth {
    * @returns promise for token
    */
   public getAdminCliToken() {
-    return this.getClientToken("admin", "test", "admin-cli");
+    return this.getClientToken("admin", "admin", "admin-cli");
   }
 
   /**
@@ -91,7 +88,7 @@ export default new class Auth {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser1Id();
-      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
+      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
     }
 
     return this.getToken("test1-testrealm1", "test");
@@ -100,25 +97,25 @@ export default new class Auth {
   /**
    * Removes specified roles from user 1
    *
-   * @param {Array} roles list of roles to be removed
-   * @returns {Promise} promise for removed roles
+   * @param roles list of roles to be removed
+   * @returns promise for removed roles
    */
   async removeUser1Roles(roles?: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser1Id();
-    return this.removeRealmRolesToUser(userId, roles ? Array.isArray(roles) ? roles : [roles] : []);
+    return this.removeRealmRolesToUser(adminToken, userId, roles ? Array.isArray(roles) ? roles : [roles] : []);
   }
 
   /**
    * Gets access token from keycloak with user2 username and password
    *
-   * @return {Promise} promise for results
+   * @return promise for results
    */
   async getTokenUser2(roles?: string | string[]) {
     if (roles) {
       const adminToken = await this.getAdminCliToken();
       const userId = this.getUser2Id();
-      await this.addRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
+      await this.addRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
     }
 
     return this.getToken("test2-testrealm1", "test");
@@ -127,19 +124,19 @@ export default new class Auth {
   /**
    * Removes specified roles from user 2
    *
-   * @param {Array} roles list of roles to be removed
-   * @returns {Promise} promise for removed roles
+   * @param roles list of roles to be removed
+   * @returns promise for removed roles
    */
   async removeUser2Roles(roles: string | string[]) {
     const adminToken = await this.getAdminCliToken();
     const userId = this.getUser2Id();
-    return this.removeRealmRolesToUser(userId, Array.isArray(roles) ? roles : [roles]);
+    return this.removeRealmRolesToUser(adminToken, userId, Array.isArray(roles) ? roles : [roles]);
   }
 
   /**
    * Returns admin id
    *
-   * @return {String} user id
+   * @return user id
    */
   public getAdminId() {
     return "3feb85af-3ddb-4d3d-a97f-a879a32037a1";
@@ -148,7 +145,7 @@ export default new class Auth {
   /**
    * Returns user 1 id
    *
-   * @return {String} user id
+   * @return user id
    */
   public getUser1Id() {
     return "6f1cd486-107e-404c-a73f-50cc1fdabdd6";
@@ -157,7 +154,7 @@ export default new class Auth {
   /**
    * Returns user 2 id
    *
-   * @return {String} user id
+   * @return user id
    */
   public getUser2Id() {
     return "677e99fd-b854-479f-afa6-74f295052770";
@@ -194,63 +191,48 @@ export default new class Auth {
    * @param roles array of roles to be added
    * @returns promise for added roles
    */
-  public async addRealmRolesToUser(userId: string, roles: string[]) {
-    const usersApi = this.getAdminUsersApi();
-    const realm = config.get("keycloak:app:realm");
+  public async addRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
+    const roleMapperApi = this.getRoleMapperApi(adminToken);
 
-    const user = await usersApi.adminRealmsRealmUsersUserIdGet({
-      realm: realm,
-      userId: userId
-    });
-
-    const updatedUser = {
-      ... user,
-      realmRoles: Array.from(new Set((user.realmRoles || []).concat(roles)))
-    };
-
-    return usersApi.adminRealmsRealmUsersUserIdPut({
-      realm: realm,
+    await roleMapperApi.adminRealmsRealmUsersUserIdRoleMappingsRealmPost({
+      realm: config.get("keycloak:app:realm"),
       userId: userId,
-      userRepresentation: updatedUser
+      roleRepresentation: roles.map((role: string) => {
+        return { id: this.getRealmRoleId(role), name: role };
+      })
     });
   }
 
   /**
    * Removes realm roles to user
    *
+   * @param adminToken admin token
    * @param userId user id
    * @param roles array of roles to be removed
    * @returns promise for removed roles
    */
-  public async removeRealmRolesToUser(userId: string, roles: string[]) {
-    const usersApi = this.getAdminUsersApi();
+  public async removeRealmRolesToUser(adminToken: string, userId: string, roles: string[]) {
+    const roleMapperApi = this.getRoleMapperApi(adminToken);
     const realm = config.get("keycloak:app:realm");
 
-    const user = await usersApi.adminRealmsRealmUsersUserIdGet({
-      realm: realm,
-      userId: userId
-    });
-
-    const updatedUser = {
-      ... user,
-      realmRoles: (user.realmRoles || []).filter((role: string) => roles.indexOf(role) === -1)
-    };
-
-    return usersApi.adminRealmsRealmUsersUserIdPut({
+    await roleMapperApi.adminRealmsRealmUsersUserIdRoleMappingsRealmDelete({
       realm: realm,
       userId: userId,
-      userRepresentation: updatedUser
+      roleRepresentation: roles.map((role: string) => {
+        return { id: this.getRealmRoleId(role), name: role };
+      })
     });
   }
 
   /**
    * Creates roles for testing purposes
    *
+   * @param adminToken admin token
    * @returns promise for added roles
    */
-  async createRoles() {
+  async createRoles(adminToken: string) {
     const roles = ["list-all-contacts","delete-week-delivery-predictions","update-other-contacts","update-other-week-delivery-predictions","list-all-week-delivery-predictions","create-contract","list-all-contracts","update-other-contracts","create-contract-document-templates","list-contract-document-templates","update-contract-document-templates","list-item-group-document-templates","update-item-group-document-templates","create-item-group-prices","create-item-groups","update-item-group-prices","delete-item-group-prices","list-operation-reports","create-operations","manage-product-prices","create-item-group-prices","update-item-group-prices", "manage-delivery-qualities"];
-    const rolesApi = this.getAdminRolesApi();
+    const rolesApi = this.getAdminRolesApi(adminToken);
 
     return Promise.all(roles.map((role) => {
       return rolesApi.adminRealmsRealmRolesPost({
@@ -262,36 +244,45 @@ export default new class Auth {
     }));
   }
 
-  /**
-   * Returns initalized admin users api
-   * 
-   * @returns admin users api
-   */
-  private getAdminUsersApi = () => {
-    return new UsersApi(this.getAdminApiConfiguration());
-  }
 
   /**
    * Return initialized admin roles api
    * 
+   * @param accessToken access token
    * @returns admin roles api
    */
-  private getAdminRolesApi = () => {
-    return new RolesApi(this.getAdminApiConfiguration());
+  private getAdminRolesApi = (accessToken: string) => {
+    return new RolesApi(this.getAdminApiConfiguration(accessToken));
+  }
+
+  /**
+   * Return initialized admin users api
+   * 
+   * @param accessToken access token
+   * @returns admin role mapper api
+   */
+  private getRoleMapperApi = (accessToken: string) => {
+    return new RoleMapperApi(this.getAdminApiConfiguration(accessToken));
   }
 
   /**
    * Returns admin api configuration
    * 
+   * @param accessToken access token
    * @returns admin api configuration
    */
-  private getAdminApiConfiguration = () => {
+  private getAdminApiConfiguration = (accessToken: string) => {
     const keycloakConfig = config.get("keycloak:admin");
 
     return new Configuration({
       basePath: keycloakConfig.baseUrl,
       username: keycloakConfig.username,
-      password: keycloakConfig.password
+      password: keycloakConfig.password,
+      accessToken: accessToken,
+      fetchApi: fetch as any,
+      headers: {
+        "Authorization": `Bearer ${accessToken}`
+      }
     }); 
   }
 

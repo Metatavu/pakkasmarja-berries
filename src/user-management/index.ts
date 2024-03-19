@@ -2,7 +2,8 @@ import * as _ from "lodash";
 import * as crypto from "crypto";
 import UserCache from "./user-cache";
 import { config } from "../config";
-import { UserRepresentation, GroupRepresentation, GroupsApi, UsersApi, Configuration } from "../generated/keycloak-admin-client";
+import { UserRepresentation, GroupRepresentation, GroupsApi, UsersApi, Configuration, AccessToken, ResponseError } from "../generated/keycloak-admin-client";
+import fetch from "node-fetch";
 
 export enum UserProperty {
   SAP_ID = "sapId",
@@ -25,12 +26,24 @@ export enum UserProperty {
   CITY_2 = "Tilan kaupunki"
 }
 
+/**
+ * Admin token interface
+ */
+interface AdminToken {
+  accessToken: string;
+  expiresAt: number;
+}
+
+const ADMIN_TOKEN_EXPIRATION_MARGIN = 60 * 1000;
+
 export default new class UserManagement {
 
   private userCache: UserCache | null;
+  private adminToken: AdminToken | null;
 
   constructor () {
     this.userCache = config().cache.enabled ? new UserCache(config().cache["expire-time"]) : null;
+    this.adminToken = null;
   }
 
   /**
@@ -160,7 +173,7 @@ export default new class UserManagement {
    * @return promise that resolves on success and rejects on failure
    */
   public async updateUser(user: UserRepresentation): Promise<any> {
-    const usersApi = this.getAdminUsersApi();
+    const usersApi = await this.getAdminUsersApi();
     const { realm } = config().keycloak.admin; 
 
     await usersApi.adminRealmsRealmUsersUserIdPut({
@@ -185,7 +198,7 @@ export default new class UserManagement {
    * @return promise that resolves on success and rejects on failure
    */
   public async resetUserPassword(userId: string, password: string, temporary: boolean) {
-    const usersApi = this.getAdminUsersApi();
+    const usersApi = await this.getAdminUsersApi();
     const { realm } = config().keycloak.admin; 
 
     await usersApi.adminRealmsRealmUsersUserIdResetPasswordPut({
@@ -211,7 +224,7 @@ export default new class UserManagement {
     first?: number,
     max?: number
   }): Promise<UserRepresentation[]> {
-    const usersApi = this.getAdminUsersApi();
+    const usersApi = await this.getAdminUsersApi();
     const { realm } = config().keycloak.admin;
     const { search, first, max } = options || {};
 
@@ -229,7 +242,7 @@ export default new class UserManagement {
    * @param userGroupId user group id
    */
   public async findGroup(userGroupId: string): Promise<GroupRepresentation> {
-    const groupsApi = this.getAdminGroupsApi();
+    const groupsApi = await this.getAdminGroupsApi();
     const { realm } = config().keycloak.admin;
 
     return await groupsApi.adminRealmsRealmGroupsGroupIdGet({
@@ -246,7 +259,7 @@ export default new class UserManagement {
    * @param search search string
    */
   public async listGroups(first?: number, max?: number, search?: string): Promise<GroupRepresentation[]> {
-    const groupsApi = this.getAdminGroupsApi();
+    const groupsApi = await this.getAdminGroupsApi();
     const { realm } = config().keycloak.admin;
 
     return await groupsApi.adminRealmsRealmGroupsGet({
@@ -329,14 +342,6 @@ export default new class UserManagement {
     return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
   }
 
-  isValidUserId(userId: string) {
-    if (typeof userId === "string") {
-      return !!userId.match(/[0-9a-zA-Z]{8}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{12}$/);
-    }
-
-    return false;
-  }
-
   /**
    * Returns single user attribute
    *
@@ -391,14 +396,22 @@ export default new class UserManagement {
    * @param id id
    * @return promise for user or null if not found
    */
-  private async findKeycloakUser(id: string): Promise<UserRepresentation> {
-    const usersApi = this.getAdminUsersApi();
+  private async findKeycloakUser(id: string): Promise<UserRepresentation | null> {
+    const usersApi = await this.getAdminUsersApi();
     const { realm } = config().keycloak.admin;
 
-    return await usersApi.adminRealmsRealmUsersUserIdGet({
-      realm: realm,
-      userId: id
-    });
+    try {
+      return await usersApi.adminRealmsRealmUsersUserIdGet({
+        realm: realm,
+        userId: id
+      });
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -406,8 +419,8 @@ export default new class UserManagement {
    * 
    * @returns admin groups api
    */
-  private getAdminGroupsApi = (): GroupsApi => {
-    return new GroupsApi(this.getAdminApiConfiguration());
+  private getAdminGroupsApi = async () => {
+    return new GroupsApi(await this.getAdminApiConfiguration());
   }
 
   /**
@@ -415,8 +428,8 @@ export default new class UserManagement {
    * 
    * @returns admin users api
    */
-  private getAdminUsersApi = () => {
-    return new UsersApi(this.getAdminApiConfiguration());
+  private getAdminUsersApi = async () => {
+    return new UsersApi(await this.getAdminApiConfiguration());
   }
 
   /**
@@ -424,12 +437,71 @@ export default new class UserManagement {
    * 
    * @returns admin api configuration
    */
-  private getAdminApiConfiguration = () => {
+  private getAdminApiConfiguration = async () => {
+    const adminToken = await this.getAdminToken();
+
     return new Configuration({
-      username: config().keycloak.admin.username,
-      password: config().keycloak.admin.password,
-      basePath: config().keycloak.rest["auth-server-url"]
+      accessToken: adminToken,
+      basePath: config().keycloak.rest["auth-server-url"],
+      fetchApi: fetch as any,
+      headers: {
+        "Authorization": `Bearer ${adminToken}`
+      }
     }); 
+  }
+
+  /**
+   * Returns admin api token and fetches new one if needed
+   * 
+   * @returns admin api token
+   */
+  private getAdminToken = async () => {
+    if (!this.adminToken || this.adminToken.expiresAt < Date.now()) {
+      this.adminToken = await this.fetchAdminToken();
+    }
+
+    return this.adminToken.accessToken;
+  }
+
+  /**
+   * Fetches fresh admin api token
+   * 
+   * @returns fresh admin api token
+   */
+  private fetchAdminToken = async () => {
+    try {
+      const { realm, baseUrl, username, password, grant_type, client_id, client_secret } = config().keycloak.admin;
+
+      const url = `${baseUrl}/realms/${realm}/protocol/openid-connect/token`;
+
+      const body = new URLSearchParams();
+      body.append("client_id", client_id);
+      body.append("grant_type", grant_type);
+      body.append("username", username);
+      body.append("password", password);
+
+      if (client_secret) {
+        body.append("client_secret", client_secret);
+      }
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: body
+      });
+
+      const token = (await response.json());
+
+      return {
+        accessToken: token.access_token,
+        expiresAt: Date.now() + (token.expires_in * 1000) - ADMIN_TOKEN_EXPIRATION_MARGIN
+      };
+    } catch (error) {
+      console.error("Error occurred while fetching admin api token", error);
+      throw error;
+    }
   }
 
 };
