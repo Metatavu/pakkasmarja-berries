@@ -88,7 +88,8 @@ process.on("unhandledRejection", (error) => {
 
   sessionStore.sync();
 
-  const keycloak = new KeycloakConnect({ store: sessionStore }, config().keycloak.rest);
+  const keycloak = new KeycloakConnect({ }, config().keycloak.rest);
+
   httpServer.listen(port, () => {
     logger.info("Http server started");
   });
