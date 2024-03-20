@@ -492,7 +492,7 @@ export default new class UserManagement {
         body: body
       });
 
-      const token = (await response.json());
+      const token = await response.json();
 
       return {
         accessToken: token.access_token,
