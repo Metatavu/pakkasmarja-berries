@@ -10,3 +10,4 @@ keycloak.log
 coverage
 *~
 /config*.json
+dist

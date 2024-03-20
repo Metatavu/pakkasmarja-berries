@@ -1,6 +1,6 @@
 import { QueryInterface } from "sequelize";
 import fetch from "node-fetch";
-import { config } from "../../config";
+import { config } from "../../config";
 import * as fs from "fs";
 import * as uuid from "uuid4";
 import * as Sequelize from "sequelize";

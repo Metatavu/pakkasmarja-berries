@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import ApplicationRoles from "../application-roles";
 import AWS = require("aws-sdk");
 import { Logger, getLogger } from "log4js";

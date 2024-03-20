@@ -23,8 +23,9 @@ services:
       QUARKUS_OIDC_CLIENT_ID: erp
   pakkasmarja-berries-mysql:
     container_name: pakkasmarja-berries-mysql
-    image: mysql:5.7
-    command: --lower_case_table_names=1
+    platform: linux/amd64
+    image: mysql:8
+    command: --lower_case_table_names=1 --max_connections=1000
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: pm
@@ -34,18 +35,22 @@ services:
       - 3306:3306
   pakkasmarja-berries-keycloak:
     container_name: pakkasmarja-berries-keycloak
-    image: jboss/keycloak:4.8.3.Final
+    image: quay.io/keycloak/keycloak:24.0.1
+    command:
+      - start-dev
+      - --import-realm
     environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
-      KEYCLOAK_IMPORT: /opt/docker/kc.json
-      DB_VENDOR: h2
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_FILE: /opt/docker/kc.json
+      KC_HTTP_RELATIVE_PATH: /auth
     ports:
       - 8080:8080
     volumes:
-      - ./test-volumes/keycloak:/opt/docker
+      - ./test-volumes/keycloak:/opt/keycloak/data/import
   pakkasmarja-berries-api:
     container_name: pakkasmarja-berries-api
+    platform: linux/amd64
     build: .
     environment:
       STARTUP_DELAY: 35

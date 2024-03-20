@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import models, { ProductModel, DeliveryPlaceModel } from "../../models";
 import * as _ from "lodash";
 import { getLogger, Logger } from "log4js";
@@ -9,8 +9,8 @@ import * as pug from "pug";
 import ReportsService from "../api/reports.service";
 import userManagement, { UserProperty } from "../../user-management";
 import pdf from "../../pdf";
-import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as moment from "moment";
+import { UserRepresentation } from "../../generated/keycloak-admin-client/models";
 
 interface HtmlDeliveriesReportData {
   documentName: string,

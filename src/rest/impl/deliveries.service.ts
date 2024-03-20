@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import models, { DeliveryModel, DeliveryNoteModel, DeliveryPlaceModel, ProductModel } from "../../models";
 import DeliveriesService from "../api/deliveries.service";
 import { Delivery, DeliveryLoan, DeliveryNote, ItemGroupCategory } from "../model/models";
@@ -8,13 +8,13 @@ import * as uuid from "uuid/v4";
 import moment = require("moment");
 import userManagement, { UserProperty } from "../../user-management";
 import { config } from "../../config";
-import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
 import * as _ from "lodash";
 import mailer from "../../mailer";
 import { getLogger } from "log4js";
 import { createStackedReject, logReject } from "../../utils";
 import ErpClient from "../../erp/client";
 import { BinActionType, HttpError, SapBatchNumber, SapStockTransfer, SapStockTransferLine } from "../../generated/erp-services-client/api";
+import { UserRepresentation } from "../../generated/keycloak-admin-client/models";
 
 /**
  * Implementation for Deliveries REST service

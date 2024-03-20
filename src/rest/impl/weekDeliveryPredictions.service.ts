@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import models, { WeekDeliveryPredictionModel } from "../../models";
 import WeekDeliveryPredictionsService from "../api/weekDeliveryPredictions.service";
 import { WeekDeliveryPrediction } from "../model/models";

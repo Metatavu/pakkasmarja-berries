@@ -38,13 +38,13 @@ test("Test listing contacts", async (t) => {
       t.equal(actualResponse.length, 7, "Should return 7 contacts");
 
       t.deepEqual(
-        contactDatas[testUser1],
         actualResponse.find(c => c.id === testUser1),
+        contactDatas[testUser1],
         `Contact ${testUser1} should be the same in response as in test data`
       );
       t.deepEqual(
-        contactDatas[testUser2],
         actualResponse.find(c => c.id === testUser2),
+        contactDatas[testUser2],
         `Contact ${testUser2} should be the same in response as in test data`
       );
     });

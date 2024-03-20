@@ -7,7 +7,7 @@ import mailer from "../../mailer";
 import { Contact, Address, BasicContact } from "../model/models";
 import { config } from "../../config";
 import { getLogger, Logger } from "log4js";
-import UserRepresentation from "keycloak-admin/lib/defs/userRepresentation";
+import { UserRepresentation } from "../../generated/keycloak-admin-client/models";
 
 /**
  * Implementation for Contacts REST service
@@ -71,10 +71,12 @@ export default class ContactsServiceImpl extends ContactsService {
       }
 
       const search = req.query.search as any;
-      const users = await userManagement.listUsers({
-        search: search,
-        max: 9999
-      });
+      const users = (await userManagement
+        .listUsers({
+          search: search,
+          max: 9999
+        }))
+        .filter(user => user.username !== config().keycloak.admin.username);
 
       const contacts = users.map((user: any) => {
         return this.translateContact(user);
@@ -110,13 +112,15 @@ export default class ContactsServiceImpl extends ContactsService {
     }
 
     const user = await userManagement.findUser(userId);
-    const oldAttributes = Object.assign({}, user && user.attributes ? user.attributes : {});
-
     if (!user) {
       this.sendNotFound(res);
       return;
     }
+
+    const oldAttributes = Object.assign({}, user && user.attributes ? user.attributes : {});
+
     await userManagement.updateUser(this.updateKeycloakUserModel(user, updateContact));
+
     const updatedUser = await userManagement.findUser(userId);
     user.attributes = oldAttributes;
     this.triggerChangeNotification(user, updatedUser);

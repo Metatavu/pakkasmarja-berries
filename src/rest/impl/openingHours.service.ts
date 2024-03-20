@@ -1,5 +1,5 @@
 import { Application, Response, Request } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import OpeningHoursService from "../api/openingHours.service";
 import models, { OpeningHourDayModel, OpeningHourPeriodModel, OpeningHourDayIntervalModel, OpeningHourExceptionModel, OpeningHourExceptionIntervalModel } from "../../models";
 import ApplicationRoles from "../application-roles";
