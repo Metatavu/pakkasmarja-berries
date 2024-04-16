@@ -15,16 +15,17 @@ export default new class Users {
   /**
    * Resets user back to original state
    *
-   * @param {String} userId
-   * @param {Object} t tape
-   * @return {Promise} promise
+   * @param userId
+   * @param t tape
+   * @return promise
    */
   async resetUser(userId: string, t: Test) {
+    const adminToken = await auth.getAdminToken();    
     const user = contactDatas[userId];
 
     return request(TestConfig.HOST)
       .put(`/rest/v1/contacts/${user.id}`)
-      .set("Authorization", `Bearer ${await auth.getAdminToken()}`)
+      .set("Authorization", `Bearer ${adminToken}`)
       .send(user)
       .set("Accept", "application/json")
       .expect(200)

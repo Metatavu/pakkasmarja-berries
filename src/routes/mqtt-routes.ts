@@ -1,5 +1,5 @@
 import { Response, Request, Application } from "express";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import { config } from "../config";
 
 /**

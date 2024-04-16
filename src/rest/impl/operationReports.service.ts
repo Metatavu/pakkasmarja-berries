@@ -1,5 +1,5 @@
 import OperationReportsService from "../api/operationReports.service";
-import * as Keycloak from "keycloak-connect";
+import { Keycloak } from "keycloak-connect";
 import { Response, Request, Application } from "express";
 import { OperationReport, OperationReportItem, OperationType } from "../model/models";
 import models, { OperationReportModel, OperationReportItemModel } from "../../models";
