@@ -486,7 +486,7 @@ export default new class UserManagement {
       if (client_secret) {
         body.append("client_secret", client_secret);
       }
-      
+
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -494,6 +494,10 @@ export default new class UserManagement {
         },
         body: body
       });
+
+      if (!response.ok) {
+        throw new Error(`Invalid response ${response.status} - ${response.statusText}. ${await response.text()}`);
+      }
 
       const token = await response.json();
 
