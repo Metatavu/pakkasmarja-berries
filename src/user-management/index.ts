@@ -457,8 +457,11 @@ export default new class UserManagement {
    */
   private getAdminToken = async () => {
     if (!this.adminToken || this.adminToken.expiresAt < Date.now()) {
+      console.log("No existing admin token or it is expired. Fetching new admin token..");
       this.adminToken = await this.fetchAdminToken();
     }
+
+    console.log(`Admin token: ${JSON.stringify(this.adminToken, null, 2)}`);
 
     return this.adminToken.accessToken;
   }
