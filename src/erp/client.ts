@@ -89,16 +89,17 @@ export default class ErpClient {
    */
   private static getAccessToken = (): Promise<AccessToken> => {
     return new Promise((resolve, reject) => {
-      const erpConfig = config().keycloak.erp;
-      const keycloakConfig = config().keycloak.admin;
+      const keycloakUrl = config().keycloak.rest["auth-server-url"];
+      const realm = config().keycloak.rest.realm;
+      const url = `${keycloakUrl}/realms/${realm}/protocol/openid-connect/token`;
 
-      const url = `${keycloakConfig.baseUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`;
+      const { clientId, clientSecret, password, username } = config().keycloak.erp;
 
       const body = new URLSearchParams();
-      body.append("client_id", erpConfig.clientId);
-      body.append("client_secret", erpConfig.clientSecret);
-      body.append("username", erpConfig.username);
-      body.append("password", erpConfig.password);
+      body.append("client_id", clientId);
+      body.append("client_secret", clientSecret);
+      body.append("username", username);
+      body.append("password", password);
       body.append("grant_type", "password");
 
       const options = { body: body.toString(), headers: { "content-type": "application/x-www-form-urlencoded" } };
