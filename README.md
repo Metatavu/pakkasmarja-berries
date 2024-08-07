@@ -29,4 +29,12 @@ This guide assumes that you are running on linux and have installed docker, dock
 ## Build ERP services
 
 ./gradlew clean build -PtargetEnvironment=local && 
-docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest .
+docker build -f src/main/docker/Dockerfile.jvm -t metatavu/erp-service:latest .<div id="metatavu-custom-footer"><div align="center">
+    <img src="https://metatavu.fi/wp-content/uploads/2024/02/cropped-metatavu-favicon.jpg" alt="Organization Logo" width="100">
+    <p>© 2024 Metatavu. All rights reserved.</p>
+    <p>
+        <a href="https://www.metatavu.fi">Website</a> | 
+        <a href="https://twitter.com/metatavu">Twitter</a> | 
+        <a href="https://fi.linkedin.com/company/metatavu">LinkedIn</a>
+    </p>
+</div></div>
